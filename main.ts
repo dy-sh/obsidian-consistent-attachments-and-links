@@ -1,61 +1,76 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, MarkdownView, TAbstractFile } from 'obsidian';
+import * as CodeMirror from "codemirror";
 
-interface MyPluginSettings {
-	mySetting: string;
+interface PluginSettings {
+	language: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: PluginSettings = {
+	language: ''
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+
+export default class MoveNoteWithAttachments extends Plugin {
+	settings: PluginSettings;
 
 	async onload() {
-		console.log('loading plugin');
-
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', 'Sample Plugin', () => {
-			new Notice('This is a notice!');
-		});
+		// this.addCommand({
+		// 	id: 'test',
+		// 	name: 'Test',
+		// 	callback: () => this.test()
+		// });
 
-		this.addStatusBarItem().setText('Status Bar Text');
+		this.addSettingTab(new SettingTab(this.app, this));
 
-		this.addCommand({
-			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
-			// callback: () => {
-			// 	console.log('Simple Callback');
-			// },
-			checkCallback: (checking: boolean) => {
-				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-					return true;
-				}
-				return false;
-			}
-		});
+		this.registerEvent(
+			this.app.vault.on('rename', (file, oldPath) => this.moveNoteAttachments(file, oldPath)),
+		);
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		this.registerCodeMirror((cm: CodeMirror.Editor) => {
-			console.log('codemirror', cm);
-		});
-
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		this.registerEvent(
+			this.app.vault.on('delete', (file) => this.deleteNoteAttachments(file)),
+		);
 	}
 
-	onunload() {
-		console.log('unloading plugin');
+	private moveNoteAttachments(file: TAbstractFile, oldPath: string) {
+
+		// console.log(this.app.metadataCache);
+		console.log(file);
+
+		let embeds = this.app.metadataCache.getCache(oldPath)?.embeds; //metadataCache still has oldPath links
+
+		for (let key in embeds) {
+			console.log(embeds[key].link)
+			this.moveFile(embeds[key].link, file.parent.path)
+		}
 	}
+
+	async moveFile(link: string, newParent: string) {
+		const file = this.app.metadataCache.getFirstLinkpathDest(link, "/");
+		if (!file) {
+			// console.error("file not found: " + oldPath)
+			return;
+		}
+		console.log(file)
+
+		let newParentPath = newParent + "/" + file.parent.name;
+		try {
+			//todo check filder exist
+			await this.app.vault.createFolder(newParentPath)
+		} catch { }
+
+
+		let newPath = newParent + "/" + link;
+		await this.app.vault.rename(file, newPath);
+	}
+
+	private deleteNoteAttachments(file: TAbstractFile) {
+
+	}
+
+
+
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -66,46 +81,31 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
 
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
 
-	onClose() {
-		let {contentEl} = this;
-		contentEl.empty();
-	}
-}
+class SettingTab extends PluginSettingTab {
+	plugin: MoveNoteWithAttachments;
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: MoveNoteWithAttachments) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		let {containerEl} = this;
+		let { containerEl } = this;
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', { text: 'Plugin - Settings' });
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Language')
+			.setDesc('')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue('')
+				.setPlaceholder('Example: c++')
+				.setValue(this.plugin.settings.language)
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.language = value;
 					await this.plugin.saveSettings();
 				}));
 	}
