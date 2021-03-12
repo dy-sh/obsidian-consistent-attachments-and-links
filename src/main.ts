@@ -39,9 +39,12 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 			let newNotePath = noteFile.path;
 
-			await Utils.delay(500);//waiting for move note
-			await this.moveNoteAttachments(oldNotePath, newNotePath)
-			await this.updateInternalLinksInMovedNote(oldNotePath, newNotePath)
+			await Utils.delay(500);//waiting for move note and update cache
+
+			if (path.dirname(oldNotePath) != path.dirname(newNotePath)) {
+				await this.moveNoteAttachments(oldNotePath, newNotePath)
+				await this.updateInternalLinksInMovedNote(oldNotePath, newNotePath)
+			}
 			await this.updateBacklinksToMovedNote(oldNotePath, newNotePath)
 			//todo: delete empty folders
 		}
