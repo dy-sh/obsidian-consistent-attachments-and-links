@@ -3,10 +3,12 @@ import MoveNoteWithAttachments from './main';
 
 export interface PluginSettings {
 	deleteFilesWhenExist: boolean;
+	changeNoteBacklinksAlt: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-	deleteFilesWhenExist: false
+	deleteFilesWhenExist: false,
+	changeNoteBacklinksAlt: false
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -33,6 +35,13 @@ export class SettingTab extends PluginSettingTab {
             }
             ).setValue(this.plugin.settings.deleteFilesWhenExist));
 
-
+        new Setting(containerEl)
+            .setName('Change backlinks text for reanamed note')
+            .setDesc('When the page is renamed, the links to it are updated. If this option is enabled, the text of links to this page will also be automatically changed.')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.changeNoteBacklinksAlt = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.changeNoteBacklinksAlt));
     }
 }
