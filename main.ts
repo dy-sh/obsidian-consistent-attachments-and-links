@@ -43,15 +43,17 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 
+
 	async moveNoteAttachments(noteFile: TAbstractFile, noteOldPath: string) {
-		// await this.delay(500);//waiting for move note
-
+		
 		let fileExt = noteOldPath.substring(noteOldPath.lastIndexOf("."));
-
 		if (fileExt == ".md") {
-			let embeds = this.app.metadataCache.getCache(noteFile.path)?.embeds; //metadataCache still has old path links
+
+			await this.delay(500);//waiting for move note
+
+			let embeds = this.app.metadataCache.getCache(noteOldPath)?.embeds; //metadataCache still has old path links
 			if (!embeds)
-				embeds = this.app.metadataCache.getCache(noteOldPath)?.embeds; //metadataCache has new path links
+				embeds = this.app.metadataCache.getCache(noteFile.path)?.embeds; //metadataCache has new path links
 
 			for (let key in embeds) {
 				let link = embeds[key].link;
@@ -74,7 +76,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 					if (!existFile) {
 						await this.app.vault.rename(file, newFullPath);
 					} else {
-						// await this.app.vault.rename(file, newFullPath+".png");
+						//todo: optional, rename attachment to new name and move to new path
 						await this.app.vault.trash(file, true);
 					}
 				}
@@ -85,12 +87,55 @@ export default class MoveNoteWithAttachments extends Plugin {
 					let existFile = this.getFileByPath(newFullPath);
 					if (!existFile) {
 						await this.app.vault.copy(file, newFullPath);
+					}else{
+						//todo: optional, rename attachment to new name and copy to new path
 					}
 				}
 
 			}
+
+
+			//update links to notes
+			let file = this.getFileByPath(noteFile.path);
+			let txt = await this.app.vault.read(file);
+
+			console.log(txt);
+
+
+			// let match;
+			// let re = /(?:__|[*#])|\[(.*?)\]\(.*?\)/gm
+			// while ((match = re.exec(text)) != null) {
+			// 	console.log( match.index+ " "+match);
+			// }
+
+
+			// const regexMdLinks = /\[(.*?)\]\((.*)\)/gm
+
+			// const matches = txt.match(regexMdLinks)
+			// console.log('links', matches)
+
+			// const singleMatch = /\[(.*?)\]\((.*)\)/
+			// for (var i = 0; i < matches.length; i++) {
+			//   var text = singleMatch.exec(matches[i])
+			//   console.log(`Match #${i}:`, text)
+			//   console.log(`Word  #${i}: ${text[1]}`)
+			//   console.log(`Link  #${i}: ${text[2]}`)
+			//   console.log(`Index }: `+text.index)
+			// }
+
+
+
+			let match;
+			let re = /\[(.*?)\]\((.*)\)/gm
+			while ((match = re.exec(txt)) != null) {
+				console.log(match.index + " " + match[2]);
+			}
+
+			//  await this.app.vault.modify(file,text+"\n 111");
 		}
 	}
+
+
 
 
 	getBacklinksForFile(file: TFile): string[] {
