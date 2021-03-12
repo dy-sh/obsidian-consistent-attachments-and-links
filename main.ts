@@ -124,7 +124,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 				if (link.endsWith(".md")) {
 					let fullLink = this.getFullPathForLink(link, oldNotePath);
 					let newRelLink: string = path.relative(newNotePath, fullLink);
-					newRelLink = this.normalizePathForLink(newRelLink); //replace \ to /
+					newRelLink = this.normalizePathForLink(newRelLink);
 
 					if (newRelLink.startsWith("../"))
 						newRelLink = newRelLink.substring(3);
@@ -152,39 +152,26 @@ export default class MoveNoteWithAttachments extends Plugin {
 					let link = el.match(/\((.*?)\)/)[1];
 
 					let fullLink = this.getFullPathForLink(link, note);
-					console.log("1 " + fullLink)
-					console.log("2 " + oldNotePath)
+					// console.log("1 " + fullLink)
+					// console.log("2 " + oldNotePath)
 
-					if (link.endsWith(".md")) {
-						let fullLink = this.getFullPathForLink(link, oldNotePath);
-						let newRelLink: string = path.relative(newNotePath, fullLink);
-						newRelLink = this.normalizePathForLink(newRelLink); //replace \ to /
+					if (fullLink == oldNotePath) {
+						let newRelLink: string = path.relative(fullLink, newNotePath);
+						newRelLink = this.normalizePathForLink(newRelLink);
 
 						if (newRelLink.startsWith("../"))
 							newRelLink = newRelLink.substring(3);
+
+						console.log(newRelLink)
 
 						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
 					}
 				}
 			}
 
-			// await this.app.vault.modify(file, text);
-			console.log(text)
+			await this.app.vault.modify(file, text);
 		}
 	}
-
-	// async updateBacklinksToNote(oldNotePath: string, newNotePath: string) {
-	// 	let allLinks = this.getAllLinksToFile(oldNotePath);
-
-	// 	console.log(allLinks)
-	// 	for (let key in allLinks) {			
-	// 		let file = this.getFileByPath(key);
-	// 		let text = await this.app.vault.read(file);		
-
-	// 	}
-	// }
-
-
 
 
 	normalizePathForFile(path: string) {
