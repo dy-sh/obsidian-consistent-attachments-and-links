@@ -59,12 +59,25 @@ export default class MoveNoteWithAttachments extends Plugin {
 			let newFullPath = this.getFullPathForLink(link, noteFile.path);
 
 			let backlinks = this.getBacklinksForFile(file);
+			//if no other file has link to this file
 			if (backlinks.length == 0) {
 				console.log("move " + newFullPath)
-				await this.app.vault.rename(file, newFullPath);
-			} else {
+				//move file. if file already exist at new location - just delete the old one
+				let existFile = this.getFileByPath(newFullPath);
+				if (!existFile) {
+					await this.app.vault.rename(file, newFullPath);
+				} else {
+					await this.app.vault.trash(file, true);
+				}
+			} 
+			//if some other file has link to this file
+			else {
 				console.log("copy " + newFullPath)
-				await this.app.vault.copy(file, newFullPath);
+				//copy file. if file already exist at new location - do nothing
+				let existFile = this.getFileByPath(newFullPath);
+				if (!existFile) {
+					await this.app.vault.copy(file, newFullPath);
+				}
 			}
 
 		}
@@ -92,7 +105,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 		}
 
 		return backlinks;
-	}	
+	}
 
 	async createFolderForAttachment(link: string, owningNotePath: string) {
 		let newFullPath = this.getFullPathForLink(link, owningNotePath);
