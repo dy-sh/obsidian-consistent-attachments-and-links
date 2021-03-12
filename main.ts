@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, MarkdownView, TAbstractFile } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, MarkdownView, TAbstractFile, getLinkpath, iterateCacheRefs, TFile, } from 'obsidian';
 import * as CodeMirror from "codemirror";
 
 interface PluginSettings {
@@ -7,6 +7,11 @@ interface PluginSettings {
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	language: ''
+}
+
+interface Link {
+	link: string;
+	files: string[];
 }
 
 
@@ -33,42 +38,88 @@ export default class MoveNoteWithAttachments extends Plugin {
 		);
 	}
 
-	private moveNoteAttachments(file: TAbstractFile, oldPath: string) {
+	deleteNoteAttachments(file: TAbstractFile) {
 
-		// console.log(this.app.metadataCache);
-		console.log(file);
+	}
 
-		let embeds = this.app.metadataCache.getCache(oldPath)?.embeds; //metadataCache still has oldPath links
+
+	async moveNoteAttachments(noteFile: TAbstractFile, noteOldPath: string) {
+		let embeds = this.app.metadataCache.getCache(noteOldPath)?.embeds; //metadataCache still has oldPath links
 
 		for (let key in embeds) {
-			console.log(embeds[key].link)
-			this.moveFile(embeds[key].link, file.parent.path)
+			let link = embeds[key].link;
+
+			let file = this.getFileByLink(link, noteOldPath);
+			if (!file) {
+				console.error("Move Note With Attachments: " + noteOldPath + " has bad link (file does not exist): " + link);
+				continue;
+			}
+
+			this.createFolderForAttachment(link, noteFile.path);
+			let newFullPath = this.getFullPathForLink(link, noteFile.path);
+
+			let backlinks = this.getBacklinksForFile(file);
+			if (backlinks.length == 0) {
+				console.log("move " + newFullPath)
+				await this.app.vault.rename(file, newFullPath);
+			} else {
+				console.log("copy " + newFullPath)
+				await this.app.vault.copy(file, newFullPath);
+			}
+
 		}
 	}
 
-	async moveFile(link: string, newParent: string) {
-		const file = this.app.metadataCache.getFirstLinkpathDest(link, "/");
-		if (!file) {
-			// console.error("file not found: " + oldPath)
-			return;
-		}
-		console.log(file)
 
-		let newParentPath = newParent + "/" + file.parent.name;
+	getBacklinksForFile(file: TFile): string[] {
+		let backlinks: string[] = [];
+		let notes = this.app.vault.getMarkdownFiles();
+
+		for (let noteKey in notes) {
+			let notePath = notes[noteKey].path;
+			let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+
+			//just moved note will have undefined embeds, so it will be skipped
+
+			for (let embKey in embeds) {
+				let link = embeds[embKey].link;
+				let linkFullPath = this.getFullPathForLink(link, notePath);
+				if (linkFullPath == file.path) {
+					if (!backlinks.contains(notePath))
+						backlinks.push(notePath);
+				}
+			}
+		}
+
+		return backlinks;
+	}	
+
+	async createFolderForAttachment(link: string, owningNotePath: string) {
+		let newFullPath = this.getFullPathForLink(link, owningNotePath);
+		let newParentFolder = newFullPath.substring(0, owningNotePath.lastIndexOf("/"));
 		try {
 			//todo check filder exist
-			await this.app.vault.createFolder(newParentPath)
+			await this.app.vault.createFolder(newParentFolder)
 		} catch { }
-
-
-		let newPath = newParent + "/" + link;
-		await this.app.vault.rename(file, newPath);
 	}
 
-	private deleteNoteAttachments(file: TAbstractFile) {
-
+	getFullPathForLink(link: string, owningNotePath: string) {
+		let parentFolder = owningNotePath.substring(0, owningNotePath.lastIndexOf("/"));
+		let fullPath = parentFolder + "/" + link;
+		return fullPath;
 	}
 
+	getFileByLink(link: string, owningNotePath: string): TFile {
+		let fullPath = this.getFullPathForLink(link, owningNotePath);
+		let file = this.getFileByPath(fullPath);
+		return file;
+	}
+
+	getFileByPath(path: string): TFile {
+		let files = this.app.vault.getFiles();
+		let file = files.find(file => file.path === path);
+		return file;
+	}
 
 
 
