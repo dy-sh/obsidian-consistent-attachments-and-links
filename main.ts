@@ -55,7 +55,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 				continue;
 			}
 
-			this.createFolderForAttachment(link, noteFile.path);
+			await this.createFolderForAttachment(link, noteFile.path);
 			let newFullPath = this.getFullPathForLink(link, noteFile.path);
 
 			let backlinks = this.getBacklinksForFile(file);
@@ -109,7 +109,8 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 	async createFolderForAttachment(link: string, owningNotePath: string) {
 		let newFullPath = this.getFullPathForLink(link, owningNotePath);
-		let newParentFolder = newFullPath.substring(0, owningNotePath.lastIndexOf("/"));
+		let newParentFolder = newFullPath.substring(0, newFullPath.lastIndexOf("/"));
+		console.log(newParentFolder)
 		try {
 			//todo check filder exist
 			await this.app.vault.createFolder(newParentFolder)
