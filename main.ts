@@ -1,5 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting, MarkdownView, TAbstractFile, getLinkpath, iterateCacheRefs, TFile, } from 'obsidian';
 import * as CodeMirror from "codemirror";
+const path = require('path');
 
 interface PluginSettings {
 	language: string;
@@ -45,7 +46,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 
 	async moveNoteAttachments(noteFile: TAbstractFile, noteOldPath: string) {
-		
+
 		let fileExt = noteOldPath.substring(noteOldPath.lastIndexOf("."));
 		if (fileExt == ".md") {
 
@@ -87,7 +88,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 					let existFile = this.getFileByPath(newFullPath);
 					if (!existFile) {
 						await this.app.vault.copy(file, newFullPath);
-					}else{
+					} else {
 						//todo: optional, rename attachment to new name and copy to new path
 					}
 				}
@@ -96,42 +97,64 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 
 			//update links to notes
+
+			console.log("------")
 			let file = this.getFileByPath(noteFile.path);
-			let txt = await this.app.vault.read(file);
-
-			console.log(txt);
-
-
+			let text = await this.app.vault.read(file);
+			// let newText = text;
 			// let match;
-			// let re = /(?:__|[*#])|\[(.*?)\]\(.*?\)/gm
+			// let re = /\[(.*?)\]\((.*)\)/gm
 			// while ((match = re.exec(text)) != null) {
-			// 	console.log( match.index+ " "+match);
+			// 	let link = match[2]
+			// 	if (link.endsWith(".md")) {
+			// 		console.log(match.index + " " + link);
+
+			// 		let fullLink = this.getFullPathForLink(link, noteOldPath);
+			// 		console.log(fullLink)
+
+			// 		let fullNewLink = this.getFullPathForLink(link, noteFile.path);
+			// 		console.log(fullNewLink)
+
+			// 		let rel = path.relative(fullNewLink, fullLink)
+			// 		console.log(rel)
+
+			// 		console.log()
+			// 		// newText.replace()
+			// 	}
 			// }
 
 
-			// const regexMdLinks = /\[(.*?)\]\((.*)\)/gm
 
-			// const matches = txt.match(regexMdLinks)
-			// console.log('links', matches)
+			let elements = text.match(/\[.*?\)/g);
+			if (elements != null && elements.length > 0) {
+				for (let el of elements) {
+					let alt = el.match(/\[(.*?)\]/)[1];
+					let link = el.match(/\((.*?)\)/)[1];
+					if (link.endsWith(".md")) {
 
-			// const singleMatch = /\[(.*?)\]\((.*)\)/
-			// for (var i = 0; i < matches.length; i++) {
-			//   var text = singleMatch.exec(matches[i])
-			//   console.log(`Match #${i}:`, text)
-			//   console.log(`Word  #${i}: ${text[1]}`)
-			//   console.log(`Link  #${i}: ${text[2]}`)
-			//   console.log(`Index }: `+text.index)
-			// }
+						let fullLink = this.getFullPathForLink(link, noteOldPath);
+						// console.log(fullLink)
 
+						let fullNewLink = this.getFullPathForLink(link, noteFile.path);
+						// console.log(fullNewLink)
 
+						let newLink: string = path.relative(fullNewLink, fullLink)
+						// console.log(newLink);
 
-			let match;
-			let re = /\[(.*?)\]\((.*)\)/gm
-			while ((match = re.exec(txt)) != null) {
-				console.log(match.index + " " + match[2]);
+						let re = /\\/gi;
+						newLink = newLink.replace(re, "/"); //replace \ to /
+
+						if (newLink.startsWith("../"))
+							newLink = newLink.substring(3);
+
+						text = text.replace(el, '[' + alt + ']' + '(' + newLink + ')')
+					}
+				}
 			}
 
-			//  await this.app.vault.modify(file,text+"\n 111");
+			console.log(text)
+
+			 await this.app.vault.modify(file,text);
 		}
 	}
 
@@ -164,7 +187,6 @@ export default class MoveNoteWithAttachments extends Plugin {
 	async createFolderForAttachment(link: string, owningNotePath: string) {
 		let newFullPath = this.getFullPathForLink(link, owningNotePath);
 		let newParentFolder = newFullPath.substring(0, newFullPath.lastIndexOf("/"));
-		console.log(newParentFolder)
 		try {
 			//todo check filder exist
 			await this.app.vault.createFolder(newParentFolder)
