@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, MarkdownView, TAbstractFile, getLinkpath, iterateCacheRefs, TFile, } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, MarkdownView, TAbstractFile, getLinkpath, iterateCacheRefs, TFile, EmbedCache, LinkCache, } from 'obsidian';
 import * as CodeMirror from "codemirror";
 const path = require('path');
 
@@ -53,6 +53,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 			await this.delay(500);//waiting for move note
 			await this.moveNoteAttachments(oldNotePath, newNotePath)
 			await this.updateInternalLinksInNote(oldNotePath, newNotePath)
+			await this.updateBacklinksToNote(oldNotePath, newNotePath)
 			//todo: delete empty folders
 		}
 	}
@@ -61,8 +62,8 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 		let embeds = this.app.metadataCache.getCache(newNotePath)?.embeds; //wait to metadataCache update before call it
 
-		for (let key in embeds) {
-			let link = embeds[key].link;
+		for (let embed of embeds) {
+			let link = embed.link;
 
 			let file = this.getFileByLink(link, oldNotePath);
 			if (!file) {
@@ -74,10 +75,10 @@ export default class MoveNoteWithAttachments extends Plugin {
 			let newFullPath = this.getFullPathForLink(link, newNotePath);
 
 			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
-			let backlinks = this.getBacklinksForFile(file);
-			
+			let linkedNotes = this.getNotesThatHaveLinkToFile(file.path);
+
 			//if no other file has link to this file
-			if (backlinks.length == 0) {
+			if (linkedNotes.length == 0) {
 				console.log("move " + newFullPath)
 				//move file. if file already exist at new location - just delete the old one
 				let existFile = this.getFileByPath(newFullPath);
@@ -107,7 +108,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 	async updateInternalLinksInNote(oldNotePath: string, newNotePath: string) {
 		let file = this.getFileByPath(newNotePath);
 		if (!file) {
-			console.error("Move Note With Attachments: " + "cant update links, file not found: " + newNotePath);
+			console.error("Move Note With Attachments: " + "cant update internal links, file not found: " + newNotePath);
 			return;
 		}
 
@@ -136,6 +137,17 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 
+	async updateBacklinksToNote(oldNotePath: string, newNotePath: string) {
+		let allLinks = this.getAllLinksToFile(oldNotePath);
+
+		console.log(allLinks)
+		for (let key in allLinks) {
+			console.log(key)
+
+		}
+	}
+
+
 
 	normalizePath(path: string) {
 		let re = /\\/gi;
@@ -143,41 +155,85 @@ export default class MoveNoteWithAttachments extends Plugin {
 		return path;
 	}
 
-	getBacklinksForFile(file: TFile): string[] {
-		
-		let backlinks: string[] = [];
-		let notes = this.app.vault.getMarkdownFiles();
-		
-		for (let noteKey in notes) {
-			let notePath = notes[noteKey].path;
-			
+	getNotesThatHaveLinkToFile(filePath: string): string[] {
+		let notes: string[] = [];
+		let allNotes = this.app.vault.getMarkdownFiles();
+
+		for (let note of allNotes) {
+			let notePath = note.path;
+
 			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
 			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
 			let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 
-			for (let key in embeds) {
-				let link = embeds[key].link;
-				let linkFullPath = this.getFullPathForLink(link, notePath);
-				if (linkFullPath == file.path) {
-					if (!backlinks.contains(notePath))
-						backlinks.push(notePath);
+			for (let embed of embeds) {
+				let linkFullPath = this.getFullPathForLink(embed.link, notePath);
+				if (linkFullPath == filePath) {
+					if (!notes.contains(notePath))
+						notes.push(notePath);
 				}
 			}
 
 			let links = this.app.metadataCache.getCache(notePath)?.links;
 
-			for (let key in links) {
-				let link = links[key].link;
-				let linkFullPath = this.getFullPathForLink(link, notePath);
-				if (linkFullPath == file.path) {
-					if (!backlinks.contains(notePath))
-						backlinks.push(notePath);
+			for (let link of links) {
+				let linkFullPath = this.getFullPathForLink(link.link, notePath);
+				if (linkFullPath == filePath) {
+					if (!notes.contains(notePath))
+						notes.push(notePath);
 				}
 			}
 		}
 
-		return backlinks;
+		return notes;
 	}
+
+
+
+	getAllEmbedsToFile(filePath: string): { [notePath: string]: EmbedCache[]; } {
+		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		for (let note of notes) {
+			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
+			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
+			let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+
+			for (let embed of embeds) {
+				let linkFullPath = this.getFullPathForLink(embed.link, note.path);
+				if (linkFullPath == filePath) {
+					if (!allEmbeds[note.path])
+						allEmbeds[note.path] = [];
+					allEmbeds[note.path].push(embed);
+				}
+			}
+		}
+
+		return allEmbeds;
+	}
+
+	getAllLinksToFile(filePath: string): { [notePath: string]: LinkCache[]; } {
+		let allLinks: { [notePath: string]: LinkCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		for (let note of notes) {
+			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
+			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
+			let links = this.app.metadataCache.getCache(note.path)?.links;
+
+			for (let link of links) {
+				let linkFullPath = this.getFullPathForLink(link.link, note.path);
+				if (linkFullPath == filePath) {
+					if (!allLinks[note.path])
+						allLinks[note.path] = [];
+					allLinks[note.path].push(link);
+				}
+			}
+		}
+
+		return allLinks;
+	}
+
 
 	async createFolderForAttachment(link: string, owningNotePath: string) {
 		let newFullPath = this.getFullPathForLink(link, owningNotePath);
