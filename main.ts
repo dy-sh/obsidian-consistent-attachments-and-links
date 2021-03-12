@@ -44,11 +44,14 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 
 	async moveNoteAttachments(noteFile: TAbstractFile, noteOldPath: string) {
+		// await this.delay(500);//waiting for move note
+
 		let fileExt = noteOldPath.substring(noteOldPath.lastIndexOf("."));
 
 		if (fileExt == ".md") {
-			let embeds = this.app.metadataCache.getCache(noteOldPath)?.embeds; //metadataCache still has oldPath links
-			console.log(embeds)
+			let embeds = this.app.metadataCache.getCache(noteFile.path)?.embeds; //metadataCache still has old path links
+			if (!embeds)
+				embeds = this.app.metadataCache.getCache(noteOldPath)?.embeds; //metadataCache has new path links
 
 			for (let key in embeds) {
 				let link = embeds[key].link;
@@ -71,6 +74,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 					if (!existFile) {
 						await this.app.vault.rename(file, newFullPath);
 					} else {
+						// await this.app.vault.rename(file, newFullPath+".png");
 						await this.app.vault.trash(file, true);
 					}
 				}
@@ -148,6 +152,10 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	async delay(ms: number) {
+		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 }
 
