@@ -171,14 +171,22 @@ export default class MoveNoteWithAttachments extends Plugin {
 						let newRelLink: string = path.relative(notePath, renamedFile.newPath);
 						newRelLink = Utils.normalizePathForLink(newRelLink);
 
-						if (newRelLink.startsWith("../"))
+						if (newRelLink.startsWith("../")) {
 							newRelLink = newRelLink.substring(3);
+						}
+
+						if (this.settings.changeNoteBacklinksAlt) {
+							let ext = path.extname(newRelLink);
+							let baseName = path.basename(newRelLink, ext);
+							alt = Utils.normalizePathForFile(baseName);
+						}
+
+						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
+
+						dirty = true;
 
 						console.log("Move Note With Attachments: link updated in note [note, old link, new link]: \n   "
 							+ file.path + "\n   " + link + "   \n" + newRelLink)
-
-						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
-						dirty = true;
 					}
 				}
 			}
@@ -213,14 +221,22 @@ export default class MoveNoteWithAttachments extends Plugin {
 					let newRelLink: string = path.relative(newNotePath, fullLink);
 					newRelLink = Utils.normalizePathForLink(newRelLink);
 
-					if (newRelLink.startsWith("../"))
+					if (newRelLink.startsWith("../")) {
 						newRelLink = newRelLink.substring(3);
+					}
+
+					if (this.settings.changeNoteBacklinksAlt) {
+						let ext = path.extname(newRelLink);
+						let baseName = path.basename(newRelLink, ext);
+						alt = Utils.normalizePathForFile(baseName);
+					}
+
+					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
+
+					dirty = true;
 
 					console.log("Move Note With Attachments: link updated in note [note, old link, new link]: \n   "
-						+ file.path + "\n   " + link + "   \n" + newRelLink)
-
-					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
-					dirty = true;
+						+ file.path + "\n   " + link + "   \n" + newRelLink);
 				}
 			}
 		}
