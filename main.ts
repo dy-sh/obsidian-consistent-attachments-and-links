@@ -80,22 +80,23 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 			//if no other file has link to this file
 			if (linkedNotes.length == 0) {
-				console.log("move " + newFullPath)
 				//move file. if file already exist at new location - just delete the old one
 				let existFile = this.getFileByPath(newFullPath);
 				if (!existFile) {
+					console.log("Move Note With Attachments: move file (from to): \n   " + file.path + "\n   " + newFullPath)
 					await this.app.vault.rename(file, newFullPath);
 				} else {
 					//todo: optional, rename attachment to new name and move to new path
+					console.log("Move Note With Attachments: delete file: \n   " + file.path)
 					await this.app.vault.trash(file, true);
 				}
 			}
 			//if some other file has link to this file
 			else {
-				console.log("copy " + newFullPath)
 				//copy file. if file already exist at new location - do nothing
 				let existFile = this.getFileByPath(newFullPath);
 				if (!existFile) {
+					console.log("Move Note With Attachments: copy file (from to): \n   " + file.path + "\n   " + newFullPath)
 					await this.app.vault.copy(file, newFullPath);
 				} else {
 					//todo: optional, rename attachment to new name and copy to new path
@@ -129,6 +130,8 @@ export default class MoveNoteWithAttachments extends Plugin {
 					if (newRelLink.startsWith("../"))
 						newRelLink = newRelLink.substring(3);
 
+					console.log("Move Note With Attachments: link updated in note: \n   " + file.path)
+
 					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
 				}
 			}
@@ -152,8 +155,6 @@ export default class MoveNoteWithAttachments extends Plugin {
 					let link = el.match(/\((.*?)\)/)[1];
 
 					let fullLink = this.getFullPathForLink(link, note);
-					// console.log("1 " + fullLink)
-					// console.log("2 " + oldNotePath)
 
 					if (fullLink == oldNotePath) {
 						let newRelLink: string = path.relative(fullLink, newNotePath);
@@ -162,7 +163,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 						if (newRelLink.startsWith("../"))
 							newRelLink = newRelLink.substring(3);
 
-						console.log(newRelLink)
+						console.log("Move Note With Attachments: link updated in note: \n   " + file.path)
 
 						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
 					}
