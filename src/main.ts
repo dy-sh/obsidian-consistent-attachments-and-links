@@ -161,6 +161,9 @@ export default class MoveNoteWithAttachments extends Plugin {
 			return;
 		}
 
+		console.log(notePath)
+		console.log(changedLinks)
+
 		let text = await this.app.vault.read(file);
 		let dirty = false;
 
@@ -174,8 +177,12 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 				for (let renamedFile of changedLinks) {
 					if (fullLink == renamedFile.oldPath) {
-						let newRelLink: string = path.relative(fullLink, renamedFile.newPath);
+						let newRelLink: string = path.relative(notePath, renamedFile.newPath);
 						newRelLink = Utils.normalizePathForLink(newRelLink);
+
+						console.warn(fullLink,)
+						console.warn(renamedFile.newPath)
+						console.warn(newRelLink)
 
 						if (newRelLink.startsWith("../"))
 							newRelLink = newRelLink.substring(3);
