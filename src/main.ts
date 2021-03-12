@@ -42,7 +42,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 			await Utils.delay(500);//waiting for move note
 			await this.moveNoteAttachments(oldNotePath, newNotePath)
 			await this.updateInternalLinksInMovedNote(oldNotePath, newNotePath)
-			await this.updateBacklinksToModedNote(oldNotePath, newNotePath)
+			await this.updateBacklinksToMovedNote(oldNotePath, newNotePath)
 			//todo: delete empty folders
 		}
 	}
@@ -143,12 +143,14 @@ export default class MoveNoteWithAttachments extends Plugin {
 		return "";
 	}
 
-	async updateBacklinksToModedNote(oldNotePath: string, newNotePath: string) {
+	async updateBacklinksToMovedNote(oldNotePath: string, newNotePath: string) {
 		let notes = this.getNotesThatHaveLinkToFile(oldNotePath);
 		let changedLinks: LinkChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
-		for (let note of notes) {
-			await this.updateChangedLinksInNote(note, changedLinks);
+		if (notes) {
+			for (let note of notes) {
+				await this.updateChangedLinksInNote(note, changedLinks);
+			}
 		}
 	}
 
@@ -239,31 +241,32 @@ export default class MoveNoteWithAttachments extends Plugin {
 		let notes: string[] = [];
 		let allNotes = this.app.vault.getMarkdownFiles();
 
+		if (allNotes) {
+			for (let note of allNotes) {
+				let notePath = note.path;
 
-		for (let note of allNotes) {
-			let notePath = note.path;
+				// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
+				// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
+				let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 
-			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
-			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
-			let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
-
-			if (embeds) {
-				for (let embed of embeds) {
-					let linkFullPath = this.getFullPathForLink(embed.link, notePath);
-					if (linkFullPath == filePath) {
-						if (!notes.contains(notePath))
-							notes.push(notePath);
+				if (embeds) {
+					for (let embed of embeds) {
+						let linkFullPath = this.getFullPathForLink(embed.link, notePath);
+						if (linkFullPath == filePath) {
+							if (!notes.contains(notePath))
+								notes.push(notePath);
+						}
 					}
 				}
-			}
 
-			let links = this.app.metadataCache.getCache(notePath)?.links;
-			if (links) {
-				for (let link of links) {
-					let linkFullPath = this.getFullPathForLink(link.link, notePath);
-					if (linkFullPath == filePath) {
-						if (!notes.contains(notePath))
-							notes.push(notePath);
+				let links = this.app.metadataCache.getCache(notePath)?.links;
+				if (links) {
+					for (let link of links) {
+						let linkFullPath = this.getFullPathForLink(link.link, notePath);
+						if (linkFullPath == filePath) {
+							if (!notes.contains(notePath))
+								notes.push(notePath);
+						}
 					}
 				}
 			}
@@ -278,18 +281,20 @@ export default class MoveNoteWithAttachments extends Plugin {
 		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
-		for (let note of notes) {
-			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
-			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
-			let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+		if (notes) {
+			for (let note of notes) {
+				// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
+				// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
+				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
 
-			if (embeds) {
-				for (let embed of embeds) {
-					let linkFullPath = this.getFullPathForLink(embed.link, note.path);
-					if (linkFullPath == filePath) {
-						if (!allEmbeds[note.path])
-							allEmbeds[note.path] = [];
-						allEmbeds[note.path].push(embed);
+				if (embeds) {
+					for (let embed of embeds) {
+						let linkFullPath = this.getFullPathForLink(embed.link, note.path);
+						if (linkFullPath == filePath) {
+							if (!allEmbeds[note.path])
+								allEmbeds[note.path] = [];
+							allEmbeds[note.path].push(embed);
+						}
 					}
 				}
 			}
@@ -302,18 +307,20 @@ export default class MoveNoteWithAttachments extends Plugin {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
-		for (let note of notes) {
-			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
-			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
-			let links = this.app.metadataCache.getCache(note.path)?.links;
+		if (notes) {
+			for (let note of notes) {
+				// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
+				// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
+				let links = this.app.metadataCache.getCache(note.path)?.links;
 
-			if (links) {
-				for (let link of links) {
-					let linkFullPath = this.getFullPathForLink(link.link, note.path);
-					if (linkFullPath == filePath) {
-						if (!allLinks[note.path])
-							allLinks[note.path] = [];
-						allLinks[note.path].push(link);
+				if (links) {
+					for (let link of links) {
+						let linkFullPath = this.getFullPathForLink(link.link, note.path);
+						if (linkFullPath == filePath) {
+							if (!allLinks[note.path])
+								allLinks[note.path] = [];
+							allLinks[note.path].push(link);
+						}
 					}
 				}
 			}
