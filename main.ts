@@ -101,28 +101,6 @@ export default class MoveNoteWithAttachments extends Plugin {
 			console.log("------")
 			let file = this.getFileByPath(noteFile.path);
 			let text = await this.app.vault.read(file);
-			// let newText = text;
-			// let match;
-			// let re = /\[(.*?)\]\((.*)\)/gm
-			// while ((match = re.exec(text)) != null) {
-			// 	let link = match[2]
-			// 	if (link.endsWith(".md")) {
-			// 		console.log(match.index + " " + link);
-
-			// 		let fullLink = this.getFullPathForLink(link, noteOldPath);
-			// 		console.log(fullLink)
-
-			// 		let fullNewLink = this.getFullPathForLink(link, noteFile.path);
-			// 		console.log(fullNewLink)
-
-			// 		let rel = path.relative(fullNewLink, fullLink)
-			// 		console.log(rel)
-
-			// 		console.log()
-			// 		// newText.replace()
-			// 	}
-			// }
-
 
 
 			let elements = text.match(/\[.*?\)/g);
@@ -132,29 +110,27 @@ export default class MoveNoteWithAttachments extends Plugin {
 					let link = el.match(/\((.*?)\)/)[1];
 					if (link.endsWith(".md")) {
 
+						console.log(link + " " + noteOldPath)
 						let fullLink = this.getFullPathForLink(link, noteOldPath);
-						// console.log(fullLink)
+						console.log("1 " + fullLink)
 
-						let fullNewLink = this.getFullPathForLink(link, noteFile.path);
-						// console.log(fullNewLink)
-
-						let newLink: string = path.relative(fullNewLink, fullLink)
-						// console.log(newLink);
+						let newRelLink: string = path.relative(noteFile.path, fullLink);
+						console.log("2 " + newRelLink);
 
 						let re = /\\/gi;
-						newLink = newLink.replace(re, "/"); //replace \ to /
+						newRelLink = newRelLink.replace(re, "/"); //replace \ to /
 
-						if (newLink.startsWith("../"))
-							newLink = newLink.substring(3);
+						if (newRelLink.startsWith("../"))
+							newRelLink = newRelLink.substring(3);
 
-						text = text.replace(el, '[' + alt + ']' + '(' + newLink + ')')
+						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
 					}
 				}
 			}
 
-			console.log(text)
+			// console.log(text)
 
-			 await this.app.vault.modify(file,text);
+			await this.app.vault.modify(file, text);
 		}
 	}
 
@@ -195,7 +171,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 	getFullPathForLink(link: string, owningNotePath: string) {
 		let parentFolder = owningNotePath.substring(0, owningNotePath.lastIndexOf("/"));
-		let fullPath = parentFolder + "/" + link;
+		let fullPath = path.join(parentFolder, link);
 		return fullPath;
 	}
 
