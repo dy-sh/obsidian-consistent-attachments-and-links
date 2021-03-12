@@ -44,42 +44,47 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 
 	async moveNoteAttachments(noteFile: TAbstractFile, noteOldPath: string) {
-		let embeds = this.app.metadataCache.getCache(noteOldPath)?.embeds; //metadataCache still has oldPath links
+		let fileExt = noteOldPath.substring(noteOldPath.lastIndexOf("."));
 
-		for (let key in embeds) {
-			let link = embeds[key].link;
+		if (fileExt == ".md") {
+			let embeds = this.app.metadataCache.getCache(noteOldPath)?.embeds; //metadataCache still has oldPath links
+			console.log(embeds)
 
-			let file = this.getFileByLink(link, noteOldPath);
-			if (!file) {
-				console.error("Move Note With Attachments: " + noteOldPath + " has bad link (file does not exist): " + link);
-				continue;
-			}
+			for (let key in embeds) {
+				let link = embeds[key].link;
 
-			await this.createFolderForAttachment(link, noteFile.path);
-			let newFullPath = this.getFullPathForLink(link, noteFile.path);
-
-			let backlinks = this.getBacklinksForFile(file);
-			//if no other file has link to this file
-			if (backlinks.length == 0) {
-				console.log("move " + newFullPath)
-				//move file. if file already exist at new location - just delete the old one
-				let existFile = this.getFileByPath(newFullPath);
-				if (!existFile) {
-					await this.app.vault.rename(file, newFullPath);
-				} else {
-					await this.app.vault.trash(file, true);
+				let file = this.getFileByLink(link, noteOldPath);
+				if (!file) {
+					console.error("Move Note With Attachments: " + noteOldPath + " has bad link (file does not exist): " + link);
+					continue;
 				}
-			} 
-			//if some other file has link to this file
-			else {
-				console.log("copy " + newFullPath)
-				//copy file. if file already exist at new location - do nothing
-				let existFile = this.getFileByPath(newFullPath);
-				if (!existFile) {
-					await this.app.vault.copy(file, newFullPath);
-				}
-			}
 
+				await this.createFolderForAttachment(link, noteFile.path);
+				let newFullPath = this.getFullPathForLink(link, noteFile.path);
+
+				let backlinks = this.getBacklinksForFile(file);
+				//if no other file has link to this file
+				if (backlinks.length == 0) {
+					console.log("move " + newFullPath)
+					//move file. if file already exist at new location - just delete the old one
+					let existFile = this.getFileByPath(newFullPath);
+					if (!existFile) {
+						await this.app.vault.rename(file, newFullPath);
+					} else {
+						await this.app.vault.trash(file, true);
+					}
+				}
+				//if some other file has link to this file
+				else {
+					console.log("copy " + newFullPath)
+					//copy file. if file already exist at new location - do nothing
+					let existFile = this.getFileByPath(newFullPath);
+					if (!existFile) {
+						await this.app.vault.copy(file, newFullPath);
+					}
+				}
+
+			}
 		}
 	}
 
