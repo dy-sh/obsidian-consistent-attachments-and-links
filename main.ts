@@ -99,39 +99,42 @@ export default class MoveNoteWithAttachments extends Plugin {
 			//update links to notes
 
 			console.log("------")
-			let file = this.getFileByPath(noteFile.path);
-			let text = await this.app.vault.read(file);
+			await this.updateLinks(noteOldPath, noteFile.path)
 
+		}
+	}
 
-			let elements = text.match(/\[.*?\)/g);
-			if (elements != null && elements.length > 0) {
-				for (let el of elements) {
-					let alt = el.match(/\[(.*?)\]/)[1];
-					let link = el.match(/\((.*?)\)/)[1];
-					if (link.endsWith(".md")) {
+	async updateLinks(oldNotePath: string, newNotePath: string) {
+		let file = this.getFileByPath(newNotePath);
+		if (!file){
+			console.error("Move Note With Attachments: " +"cant update links, file not found: "+newNotePath);
+			return;
+		}
 
-						console.log(link + " " + noteOldPath)
-						let fullLink = this.getFullPathForLink(link, noteOldPath);
-						console.log("1 " + fullLink)
+		let text = await this.app.vault.read(file);
 
-						let newRelLink: string = path.relative(noteFile.path, fullLink);
-						console.log("2 " + newRelLink);
+		let elements = text.match(/\[.*?\)/g);
+		if (elements != null && elements.length > 0) {
+			for (let el of elements) {
+				let alt = el.match(/\[(.*?)\]/)[1];
+				let link = el.match(/\((.*?)\)/)[1];
+				
+				if (link.endsWith(".md")) {
+					let fullLink = this.getFullPathForLink(link, oldNotePath);
+					let newRelLink: string = path.relative(newNotePath, fullLink);
 
-						let re = /\\/gi;
-						newRelLink = newRelLink.replace(re, "/"); //replace \ to /
+					let re = /\\/gi;
+					newRelLink = newRelLink.replace(re, "/"); //replace \ to /
 
-						if (newRelLink.startsWith("../"))
-							newRelLink = newRelLink.substring(3);
+					if (newRelLink.startsWith("../"))
+						newRelLink = newRelLink.substring(3);
 
-						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
-					}
+					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
 				}
 			}
-
-			// console.log(text)
-
-			await this.app.vault.modify(file, text);
 		}
+
+		await this.app.vault.modify(file, text);
 	}
 
 
