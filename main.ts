@@ -74,6 +74,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 			await this.createFolderForAttachment(link, newNotePath);
 			let newFullPath = this.getFullPathForLink(link, newNotePath);
 
+
 			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
 			let linkedNotes = this.getNotesThatHaveLinkToFile(file.path);
 
@@ -123,7 +124,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 				if (link.endsWith(".md")) {
 					let fullLink = this.getFullPathForLink(link, oldNotePath);
 					let newRelLink: string = path.relative(newNotePath, fullLink);
-					newRelLink = this.normalizePath(newRelLink); //replace \ to /
+					newRelLink = this.normalizePathForLink(newRelLink); //replace \ to /
 
 					if (newRelLink.startsWith("../"))
 						newRelLink = newRelLink.substring(3);
@@ -138,26 +139,70 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 
 	async updateBacklinksToNote(oldNotePath: string, newNotePath: string) {
-		let allLinks = this.getAllLinksToFile(oldNotePath);
+		let notes = this.getNotesThatHaveLinkToFile(oldNotePath);
 
-		console.log(allLinks)
-		for (let key in allLinks) {
-			console.log(key)
+		for (let note of notes) {
+			let file = this.getFileByPath(note);
+			let text = await this.app.vault.read(file);
 
+			let elements = text.match(/\[.*?\)/g);
+			if (elements != null && elements.length > 0) {
+				for (let el of elements) {
+					let alt = el.match(/\[(.*?)\]/)[1];
+					let link = el.match(/\((.*?)\)/)[1];
+
+					let fullLink = this.getFullPathForLink(link, note);
+					console.log("1 " + fullLink)
+					console.log("2 " + oldNotePath)
+
+					if (link.endsWith(".md")) {
+						let fullLink = this.getFullPathForLink(link, oldNotePath);
+						let newRelLink: string = path.relative(newNotePath, fullLink);
+						newRelLink = this.normalizePathForLink(newRelLink); //replace \ to /
+
+						if (newRelLink.startsWith("../"))
+							newRelLink = newRelLink.substring(3);
+
+						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
+					}
+				}
+			}
+
+			// await this.app.vault.modify(file, text);
+			console.log(text)
 		}
 	}
 
+	// async updateBacklinksToNote(oldNotePath: string, newNotePath: string) {
+	// 	let allLinks = this.getAllLinksToFile(oldNotePath);
+
+	// 	console.log(allLinks)
+	// 	for (let key in allLinks) {			
+	// 		let file = this.getFileByPath(key);
+	// 		let text = await this.app.vault.read(file);		
+
+	// 	}
+	// }
 
 
-	normalizePath(path: string) {
-		let re = /\\/gi;
-		path = path.replace(re, "/"); //replace \ to /
+
+
+	normalizePathForFile(path: string) {
+		path = path.replace(/\\/gi, "/"); //replace \ to /
+		path = path.replace(/%20/gi, " "); //replace %20 to space
+		return path;
+	}
+
+	normalizePathForLink(path: string) {
+		path = path.replace(/\\/gi, "/"); //replace \ to /
+		path = path.replace(/ /gi, "%20"); //replace space to %20
 		return path;
 	}
 
 	getNotesThatHaveLinkToFile(filePath: string): string[] {
 		let notes: string[] = [];
 		let allNotes = this.app.vault.getMarkdownFiles();
+
 
 		for (let note of allNotes) {
 			let notePath = note.path;
@@ -166,21 +211,24 @@ export default class MoveNoteWithAttachments extends Plugin {
 			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
 			let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 
-			for (let embed of embeds) {
-				let linkFullPath = this.getFullPathForLink(embed.link, notePath);
-				if (linkFullPath == filePath) {
-					if (!notes.contains(notePath))
-						notes.push(notePath);
+			if (embeds) {
+				for (let embed of embeds) {
+					let linkFullPath = this.getFullPathForLink(embed.link, notePath);
+					if (linkFullPath == filePath) {
+						if (!notes.contains(notePath))
+							notes.push(notePath);
+					}
 				}
 			}
 
 			let links = this.app.metadataCache.getCache(notePath)?.links;
-
-			for (let link of links) {
-				let linkFullPath = this.getFullPathForLink(link.link, notePath);
-				if (linkFullPath == filePath) {
-					if (!notes.contains(notePath))
-						notes.push(notePath);
+			if (links) {
+				for (let link of links) {
+					let linkFullPath = this.getFullPathForLink(link.link, notePath);
+					if (linkFullPath == filePath) {
+						if (!notes.contains(notePath))
+							notes.push(notePath);
+					}
 				}
 			}
 		}
@@ -199,12 +247,14 @@ export default class MoveNoteWithAttachments extends Plugin {
 			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
 			let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
 
-			for (let embed of embeds) {
-				let linkFullPath = this.getFullPathForLink(embed.link, note.path);
-				if (linkFullPath == filePath) {
-					if (!allEmbeds[note.path])
-						allEmbeds[note.path] = [];
-					allEmbeds[note.path].push(embed);
+			if (embeds) {
+				for (let embed of embeds) {
+					let linkFullPath = this.getFullPathForLink(embed.link, note.path);
+					if (linkFullPath == filePath) {
+						if (!allEmbeds[note.path])
+							allEmbeds[note.path] = [];
+						allEmbeds[note.path].push(embed);
+					}
 				}
 			}
 		}
@@ -221,12 +271,14 @@ export default class MoveNoteWithAttachments extends Plugin {
 			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
 			let links = this.app.metadataCache.getCache(note.path)?.links;
 
-			for (let link of links) {
-				let linkFullPath = this.getFullPathForLink(link.link, note.path);
-				if (linkFullPath == filePath) {
-					if (!allLinks[note.path])
-						allLinks[note.path] = [];
-					allLinks[note.path].push(link);
+			if (links) {
+				for (let link of links) {
+					let linkFullPath = this.getFullPathForLink(link.link, note.path);
+					if (linkFullPath == filePath) {
+						if (!allLinks[note.path])
+							allLinks[note.path] = [];
+						allLinks[note.path].push(link);
+					}
 				}
 			}
 		}
@@ -245,14 +297,13 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 	getFullPathForLink(link: string, owningNotePath: string) {
-		link = this.normalizePath(link);
-		owningNotePath = this.normalizePath(owningNotePath);
+		link = this.normalizePathForFile(link);
+		owningNotePath = this.normalizePathForFile(owningNotePath);
 
 		let parentFolder = owningNotePath.substring(0, owningNotePath.lastIndexOf("/"));
 		let fullPath = path.join(parentFolder, link);
 
-		fullPath = this.normalizePath(fullPath);
-
+		fullPath = this.normalizePathForFile(fullPath);
 		return fullPath;
 	}
 
@@ -263,9 +314,9 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 	getFileByPath(path: string): TFile {
-		path = this.normalizePath(path);
+		path = this.normalizePathForFile(path);
 		let files = this.app.vault.getFiles();
-		let file = files.find(file => this.normalizePath(file.path) === path);
+		let file = files.find(file => this.normalizePathForFile(file.path) === path);
 		return file;
 	}
 
