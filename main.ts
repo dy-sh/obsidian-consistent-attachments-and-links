@@ -73,7 +73,9 @@ export default class MoveNoteWithAttachments extends Plugin {
 			await this.createFolderForAttachment(link, newNotePath);
 			let newFullPath = this.getFullPathForLink(link, newNotePath);
 
+			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
 			let backlinks = this.getBacklinksForFile(file);
+			
 			//if no other file has link to this file
 			if (backlinks.length == 0) {
 				console.log("move " + newFullPath)
@@ -142,14 +144,15 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 	getBacklinksForFile(file: TFile): string[] {
-		//note! just moved note will have undefined embeds, so it will be skipped
-
+		
 		let backlinks: string[] = [];
 		let notes = this.app.vault.getMarkdownFiles();
-
+		
 		for (let noteKey in notes) {
 			let notePath = notes[noteKey].path;
-
+			
+			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
+			// if you dont wait after note moved, it will have undefined embeds due to metadataCache update delay
 			let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 
 			for (let key in embeds) {
@@ -199,7 +202,6 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 	getFileByLink(link: string, owningNotePath: string): TFile {
 		let fullPath = this.getFullPathForLink(link, owningNotePath);
-		console.log(fullPath)
 		let file = this.getFileByPath(fullPath);
 		return file;
 	}
