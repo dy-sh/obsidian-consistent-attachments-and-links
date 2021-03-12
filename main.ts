@@ -10,9 +10,9 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	deleteFilesWhenExist: false
 }
 
-interface RenameFileInfo {
-	old: string,
-	new: string
+interface LinkChangeInfo {
+	oldPath: string,
+	newPath: string
 }
 
 export default class MoveNoteWithAttachments extends Plugin {
@@ -46,13 +46,13 @@ export default class MoveNoteWithAttachments extends Plugin {
 			await this.delay(500);//waiting for move note
 			await this.moveNoteAttachments(oldNotePath, newNotePath)
 			await this.updateInternalLinksInNote(oldNotePath, newNotePath)
-			await this.updateBacklinksToNote(oldNotePath, newNotePath)
+			await this.updateAllBacklinksToNote(oldNotePath, newNotePath)
 			//todo: delete empty folders
 		}
 	}
 
 	async moveNoteAttachments(oldNotePath: string, newNotePath: string) {
-		let renamedFiles: RenameFileInfo[] = [];
+		let renamedFiles: LinkChangeInfo[] = [];
 
 		let embeds = this.app.metadataCache.getCache(newNotePath)?.embeds; //wait to metadataCache update before call it
 
@@ -106,7 +106,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 						let newFileCopyName = this.getFileCopyName(newFullPath)
 						console.log("Move Note With Attachments: copy file with new name (from to): \n   " + file.path + "\n   " + newFileCopyName)
 						await this.app.vault.copy(file, newFileCopyName);
-						renamedFiles.push({ old: newFullPath, new: newFileCopyName })
+						renamedFiles.push({ oldPath: newFullPath, newPath: newFileCopyName })
 					}
 				}
 				//if some other file has link to this file
@@ -120,14 +120,16 @@ export default class MoveNoteWithAttachments extends Plugin {
 						let newFileCopyName = this.getFileCopyName(newFullPath)
 						console.log("Move Note With Attachments: copy file with new name (from to): \n   " + file.path + "\n   " + newFileCopyName)
 						await this.app.vault.copy(file, newFileCopyName);
-						renamedFiles.push({ old: newFullPath, new: newFileCopyName })
+						renamedFiles.push({ oldPath: newFullPath, newPath: newFileCopyName })
 					}
 				}
 			}
 		}
 
-		if (renamedFiles.length > 0)
+		if (renamedFiles.length > 0) {
 			console.log(renamedFiles)
+			await this.updateLinksForRenamedFiles(newNotePath, renamedFiles)
+		}
 	}
 
 	getFileCopyName(originalName: string): string {
@@ -143,15 +145,14 @@ export default class MoveNoteWithAttachments extends Plugin {
 		return "";
 	}
 
-
-	async updateInternalLinksInNote(oldNotePath: string, newNotePath: string) {
-		let file = this.getFileByPath(newNotePath);
+	async updateLinksForRenamedFiles(notePath: string, changedLinks: LinkChangeInfo[]) {
+		let file = this.getFileByPath(notePath);
 		if (!file) {
-			console.error("Move Note With Attachments: " + "cant update internal links, file not found: " + newNotePath);
+			console.error("Move Note With Attachments: " + "cant update links in note, file not found: " + notePath);
 			return;
 		}
-
 		let text = await this.app.vault.read(file);
+		let dirty = false;
 
 		let elements = text.match(/\[.*?\)/g);
 		if (elements != null && elements.length > 0) {
@@ -159,27 +160,34 @@ export default class MoveNoteWithAttachments extends Plugin {
 				let alt = el.match(/\[(.*?)\]/)[1];
 				let link = el.match(/\((.*?)\)/)[1];
 
-				if (link.endsWith(".md")) {
-					let fullLink = this.getFullPathForLink(link, oldNotePath);
-					let newRelLink: string = path.relative(newNotePath, fullLink);
-					newRelLink = this.normalizePathForLink(newRelLink);
+				let fullLink = this.getFullPathForLink(link, notePath);
 
-					if (newRelLink.startsWith("../"))
-						newRelLink = newRelLink.substring(3);
+				for (let renamedFile of changedLinks) {
+					if (fullLink == renamedFile.oldPath) {
+						let newRelLink: string = path.relative(fullLink, renamedFile.newPath);
+						newRelLink = this.normalizePathForLink(newRelLink);
 
-					console.log("Move Note With Attachments: link updated in note: \n   " + file.path)
+						if (newRelLink.startsWith("../"))
+							newRelLink = newRelLink.substring(3);
 
-					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
+						console.log("Move Note With Attachments: link updated in note [file, old, new]: \n   "
+							+ file.path + "\n   " + link + "   \n" + newRelLink)
+
+						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
+						dirty = true;
+					}
 				}
 			}
 		}
 
-		await this.app.vault.modify(file, text);
+		if (dirty)
+			await this.app.vault.modify(file, text);
 	}
 
 
-	async updateBacklinksToNote(oldNotePath: string, newNotePath: string) {
+	async updateAllBacklinksToNote(oldNotePath: string, newNotePath: string) {
 		let notes = this.getNotesThatHaveLinkToFile(oldNotePath);
+		let dirty = false;
 
 		for (let note of notes) {
 			let file = this.getFileByPath(note);
@@ -200,16 +208,61 @@ export default class MoveNoteWithAttachments extends Plugin {
 						if (newRelLink.startsWith("../"))
 							newRelLink = newRelLink.substring(3);
 
-						console.log("Move Note With Attachments: link updated in note: \n   " + file.path)
+						console.log("Move Note With Attachments: link updated in note [file, old, new]: \n   "
+							+ file.path + "\n   " + link + "   \n" + newRelLink)
 
 						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
+						dirty = true;
 					}
 				}
 			}
 
-			await this.app.vault.modify(file, text);
+			if (dirty)
+				await this.app.vault.modify(file, text);
 		}
 	}
+
+
+	async updateInternalLinksInNote(oldNotePath: string, newNotePath: string) {
+		let file = this.getFileByPath(newNotePath);
+		if (!file) {
+			console.error("Move Note With Attachments: " + "cant update internal links, file not found: " + newNotePath);
+			return;
+		}
+
+		let text = await this.app.vault.read(file);
+		let dirty = false;
+
+		let elements = text.match(/\[.*?\)/g);
+		if (elements != null && elements.length > 0) {
+			for (let el of elements) {
+				let alt = el.match(/\[(.*?)\]/)[1];
+				let link = el.match(/\((.*?)\)/)[1];
+
+				if (link.endsWith(".md")) {
+					let fullLink = this.getFullPathForLink(link, oldNotePath);
+					let newRelLink: string = path.relative(newNotePath, fullLink);
+					newRelLink = this.normalizePathForLink(newRelLink);
+
+					if (newRelLink.startsWith("../"))
+						newRelLink = newRelLink.substring(3);
+
+					console.log("Move Note With Attachments: link updated in note [file, old, new]: \n   "
+						+ file.path + "\n   " + link + "   \n" + newRelLink)
+
+					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
+					dirty = true;
+				}
+			}
+		}
+		if (dirty)
+			await this.app.vault.modify(file, text);
+	}
+
+
+	
+
+
 
 
 	normalizePathForFile(path: string) {
