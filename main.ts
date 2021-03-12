@@ -187,11 +187,11 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 	async updateAllBacklinksToNote(oldNotePath: string, newNotePath: string) {
 		let notes = this.getNotesThatHaveLinkToFile(oldNotePath);
-		let dirty = false;
 
 		for (let note of notes) {
 			let file = this.getFileByPath(note);
 			let text = await this.app.vault.read(file);
+			let dirty = false;
 
 			let elements = text.match(/\[.*?\)/g);
 			if (elements != null && elements.length > 0) {
@@ -255,6 +255,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 				}
 			}
 		}
+
 		if (dirty)
 			await this.app.vault.modify(file, text);
 	}
