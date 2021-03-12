@@ -66,54 +66,45 @@ export default class MoveNoteWithAttachments extends Plugin {
 				let newFullPath = this.getFullPathForLink(link, newNotePath);
 
 
+
 				// just moved note will have unresolved links to embeds, so it will not have any valid backlinks 
 				let linkedNotes = this.getNotesThatHaveLinkToFile(file.path);
 
-				if (this.settings.deleteFilesWhenExist) {
-					//if no other file has link to this file
-					if (linkedNotes.length == 0) {
-						//move file. if file already exist at new location - just delete the old one
-						let existFile = this.getFileByPath(newFullPath);
-						if (!existFile) {
-							console.log("Move Note With Attachments: move file [from, to]: \n   " + file.path + "\n   " + newFullPath)
-							await this.app.vault.rename(file, newFullPath);
-						} else {
+				//if no other file has link to this file - try to move file
+				//if file already exist at new location - delete or move with new name
+				if (linkedNotes.length == 0) {
+					let existFile = this.getFileByPath(newFullPath);
+					if (!existFile) {
+						//move
+						console.log("Move Note With Attachments: move file [from, to]: \n   " + file.path + "\n   " + newFullPath)
+						await this.app.vault.rename(file, newFullPath);
+					} else {
+						if (this.settings.deleteFilesWhenExist) {
+							//delete
 							console.log("Move Note With Attachments: delete file: \n   " + file.path)
 							await this.app.vault.trash(file, true);
-						}
-					}
-					//if some other file has link to this file
-					else {
-						//copy file. if file already exist at new location - do nothing
-						let existFile = this.getFileByPath(newFullPath);
-						if (!existFile) {
-							console.log("Move Note With Attachments: copy file [from, to]: \n   " + file.path + "\n   " + newFullPath)
-							await this.app.vault.copy(file, newFullPath);
-						}
-					}
-				} else {
-					//if no other file has link to this file
-					if (linkedNotes.length == 0) {
-						//move file. if file already exist at new location - copy file with new name
-						let existFile = this.getFileByPath(newFullPath);
-						if (!existFile) {
-							console.log("Move Note With Attachments: move file [from, to]: \n   " + file.path + "\n   " + newFullPath)
-							await this.app.vault.rename(file, newFullPath);
 						} else {
+							//move with new name
 							let newFileCopyName = this.generateFileCopyName(newFullPath)
 							console.log("Move Note With Attachments: copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
-							await this.app.vault.copy(file, newFileCopyName);
+							await this.app.vault.rename(file, newFileCopyName);
 							renamedFiles.push({ oldPath: newFullPath, newPath: newFileCopyName })
 						}
 					}
-					//if some other file has link to this file
-					else {
-						//copy file. if file already exist at new location - copy file with new name
-						let existFile = this.getFileByPath(newFullPath);
-						if (!existFile) {
-							console.log("Move Note With Attachments: copy file (from to): \n   " + file.path + "\n   " + newFullPath)
-							await this.app.vault.copy(file, newFullPath);
+				}
+				//if some other file has link to this file - try to copy file
+				//if file already exist at new location - copy file with new name or do nothing
+				else {
+					let existFile = this.getFileByPath(newFullPath);
+					if (!existFile) {
+						//copy
+						console.log("Move Note With Attachments: copy file [from, to]: \n   " + file.path + "\n   " + newFullPath)
+						await this.app.vault.copy(file, newFullPath);
+					} else {
+						if (this.settings.deleteFilesWhenExist) {
+							//do nothing
 						} else {
+							//copy with new name
 							let newFileCopyName = this.generateFileCopyName(newFullPath)
 							console.log("Move Note With Attachments: copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
 							await this.app.vault.copy(file, newFileCopyName);
