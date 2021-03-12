@@ -1,19 +1,15 @@
-import { App, Plugin, PluginSettingTab, Setting, MarkdownView, TAbstractFile, getLinkpath, iterateCacheRefs, TFile, EmbedCache, LinkCache, } from 'obsidian';
-import * as CodeMirror from "codemirror";
+import { App, Plugin, PluginSettingTab, Setting, TAbstractFile, TFile, EmbedCache, LinkCache } from 'obsidian';
+
 const path = require('path');
 
 interface PluginSettings {
-	language: string;
+	deleteFilesWhenExist: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
-	language: ''
+	deleteFilesWhenExist: false
 }
 
-interface Link {
-	link: string;
-	files: string[];
-}
 
 
 export default class MoveNoteWithAttachments extends Plugin {
@@ -21,12 +17,6 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-
-		// this.addCommand({
-		// 	id: 'test',
-		// 	name: 'Test',
-		// 	callback: () => this.test()
-		// });
 
 		this.addSettingTab(new SettingTab(this.app, this));
 
@@ -75,32 +65,36 @@ export default class MoveNoteWithAttachments extends Plugin {
 			let newFullPath = this.getFullPathForLink(link, newNotePath);
 
 
-			// just moved note will have unresolved links to embeds, so it will don have any valid backlinks 
+			// just moved note will have unresolved links to embeds, so it will not have any valid backlinks 
 			let linkedNotes = this.getNotesThatHaveLinkToFile(file.path);
 
-			//if no other file has link to this file
-			if (linkedNotes.length == 0) {
-				//move file. if file already exist at new location - just delete the old one
-				let existFile = this.getFileByPath(newFullPath);
-				if (!existFile) {
-					console.log("Move Note With Attachments: move file (from to): \n   " + file.path + "\n   " + newFullPath)
-					await this.app.vault.rename(file, newFullPath);
-				} else {
-					//todo: optional, rename attachment to new name and move to new path
-					console.log("Move Note With Attachments: delete file: \n   " + file.path)
-					await this.app.vault.trash(file, true);
+			if (this.settings.deleteFilesWhenExist){
+				//if no other file has link to this file
+				if (linkedNotes.length == 0) {
+					//move file. if file already exist at new location - just delete the old one
+					let existFile = this.getFileByPath(newFullPath);
+					if (!existFile) {
+						console.log("Move Note With Attachments: move file (from to): \n   " + file.path + "\n   " + newFullPath)
+						await this.app.vault.rename(file, newFullPath);
+					} else {
+						//todo: optional, rename attachment to new name and move to new path
+						console.log("Move Note With Attachments: delete file: \n   " + file.path)
+						await this.app.vault.trash(file, true);
+					}
 				}
-			}
-			//if some other file has link to this file
-			else {
-				//copy file. if file already exist at new location - do nothing
-				let existFile = this.getFileByPath(newFullPath);
-				if (!existFile) {
-					console.log("Move Note With Attachments: copy file (from to): \n   " + file.path + "\n   " + newFullPath)
-					await this.app.vault.copy(file, newFullPath);
-				} else {
-					//todo: optional, rename attachment to new name and copy to new path
+				//if some other file has link to this file
+				else {
+					//copy file. if file already exist at new location - do nothing
+					let existFile = this.getFileByPath(newFullPath);
+					if (!existFile) {
+						console.log("Move Note With Attachments: copy file (from to): \n   " + file.path + "\n   " + newFullPath)
+						await this.app.vault.copy(file, newFullPath);
+					} else {
+						//todo: optional, rename attachment to new name and copy to new path
+					}
 				}
+			}else{
+				console.log("111")
 			}
 		}
 	}
@@ -338,17 +332,17 @@ class SettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Plugin - Settings' });
+		containerEl.createEl('h2', { text: 'Move Note With Attachments - Settings' });
 
 		new Setting(containerEl)
-			.setName('Language')
-			.setDesc('')
-			.addText(text => text
-				.setPlaceholder('Example: c++')
-				.setValue(this.plugin.settings.language)
-				.onChange(async (value) => {
-					this.plugin.settings.language = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName('Delete attachment if exist')
+			.setDesc('Delete attachment when moving a note if there is a file with the same name in the new folder. If disabled, file will be renamed and moved.')
+			.addToggle(cb => cb.onChange(value => {
+				this.plugin.settings.deleteFilesWhenExist = value;
+				this.plugin.saveSettings();
+			}
+			).setValue(this.plugin.settings.deleteFilesWhenExist));
+
+
 	}
 }
