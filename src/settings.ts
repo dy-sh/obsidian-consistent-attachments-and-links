@@ -1,22 +1,24 @@
-import { App, PluginSettingTab, Setting, } from 'obsidian';
+import { App, normalizePath, PluginSettingTab, Setting, } from 'obsidian';
 import MoveNoteWithAttachments from './main';
 
 export interface PluginSettings {
-	moveAttachmentsWithNote: boolean;
-	deleteAttachmentsWithNote: boolean;
-	updateLinks: boolean;
-	deleteExistFilesWhenMoveNote: boolean;
-	changeNoteBacklinksAlt: boolean;
-	deleteEmptyFolders: boolean;
+    moveAttachmentsWithNote: boolean;
+    deleteAttachmentsWithNote: boolean;
+    updateLinks: boolean;
+    deleteExistFilesWhenMoveNote: boolean;
+    changeNoteBacklinksAlt: boolean;
+    deleteEmptyFolders: boolean;
+    ignoreFolders: string[];
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-	moveAttachmentsWithNote: true,
-	deleteAttachmentsWithNote: true,
-	updateLinks: true,
-	deleteExistFilesWhenMoveNote: false,
-	changeNoteBacklinksAlt: false,
+    moveAttachmentsWithNote: true,
+    deleteAttachmentsWithNote: true,
+    updateLinks: true,
+    deleteExistFilesWhenMoveNote: false,
+    changeNoteBacklinksAlt: false,
     deleteEmptyFolders: false,
+    ignoreFolders: [".git/",".obsidian/"],
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -33,36 +35,36 @@ export class SettingTab extends PluginSettingTab {
         containerEl.empty();
 
         containerEl.createEl('h2', { text: 'Move Note With Attachments - Settings' });
-        
-        
-        new Setting(containerEl)
-        .setName('Move attachments with note')
-        .setDesc('When the note is moved, move all attachments along with it, keeping relative paths.')
-        .addToggle(cb => cb.onChange(value => {
-            this.plugin.settings.moveAttachmentsWithNote = value;
-            this.plugin.saveSettings();
-        }
-        ).setValue(this.plugin.settings.moveAttachmentsWithNote));
 
 
         new Setting(containerEl)
-        .setName('Delete unused attachments with note')
-        .setDesc('When note is deleted, delete and all attachments that are no longer used.')
-        .addToggle(cb => cb.onChange(value => {
-            this.plugin.settings.deleteAttachmentsWithNote = value;
-            this.plugin.saveSettings();
-        }
-        ).setValue(this.plugin.settings.deleteAttachmentsWithNote));
+            .setName('Move attachments with note')
+            .setDesc('When the note is moved, move all attachments along with it, keeping relative paths.')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.moveAttachmentsWithNote = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.moveAttachmentsWithNote));
 
 
         new Setting(containerEl)
-        .setName('Update links')
-        .setDesc('Update links when moving notes or attachments')
-        .addToggle(cb => cb.onChange(value => {
-            this.plugin.settings.updateLinks = value;
-            this.plugin.saveSettings();
-        }
-        ).setValue(this.plugin.settings.updateLinks));
+            .setName('Delete unused attachments with note')
+            .setDesc('When note is deleted, delete and all attachments that are no longer used.')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.deleteAttachmentsWithNote = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.deleteAttachmentsWithNote));
+
+
+        new Setting(containerEl)
+            .setName('Update links')
+            .setDesc('Update links when moving notes or attachments')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.updateLinks = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.updateLinks));
 
 
         new Setting(containerEl)
@@ -84,7 +86,7 @@ export class SettingTab extends PluginSettingTab {
             }
             ).setValue(this.plugin.settings.changeNoteBacklinksAlt));
 
-            new Setting(containerEl)
+        new Setting(containerEl)
             .setName('Delete empty folders')
             .setDesc('Delete empty folders after moving notes with attachments.')
             .addToggle(cb => cb.onChange(value => {
@@ -92,5 +94,21 @@ export class SettingTab extends PluginSettingTab {
                 this.plugin.saveSettings();
             }
             ).setValue(this.plugin.settings.deleteEmptyFolders));
+
+        new Setting(containerEl)
+            .setName("Ignore folders to delete")
+            .setDesc("List of folders to ignore to scan when deleting empty folders. Each folder on a new line.")
+            .addTextArea(cb => cb
+                .setPlaceholder("Example: .git, .obsidian")
+                .setValue(this.plugin.settings.ignoreFolders.join("\n"))
+                .onChange((value) => {
+                    let paths = value.trim().split("\n").map(value => this.getNormalizedPath(value) + "/");
+                    this.plugin.settings.ignoreFolders = paths;
+                    this.plugin.saveSettings();
+                }));
+    }
+
+    getNormalizedPath(path: string): string {
+        return path.length == 0 ? path : normalizePath(path);
     }
 }

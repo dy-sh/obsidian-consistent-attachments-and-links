@@ -32,12 +32,12 @@ export default class MoveNoteWithAttachments extends Plugin {
 		if (this.settings.deleteAttachmentsWithNote) {
 			let fileExt = file.path.substring(file.path.lastIndexOf("."));
 			if (fileExt == ".md") {
-				this.deleteAllUnusedAttachmentsWithNote(file.path);
+				this.deleteUnusedAttachmentsForNote(file.path);
 			}
 		}
 	}
 
-	async deleteAllUnusedAttachmentsWithNote(notePath: string) {
+	async deleteUnusedAttachmentsForNote(notePath: string) {
 		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 		if (embeds) {
 			for (let embed of embeds) {
@@ -87,6 +87,15 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 	async deleteEmptyFolders(dirName: string) {
+		if (dirName.startsWith("./"))
+			dirName = dirName.substring(2);
+
+		for (let ignoreFolder of this.settings.ignoreFolders) {
+			if (dirName.startsWith(ignoreFolder)) {
+				return;
+			}
+		}
+
 		let list = await this.app.vault.adapter.list(dirName);
 		for (let folder of list.folders) {
 			await this.deleteEmptyFolders(folder)
