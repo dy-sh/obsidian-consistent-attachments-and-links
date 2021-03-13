@@ -28,11 +28,19 @@ export default class MoveNoteWithAttachments extends Plugin {
 		);
 	}
 
-	handleDeletedFile(file: TAbstractFile) {
-		if (this.settings.deleteAttachmentsWithNote) {
-			let fileExt = file.path.substring(file.path.lastIndexOf("."));
-			if (fileExt == ".md") {
+	async handleDeletedFile(file: TAbstractFile) {
+		let fileExt = file.path.substring(file.path.lastIndexOf("."));
+		if (fileExt == ".md") {
+			if (this.settings.deleteAttachmentsWithNote) {
 				this.deleteUnusedAttachmentsForNote(file.path);
+			}
+
+			//delete child folders (do not delete parent)
+			if (this.settings.deleteEmptyFolders) {
+				let list = await this.app.vault.adapter.list(path.dirname(file.path));
+				for (let folder of list.folders) {
+					await this.deleteEmptyFolders(folder)
+				}
 			}
 		}
 	}
@@ -60,7 +68,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 		let fileExt = oldPath.substring(oldPath.lastIndexOf("."));
 
 		if (fileExt == ".md") {
-			await Utils.delay(500);//waiting for move note and update cache
+			// await Utils.delay(500);//waiting for update metadataCache
 
 			if (path.dirname(oldPath) != path.dirname(file.path)) {
 				if (this.settings.moveAttachmentsWithNote) {
@@ -70,13 +78,13 @@ export default class MoveNoteWithAttachments extends Plugin {
 				if (this.settings.updateLinks) {
 					await this.updateInternalLinksInMovedNote(oldPath, file.path, this.settings.moveAttachmentsWithNote)
 				}
-			}
 
-			//delete child folders (do not delete parent)
-			if (this.settings.deleteEmptyFolders) {
-				let list = await this.app.vault.adapter.list(path.dirname(oldPath));
-				for (let folder of list.folders) {
-					await this.deleteEmptyFolders(folder)
+				//delete child folders (do not delete parent)
+				if (this.settings.deleteEmptyFolders) {
+					let list = await this.app.vault.adapter.list(path.dirname(oldPath));
+					for (let folder of list.folders) {
+						await this.deleteEmptyFolders(folder)
+					}
 				}
 			}
 		}
@@ -109,11 +117,15 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 	async moveNoteAttachments(oldNotePath: string, newNotePath: string) {
-		let renamedFiles: LinkChangeInfo[] = [];
 
-		let embeds = this.app.metadataCache.getCache(newNotePath)?.embeds; //wait to metadataCache update before call it
+		//try to get embeds for olad or new path (metadataCache can be updated or not)		
+		let embeds = this.app.metadataCache.getCache(newNotePath)?.embeds;
+		if (!embeds)
+			embeds = this.app.metadataCache.getCache(oldNotePath)?.embeds;
 
 		if (embeds) {
+			let renamedFiles: LinkChangeInfo[] = [];
+
 			for (let embed of embeds) {
 				let link = embed.link;
 
