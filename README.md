@@ -1,12 +1,20 @@
 # Consistent attachments and links
 
 This plugin provides attachment and link consistency.
+
+## What's the idea
+
 The idea is to ensure that notes always have the correct relative path to attachments and to each other.
 This is useful when you want to open a note in another program that does not know where your vault folder is. Or, post notes on Github, for example.
-Ideally, all attachments should be located in the note folder or its subfolders.
-In this case, you can easily export a note to a separate folder outside of your vault, knowing that all its attachments are with it.
+
+Ideally, all attachments should be located in the note folder or its subfolders. In this case, you can easily export a note to a separate folder outside of your vault, knowing that all its attachments are with it.
+
+By deleting a note, you know for sure that you will not delete the attachments you still need and will not leave unnecessary garbage in your library.
+
+## How plugins work
 
 When you move a note in Obsidian, this plugin moves note attachments and update links automatically.
+
 It does this safely, making sure not to move attachments that are referenced by other notes.
 If you move a note with attachments that are used in other notes, the plugin automatically creates a copy of this files and redirects the moved note to them. 
 
@@ -19,6 +27,7 @@ When deleting a note, the plugin can delete all attachments that are no longer i
 The plugin is also able to automatically delete empty folders that result from moving files, as well as update the text of links when renaming notes (optionally).
 
 
+## How to configure 
 Recommended Obsidian settings for the plugin to work properly:
 
 - **"Files & Linsks > Automatically update internal links": disabled.** The plugin itself is responsible for updating the links. When Obsidian shows a dialog asking to update links, refuse.
@@ -30,3 +39,6 @@ Recommended Obsidian settings for the plugin to work properly:
 - **"Default location for new attachments":In subfolder under current folder**. This is not required, but this ensures that attachments are always next to your notes. The option "Same folder as current file" is also suitable.
 
 - **"Subfolder name": "_attachments"**. Or any other.
+
+## Caution
+Please make a backup of your files before running the plugin for the first time.

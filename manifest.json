@@ -4,7 +4,7 @@
 	"version": "1.0.1",
 	"minAppVersion": "0.9.12",
 	"description": "Move note attachments and update links automatically",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md/about",
+	"author": "Dmitry Savosh",
+	"authorUrl": "https://github.com/derwish-pro/",
 	"isDesktopOnly": false
 }
