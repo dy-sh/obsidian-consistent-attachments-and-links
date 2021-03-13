@@ -7,6 +7,7 @@ export interface PluginSettings {
 	updateLinks: boolean;
 	deleteExistFilesWhenMoveNote: boolean;
 	changeNoteBacklinksAlt: boolean;
+	deleteEmptyFolders: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	updateLinks: true,
 	deleteExistFilesWhenMoveNote: false,
 	changeNoteBacklinksAlt: false,
+    deleteEmptyFolders: false,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -82,6 +84,13 @@ export class SettingTab extends PluginSettingTab {
             }
             ).setValue(this.plugin.settings.changeNoteBacklinksAlt));
 
-
+            new Setting(containerEl)
+            .setName('Delete empty folders')
+            .setDesc('Delete empty folders after moving notes with attachments.')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.deleteEmptyFolders = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.deleteEmptyFolders));
     }
 }
