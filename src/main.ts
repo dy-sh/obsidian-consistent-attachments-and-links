@@ -71,11 +71,31 @@ export default class MoveNoteWithAttachments extends Plugin {
 					await this.updateInternalLinksInMovedNote(oldPath, file.path, this.settings.moveAttachmentsWithNote)
 				}
 			}
-			//todo: delete empty folders
+
+			//delete child folders (do not delete parent)
+			if (this.settings.deleteEmptyFolders) {
+				let list = await this.app.vault.adapter.list(path.dirname(oldPath));
+				for (let folder of list.folders) {
+					await this.deleteEmptyFolders(folder)
+				}
+			}
 		}
 
 		if (this.settings.updateLinks) {
 			await this.updateLinksToRenamedFile(oldPath, file.path)
+		}
+	}
+
+	async deleteEmptyFolders(dirName: string) {
+		let list = await this.app.vault.adapter.list(dirName);
+		for (let folder of list.folders) {
+			await this.deleteEmptyFolders(folder)
+		}
+
+		list = await this.app.vault.adapter.list(dirName);
+		if (list.files.length == 0 && list.folders.length == 0) {
+			console.log("Move Note With Attachments: delete empty folder: \n   " + dirName)
+			await this.app.vault.adapter.rmdir(dirName, false);
 		}
 	}
 
