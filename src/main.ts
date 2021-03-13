@@ -20,19 +20,43 @@ export default class MoveNoteWithAttachments extends Plugin {
 		this.addSettingTab(new SettingTab(this.app, this));
 
 		this.registerEvent(
-			this.app.vault.on('rename', (file, oldPath) => this.proceedMovedFile(file, oldPath)),
+			this.app.vault.on('rename', (file, oldPath) => this.handleRenamedFile(file, oldPath)),
 		);
 
 		this.registerEvent(
-			this.app.vault.on('delete', (file) => this.deleteNoteAttachments(file)),
+			this.app.vault.on('delete', (file) => this.handleDeletedFile(file)),
 		);
 	}
 
-	deleteNoteAttachments(file: TAbstractFile) {
-		//todo
+	handleDeletedFile(file: TAbstractFile) {
+		if (this.settings.deleteFilesWithNote) {
+			let fileExt = file.path.substring(file.path.lastIndexOf("."));
+			if (fileExt == ".md") {
+				this.deleteAllUnusedAttachmentsWithNote(file.path);
+			}
+		}
 	}
 
-	async proceedMovedFile(noteFile: TAbstractFile, oldNotePath: string) {
+	async deleteAllUnusedAttachmentsWithNote(notePath: string) {
+		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+		if (embeds) {
+			for (let embed of embeds) {
+				let link = embed.link;
+
+				let fullPath = this.getFullPathForLink(link, notePath);
+				let linkedNotes = this.getNotesThatHaveLinkToFile(fullPath);
+				if (linkedNotes.length == 0) {
+					let file = this.getFileByLink(link, notePath);
+					if (file) {
+						await this.app.vault.trash(file, true);
+					}
+				}
+			}
+		}
+
+	}
+
+	async handleRenamedFile(noteFile: TAbstractFile, oldNotePath: string) {
 
 		let fileExt = oldNotePath.substring(oldNotePath.lastIndexOf("."));
 		if (fileExt == ".md") {
@@ -47,6 +71,8 @@ export default class MoveNoteWithAttachments extends Plugin {
 			}
 			await this.updateBacklinksToMovedNote(oldNotePath, newNotePath)
 			//todo: delete empty folders
+		}else{
+			//todo: update links to renamed attachment
 		}
 	}
 
@@ -82,7 +108,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 						console.log("Move Note With Attachments: move file [from, to]: \n   " + file.path + "\n   " + newFullPath)
 						await this.app.vault.rename(file, newFullPath);
 					} else {
-						if (this.settings.deleteFilesWhenExist) {
+						if (this.settings.deleteExistFilesWhenMoveNote) {
 							//delete
 							console.log("Move Note With Attachments: delete file: \n   " + file.path)
 							await this.app.vault.trash(file, true);
@@ -104,7 +130,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 						console.log("Move Note With Attachments: copy file [from, to]: \n   " + file.path + "\n   " + newFullPath)
 						await this.app.vault.copy(file, newFullPath);
 					} else {
-						if (this.settings.deleteFilesWhenExist) {
+						if (this.settings.deleteExistFilesWhenMoveNote) {
 							//do nothing
 						} else {
 							//copy with new name
