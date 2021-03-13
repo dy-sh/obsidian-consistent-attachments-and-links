@@ -20,11 +20,11 @@ export default class MoveNoteWithAttachments extends Plugin {
 		this.addSettingTab(new SettingTab(this.app, this));
 
 		this.registerEvent(
-			this.app.vault.on('rename', (file, oldPath) => this.handleRenamedFile(file, oldPath)),
+			this.app.vault.on('delete', (file) => this.handleDeletedFile(file)),
 		);
 
 		this.registerEvent(
-			this.app.vault.on('delete', (file) => this.handleDeletedFile(file)),
+			this.app.vault.on('rename', (file, oldPath) => this.handleRenamedFile(file, oldPath)),
 		);
 	}
 
@@ -67,12 +67,14 @@ export default class MoveNoteWithAttachments extends Plugin {
 					await this.moveNoteAttachments(oldPath, file.path)
 				}
 
-				await this.updateInternalLinksInMovedNote(oldPath, file.path, this.settings.moveAttachmentsWithNote)
+				if (this.settings.updateLinks) {
+					await this.updateInternalLinksInMovedNote(oldPath, file.path, this.settings.moveAttachmentsWithNote)
+				}
 			}
-			await this.updateLinksToRenamedFile(oldPath, file.path)
-
 			//todo: delete empty folders
-		} else {
+		}
+
+		if (this.settings.updateLinks) {
 			await this.updateLinksToRenamedFile(oldPath, file.path)
 		}
 	}
@@ -145,8 +147,9 @@ export default class MoveNoteWithAttachments extends Plugin {
 			}
 
 			if (renamedFiles.length > 0) {
-				console.log(renamedFiles)
-				await this.updateChangedLinksInNote(newNotePath, renamedFiles)
+				if (this.settings.updateLinks) {
+					await this.updateChangedLinksInNote(newNotePath, renamedFiles)
+				}
 			}
 		}
 	}
