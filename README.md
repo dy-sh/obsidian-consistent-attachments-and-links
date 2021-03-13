@@ -42,3 +42,9 @@ Recommended Obsidian settings for the plugin to work properly:
 
 ## Caution
 Please make a backup of your files before running the plugin for the first time.
+
+## Todo
+
+- Add hotkey "Move all attachments to notes", to reorganize the folder structure to a more consistent state in one click.
+
+- A separate plugin that renames attachments by generating names with a hash function of their contents. In the settings, you can set the type of attachments that will be processed. As a result, the same file with an image in different folders will have the same name if it is the same in content. This will improve consistency when moving notes with attachments.
