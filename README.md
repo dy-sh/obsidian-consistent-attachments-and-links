@@ -1,56 +1,32 @@
-## Obsidian Sample Plugin
+# Consistent attachments and links
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+This plugin provides attachment and link consistency.
+The idea is to ensure that notes always have the correct relative path to attachments and to each other.
+This is useful when you want to open a note in another program that does not know where your vault folder is. Or, post notes on Github, for example.
+Ideally, all attachments should be located in the note folder or its subfolders.
+In this case, you can easily export a note to a separate folder outside of your vault, knowing that all its attachments are with it.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+When you move a note in Obsidian, this plugin moves note attachments and update links automatically.
+It does this safely, making sure not to move attachments that are referenced by other notes.
+If you move a note with attachments that are used in other notes, the plugin automatically creates a copy of this files and redirects the moved note to them. 
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+If you move a note to a folder where there are already attachments with the same names, the plugin can operate in two modes (can be selected in the settings):
+1. Duplicate files will be renamed (new names are generated), and then moved to a new folder with a note. This is useful if your attachment files do not have unique names and you want each note to link only to its own files. 
+2. It will remove the duplicate files that you move, leaving the ones that are already in the target folder. In this case, the links will be updated and, as a result, they will refer to the existing files. If there was a note in the target folder that referred to these files, then after moving, all notes will use the same files. This is useful if you have unique names for all attachments.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Changes the default font color to red using `styles.css`.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+When deleting a note, the plugin can delete all attachments that are no longer in use. This option can be disabled.
 
-### First time developing plugins?
+The plugin is also able to automatically delete empty folders that result from moving files, as well as update the text of links when renaming notes (optionally).
 
-Quick starting guide for new plugin devs:
 
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
+Recommended Obsidian settings for the plugin to work properly:
 
-### Releasing new releases
+- **"Files & Linsks > Automatically update internal links": disabled.** The plugin itself is responsible for updating the links. When Obsidian shows a dialog asking to update links, refuse.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments.
-- Publish the release.
+- **"New link format": Relative path to file.** Otherwise, strict compliance of the links cannot be guaranteed.
 
-### Adding your plugin to the community plugin list
+- **"Use \[\[Wikilinks\]\]": disabled**. At the moment, the plugin does not work with wikilinks. Perhaps it will be in an update later.
 
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+- **"Default location for new attachments":In subfolder under current folder**. This is not required, but this ensures that attachments are always next to your notes. The option "Same folder as current file" is also suitable.
 
-### How to use
-
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
-
-### Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-### API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+- **"Subfolder name": "_attachments"**. Or any other.

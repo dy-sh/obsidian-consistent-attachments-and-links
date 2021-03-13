@@ -10,7 +10,7 @@ const path = require('path');
 
 
 
-export default class MoveNoteWithAttachments extends Plugin {
+export default class ConsistentAttachmentsAndLinks extends Plugin {
 	settings: PluginSettings;
 	lh: LinksHandler;
 	fh: FilesHandler;
@@ -29,8 +29,8 @@ export default class MoveNoteWithAttachments extends Plugin {
 			this.app.vault.on('rename', (file, oldPath) => this.handleRenamedFile(file, oldPath)),
 		);
 
-		this.lh = new LinksHandler(this.app);
-		this.fh = new FilesHandler(this.app, this.lh);
+		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
+		this.fh = new FilesHandler(this.app, this.lh, "Consistent attachments and links: ");
 	}
 
 	async handleDeletedFile(file: TAbstractFile) {
