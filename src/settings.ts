@@ -2,15 +2,17 @@ import { App, PluginSettingTab, Setting, } from 'obsidian';
 import MoveNoteWithAttachments from './main';
 
 export interface PluginSettings {
+	moveAttachmentsWithNote: boolean;
+	deleteAttachmentsWithNote: boolean;
 	deleteExistFilesWhenMoveNote: boolean;
 	changeNoteBacklinksAlt: boolean;
-	deleteFilesWithNote: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
+	moveAttachmentsWithNote: true,
+	deleteAttachmentsWithNote: true,
 	deleteExistFilesWhenMoveNote: false,
 	changeNoteBacklinksAlt: false,
-	deleteFilesWithNote: true
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -27,9 +29,27 @@ export class SettingTab extends PluginSettingTab {
         containerEl.empty();
 
         containerEl.createEl('h2', { text: 'Move Note With Attachments - Settings' });
+        
+        new Setting(containerEl)
+        .setName('Move attachments with note')
+        .setDesc('When the note is moved, move all attachments along with it, keeping relative paths.')
+        .addToggle(cb => cb.onChange(value => {
+            this.plugin.settings.moveAttachmentsWithNote = value;
+            this.plugin.saveSettings();
+        }
+        ).setValue(this.plugin.settings.moveAttachmentsWithNote));
 
         new Setting(containerEl)
-            .setName('Delete exist attachments when move note')
+        .setName('Delete unused attachments with note')
+        .setDesc('When note is deleted, delete and all attachments that are no longer used.')
+        .addToggle(cb => cb.onChange(value => {
+            this.plugin.settings.deleteAttachmentsWithNote = value;
+            this.plugin.saveSettings();
+        }
+        ).setValue(this.plugin.settings.deleteAttachmentsWithNote));
+
+        new Setting(containerEl)
+            .setName('Remove duplicate attachments while note moving')
             .setDesc('Delete attachment when moving a note if there is a file with the same name in the new folder. If disabled, file will be renamed and moved.')
             .addToggle(cb => cb.onChange(value => {
                 this.plugin.settings.deleteExistFilesWhenMoveNote = value;
@@ -46,13 +66,6 @@ export class SettingTab extends PluginSettingTab {
             }
             ).setValue(this.plugin.settings.changeNoteBacklinksAlt));
 
-        new Setting(containerEl)
-            .setName('Delete unused attachments with note')
-            .setDesc('When note is deleted, delete and all attachments that are no longer used.')
-            .addToggle(cb => cb.onChange(value => {
-                this.plugin.settings.deleteFilesWithNote = value;
-                this.plugin.saveSettings();
-            }
-            ).setValue(this.plugin.settings.deleteFilesWithNote));
+
     }
 }

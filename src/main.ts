@@ -29,7 +29,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 	}
 
 	handleDeletedFile(file: TAbstractFile) {
-		if (this.settings.deleteFilesWithNote) {
+		if (this.settings.deleteAttachmentsWithNote) {
 			let fileExt = file.path.substring(file.path.lastIndexOf("."));
 			if (fileExt == ".md") {
 				this.deleteAllUnusedAttachmentsWithNote(file.path);
@@ -56,23 +56,24 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 	}
 
-	async handleRenamedFile(noteFile: TAbstractFile, oldNotePath: string) {
+	async handleRenamedFile(file: TAbstractFile, oldPath: string) {
+		let fileExt = oldPath.substring(oldPath.lastIndexOf("."));
 
-		let fileExt = oldNotePath.substring(oldNotePath.lastIndexOf("."));
 		if (fileExt == ".md") {
-
-			let newNotePath = noteFile.path;
-
 			await Utils.delay(500);//waiting for move note and update cache
 
-			if (path.dirname(oldNotePath) != path.dirname(newNotePath)) {
-				await this.moveNoteAttachments(oldNotePath, newNotePath)
-				await this.updateInternalLinksInMovedNote(oldNotePath, newNotePath)
+			if (path.dirname(oldPath) != path.dirname(file.path)) {
+				if (this.settings.moveAttachmentsWithNote) {
+					await this.moveNoteAttachments(oldPath, file.path)
+				}
+
+				await this.updateInternalLinksInMovedNote(oldPath, file.path, this.settings.moveAttachmentsWithNote)
 			}
-			await this.updateBacklinksToMovedNote(oldNotePath, newNotePath)
+			await this.updateLinksToRenamedFile(oldPath, file.path)
+
 			//todo: delete empty folders
-		}else{
-			//todo: update links to renamed attachment
+		} else {
+			await this.updateLinksToRenamedFile(oldPath, file.path)
 		}
 	}
 
@@ -163,7 +164,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 		return "";
 	}
 
-	async updateBacklinksToMovedNote(oldNotePath: string, newNotePath: string) {
+	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string) {
 		let notes = this.getNotesThatHaveLinkToFile(oldNotePath);
 		let changedLinks: LinkChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
@@ -192,16 +193,16 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 				let fullLink = this.getFullPathForLink(link, notePath);
 
-				for (let renamedFile of changedLinks) {
-					if (fullLink == renamedFile.oldPath) {
-						let newRelLink: string = path.relative(notePath, renamedFile.newPath);
+				for (let changedLink of changedLinks) {
+					if (fullLink == changedLink.oldPath) {
+						let newRelLink: string = path.relative(notePath, changedLink.newPath);
 						newRelLink = Utils.normalizePathForLink(newRelLink);
 
 						if (newRelLink.startsWith("../")) {
 							newRelLink = newRelLink.substring(3);
 						}
 
-						if (this.settings.changeNoteBacklinksAlt) {
+						if (this.settings.changeNoteBacklinksAlt && newRelLink.endsWith(".md")) {
 							let ext = path.extname(newRelLink);
 							let baseName = path.basename(newRelLink, ext);
 							alt = Utils.normalizePathForFile(baseName);
@@ -226,7 +227,7 @@ export default class MoveNoteWithAttachments extends Plugin {
 
 
 
-	async updateInternalLinksInMovedNote(oldNotePath: string, newNotePath: string) {
+	async updateInternalLinksInMovedNote(oldNotePath: string, newNotePath: string, handleOnlyLinksToNotes: boolean) {
 		let file = this.getFileByPath(newNotePath);
 		if (!file) {
 			console.error("Move Note With Attachments: " + "cant update internal links, file not found: " + newNotePath);
@@ -242,28 +243,23 @@ export default class MoveNoteWithAttachments extends Plugin {
 				let alt = el.match(/\[(.*?)\]/)[1];
 				let link = el.match(/\((.*?)\)/)[1];
 
-				if (link.endsWith(".md")) {
-					let fullLink = this.getFullPathForLink(link, oldNotePath);
-					let newRelLink: string = path.relative(newNotePath, fullLink);
-					newRelLink = Utils.normalizePathForLink(newRelLink);
+				if (handleOnlyLinksToNotes && !link.endsWith(".md"))
+					continue;
 
-					if (newRelLink.startsWith("../")) {
-						newRelLink = newRelLink.substring(3);
-					}
+				let fullLink = this.getFullPathForLink(link, oldNotePath);
+				let newRelLink: string = path.relative(newNotePath, fullLink);
+				newRelLink = Utils.normalizePathForLink(newRelLink);
 
-					if (this.settings.changeNoteBacklinksAlt) {
-						let ext = path.extname(newRelLink);
-						let baseName = path.basename(newRelLink, ext);
-						alt = Utils.normalizePathForFile(baseName);
-					}
-
-					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
-
-					dirty = true;
-
-					console.log("Move Note With Attachments: link updated in note [note, old link, new link]: \n   "
-						+ file.path + "\n   " + link + "   \n" + newRelLink);
+				if (newRelLink.startsWith("../")) {
+					newRelLink = newRelLink.substring(3);
 				}
+
+				text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
+
+				dirty = true;
+
+				console.log("Move Note With Attachments: link updated in note [note, old link, new link]: \n   "
+					+ file.path + "\n   " + link + "   \n" + newRelLink);
 			}
 		}
 
