@@ -4,6 +4,7 @@ import MoveNoteWithAttachments from './main';
 export interface PluginSettings {
 	moveAttachmentsWithNote: boolean;
 	deleteAttachmentsWithNote: boolean;
+	updateLinks: boolean;
 	deleteExistFilesWhenMoveNote: boolean;
 	changeNoteBacklinksAlt: boolean;
 }
@@ -11,6 +12,7 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
 	moveAttachmentsWithNote: true,
 	deleteAttachmentsWithNote: true,
+	updateLinks: true,
 	deleteExistFilesWhenMoveNote: false,
 	changeNoteBacklinksAlt: false,
 }
@@ -30,6 +32,7 @@ export class SettingTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'Move Note With Attachments - Settings' });
         
+        
         new Setting(containerEl)
         .setName('Move attachments with note')
         .setDesc('When the note is moved, move all attachments along with it, keeping relative paths.')
@@ -38,6 +41,7 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.saveSettings();
         }
         ).setValue(this.plugin.settings.moveAttachmentsWithNote));
+
 
         new Setting(containerEl)
         .setName('Delete unused attachments with note')
@@ -48,6 +52,17 @@ export class SettingTab extends PluginSettingTab {
         }
         ).setValue(this.plugin.settings.deleteAttachmentsWithNote));
 
+
+        new Setting(containerEl)
+        .setName('Update links')
+        .setDesc('Update links when moving notes or attachments')
+        .addToggle(cb => cb.onChange(value => {
+            this.plugin.settings.updateLinks = value;
+            this.plugin.saveSettings();
+        }
+        ).setValue(this.plugin.settings.updateLinks));
+
+
         new Setting(containerEl)
             .setName('Remove duplicate attachments while note moving')
             .setDesc('Delete attachment when moving a note if there is a file with the same name in the new folder. If disabled, file will be renamed and moved.')
@@ -56,6 +71,7 @@ export class SettingTab extends PluginSettingTab {
                 this.plugin.saveSettings();
             }
             ).setValue(this.plugin.settings.deleteExistFilesWhenMoveNote));
+
 
         new Setting(containerEl)
             .setName('Change backlinks text for reanamed note')
