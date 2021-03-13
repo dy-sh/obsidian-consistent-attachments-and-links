@@ -12,7 +12,7 @@ export class LinksHandler {
 
 	constructor(
 		private app: App,
-
+		private consoleLogPrefix: string = ""
 	) { }
 
 	getFileByLink(link: string, owningNotePath: string): TFile {
@@ -103,7 +103,7 @@ export class LinksHandler {
 	async updateChangedLinksInNote(notePath: string, changedLinks: LinkChangeInfo[], changelinksAlt: boolean) {
 		let file = this.getFileByPath(notePath);
 		if (!file) {
-			console.error("Move Note With Attachments: " + "cant update links in note, file not found: " + notePath);
+			console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
 			return;
 		}
 
@@ -137,7 +137,7 @@ export class LinksHandler {
 
 						dirty = true;
 
-						console.log("Move Note With Attachments: link updated in note [note, old link, new link]: \n   "
+						console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
 							+ file.path + "\n   " + link + "   \n" + newRelLink)
 					}
 				}
@@ -155,7 +155,7 @@ export class LinksHandler {
 	async updateInternalLinksInMovedNote(oldNotePath: string, newNotePath: string, attachmentsAlreadyMoved: boolean) {
 		let file = this.getFileByPath(newNotePath);
 		if (!file) {
-			console.error("Move Note With Attachments: " + "cant update internal links, file not found: " + newNotePath);
+			console.error(this.consoleLogPrefix + "cant update internal links, file not found: " + newNotePath);
 			return;
 		}
 
@@ -184,7 +184,7 @@ export class LinksHandler {
 
 				dirty = true;
 
-				console.log("Move Note With Attachments: link updated in note [note, old link, new link]: \n   "
+				console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
 					+ file.path + "\n   " + link + "   \n" + newRelLink);
 			}
 		}

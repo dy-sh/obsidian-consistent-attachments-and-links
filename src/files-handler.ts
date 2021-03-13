@@ -7,6 +7,7 @@ export class FilesHandler {
 	constructor(
 		private app: App,
 		private lh: LinksHandler,
+		private consoleLogPrefix: string = ""
 	) { }
 
 
@@ -51,7 +52,7 @@ export class FilesHandler {
 
 				let file = this.lh.getFileByLink(link, oldNotePath);
 				if (!file) {
-					console.error("Move Note With Attachments: " + oldNotePath + " has bad link (file does not exist): " + link);
+					console.error(this.consoleLogPrefix + oldNotePath + " has bad link (file does not exist): " + link);
 					continue;
 				}
 
@@ -75,17 +76,17 @@ export class FilesHandler {
 					let existFile = this.lh.getFileByPath(newLinkPath);
 					if (!existFile) {
 						//move
-						console.log("Move Note With Attachments: move file [from, to]: \n   " + file.path + "\n   " + newLinkPath)
+						console.log(this.consoleLogPrefix + "move file [from, to]: \n   " + file.path + "\n   " + newLinkPath)
 						await this.app.vault.rename(file, newLinkPath);
 					} else {
 						if (deleteExistFiles) {
 							//delete
-							console.log("Move Note With Attachments: delete file: \n   " + file.path)
+							console.log(this.consoleLogPrefix + "delete file: \n   " + file.path)
 							await this.app.vault.trash(file, true);
 						} else {
 							//move with new name
 							let newFileCopyName = this.generateFileCopyName(newLinkPath)
-							console.log("Move Note With Attachments: copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
+							console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
 							await this.app.vault.rename(file, newFileCopyName);
 							renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName })
 						}
@@ -97,7 +98,7 @@ export class FilesHandler {
 					let existFile = this.lh.getFileByPath(newLinkPath);
 					if (!existFile) {
 						//copy
-						console.log("Move Note With Attachments: copy file [from, to]: \n   " + file.path + "\n   " + newLinkPath)
+						console.log(this.consoleLogPrefix + "copy file [from, to]: \n   " + file.path + "\n   " + newLinkPath)
 						await this.app.vault.copy(file, newLinkPath);
 					} else {
 						if (deleteExistFiles) {
@@ -105,7 +106,7 @@ export class FilesHandler {
 						} else {
 							//copy with new name
 							let newFileCopyName = this.generateFileCopyName(newLinkPath)
-							console.log("Move Note With Attachments: copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
+							console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
 							await this.app.vault.copy(file, newFileCopyName);
 							renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName })
 						}
@@ -138,7 +139,7 @@ export class FilesHandler {
 
 		list = await this.app.vault.adapter.list(dirName);
 		if (list.files.length == 0 && list.folders.length == 0) {
-			console.log("Move Note With Attachments: delete empty folder: \n   " + dirName)
+			console.log(this.consoleLogPrefix + "delete empty folder: \n   " + dirName)
 			await this.app.vault.adapter.rmdir(dirName, false);
 		}
 	}

@@ -1,13 +1,13 @@
 import { App, normalizePath, PluginSettingTab, Setting, } from 'obsidian';
-import MoveNoteWithAttachments from './main';
+import ConsistentAttachmentsAndLinks from './main';
 
 export interface PluginSettings {
     moveAttachmentsWithNote: boolean;
     deleteAttachmentsWithNote: boolean;
     updateLinks: boolean;
+    deleteEmptyFolders: boolean;
     deleteExistFilesWhenMoveNote: boolean;
     changeNoteBacklinksAlt: boolean;
-    deleteEmptyFolders: boolean;
     ignoreFolders: string[];
 }
 
@@ -15,16 +15,16 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     moveAttachmentsWithNote: true,
     deleteAttachmentsWithNote: true,
     updateLinks: true,
+    deleteEmptyFolders: true,
     deleteExistFilesWhenMoveNote: false,
     changeNoteBacklinksAlt: false,
-    deleteEmptyFolders: false,
-    ignoreFolders: [".git/",".obsidian/"],
+    ignoreFolders: [".git/", ".obsidian/"],
 }
 
 export class SettingTab extends PluginSettingTab {
-    plugin: MoveNoteWithAttachments;
+    plugin: ConsistentAttachmentsAndLinks;
 
-    constructor(app: App, plugin: MoveNoteWithAttachments) {
+    constructor(app: App, plugin: ConsistentAttachmentsAndLinks) {
         super(app, plugin);
         this.plugin = plugin;
     }
@@ -34,12 +34,14 @@ export class SettingTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Move Note With Attachments - Settings' });
+        containerEl.createEl('h2', { text: 'Consistent attachments and links - Settings' });
+
+        containerEl.createSpan( { text: "Please, check \"Files & Linsks > Automatically update internal links\" option is disabled for the plugin to work as expected."});
 
 
         new Setting(containerEl)
             .setName('Move attachments with note')
-            .setDesc('When the note is moved, move all attachments along with it, keeping relative paths.')
+            .setDesc('When a note moves, move with it any attachments that are in the same folder and subfolders.')
             .addToggle(cb => cb.onChange(value => {
                 this.plugin.settings.moveAttachmentsWithNote = value;
                 this.plugin.saveSettings();
@@ -49,7 +51,7 @@ export class SettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Delete unused attachments with note')
-            .setDesc('When note is deleted, delete and all attachments that are no longer used.')
+            .setDesc('When the note is deleted, delete all attachments that are no longer used in other notes.')
             .addToggle(cb => cb.onChange(value => {
                 this.plugin.settings.deleteAttachmentsWithNote = value;
                 this.plugin.saveSettings();
@@ -59,12 +61,21 @@ export class SettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Update links')
-            .setDesc('Update links when moving notes or attachments')
+            .setDesc('Update links to attachments and other notes when moving notes or attachments.')
             .addToggle(cb => cb.onChange(value => {
                 this.plugin.settings.updateLinks = value;
                 this.plugin.saveSettings();
             }
             ).setValue(this.plugin.settings.updateLinks));
+
+        new Setting(containerEl)
+            .setName('Delete empty folders')
+            .setDesc('Delete empty folders after moving notes with attachments.')
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.deleteEmptyFolders = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.deleteEmptyFolders));
 
 
         new Setting(containerEl)
@@ -78,26 +89,19 @@ export class SettingTab extends PluginSettingTab {
 
 
         new Setting(containerEl)
-            .setName('Change backlinks text for reanamed note')
-            .setDesc('When the note is renamed, the links to it are updated. If this option is enabled, the text of links to this note will also be automatically changed.')
+            .setName('Change backlink text when renaming a note')
+            .setDesc('When the note is renamed, the links to it are updated. If this option is enabled, the text of links to this note will also be changed.')
             .addToggle(cb => cb.onChange(value => {
                 this.plugin.settings.changeNoteBacklinksAlt = value;
                 this.plugin.saveSettings();
             }
             ).setValue(this.plugin.settings.changeNoteBacklinksAlt));
 
-        new Setting(containerEl)
-            .setName('Delete empty folders')
-            .setDesc('Delete empty folders after moving notes with attachments.')
-            .addToggle(cb => cb.onChange(value => {
-                this.plugin.settings.deleteEmptyFolders = value;
-                this.plugin.saveSettings();
-            }
-            ).setValue(this.plugin.settings.deleteEmptyFolders));
+
 
         new Setting(containerEl)
             .setName("Ignore folders to delete")
-            .setDesc("List of folders to ignore to scan when deleting empty folders. Each folder on a new line.")
+            .setDesc("List of folders to ignore when deleting empty folders. Each folder on a new line.")
             .addTextArea(cb => cb
                 .setPlaceholder("Example: .git, .obsidian")
                 .setValue(this.plugin.settings.ignoreFolders.join("\n"))
