@@ -1,7 +1,7 @@
-import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache } from 'obsidian';
+import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache, Notice } from 'obsidian';
 import { PluginSettings, DEFAULT_SETTINGS, SettingTab } from './settings';
 import { Utils } from './utils';
-import { LinksHandler } from './links-handler';
+import { LinksHandler, LinkChangeInfo } from './links-handler';
 import { FilesHandler } from './files-handler';
 
 const path = require('path');
@@ -37,7 +37,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		let fileExt = file.path.substring(file.path.lastIndexOf("."));
 		if (fileExt == ".md") {
 			if (this.settings.deleteAttachmentsWithNote) {
-				this.fh.deleteUnusedAttachmentsForNote(file.path);
+				await this.fh.deleteUnusedAttachmentsForCachedNote(file.path);
 			}
 
 			//delete child folders (do not delete parent)
@@ -53,6 +53,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 	async handleRenamedFile(file: TAbstractFile, oldPath: string) {
+		let movedAttachments: LinkChangeInfo[];
+		let updatedLinks: LinkChangeInfo[];
+
 		let fileExt = oldPath.substring(oldPath.lastIndexOf("."));
 
 		if (fileExt == ".md") {
@@ -60,7 +63,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 			if (path.dirname(oldPath) != path.dirname(file.path)) {
 				if (this.settings.moveAttachmentsWithNote) {
-					await this.fh.moveNoteAttachments(
+					movedAttachments = await this.fh.moveCachedNoteAttachments(
 						oldPath,
 						file.path,
 						this.settings.deleteExistFilesWhenMoveNote,
@@ -86,6 +89,10 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		if (this.settings.updateLinks) {
 			await this.lh.updateLinksToRenamedFile(oldPath, file.path, updateAlts)
+		}
+
+		if (movedAttachments && movedAttachments.length > 0) {
+			new Notice("Moved " + movedAttachments.length + " attachment" + (movedAttachments.length > 1 ? "s" : ""));
 		}
 	}
 
