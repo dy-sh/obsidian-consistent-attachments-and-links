@@ -17,6 +17,8 @@ If you store attachments in a folder with a note or its subfolders, the plugin w
 
 Obsidian has a very clever file link search, but this can be a problem for you if you want your notes to be compatible with other programs. This is the main point of the plugin.
 
+If you still want to have link compatibility with some Obsidian features, write a feature request to the [github repository](https://github.com/derwish-pro/obsidian-consistent-attachments-and-links/issues) of this plugin.
+
 
 ## How plugins work
 
