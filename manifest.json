@@ -3,7 +3,7 @@
 	"name": "Consistent attachments and links",
 	"version": "1.0.2",
 	"minAppVersion": "0.9.12",
-	"description": "Move note attachments and update links automatically",
+	"description": "This plugin ensures the consistency of attachments and links",
 	"author": "Dmitry Savosh",
 	"authorUrl": "https://github.com/derwish-pro/",
 	"isDesktopOnly": true
