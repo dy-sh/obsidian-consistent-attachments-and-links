@@ -44,6 +44,8 @@ Required Obsidian settings for the plugin to work properly:
 
 - **"Use \[\[Wikilinks\]\]": disabled**. Wikilinks are not a markdown standard.
 
+Recommended additional settings (not required for the plugin to work):
+
 - **"Default location for new attachments":In subfolder under current folder**. This is not required, but this ensures that attachments are always next to your notes. The option "Same folder as current file" is also suitable.
 
 - **"Subfolder name": "_attachments"**. Or any other.
@@ -53,7 +55,7 @@ Please make a backup of your files before running the plugin for the first time.
 
 ## Todo
 
-- Add hotkey "Move all attachments to notes", to reorganize the folder structure to a more consistent state in one click.
+- Add hotkey "Move all attachments to notes" to reorganize the folder structure to a more consistent state in one click.
 
 - Find broken links with a reliable algorithm by reading and checking each file.
 
