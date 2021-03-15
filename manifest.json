@@ -1,10 +1,10 @@
 {
 	"id": "consistent-attachments-and-links",
 	"name": "Consistent attachments and links",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.9.12",
 	"description": "Move note attachments and update links automatically",
 	"author": "Dmitry Savosh",
 	"authorUrl": "https://github.com/derwish-pro/",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }
