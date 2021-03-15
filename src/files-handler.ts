@@ -53,6 +53,11 @@ export class FilesHandler {
 
 		for (let embed of embeds) {
 			let link = embed.link;
+			let oldLinkPath = this.lh.getFullPathForLink(link, oldNotePath);
+
+			if (movedAttachments.findIndex(x => x.oldPath == oldLinkPath) != -1)
+				continue;//already moved
+
 
 			let file = this.lh.getFileByLink(link, oldNotePath);
 			if (!file) {
@@ -60,7 +65,6 @@ export class FilesHandler {
 				continue;
 			}
 
-			let oldLinkPath = this.lh.getFullPathForLink(link, oldNotePath);
 
 			//if attachment not in note directory, skip it
 			// = "." means that note was at root path, so do not skip it
@@ -70,8 +74,6 @@ export class FilesHandler {
 
 			await this.createFolderForAttachment(link, newNotePath);
 			let newLinkPath = this.lh.getFullPathForLink(link, newNotePath);
-
-
 			let linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(file.path);
 
 			//if no other file has link to this file - try to move file
