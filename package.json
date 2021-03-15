@@ -1,7 +1,7 @@
 {
   "name": "consistent-attachments-and-links",
   "version": "0.9.7",
-  "description": "Move note attachments and update links automatically",
+  "description": "This plugin ensures the consistency of attachments and links",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
