@@ -26,7 +26,7 @@ It does this safely, making sure not to move attachments that are referenced by 
 
 If you move a note to a folder where there are already attachments with the same names, the plugin can operate in two modes (can be selected in the settings):
 1. Duplicate files will be renamed (new names are generated), and then moved to a new folder with a note.
-2. It will remove the duplicate files that you move, leaving the ones that are already in the target folder. This is useful if you have unique names for all attachments. You can use this plugin which renames attachments by generating file names based on file content: [Unique attachments](https://github.com/derwish-pro/obsidian-unique-attachments) (it's great to use both of these plugins in conjunction).
+2. It will remove the duplicate files that you move, leaving the ones that are already in the target folder. This is useful if you have unique names for all attachments. You can use this plugin which renames attachments by generating file names based on hashing of file content: [Unique attachments](https://github.com/derwish-pro/obsidian-unique-attachments) (it's great to use both of these plugins in conjunction).
 
 When deleting a note, the plugin can delete all attachments that are no longer in use. This option can be disabled.
 
