@@ -8,6 +8,8 @@ export interface LinkChangeInfo {
 	newPath: string
 }
 
+const markdownLinkRegex = /\[(.*?)\]\((.*?)(?=\"|\))(\".*?\")?\)/g;
+
 export class LinksHandler {
 
 	constructor(
@@ -39,12 +41,13 @@ export class LinksHandler {
 		return fullPath;
 	}
 
-	getAllLinksToFile(filePath: string): { [notePath: string]: LinkCache[]; } {
+	getAllCachedLinksToFile(filePath: string): { [notePath: string]: LinkCache[]; } {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
 		if (notes) {
 			for (let note of notes) {
+				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(note.path)?.links;
 
 				if (links) {
@@ -63,12 +66,13 @@ export class LinksHandler {
 		return allLinks;
 	}
 
-	getAllEmbedsToFile(filePath: string): { [notePath: string]: EmbedCache[]; } {
+	getAllCachedEmbedsToFile(filePath: string): { [notePath: string]: EmbedCache[]; } {
 		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
 		if (notes) {
 			for (let note of notes) {
+				//!!! this can return undefined if note was just updated
 				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
 
 				if (embeds) {
@@ -88,19 +92,23 @@ export class LinksHandler {
 	}
 
 
-
-	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt: boolean) {
-		let notes = this.getNotesThatHaveLinkToFile(oldNotePath);
-		let changedLinks: LinkChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
+	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false) {
+		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);
+		let links: LinkChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
 		if (notes) {
 			for (let note of notes) {
-				await this.updateChangedLinksInNote(note, changedLinks, changelinksAlt);
+				await this.updateChangedLinksInNote(note, links, changelinksAlt);
 			}
 		}
 	}
 
-	async updateChangedLinksInNote(notePath: string, changedLinks: LinkChangeInfo[], changelinksAlt: boolean) {
+	async updateChangedLinkInNote(notePath: string, oldLink: string, newLink: string, changelinksAlt = false) {
+		let changes: LinkChangeInfo[] = [{ oldPath: oldLink, newPath: newLink }];
+		return await this.updateChangedLinksInNote(notePath, changes, changelinksAlt);
+	}
+
+	async updateChangedLinksInNote(notePath: string, changedLinks: LinkChangeInfo[], changelinksAlt = false) {
 		let file = this.getFileByPath(notePath);
 		if (!file) {
 			console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
@@ -110,7 +118,7 @@ export class LinksHandler {
 		let text = await this.app.vault.read(file);
 		let dirty = false;
 
-		let elements = text.match(/\[.*?\)/g);
+		let elements = text.match(markdownLinkRegex);
 		if (elements != null && elements.length > 0) {
 			for (let el of elements) {
 				let alt = el.match(/\[(.*?)\]/)[1];
@@ -138,7 +146,7 @@ export class LinksHandler {
 						dirty = true;
 
 						console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
-							+ file.path + "\n   " + link + "   \n" + newRelLink)
+							+ file.path + "\n   " + link + "\n   " + newRelLink)
 					}
 				}
 			}
@@ -193,7 +201,7 @@ export class LinksHandler {
 			await this.app.vault.modify(file, text);
 	}
 
-	getNotesThatHaveLinkToFile(filePath: string): string[] {
+	getCachedNotesThatHaveLinkToFile(filePath: string): string[] {
 		let notes: string[] = [];
 		let allNotes = this.app.vault.getMarkdownFiles();
 
@@ -201,6 +209,7 @@ export class LinksHandler {
 			for (let note of allNotes) {
 				let notePath = note.path;
 
+				//!!! this can return undefined if note was just updated
 				let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 
 				if (embeds) {
@@ -213,7 +222,9 @@ export class LinksHandler {
 					}
 				}
 
+				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(notePath)?.links;
+
 				if (links) {
 					for (let link of links) {
 						let linkFullPath = this.getFullPathForLink(link.link, notePath);
@@ -229,5 +240,72 @@ export class LinksHandler {
 		return notes;
 	}
 
+	async getNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
+		let notes: string[] = [];
+		let allNotes = this.app.vault.getMarkdownFiles();
 
+		if (allNotes) {
+			for (let note of allNotes) {
+				let notePath = note.path;
+
+				let links = await this.getLinksFromNote(notePath);
+
+				for (let link of links) {
+					let linkFullPath = this.getFullPathForLink(link.link, notePath);
+					if (linkFullPath == filePath) {
+						if (!notes.contains(notePath))
+							notes.push(notePath);
+					}
+				}
+			}
+		}
+
+		return notes;
+	}
+
+
+	getFilePathWithRenamedBaseName(filePath: string, newBaseName: string): string {
+		return Utils.normalizePathForFile(path.join(path.dirname(filePath), newBaseName + path.extname(filePath)));
+	}
+
+	async getLinksFromNote(notePath: string): Promise<LinkCache[]> {
+		let file = this.getFileByPath(notePath);
+		if (!file) {
+			console.error(this.consoleLogPrefix + "cant get embeds, file not found: " + notePath);
+			return;
+		}
+
+		let text = await this.app.vault.read(file);
+
+		let links: LinkCache[] = [];
+
+		let elements = text.match(markdownLinkRegex);
+		if (elements != null && elements.length > 0) {
+			for (let el of elements) {
+				let alt = el.match(/\[(.*?)\]/)[1];
+				let link = el.match(/\((.*?)\)/)[1];
+
+				let emb: LinkCache = {
+					link: link,
+					displayText: alt,
+					original: el,
+					position: {
+						start: {
+							col: 0,//todo
+							line: 0,
+							offset: 0
+						},
+						end: {
+							col: 0,//todo
+							line: 0,
+							offset: 0
+						}
+					}
+				};
+
+				links.push(emb);
+			}
+		}
+		return links;
+	}
 }
