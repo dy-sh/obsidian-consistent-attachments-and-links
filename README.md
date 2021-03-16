@@ -95,20 +95,20 @@ This is the fastest way to clean up your library.
 
 Searches for all wikilinks in notes and converts them into regular markdown links.
 
-Example:
-`[[readme]]`
-will turn into this:
-`[readme](readme.md)`
+Example:  
+`[[readme]]`  
+will turn into this:  
+`[readme](readme.md)`  
 <br>
 
 ### Convert all embed paths to relative
 
 Searches for all embeds in notes and converts their paths to relative format.
 
-Example:
-`![](title.png)`
-will turn into this:
-`![](../attachments/title.png)`
+Example:  
+`![](title.png)`  
+will turn into this:  
+`![](../attachments/title.png)`  
 
 This is one of the most important steps on the road to consistency, ensuring that all embed links now point to the correct files accurately.
 <br>
@@ -117,10 +117,10 @@ This is one of the most important steps on the road to consistency, ensuring tha
 
 Does the same as "Convert all embed paths to relative" for links.
 
-Example:
-`[](readme.md)`
-will turn into this:
-`[](../readme.md)`
+Example:  
+`[](readme.md)`  
+will turn into this:  
+`[](../readme.md)`  
 <br>
 
 ### Collect all attachments
