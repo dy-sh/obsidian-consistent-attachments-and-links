@@ -561,7 +561,8 @@ export class LinksHandler {
 			for (let embed of embeds) {
 				if (this.checkIsCorrectWikiEmbed(embed.original)) {
 
-					let newLink = '![' + ']' + '(' + embed.link + ')'
+					let newPath = Utils.normalizePathForLink(embed.link)
+					let newLink = '![' + ']' + '(' + newPath + ')'
 					text = text.replace(embed.original, newLink);
 
 					console.log(this.consoleLogPrefix + "wikilink (embed) replaced in note [note, old link, new link]: \n   "
@@ -576,9 +577,14 @@ export class LinksHandler {
 
 		if (links) {
 			for (let link of links) {
-				if (this.checkIsCorrectWikiLink(link.original)) {
+				if (this.checkIsCorrectWikiLink(link.original)) {					
+					let newPath = Utils.normalizePathForLink(link.link)
 
-					let newLink = '[' + link.displayText + ']' + '(' + link.link + ')'
+					let file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
+					if (file && file.extension == "md" && !newPath.endsWith(".md"))
+						newPath = newPath + ".md";
+
+					let newLink = '[' + link.displayText + ']' + '(' + newPath + ')'
 					text = text.replace(link.original, newLink);
 
 					console.log(this.consoleLogPrefix + "wikilink replaced in note [note, old link, new link]: \n   "
@@ -590,9 +596,6 @@ export class LinksHandler {
 				}
 			}
 		}
-
-
-
 
 		if (dirty)
 			await this.app.vault.modify(noteFile, text);
