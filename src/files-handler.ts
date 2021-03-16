@@ -94,38 +94,70 @@ export class FilesHandler {
 	async collectAttachmentsForCachedNote(notePath: string, subfolderName: string,
 		deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
 
-		//!!! this can return undefined if note was just updated
-		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
-
-		if (!embeds)
-			return;
-
 		let result: MovedAttachmentResult = {
 			movedAttachments: [],
 			renamedFiles: []
 		};
 
-		for (let embed of embeds) {
-			let link = embed.link;
-			let file = this.lh.getFileByLink(link, notePath)
-			if (!file) {
-				console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link);
-				continue;
+		//!!! this can return undefined if note was just updated
+		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+		if (embeds) {
+			for (let embed of embeds) {
+				let link = embed.link;
+
+				let fillPathLink = this.lh.getFullPathForLink(link, notePath);
+				if (result.movedAttachments.findIndex(x => x.oldPath == fillPathLink) != -1)
+					continue;//already moved	
+
+				let file = this.lh.getFileByLink(link, notePath)
+				if (!file) {
+					console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + link);
+					continue;
+				}
+
+				let newPath = (subfolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), subfolderName);
+				newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
+
+				if (newPath == file.path)//nothing to move
+					continue;
+
+				let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
+
+				result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
+				result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
 			}
+		}
 
-			if (result.movedAttachments.findIndex(x => x.oldPath == file.path) != -1)
-				continue;//already moved	
+		//!!! this can return undefined if note was just updated
+		let links = this.app.metadataCache.getCache(notePath)?.links;
+		if (links) {
+			for (let l of links) {
+				let link = l.link;
 
-			let newPath = (subfolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), subfolderName);
-			newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
+				if (link.endsWith(".md"))
+					continue;
 
-			if (newPath == file.path)//nothing to move
-				continue;
+				let fillPathLink = this.lh.getFullPathForLink(link, notePath);
+				if (result.movedAttachments.findIndex(x => x.oldPath == fillPathLink) != -1)
+					continue;//already moved	
 
-			let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
+				let file = this.lh.getFileByLink(link, notePath)
+				if (!file) {
+					console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link);
+					continue;
+				}
 
-			result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
-			result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
+				let newPath = (subfolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), subfolderName);
+				newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
+
+				if (newPath == file.path)//nothing to move
+					continue;
+
+				let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
+
+				result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
+				result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
+			}
 		}
 
 		return result;
