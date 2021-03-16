@@ -35,6 +35,14 @@ When deleting a note, the plugin can delete all attachments that are no longer i
 
 The plugin is also able to automatically delete empty folders that result from moving files, as well as update the text of links when renaming notes (optionally).
 
+## Commsands
+
+The plugin has the following commands that you can call:
+
+### Collect all attachments
+
+The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. In the plugin settings, you can specify how the subfolder should be called, which must be created in the folder with the note, in order to move attachments to it later ("Attachments subfolder" setting). If you leave this field blank, then attachments will be moved directly to the folder with the note, without subfolders. At any time, we can change this name and reorganize the folder structure in one click, the attachments will be moved to a new folder.
+
 
 ## How to configure 
 Required Obsidian settings for the plugin to work properly:
