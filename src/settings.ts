@@ -9,6 +9,7 @@ export interface PluginSettings {
     deleteExistFilesWhenMoveNote: boolean;
     changeNoteBacklinksAlt: boolean;
     ignoreFolders: string[];
+    attachmentsSubfolder: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -16,9 +17,10 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     deleteAttachmentsWithNote: true,
     updateLinks: true,
     deleteEmptyFolders: true,
-    deleteExistFilesWhenMoveNote: false,
+    deleteExistFilesWhenMoveNote: true,
     changeNoteBacklinksAlt: false,
     ignoreFolders: [".git/", ".obsidian/"],
+    attachmentsSubfolder: "",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -79,7 +81,7 @@ export class SettingTab extends PluginSettingTab {
 
 
         new Setting(containerEl)
-            .setName('Remove duplicate attachments while note moving')
+            .setName('Delete duplicate attachments while note moving')
             .setDesc('Delete attachment when moving a note if there is a file with the same name in the new folder. If disabled, file will be renamed and moved.')
             .addToggle(cb => cb.onChange(value => {
                 this.plugin.settings.deleteExistFilesWhenMoveNote = value;
@@ -108,6 +110,17 @@ export class SettingTab extends PluginSettingTab {
                 .onChange((value) => {
                     let paths = value.trim().split("\n").map(value => this.getNormalizedPath(value) + "/");
                     this.plugin.settings.ignoreFolders = paths;
+                    this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName("Attachments subfolder")
+            .setDesc("Collect attachments in this subfolder of the note folder (when using the \"Collect all attachments\" hotkey). Leave empty to collect attachments to the note folder without subfolders.")
+            .addText(cb => cb
+                .setPlaceholder("Example: _attachments")
+                .setValue(this.plugin.settings.attachmentsSubfolder)
+                .onChange((value) => {
+                    this.plugin.settings.attachmentsSubfolder = value;
                     this.plugin.saveSettings();
                 }));
     }
