@@ -107,7 +107,7 @@ export class FilesHandler {
 
 		for (let embed of embeds) {
 			let link = embed.link;
-			let file = this.app.metadataCache.getFirstLinkpathDest(link, notePath)
+			let file = this.lh.getFileByLink(link, notePath)
 			if (!file) {
 				console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link);
 				continue;
