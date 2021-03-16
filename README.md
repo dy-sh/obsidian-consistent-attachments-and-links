@@ -58,6 +58,8 @@ Please make a backup of your files before running the plugin for the first time.
 
 - Add hotkey "Move all attachments to notes" to reorganize the folder structure to a more consistent state in one click.
 
+- Add hotkey "Convert all links to relative paths"
+
 - Find broken links with a reliable algorithm by reading and checking each file.
 
 - Option to automatically replace wikilinks with markdown links and other markdown format compliance checks.

@@ -213,8 +213,8 @@ export class LinksHandler {
 				let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 				if (embeds) {
 					for (let embed of embeds) {
-						let embedFile = this.app.metadataCache.getFirstLinkpathDest(embed.link, note.path);
-						if (embedFile && embedFile.path == filePath) {
+						let linkPath = this.getFullPathForLink(embed.link, note.path);
+						if (linkPath == filePath) {
 							if (!notes.contains(notePath))
 								notes.push(notePath);
 						}
@@ -225,8 +225,8 @@ export class LinksHandler {
 				let links = this.app.metadataCache.getCache(notePath)?.links;
 				if (links) {
 					for (let link of links) {
-						let embedFile = this.app.metadataCache.getFirstLinkpathDest(link.link, note.path);
-						if (embedFile && embedFile.path == filePath) {
+						let linkPath = this.getFullPathForLink(link.link, note.path);
+						if (linkPath == filePath) {
 							if (!notes.contains(notePath))
 								notes.push(notePath);
 						}
