@@ -1,12 +1,12 @@
 import { App, TAbstractFile, TFile } from 'obsidian';
-import { LinksHandler, LinkChangeInfo } from './links-handler';
+import { LinksHandler, PathChangeInfo } from './links-handler';
 import { Utils } from './utils';
 
 const path = require('path');
 
 export interface MovedAttachmentResult {
-	movedAttachments: LinkChangeInfo[]
-	renamedFiles: LinkChangeInfo[],
+	movedAttachments: PathChangeInfo[]
+	renamedFiles: PathChangeInfo[],
 }
 
 export class FilesHandler {
