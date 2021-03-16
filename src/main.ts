@@ -1,7 +1,7 @@
 import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache, Notice } from 'obsidian';
 import { PluginSettings, DEFAULT_SETTINGS, SettingTab } from './settings';
 import { Utils } from './utils';
-import { LinksHandler, LinkChangeInfo } from './links-handler';
+import { LinksHandler, PathChangeInfo } from './links-handler';
 import { FilesHandler, MovedAttachmentResult } from './files-handler';
 
 const path = require('path');
@@ -39,6 +39,18 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			id: 'delete-empty-folders',
 			name: 'Delete empty folders',
 			callback: () => this.deleteEmptyFolders()
+		});
+
+		this.addCommand({
+			id: 'convert-all-link-paths-to-relative',
+			name: 'Convert all link paths to relative',
+			callback: () => this.convertAllLinkPathsToRelative()
+		});
+
+		this.addCommand({
+			id: 'convert-all-embed-paths-to-relative',
+			name: 'Convert all embed paths to relative',
+			callback: () => this.convertAllEmbedsPathsToRelative()
 		});
 
 		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
@@ -83,7 +95,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 					if (this.settings.updateLinks) {
 						if (result && result.renamedFiles && result.renamedFiles.length > 0) {
-							await this.lh.updateChangedLinksInNote(file.path, result.renamedFiles)
+							await this.lh.updateChangedPathsInNote(file.path, result.renamedFiles)
 						}
 					}
 				}
@@ -128,7 +140,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 					this.settings.deleteExistFilesWhenMoveNote);
 
 				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
-					await this.lh.updateChangedLinksInNote(note.path, result.movedAttachments)
+					await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments)
 					movedAttachmentsCount += result.movedAttachments.length;
 					processedNotesCount++;
 				}
@@ -141,6 +153,57 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			new Notice("Moved " + movedAttachmentsCount + " attachment" + (movedAttachmentsCount > 1 ? "s" : "")
 				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
 	}
+
+
+	async convertAllEmbedsPathsToRelative() {
+		let changedEmbedCount = 0;
+		let processedNotesCount = 0;
+
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+				let result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
+
+				if (result && result.length > 0) {
+					changedEmbedCount += result.length;
+					processedNotesCount++;
+				}
+			}
+		}
+
+		if (changedEmbedCount == 0)
+			new Notice("No embeds found that need to be reorganized");
+		else
+			new Notice("Reorganized " + changedEmbedCount + " embed" + (changedEmbedCount > 1 ? "s" : "")
+				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+	}
+
+
+	async convertAllLinkPathsToRelative() {
+		let changedLinksCount = 0;
+		let processedNotesCount = 0;
+
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+				let result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
+
+				if (result && result.length > 0) {
+					changedLinksCount += result.length;
+					processedNotesCount++;
+				}
+			}
+		}
+
+		if (changedLinksCount == 0)
+			new Notice("No links found that need to be reorganized");
+		else
+			new Notice("Reorganized " + changedLinksCount + " link" + (changedLinksCount > 1 ? "s" : "")
+				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+	}
+
 
 	deleteEmptyFolders() {
 		this.fh.deleteEmptyFolders("/", this.settings.ignoreFolders)

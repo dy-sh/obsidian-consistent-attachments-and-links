@@ -1,14 +1,51 @@
-import { App, TAbstractFile, TFile, EmbedCache, LinkCache } from 'obsidian';
+import { App, TAbstractFile, TFile, EmbedCache, LinkCache, Pos } from 'obsidian';
 import { Utils } from './utils';
 
 const path = require('path');
 
-export interface LinkChangeInfo {
+export interface PathChangeInfo {
 	oldPath: string,
-	newPath: string
+	newPath: string,
 }
 
-const markdownLinkRegex = /\[(.*?)\]\((.*?)(?=\"|\))(\".*?\")?\)/g;
+export interface EmbedChangeInfo {
+	oldEmbed: EmbedCache,
+	newPath: string,
+}
+
+export interface LinkChangeInfo {
+	oldLink: LinkCache,
+	newPath: string,
+}
+
+
+
+//simple regex
+// const markdownLinkOrEmbedRegexSimple = /\[(.*?)\]\((.*?)\)/gim
+// const markdownLinkRegexSimple = /(?<!\!)\[(.*?)\]\((.*?)\)/gim;
+// const markdownEmbedRegexSimple = /\!\[(.*?)\]\((.*?)\)/gim
+
+// const wikiLinkOrEmbedRegexSimple = /\[\[(.*?)\]\]/gim
+// const wikiLinkRegexSimple = /(?<!\!)\[\[(.*?)\]\]/gim;
+// const wikiEmbedRegexSimple = /\!\[\[(.*?)\]\]/gim
+
+//with escaping \ characters
+const markdownLinkOrEmbedRegexG = /(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/gim
+const markdownLinkRegexG = /(?<!\!)(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/gim;
+const markdownEmbedRegexG = /(?<!\\)\!\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/gim
+
+const wikiLinkOrEmbedRegexG = /(?<!\\)\[\[(.*?)(?<!\\)\]\]/gim
+const wikiLinkRegexG = /(?<!\!)(?<!\\)\[\[(.*?)(?<!\\)\]\]/gim;
+const wikiEmbedRegexG = /(?<!\\)\!\[\[(.*?)(?<!\\)\]\]/gim
+
+const markdownLinkOrEmbedRegex = /(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/im
+const markdownLinkRegex = /(?<!\!)(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/im;
+const markdownEmbedRegex = /(?<!\\)\!\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/im
+
+const wikiLinkOrEmbedRegex = /(?<!\\)\[\[(.*?)(?<!\\)\]\]/im
+const wikiLinkRegex = /(?<!\!)(?<!\\)\[\[(.*?)(?<!\\)\]\]/im;
+const wikiEmbedRegex = /(?<!\\)\!\[\[(.*?)(?<!\\)\]\]/im
+
 
 export class LinksHandler {
 
@@ -17,11 +54,43 @@ export class LinksHandler {
 		private consoleLogPrefix: string = ""
 	) { }
 
+	checkIsCorrectMarkdownEmbed(text: string) {
+		let elements = text.match(markdownEmbedRegexG);
+		return (elements != null && elements.length > 0)
+	}
+
+	checkIsCorrectMarkdownLink(text: string) {
+		let elements = text.match(markdownLinkRegexG);
+		return (elements != null && elements.length > 0)
+	}
+
+	checkIsCorrectMarkdownEmbedOrLink(text: string) {
+		let elements = text.match(markdownLinkOrEmbedRegexG);
+		return (elements != null && elements.length > 0)
+	}
+
+	checkIsCorrectWikiEmbed(text: string) {
+		let elements = text.match(wikiEmbedRegexG);
+		return (elements != null && elements.length > 0)
+	}
+
+	checkIsCorrectWikiLink(text: string) {
+		let elements = text.match(wikiLinkRegexG);
+		return (elements != null && elements.length > 0)
+	}
+
+	checkIsCorrectWikiEmbedOrLink(text: string) {
+		let elements = text.match(wikiLinkOrEmbedRegexG);
+		return (elements != null && elements.length > 0)
+	}
+
+
 	getFileByLink(link: string, owningNotePath: string): TFile {
 		let fullPath = this.getFullPathForLink(link, owningNotePath);
 		let file = this.getFileByPath(fullPath);
 		return file;
 	}
+
 
 	getFileByPath(path: string): TFile {
 		path = Utils.normalizePathForFile(path);
@@ -29,6 +98,7 @@ export class LinksHandler {
 		let file = files.find(file => Utils.normalizePathForFile(file.path) === path);
 		return file;
 	}
+
 
 	getFullPathForLink(link: string, owningNotePath: string): string {
 		link = Utils.normalizePathForFile(link);
@@ -40,6 +110,7 @@ export class LinksHandler {
 		fullPath = Utils.normalizePathForFile(fullPath);
 		return fullPath;
 	}
+
 
 	getAllCachedLinksToFile(filePath: string): { [notePath: string]: LinkCache[]; } {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
@@ -65,6 +136,7 @@ export class LinksHandler {
 
 		return allLinks;
 	}
+
 
 	getAllCachedEmbedsToFile(filePath: string): { [notePath: string]: EmbedCache[]; } {
 		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
@@ -94,21 +166,23 @@ export class LinksHandler {
 
 	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false) {
 		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);
-		let links: LinkChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
+		let links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
 		if (notes) {
 			for (let note of notes) {
-				await this.updateChangedLinksInNote(note, links, changelinksAlt);
+				await this.updateChangedPathsInNote(note, links, changelinksAlt);
 			}
 		}
 	}
 
-	async updateChangedLinkInNote(notePath: string, oldLink: string, newLink: string, changelinksAlt = false) {
-		let changes: LinkChangeInfo[] = [{ oldPath: oldLink, newPath: newLink }];
-		return await this.updateChangedLinksInNote(notePath, changes, changelinksAlt);
+
+	async updateChangedPathInNote(notePath: string, oldLink: string, newLink: string, changelinksAlt = false) {
+		let changes: PathChangeInfo[] = [{ oldPath: oldLink, newPath: newLink }];
+		return await this.updateChangedPathsInNote(notePath, changes, changelinksAlt);
 	}
 
-	async updateChangedLinksInNote(notePath: string, changedLinks: LinkChangeInfo[], changelinksAlt = false) {
+
+	async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[], changelinksAlt = false) {
 		let file = this.getFileByPath(notePath);
 		if (!file) {
 			console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
@@ -118,7 +192,7 @@ export class LinksHandler {
 		let text = await this.app.vault.read(file);
 		let dirty = false;
 
-		let elements = text.match(markdownLinkRegex);
+		let elements = text.match(markdownLinkOrEmbedRegexG);
 		if (elements != null && elements.length > 0) {
 			for (let el of elements) {
 				let alt = el.match(/\[(.*?)\]/)[1];
@@ -155,9 +229,6 @@ export class LinksHandler {
 		if (dirty)
 			await this.app.vault.modify(file, text);
 	}
-
-
-
 
 
 	async updateInternalLinksInMovedNote(oldNotePath: string, newNotePath: string, attachmentsAlreadyMoved: boolean) {
@@ -201,6 +272,7 @@ export class LinksHandler {
 			await this.app.vault.modify(file, text);
 	}
 
+
 	getCachedNotesThatHaveLinkToFile(filePath: string): string[] {
 		let notes: string[] = [];
 		let allNotes = this.app.vault.getMarkdownFiles();
@@ -238,6 +310,7 @@ export class LinksHandler {
 		return notes;
 	}
 
+
 	async getNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
 		let notes: string[] = [];
 		let allNotes = this.app.vault.getMarkdownFiles();
@@ -266,6 +339,7 @@ export class LinksHandler {
 		return Utils.normalizePathForFile(path.join(path.dirname(filePath), newBaseName + path.extname(filePath)));
 	}
 
+
 	async getLinksFromNote(notePath: string): Promise<LinkCache[]> {
 		let file = this.getFileByPath(notePath);
 		if (!file) {
@@ -277,7 +351,7 @@ export class LinksHandler {
 
 		let links: LinkCache[] = [];
 
-		let elements = text.match(markdownLinkRegex);
+		let elements = text.match(markdownLinkOrEmbedRegexG);
 		if (elements != null && elements.length > 0) {
 			for (let el of elements) {
 				let alt = el.match(/\[(.*?)\]/)[1];
@@ -305,5 +379,152 @@ export class LinksHandler {
 			}
 		}
 		return links;
+	}
+
+
+
+
+	async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<EmbedChangeInfo[]> {
+		let changedEmbeds: EmbedChangeInfo[] = [];
+
+		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+
+		if (embeds) {
+			for (let embed of embeds) {
+				if (this.checkIsCorrectMarkdownEmbed(embed.original) || this.checkIsCorrectWikiEmbed(embed.original)) {
+					let file = this.getFileByLink(embed.link, notePath);
+					if (file)
+						continue;
+
+					file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath);
+					if (file) {
+						let newPath = this.getFullPathForLink(embed.link, notePath);
+						changedEmbeds.push({ oldEmbed: embed, newPath: newPath })
+					} else {
+						console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
+					}
+				} else {
+					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wikilink): " + embed.original);
+				}
+			}
+		}
+
+		await this.updateChangedEmbedInNote(notePath, changedEmbeds);
+		return changedEmbeds;
+	}
+
+
+	async convertAllNoteLinksPathsToRelative(notePath: string): Promise<LinkChangeInfo[]> {
+		let changedLinks: LinkChangeInfo[] = [];
+
+		let links = this.app.metadataCache.getCache(notePath)?.links;
+
+		if (links) {
+			for (let link of links) {
+				if (this.checkIsCorrectMarkdownLink(link.original) || this.checkIsCorrectWikiLink(link.original)) {
+					let file = this.getFileByLink(link.link, notePath);
+					if (file)
+						continue;
+
+					//!!! link.displayText is always "" - OBSIDIAN BUG?, so get display text manualy
+					if (this.checkIsCorrectMarkdownLink(link.original)) {
+						let elements = link.original.match(markdownLinkRegex);
+						if (elements)
+							link.displayText = elements[1];
+					}
+
+					file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
+					if (file) {
+						let newPath = this.getFullPathForLink(link.link, notePath);
+						changedLinks.push({ oldLink: link, newPath: newPath })
+					} else {
+						console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
+					}
+				} else {
+					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wikilink): " + link.original);
+				}
+			}
+		}
+
+		await this.updateChangedLinkInNote(notePath, changedLinks);
+		return changedLinks;
+	}
+
+
+	async updateChangedEmbedInNote(notePath: string, changedEmbeds: EmbedChangeInfo[]) {
+		let noteFile = this.getFileByPath(notePath);
+		if (!noteFile) {
+			console.error(this.consoleLogPrefix + "cant update embeds in note, file not found: " + notePath);
+			return;
+		}
+
+		let text = await this.app.vault.read(noteFile);
+		let dirty = false;
+
+		if (changedEmbeds && changedEmbeds.length > 0) {
+			for (let embed of changedEmbeds) {
+				let newRelLink: string = path.relative(notePath, embed.newPath);
+				newRelLink = Utils.normalizePathForLink(newRelLink);
+
+				if (newRelLink == embed.oldEmbed.link)
+					continue;
+
+				if (this.checkIsCorrectMarkdownEmbed(embed.oldEmbed.original)) {
+					text = text.replace(embed.oldEmbed.original, '![' + embed.oldEmbed.displayText + ']' + '(' + newRelLink + ')');
+				} else if (this.checkIsCorrectWikiEmbed(embed.oldEmbed.original)) {
+					text = text.replace(embed.oldEmbed.original, '![[' + newRelLink + ']]');
+				} else {
+					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not maekdown or wikilink): " + embed.oldEmbed.original);
+					continue;
+				}
+
+				console.log(this.consoleLogPrefix + "embed updated in note [note, old link, new link]: \n   "
+					+ noteFile.path + "\n   " + embed.oldEmbed.link + "\n   " + newRelLink)
+
+				dirty = true;
+			}
+		}
+
+		if (dirty)
+			await this.app.vault.modify(noteFile, text);
+	}
+
+
+	async updateChangedLinkInNote(notePath: string, chandedLinks: LinkChangeInfo[]) {
+		let noteFile = this.getFileByPath(notePath);
+		if (!noteFile) {
+			console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
+			return;
+		}
+
+		let text = await this.app.vault.read(noteFile);
+		let dirty = false;
+
+		if (chandedLinks && chandedLinks.length > 0) {
+			for (let link of chandedLinks) {
+				let newRelLink: string = path.relative(notePath, link.newPath);
+				newRelLink = Utils.normalizePathForLink(newRelLink);
+
+				if (newRelLink == link.oldLink.link)
+					continue;
+
+				if (this.checkIsCorrectMarkdownLink(link.oldLink.original)) {
+					text = text.replace(link.oldLink.original, '[' + link.oldLink.displayText + ']' + '(' + newRelLink + ')');
+				} else if (this.checkIsCorrectWikiLink(link.oldLink.original)) {
+					text = text.replace(link.oldLink.original, '[[' + newRelLink + ']]');
+				} else {
+					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not maekdown or wikilink): " + link.oldLink.original);
+					continue;
+				}
+
+				console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
+					+ noteFile.path + "\n   " + link.oldLink.link + "\n   " + newRelLink)
+
+				dirty = true;
+			}
+		}
+
+		if (dirty)
+			await this.app.vault.modify(noteFile, text);
 	}
 }
