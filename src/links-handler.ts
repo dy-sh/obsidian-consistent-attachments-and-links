@@ -557,6 +557,23 @@ export class LinksHandler {
 		let text = await this.app.vault.read(noteFile);
 		let dirty = false;
 
+		if (embeds) { //embeds must go first!
+			for (let embed of embeds) {
+				if (this.checkIsCorrectWikiEmbed(embed.original)) {
+
+					let newLink = '![' + ']' + '(' + embed.link + ')'
+					text = text.replace(embed.original, newLink);
+
+					console.log(this.consoleLogPrefix + "wikilink (embed) replaced in note [note, old link, new link]: \n   "
+						+ noteFile.path + "\n   " + embed.original + "\n   " + newLink)
+
+					res.embeds.push({ old: embed, newLink: newLink })
+
+					dirty = true;
+				}
+			}
+		}
+
 		if (links) {
 			for (let link of links) {
 				if (this.checkIsCorrectWikiLink(link.original)) {
@@ -574,22 +591,7 @@ export class LinksHandler {
 			}
 		}
 
-		if (embeds) {
-			for (let embed of embeds) {
-				if (this.checkIsCorrectWikiEmbed(embed.original)) {
 
-					let newLink = '![' + ']' + '(' + embed.link + ')'
-					text = text.replace(embed.original, newLink);
-
-					console.log(this.consoleLogPrefix + "wikilink (embed) replaced in note [note, old link, new link]: \n   "
-						+ noteFile.path + "\n   " + embed.original + "\n   " + newLink)
-
-					res.embeds.push({ old: embed, newLink: newLink })
-
-					dirty = true;
-				}
-			}
-		}
 
 
 		if (dirty)
