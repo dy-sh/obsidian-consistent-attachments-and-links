@@ -60,14 +60,28 @@ Recommended additional settings (not required for the plugin to work):
 
 The plugin has the following commands that you can call:
 
+
 ### Collect all attachments
 
 The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. In the "Attachments subfolder" plugin settings parameter, you can specify how the subfolder should be called, which must be created in the folder with the note, in order to move attachments to it later. If you leave this field blank, then attachments will be moved directly to the folder with the note, without subfolders. At any time, we can change this name and reorganize the folder structure in one click, the attachments will be moved to a new folder.
+
 
 ### Delete empty folders
 
 This command removes all empty folders in your library. In the plugin "Ignore folders to delete"  plugin settings parameter, you can specify folders in which you do not need to scan (all specified folders and their subfolders will be ignored).
 
+
+## How to improve the consistency of your vault (reorganize vault)
+
+Run the commands in the following order:
+- Replace all wikilinks with markdown links
+- Convert all embed paths to relative
+- Convert all link paths to relative
+- Rename all attachments (using Unique attachments, optional)
+- Collect all attachments (before that, specify "Attachments subfolder" name in the plugin settings)
+- Delete empty folders
+
+Or just run "Reorganize vault" command, then rename all attachments using Unique attachments (optional)
 
 
 ## Todo

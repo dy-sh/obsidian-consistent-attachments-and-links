@@ -405,10 +405,12 @@ export class LinksHandler {
 
 					file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath);
 					if (file) {
-						let fullLink = this.getFullPathForLink(file.path, notePath);
-						let newRelLink: string = path.relative(notePath, fullLink);
-
+						let newRelLink: string = path.relative(notePath, file.path);
 						newRelLink = isMarkdownEmbed ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
+
+						if (newRelLink.startsWith("../")) {
+							newRelLink = newRelLink.substring(3);
+						}
 
 						changedEmbeds.push({ old: embed, newLink: newRelLink })
 					} else {
@@ -448,10 +450,12 @@ export class LinksHandler {
 
 					file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
 					if (file) {
-						let fullLink = this.getFullPathForLink(file.path, notePath);
-						let newRelLink: string = path.relative(notePath, fullLink);
-
+						let newRelLink: string = path.relative(notePath, file.path);
 						newRelLink = isMarkdownLink ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
+
+						if (newRelLink.startsWith("../")) {
+							newRelLink = newRelLink.substring(3);
+						}
 
 						changedLinks.push({ old: link, newLink: newRelLink })
 					} else {
