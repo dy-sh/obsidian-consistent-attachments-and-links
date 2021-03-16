@@ -1,7 +1,6 @@
 import { App, TAbstractFile, TFile, EmbedCache, LinkCache, Pos } from 'obsidian';
 import { Utils } from './utils';
-
-const path = require('path');
+import { path } from './path';
 
 export interface PathChangeInfo {
 	oldPath: string,

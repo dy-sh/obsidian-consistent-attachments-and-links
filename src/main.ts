@@ -3,9 +3,7 @@ import { PluginSettings, DEFAULT_SETTINGS, SettingTab } from './settings';
 import { Utils } from './utils';
 import { LinksHandler, PathChangeInfo } from './links-handler';
 import { FilesHandler, MovedAttachmentResult } from './files-handler';
-
-const path = require('path');
-
+import { path } from './path';
 
 
 
@@ -245,7 +243,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		this.fh.deleteEmptyFolders("/", this.settings.ignoreFolders)
 	}
 
-	async reorganizeVault(){
+	async reorganizeVault() {
 		await this.replaceAllWikilinksWithMarkdownLinks()
 		await this.convertAllEmbedsPathsToRelative()
 		await this.convertAllLinkPathsToRelative()
