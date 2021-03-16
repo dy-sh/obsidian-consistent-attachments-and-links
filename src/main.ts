@@ -220,7 +220,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			for (let note of notes) {
 				let result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
 
-				if (result) {
+				if (result && (result.links.length > 0 || result.embeds.length > 0)) {
 					changedLinksCount += result.links.length;
 					changedLinksCount += result.embeds.length;
 					processedNotesCount++;
