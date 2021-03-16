@@ -38,8 +38,6 @@ export class SettingTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'Consistent attachments and links - Settings' });
 
-        containerEl.createSpan( { text: "Please, check \"Files & Linsks > Automatically update internal links\" option is disabled for the plugin to work as expected."});
-
 
         new Setting(containerEl)
             .setName('Move attachments with note')
