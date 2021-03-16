@@ -18,6 +18,11 @@ export interface LinkChangeInfo {
 	newLink: string,
 }
 
+export interface LinksAndEmbedsChangedInfo {
+	embeds: EmbedChangeInfo[]
+	links: LinkChangeInfo[]
+}
+
 
 
 //simple regex
@@ -532,5 +537,64 @@ export class LinksHandler {
 
 		if (dirty)
 			await this.app.vault.modify(noteFile, text);
+	}
+
+
+	async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string): Promise<LinksAndEmbedsChangedInfo> {
+		let res: LinksAndEmbedsChangedInfo = {
+			links: [],
+			embeds: [],
+		}
+
+		let noteFile = this.getFileByPath(notePath);
+		if (!noteFile) {
+			console.error(this.consoleLogPrefix + "cant update wikilinks in note, file not found: " + notePath);
+			return;
+		}
+
+		let links = this.app.metadataCache.getCache(notePath)?.links;
+		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+		let text = await this.app.vault.read(noteFile);
+		let dirty = false;
+
+		if (links) {
+			for (let link of links) {
+				if (this.checkIsCorrectWikiLink(link.original)) {
+
+					let newLink = '[' + link.displayText + ']' + '(' + link.link + ')'
+					text = text.replace(link.original, newLink);
+
+					console.log(this.consoleLogPrefix + "wikilink replaced in note [note, old link, new link]: \n   "
+						+ noteFile.path + "\n   " + link.original + "\n   " + newLink)
+
+					res.links.push({ old: link, newLink: newLink })
+
+					dirty = true;
+				}
+			}
+		}
+
+		if (embeds) {
+			for (let embed of embeds) {
+				if (this.checkIsCorrectWikiEmbed(embed.original)) {
+
+					let newLink = '![' + ']' + '(' + embed.link + ')'
+					text = text.replace(embed.original, newLink);
+
+					console.log(this.consoleLogPrefix + "wikilink (embed) replaced in note [note, old link, new link]: \n   "
+						+ noteFile.path + "\n   " + embed.original + "\n   " + newLink)
+
+					res.embeds.push({ old: embed, newLink: newLink })
+
+					dirty = true;
+				}
+			}
+		}
+
+
+		if (dirty)
+			await this.app.vault.modify(noteFile, text);
+
+		return res;
 	}
 }

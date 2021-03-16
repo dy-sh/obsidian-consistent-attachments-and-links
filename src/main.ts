@@ -53,6 +53,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			callback: () => this.convertAllEmbedsPathsToRelative()
 		});
 
+		this.addCommand({
+			id: 'replace-all-wikilinks-with-markdown-links',
+			name: 'Replace all wikilinks with markdown links',
+			callback: () => this.replaceAllWikilinksWithMarkdownLinks()
+		});
+
 		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
 		this.fh = new FilesHandler(this.app, this.lh, "Consistent attachments and links: ");
 	}
@@ -173,9 +179,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		}
 
 		if (changedEmbedCount == 0)
-			new Notice("No embeds found that need to be reorganized");
+			new Notice("No embeds found that need to be converted");
 		else
-			new Notice("Reorganized " + changedEmbedCount + " embed" + (changedEmbedCount > 1 ? "s" : "")
+			new Notice("Converted " + changedEmbedCount + " embed" + (changedEmbedCount > 1 ? "s" : "")
 				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
 	}
 
@@ -198,12 +204,36 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		}
 
 		if (changedLinksCount == 0)
-			new Notice("No links found that need to be reorganized");
+			new Notice("No links found that need to be converted");
 		else
-			new Notice("Reorganized " + changedLinksCount + " link" + (changedLinksCount > 1 ? "s" : "")
+			new Notice("Converted " + changedLinksCount + " link" + (changedLinksCount > 1 ? "s" : "")
 				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
 	}
 
+	async replaceAllWikilinksWithMarkdownLinks() {
+		let changedLinksCount = 0;
+		let processedNotesCount = 0;
+
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+				let result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
+
+				if (result) {
+					changedLinksCount += result.links.length;
+					changedLinksCount += result.embeds.length;
+					processedNotesCount++;
+				}
+			}
+		}
+
+		if (changedLinksCount == 0)
+			new Notice("No wikilinks found that need to be replaced");
+		else
+			new Notice("Replaced " + changedLinksCount + " wikilink" + (changedLinksCount > 1 ? "s" : "")
+				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+	}
 
 	deleteEmptyFolders() {
 		this.fh.deleteEmptyFolders("/", this.settings.ignoreFolders)
