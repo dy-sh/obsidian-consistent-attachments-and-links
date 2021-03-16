@@ -59,6 +59,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			callback: () => this.replaceAllWikilinksWithMarkdownLinks()
 		});
 
+		this.addCommand({
+			id: 'reorganize-vault',
+			name: 'Reorganize vault',
+			callback: () => this.reorganizeVault()
+		});
+
 		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
 		this.fh = new FilesHandler(this.app, this.lh, "Consistent attachments and links: ");
 	}
@@ -237,6 +243,15 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 	deleteEmptyFolders() {
 		this.fh.deleteEmptyFolders("/", this.settings.ignoreFolders)
+	}
+
+	async reorganizeVault(){
+		await this.replaceAllWikilinksWithMarkdownLinks()
+		await this.convertAllEmbedsPathsToRelative()
+		await this.convertAllLinkPathsToRelative()
+		//- Rename all attachments (using Unique attachments, optional)
+		await this.collectAllAttachments()
+		await this.deleteEmptyFolders()
 	}
 
 
