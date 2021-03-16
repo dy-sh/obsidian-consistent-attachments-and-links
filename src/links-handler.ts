@@ -9,13 +9,13 @@ export interface PathChangeInfo {
 }
 
 export interface EmbedChangeInfo {
-	oldEmbed: EmbedCache,
-	newPath: string,
+	old: EmbedCache,
+	newLink: string,
 }
 
 export interface LinkChangeInfo {
-	oldLink: LinkCache,
-	newPath: string,
+	old: LinkCache,
+	newLink: string,
 }
 
 
@@ -391,15 +391,21 @@ export class LinksHandler {
 
 		if (embeds) {
 			for (let embed of embeds) {
-				if (this.checkIsCorrectMarkdownEmbed(embed.original) || this.checkIsCorrectWikiEmbed(embed.original)) {
+				let isMarkdownEmbed = this.checkIsCorrectMarkdownEmbed(embed.original);
+				let isWikiEmbed = this.checkIsCorrectWikiEmbed(embed.original);
+				if (isMarkdownEmbed || isWikiEmbed) {
 					let file = this.getFileByLink(embed.link, notePath);
 					if (file)
 						continue;
 
 					file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath);
 					if (file) {
-						let newPath = this.getFullPathForLink(embed.link, notePath);
-						changedEmbeds.push({ oldEmbed: embed, newPath: newPath })
+						let fullLink = this.getFullPathForLink(file.path, notePath);
+						let newRelLink: string = path.relative(notePath, fullLink);
+
+						newRelLink = isMarkdownEmbed ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
+
+						changedEmbeds.push({ old: embed, newLink: newRelLink })
 					} else {
 						console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
 					}
@@ -421,13 +427,15 @@ export class LinksHandler {
 
 		if (links) {
 			for (let link of links) {
-				if (this.checkIsCorrectMarkdownLink(link.original) || this.checkIsCorrectWikiLink(link.original)) {
+				let isMarkdownLink = this.checkIsCorrectMarkdownLink(link.original);
+				let isWikiLink = this.checkIsCorrectWikiLink(link.original);
+				if (isMarkdownLink || isWikiLink) {
 					let file = this.getFileByLink(link.link, notePath);
 					if (file)
 						continue;
 
 					//!!! link.displayText is always "" - OBSIDIAN BUG?, so get display text manualy
-					if (this.checkIsCorrectMarkdownLink(link.original)) {
+					if (isMarkdownLink) {
 						let elements = link.original.match(markdownLinkRegex);
 						if (elements)
 							link.displayText = elements[1];
@@ -435,8 +443,12 @@ export class LinksHandler {
 
 					file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
 					if (file) {
-						let newPath = this.getFullPathForLink(link.link, notePath);
-						changedLinks.push({ oldLink: link, newPath: newPath })
+						let fullLink = this.getFullPathForLink(file.path, notePath);
+						let newRelLink: string = path.relative(notePath, fullLink);
+
+						newRelLink = isMarkdownLink ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
+
+						changedLinks.push({ old: link, newLink: newRelLink })
 					} else {
 						console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
 					}
@@ -463,23 +475,20 @@ export class LinksHandler {
 
 		if (changedEmbeds && changedEmbeds.length > 0) {
 			for (let embed of changedEmbeds) {
-				let newRelLink: string = path.relative(notePath, embed.newPath);
-				newRelLink = Utils.normalizePathForLink(newRelLink);
-
-				if (newRelLink == embed.oldEmbed.link)
+				if (embed.old.link == embed.newLink)
 					continue;
 
-				if (this.checkIsCorrectMarkdownEmbed(embed.oldEmbed.original)) {
-					text = text.replace(embed.oldEmbed.original, '![' + embed.oldEmbed.displayText + ']' + '(' + newRelLink + ')');
-				} else if (this.checkIsCorrectWikiEmbed(embed.oldEmbed.original)) {
-					text = text.replace(embed.oldEmbed.original, '![[' + newRelLink + ']]');
+				if (this.checkIsCorrectMarkdownEmbed(embed.old.original)) {
+					text = text.replace(embed.old.original, '![' + embed.old.displayText + ']' + '(' + embed.newLink + ')');
+				} else if (this.checkIsCorrectWikiEmbed(embed.old.original)) {
+					text = text.replace(embed.old.original, '![[' + embed.newLink + ']]');
 				} else {
-					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not maekdown or wikilink): " + embed.oldEmbed.original);
+					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not maekdown or wikilink): " + embed.old.original);
 					continue;
 				}
 
 				console.log(this.consoleLogPrefix + "embed updated in note [note, old link, new link]: \n   "
-					+ noteFile.path + "\n   " + embed.oldEmbed.link + "\n   " + newRelLink)
+					+ noteFile.path + "\n   " + embed.old.link + "\n   " + embed.newLink)
 
 				dirty = true;
 			}
@@ -502,23 +511,20 @@ export class LinksHandler {
 
 		if (chandedLinks && chandedLinks.length > 0) {
 			for (let link of chandedLinks) {
-				let newRelLink: string = path.relative(notePath, link.newPath);
-				newRelLink = Utils.normalizePathForLink(newRelLink);
-
-				if (newRelLink == link.oldLink.link)
+				if (link.old.link == link.newLink)
 					continue;
 
-				if (this.checkIsCorrectMarkdownLink(link.oldLink.original)) {
-					text = text.replace(link.oldLink.original, '[' + link.oldLink.displayText + ']' + '(' + newRelLink + ')');
-				} else if (this.checkIsCorrectWikiLink(link.oldLink.original)) {
-					text = text.replace(link.oldLink.original, '[[' + newRelLink + ']]');
+				if (this.checkIsCorrectMarkdownLink(link.old.original)) {
+					text = text.replace(link.old.original, '[' + link.old.displayText + ']' + '(' + link.newLink + ')');
+				} else if (this.checkIsCorrectWikiLink(link.old.original)) {
+					text = text.replace(link.old.original, '[[' + link.newLink + ']]');
 				} else {
-					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not maekdown or wikilink): " + link.oldLink.original);
+					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not maekdown or wikilink): " + link.old.original);
 					continue;
 				}
 
 				console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
-					+ noteFile.path + "\n   " + link.oldLink.link + "\n   " + newRelLink)
+					+ noteFile.path + "\n   " + link.old.link + "\n   " + link.newLink)
 
 				dirty = true;
 			}
