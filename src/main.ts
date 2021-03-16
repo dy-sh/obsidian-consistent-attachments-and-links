@@ -120,6 +120,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 					note.path,
 					this.settings.attachmentsSubfolder,
 					this.settings.deleteExistFilesWhenMoveNote);
+					
 				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
 					await this.lh.updateChangedLinksInNote(note.path, result.movedAttachments)
 					movedAttachmentsCount += result.movedAttachments.length;

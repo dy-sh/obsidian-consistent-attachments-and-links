@@ -107,19 +107,20 @@ export class FilesHandler {
 
 		for (let embed of embeds) {
 			let link = embed.link;
-			let oldLinkPath = this.lh.getFullPathForLink(link, notePath);
-
-			if (result.movedAttachments.findIndex(x => x.oldPath == oldLinkPath) != -1)
-				continue;//already moved
-
-			let file = this.lh.getFileByLink(link, notePath);
+			let file = this.app.metadataCache.getFirstLinkpathDest(link, notePath)
 			if (!file) {
 				console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link);
 				continue;
 			}
 
+			if (result.movedAttachments.findIndex(x => x.oldPath == file.path) != -1)
+				continue;//already moved	
+
 			let newPath = (subfolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), subfolderName);
 			newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
+
+			if (newPath == file.path)//nothing to move
+				continue;
 
 			let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
 
@@ -132,6 +133,11 @@ export class FilesHandler {
 
 
 	async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
+		if (file.path == newLinkPath) {
+			console.warn(this.consoleLogPrefix + "Cant move file. Source and destination path the same.")
+			return;
+		}
+
 		let result: MovedAttachmentResult = {
 			movedAttachments: [],
 			renamedFiles: []
