@@ -15,9 +15,12 @@ If you store attachments in a folder with a note or its subfolders, the plugin w
 
 **To use this plugin, you will have to give up all the proprietary things that Obsidian uses in the link format.** 
 
-Obsidian has a very clever file link search, but this can be a problem for you if you want your notes to be compatible with other programs. This is the main point of the plugin.
+Obsidian has a very clever file link search, but this can be a problem for you if you want your notes to be compatible with other programs. This is the main point of the plugin. See how to set up Obsidian below.
 
 If you still want to have link compatibility with some Obsidian features, write a feature request to the [github repository](https://github.com/derwish-pro/obsidian-consistent-attachments-and-links/issues) of this plugin.
+
+
+**Please make a backup of your files before using this plugin.**
 
 
 ## How plugins work
@@ -35,16 +38,9 @@ When deleting a note, the plugin can delete all attachments that are no longer i
 
 The plugin is also able to automatically delete empty folders that result from moving files, as well as update the text of links when renaming notes (optionally).
 
-## Commsands
-
-The plugin has the following commands that you can call:
-
-### Collect all attachments
-
-The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. In the plugin settings, you can specify how the subfolder should be called, which must be created in the folder with the note, in order to move attachments to it later ("Attachments subfolder" setting). If you leave this field blank, then attachments will be moved directly to the folder with the note, without subfolders. At any time, we can change this name and reorganize the folder structure in one click, the attachments will be moved to a new folder.
 
 
-## How to configure 
+## How to configure
 Required Obsidian settings for the plugin to work properly:
 
 - **"Files & Linsks > Automatically update internal links": disabled.** The plugin itself is responsible for updating the links. When Obsidian shows a dialog asking to update links, refuse.
@@ -59,12 +55,22 @@ Recommended additional settings (not required for the plugin to work):
 
 - **"Subfolder name": "_attachments"**. Or any other.
 
-## Caution
-Please make a backup of your files before running the plugin for the first time.
+
+## Commands
+
+The plugin has the following commands that you can call:
+
+### Collect all attachments
+
+The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. In the "Attachments subfolder" plugin settings parameter, you can specify how the subfolder should be called, which must be created in the folder with the note, in order to move attachments to it later. If you leave this field blank, then attachments will be moved directly to the folder with the note, without subfolders. At any time, we can change this name and reorganize the folder structure in one click, the attachments will be moved to a new folder.
+
+### Delete empty folders
+
+This command removes all empty folders in your library. In the plugin "Ignore folders to delete"  plugin settings parameter, you can specify folders in which you do not need to scan (all specified folders and their subfolders will be ignored).
+
+
 
 ## Todo
-
-- Add hotkey "Move all attachments to notes" to reorganize the folder structure to a more consistent state in one click.
 
 - Add hotkey "Convert all links to relative paths"
 

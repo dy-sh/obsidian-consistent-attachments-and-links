@@ -35,6 +35,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			callback: () => this.collectAllAttachments()
 		});
 
+		this.addCommand({
+			id: 'delete-empty-folders',
+			name: 'Delete empty folders',
+			callback: () => this.deleteEmptyFolders()
+		});
+
 		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
 		this.fh = new FilesHandler(this.app, this.lh, "Consistent attachments and links: ");
 	}
@@ -120,7 +126,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 					note.path,
 					this.settings.attachmentsSubfolder,
 					this.settings.deleteExistFilesWhenMoveNote);
-					
+
 				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
 					await this.lh.updateChangedLinksInNote(note.path, result.movedAttachments)
 					movedAttachmentsCount += result.movedAttachments.length;
@@ -136,7 +142,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
 	}
 
-
+	deleteEmptyFolders() {
+		this.fh.deleteEmptyFolders("/", this.settings.ignoreFolders)
+	}
 
 
 	async loadSettings() {
