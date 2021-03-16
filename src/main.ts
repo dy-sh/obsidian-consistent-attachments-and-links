@@ -2,7 +2,7 @@ import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache, Notice } from
 import { PluginSettings, DEFAULT_SETTINGS, SettingTab } from './settings';
 import { Utils } from './utils';
 import { LinksHandler, LinkChangeInfo } from './links-handler';
-import { FilesHandler } from './files-handler';
+import { FilesHandler, MovedAttachmentResult } from './files-handler';
 
 const path = require('path');
 
@@ -29,9 +29,16 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			this.app.vault.on('rename', (file, oldPath) => this.handleRenamedFile(file, oldPath)),
 		);
 
+		this.addCommand({
+			id: 'collect-all-attachments',
+			name: 'Collect all attachments',
+			callback: () => this.collectAllAttachments()
+		});
+
 		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
 		this.fh = new FilesHandler(this.app, this.lh, "Consistent attachments and links: ");
 	}
+
 
 	async handleDeletedFile(file: TAbstractFile) {
 		let fileExt = file.path.substring(file.path.lastIndexOf("."));
@@ -53,8 +60,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 	async handleRenamedFile(file: TAbstractFile, oldPath: string) {
-		let movedAttachments: LinkChangeInfo[];
-		let updatedLinks: LinkChangeInfo[];
+		let result: MovedAttachmentResult;
 
 		let fileExt = oldPath.substring(oldPath.lastIndexOf("."));
 
@@ -63,12 +69,17 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 			if (path.dirname(oldPath) != path.dirname(file.path)) {
 				if (this.settings.moveAttachmentsWithNote) {
-					movedAttachments = await this.fh.moveCachedNoteAttachments(
+					result = await this.fh.moveCachedNoteAttachments(
 						oldPath,
 						file.path,
-						this.settings.deleteExistFilesWhenMoveNote,
-						this.settings.updateLinks
+						this.settings.deleteExistFilesWhenMoveNote
 					)
+
+					if (this.settings.updateLinks) {
+						if (result && result.renamedFiles && result.renamedFiles.length > 0) {
+							await this.lh.updateChangedLinksInNote(file.path, result.renamedFiles)
+						}
+					}
 				}
 
 				if (this.settings.updateLinks) {
@@ -91,10 +102,40 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			await this.lh.updateLinksToRenamedFile(oldPath, file.path, updateAlts)
 		}
 
-		if (movedAttachments && movedAttachments.length > 0) {
-			new Notice("Moved " + movedAttachments.length + " attachment" + (movedAttachments.length > 1 ? "s" : ""));
+		if (result && result.movedAttachments && result.movedAttachments.length > 0) {
+			new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
 		}
 	}
+
+
+	async collectAllAttachments() {
+		let movedAttachmentsCount = 0;
+		let processedNotesCount = 0;
+
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+				let result = await this.fh.collectAttachmentsForCachedNote(
+					note.path,
+					this.settings.attachmentsSubfolder,
+					this.settings.deleteExistFilesWhenMoveNote);
+				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
+					await this.lh.updateChangedLinksInNote(note.path, result.movedAttachments)
+					movedAttachmentsCount += result.movedAttachments.length;
+					processedNotesCount++;
+				}
+			}
+		}
+
+		if (movedAttachmentsCount == 0)
+			new Notice("No files found that need to be moved");
+		else
+			new Notice("Moved " + movedAttachmentsCount + " attachment" + (movedAttachmentsCount > 1 ? "s" : "")
+				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+	}
+
+
 
 
 	async loadSettings() {

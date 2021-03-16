@@ -30,7 +30,7 @@ export class LinksHandler {
 		return file;
 	}
 
-	getFullPathForLink(link: string, owningNotePath: string) {
+	getFullPathForLink(link: string, owningNotePath: string): string {
 		link = Utils.normalizePathForFile(link);
 		owningNotePath = Utils.normalizePathForFile(owningNotePath);
 
