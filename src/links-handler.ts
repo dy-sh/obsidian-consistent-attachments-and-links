@@ -23,6 +23,12 @@ export interface LinksAndEmbedsChangedInfo {
 }
 
 
+export interface LinkSectionInfo {
+	hasSection: boolean
+	link: string
+	secntion: string
+}
+
 
 //simple regex
 // const markdownLinkOrEmbedRegexSimple = /\[(.*?)\]\((.*?)\)/gim
@@ -35,7 +41,7 @@ export interface LinksAndEmbedsChangedInfo {
 
 //with escaping \ characters
 const markdownLinkOrEmbedRegexG = /(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/gim
-const markdownLinkRegexG = /(?<!\!)(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/gim;
+const markdownLinkRegexG = /(?<!\!)(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)(?:#(.*?))?\)/gim;
 const markdownEmbedRegexG = /(?<!\\)\!\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/gim
 
 const wikiLinkOrEmbedRegexG = /(?<!\\)\[\[(.*?)(?<!\\)\]\]/gim
@@ -170,6 +176,7 @@ export class LinksHandler {
 
 	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false) {
 		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);
+		console.warn(notes)
 		let links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
 		if (notes) {
@@ -201,6 +208,10 @@ export class LinksHandler {
 			for (let el of elements) {
 				let alt = el.match(/\[(.*?)\]/)[1];
 				let link = el.match(/\((.*?)\)/)[1];
+				let li = this.getLinkSectionInfo(link);
+
+				if (li.hasSection)  // for links with sections like [](note.md#section)
+					link = li.link;
 
 				let fullLink = this.getFullPathForLink(link, notePath);
 
@@ -214,12 +225,18 @@ export class LinksHandler {
 						}
 
 						if (changelinksAlt && newRelLink.endsWith(".md")) {
-							let ext = path.extname(newRelLink);
-							let baseName = path.basename(newRelLink, ext);
-							alt = Utils.normalizePathForFile(baseName);
+							//rename only if old alt == old note name
+							if (alt === path.basename(changedLink.oldPath, path.extname(changedLink.oldPath))) {
+								let ext = path.extname(newRelLink);
+								let baseName = path.basename(newRelLink, ext);
+								alt = Utils.normalizePathForFile(baseName);
+							}
 						}
 
-						text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')')
+						if (li.hasSection)
+							text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + '#' + li.secntion + ')');
+						else
+							text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
 
 						dirty = true;
 
@@ -250,6 +267,11 @@ export class LinksHandler {
 			for (let el of elements) {
 				let alt = el.match(/\[(.*?)\]/)[1];
 				let link = el.match(/\((.*?)\)/)[1];
+				let li = this.getLinkSectionInfo(link);
+
+				if (li.hasSection)  // for links with sections like [](note.md#section)
+					link = li.link;
+
 
 				//startsWith("../") - for not skipping files that not in the note dir
 				if (attachmentsAlreadyMoved && !link.endsWith(".md") && !link.startsWith("../"))
@@ -263,7 +285,10 @@ export class LinksHandler {
 					newRelLink = newRelLink.substring(3);
 				}
 
-				text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
+				if (li.hasSection)
+					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + '#' + li.secntion + ')');
+				else
+					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
 
 				dirty = true;
 
@@ -324,9 +349,9 @@ export class LinksHandler {
 				let notePath = note.path;
 
 				let links = await this.getLinksFromNote(notePath);
-
 				for (let link of links) {
-					let linkFullPath = this.getFullPathForLink(link.link, notePath);
+					let li = this.getLinkSectionInfo(link.link);
+					let linkFullPath = this.getFullPathForLink(li.link, notePath);
 					if (linkFullPath == filePath) {
 						if (!notes.contains(notePath))
 							notes.push(notePath);
@@ -336,6 +361,33 @@ export class LinksHandler {
 		}
 
 		return notes;
+	}
+
+	getLinkSectionInfo(link: string): LinkSectionInfo {
+		let res: LinkSectionInfo = {
+			hasSection: false,
+			link: link,
+			secntion: ""
+		}
+
+		if (!link.contains('#'))
+			return res;
+
+
+		let linkBeforeHash = link.match(/(.*?)#(.*?)$/)[1];
+		let section = link.match(/(.*?)#(.*?)$/)[2];
+
+
+
+		if (section != "" && linkBeforeHash.endsWith(".md")) { // for links with sections like [](note.md#section)
+			res = {
+				hasSection: true,
+				link: linkBeforeHash,
+				secntion: section
+			}
+		}
+
+		return res;
 	}
 
 
@@ -580,7 +632,7 @@ export class LinksHandler {
 
 		if (links) {
 			for (let link of links) {
-				if (this.checkIsCorrectWikiLink(link.original)) {					
+				if (this.checkIsCorrectWikiLink(link.original)) {
 					let newPath = Utils.normalizePathForLink(link.link)
 
 					let file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
