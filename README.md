@@ -86,7 +86,10 @@ The plugin has the following commands that you can call:
 
 ### Check vault consistent
 
-Check if there are vault consistency problems and print the report.
+Check if there are vault consistency problems and print the report. The report will contain:
+- Bad links
+- Bad embed paths
+- Bad note link sections (after # sybol)
 
 
 ### Reorganize vault

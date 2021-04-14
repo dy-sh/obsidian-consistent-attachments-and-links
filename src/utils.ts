@@ -17,4 +17,9 @@ export class Utils {
 		path = path.replace(/ /gi, "%20"); //replace space to %20
 		return path;
 	}
+
+	static normalizeLinkSection(section: string): string {
+		section = decodeURI(section);
+		return section;
+	}
 }
