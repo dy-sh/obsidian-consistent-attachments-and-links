@@ -216,6 +216,9 @@ export class LinksHandler {
 
 				if (links) {
 					for (let link of links) {
+						if (this.checkIsCorrectWikiLink(link.original))
+							continue;
+
 						let file = this.getFileByLink(link.link, note.path);
 						if (!file) {
 							if (!allLinks[note.path])
@@ -244,6 +247,9 @@ export class LinksHandler {
 
 				if (embeds) {
 					for (let embed of embeds) {
+						if (this.checkIsCorrectWikiEmbed(embed.original))
+							continue;
+
 						let file = this.getFileByLink(embed.link, note.path);
 						if (!file) {
 							if (!allEmbeds[note.path])
@@ -273,6 +279,9 @@ export class LinksHandler {
 
 				if (links) {
 					for (let link of links) {
+						if (this.checkIsCorrectWikiLink(link.original))
+							continue;
+
 						let file = this.getFileByLink(link.link, note.path);
 						if (file) {
 							if (!allLinks[note.path])
@@ -300,6 +309,8 @@ export class LinksHandler {
 				let links = this.app.metadataCache.getCache(note.path)?.links;
 				if (links) {
 					for (let link of links) {
+						if (this.checkIsCorrectWikiLink(link.original))
+							continue;
 
 						let li = this.splitLinkToPathAndSection(link.link);
 						if (!li.hasSection)
@@ -345,12 +356,72 @@ export class LinksHandler {
 
 				if (embeds) {
 					for (let embed of embeds) {
+						if (this.checkIsCorrectWikiEmbed(embed.original))
+							continue;
+
 						let file = this.getFileByLink(embed.link, note.path);
 						if (file) {
 							if (!allEmbeds[note.path])
 								allEmbeds[note.path] = [];
 							allEmbeds[note.path].push(embed);
 						}
+					}
+				}
+			}
+		}
+
+		return allEmbeds;
+	}
+
+	getAllWikiLinks(): { [notePath: string]: LinkCache[]; } {
+		let allLinks: { [notePath: string]: LinkCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
+				//!!! this can return undefined if note was just updated
+				let links = this.app.metadataCache.getCache(note.path)?.links;
+
+				if (links) {
+					for (let link of links) {
+						if (!this.checkIsCorrectWikiLink(link.original))
+							continue;
+
+						if (!allLinks[note.path])
+							allLinks[note.path] = [];
+						allLinks[note.path].push(link);
+
+					}
+				}
+			}
+		}
+
+		return allLinks;
+	}
+
+	getAllWikiEmbeds(): { [notePath: string]: EmbedCache[]; } {
+		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
+				//!!! this can return undefined if note was just updated
+				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+
+				if (embeds) {
+					for (let embed of embeds) {
+						if (!this.checkIsCorrectWikiEmbed(embed.original))
+							continue;
+
+						if (!allEmbeds[note.path])
+							allEmbeds[note.path] = [];
+						allEmbeds[note.path].push(embed);
 					}
 				}
 			}

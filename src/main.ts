@@ -303,15 +303,19 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		let badLinks = this.lh.getAllBadLinks();
 		let badSectionLinks = await this.lh.getAllBadSectionLinks();
 		let badEmbeds = this.lh.getAllBadEmbeds();
+		let wikiLinks = this.lh.getAllWikiLinks();
+		let wikiEmbeds = this.lh.getAllWikiEmbeds();
 
 		let text = "";
 
 		let badLinksCount = Object.keys(badLinks).length;
 		let badEmbedsCount = Object.keys(badEmbeds).length;
 		let badSectionLinksCount = Object.keys(badSectionLinks).length;
+		let wikiLinksCount = Object.keys(wikiLinks).length;
+		let wikiEmbedsCount = Object.keys(wikiEmbeds).length;
 
 		if (badLinksCount > 0) {
-			text += "# Bad links (" + badLinksCount + ")\n";
+			text += "# Bad links (" + badLinksCount + " files)\n";
 			for (let note in badLinks) {
 				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
 				for (let link of badLinks[note]) {
@@ -326,7 +330,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 		if (badSectionLinksCount > 0) {
-			text += "\n\n# Bad note link sections (" + badSectionLinksCount + ")\n";
+			text += "\n\n# Bad note link sections (" + badSectionLinksCount + " files)\n";
 			for (let note in badSectionLinks) {
 				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
 				for (let link of badSectionLinks[note]) {
@@ -343,7 +347,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 		if (badEmbedsCount > 0) {
-			text += "\n\n# Bad embeds (" + badEmbedsCount + ")\n";
+			text += "\n\n# Bad embeds (" + badEmbedsCount + " files)\n";
 			for (let note in badEmbeds) {
 				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
 				for (let link of badEmbeds[note]) {
@@ -355,6 +359,37 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			text += "\n\n# Bad embeds \n";
 			text += "No problems found\n\n"
 		}
+
+
+		if (wikiLinksCount > 0) {
+			text += "# Wiki links (" + wikiLinksCount + " files)\n";
+			for (let note in wikiLinks) {
+				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
+				for (let link of wikiLinks[note]) {
+					text += "- (line " + link.position.start.line + "): `" + link.original + "`\n";
+				}
+				text += "\n\n"
+			}
+		} else {
+			text += "# Wiki links \n";
+			text += "No problems found\n\n"
+		}
+
+		if (wikiEmbedsCount > 0) {
+			text += "\n\n# Wiki embeds (" + wikiEmbedsCount + " files)\n";
+			for (let note in wikiEmbeds) {
+				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
+				for (let link of wikiEmbeds[note]) {
+					text += "- (line " + link.position.start.line + "): `" + link.original + "`\n";
+				}
+				text += "\n\n"
+			}
+		} else {
+			text += "\n\n# Wiki embeds \n";
+			text += "No problems found\n\n"
+		}
+
+
 
 		let notePath = this.settings.consistantReportFile;
 		await this.app.vault.adapter.write(notePath, text);
