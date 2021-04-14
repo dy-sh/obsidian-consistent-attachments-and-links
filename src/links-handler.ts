@@ -130,6 +130,9 @@ export class LinksHandler {
 
 		if (notes) {
 			for (let note of notes) {
+				if (note.path == filePath)
+					continue;
+
 				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(note.path)?.links;
 
@@ -156,6 +159,9 @@ export class LinksHandler {
 
 		if (notes) {
 			for (let note of notes) {
+				if (note.path == filePath)
+					continue;
+
 				//!!! this can return undefined if note was just updated
 				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
 
@@ -207,8 +213,8 @@ export class LinksHandler {
 		let elements = text.match(markdownLinkOrEmbedRegexG);
 		if (elements != null && elements.length > 0) {
 			for (let el of elements) {
-				let alt = el.match(/\[(.*?)\]/)[1];
-				let link = el.match(/\((.*?)\)/)[1];
+				let alt = el.match(markdownLinkOrEmbedRegex)[1];
+				let link = el.match(markdownLinkOrEmbedRegex)[2];
 				let li = this.splitLinkToPathAndSection(link);
 
 				if (li.hasSection)  // for links with sections like [](note.md#section)
@@ -263,11 +269,11 @@ export class LinksHandler {
 		let text = await this.app.vault.read(file);
 		let dirty = false;
 
-		let elements = text.match(/\[.*?\)/g);
+		let elements = text.match(markdownLinkOrEmbedRegexG);
 		if (elements != null && elements.length > 0) {
 			for (let el of elements) {
-				let alt = el.match(/\[(.*?)\]/)[1];
-				let link = el.match(/\((.*?)\)/)[1];
+				let alt = el.match(markdownLinkOrEmbedRegex)[1];
+				let link = el.match(markdownLinkOrEmbedRegex)[2];
 				let li = this.splitLinkToPathAndSection(link);
 
 				if (li.hasSection)  // for links with sections like [](note.md#section)
@@ -310,6 +316,8 @@ export class LinksHandler {
 		if (allNotes) {
 			for (let note of allNotes) {
 				let notePath = note.path;
+				if (note.path == filePath)
+					continue;
 
 				//!!! this can return undefined if note was just updated
 				let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
@@ -348,6 +356,8 @@ export class LinksHandler {
 		if (allNotes) {
 			for (let note of allNotes) {
 				let notePath = note.path;
+				if (notePath == filePath)
+					continue;
 
 				let links = await this.getLinksFromNote(notePath);
 				for (let link of links) {

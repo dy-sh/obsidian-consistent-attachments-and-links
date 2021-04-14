@@ -88,6 +88,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 	async handleRenamedFile(file: TAbstractFile, oldPath: string) {
+		await Utils.delay(300); //waiting for update vault
 		let result: MovedAttachmentResult;
 
 		let fileExt = oldPath.substring(oldPath.lastIndexOf("."));
