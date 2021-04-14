@@ -90,6 +90,8 @@ Check if there are vault consistency problems and print the report. The report w
 - Bad links
 - Bad embed paths
 - Bad note link sections (after # sybol)
+- Wiki-links
+- Wiki-embeds
 
 
 ### Reorganize vault
