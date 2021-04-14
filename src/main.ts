@@ -116,16 +116,17 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 				//delete child folders (do not delete parent)
 				if (this.settings.deleteEmptyFolders) {
-					let list = await this.app.vault.adapter.list(path.dirname(oldPath));
-					for (let folder of list.folders) {
-						await this.fh.deleteEmptyFolders(folder, this.settings.ignoreFolders);
+					if (await this.app.vault.adapter.exists(path.dirname(oldPath))) {
+						let list = await this.app.vault.adapter.list(path.dirname(oldPath));
+						for (let folder of list.folders) {
+							await this.fh.deleteEmptyFolders(folder, this.settings.ignoreFolders);
+						}
 					}
 				}
 			}
 		}
 
 		let updateAlts = this.settings.changeNoteBacklinksAlt && fileExt == ".md";
-
 		if (this.settings.updateLinks) {
 			await this.lh.updateLinksToRenamedFile(oldPath, file.path, updateAlts)
 		}
@@ -149,7 +150,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 					this.settings.attachmentsSubfolder,
 					this.settings.deleteExistFilesWhenMoveNote);
 
-					
+
 				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
 					await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments)
 					movedAttachmentsCount += result.movedAttachments.length;
