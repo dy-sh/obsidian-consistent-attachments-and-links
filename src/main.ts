@@ -250,6 +250,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		//- Rename all attachments (using Unique attachments, optional)
 		await this.collectAllAttachments()
 		await this.deleteEmptyFolders()
+		new Notice("Reorganization of the vault completed"));
 	}
 
 
