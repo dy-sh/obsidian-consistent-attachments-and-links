@@ -267,7 +267,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			for (let key in badLinks) {
 				text += "[" + key + "](" + Utils.normalizePathForLink(key) + "): " + "\n"
 				for (let link of badLinks[key]) {
-					text += "- `" + link.link + "`\n";
+					text += "- (line " +link.position.start.line +"): `"+ link.link + "`\n";
 				}
 				text += "\n\n"
 			}
@@ -281,7 +281,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			for (let key in badEmbeds) {
 				text += "[" + key + "](" + Utils.normalizePathForLink(key) + "): " + "\n"
 				for (let link of badEmbeds[key]) {
-					text += "- `" + link.link + "`\n";
+					text += "- (line " +link.position.start.line +"): `"+ link.link + "`\n";
 				}
 				text += "\n\n"
 			}
