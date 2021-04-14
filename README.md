@@ -39,6 +39,11 @@ Recommended additional settings (not required for the plugin to work):
 <br>
 
 
+## How to check the consistency of the library
+
+Run "Check vault consistent" command and see the report.
+
+
 ## How to achieve consistency of an existing library
 
 > It is very important to make a backup of the entire vault folder before these steps.
@@ -78,6 +83,11 @@ The plugin is also able to automatically delete empty folders that result from m
 
 The plugin has the following commands that you can call:
 <br>
+
+### Check vault consistent
+
+Check if there are vault consistency problems and print the report.
+
 
 ### Reorganize vault
 
@@ -131,7 +141,6 @@ The plugin finds all the notes and moves all attachments in the note folder. Thi
 ### Delete empty folders
 
 Removes all empty folders in your library. In the "Ignore folders to delete" plugin settings parameter, you can specify folders in which you do not need to scan (all specified folders and their subfolders will be ignored).
-
 
 
 

@@ -181,6 +181,58 @@ export class LinksHandler {
 		return allEmbeds;
 	}
 
+	getAllBadLinks(): { [notePath: string]: LinkCache[]; } {
+		let allLinks: { [notePath: string]: LinkCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+
+				//!!! this can return undefined if note was just updated
+				let links = this.app.metadataCache.getCache(note.path)?.links;
+
+				if (links) {
+					for (let link of links) {
+						let file = this.getFileByLink(link.link, note.path);						
+						if (!file) {
+							if (!allLinks[note.path])
+								allLinks[note.path] = [];
+							allLinks[note.path].push(link);
+						}
+					}
+				}
+			}
+		}
+
+		return allLinks;
+	}
+
+	getAllBadEmbeds(): { [notePath: string]: EmbedCache[]; } {
+		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+
+				//!!! this can return undefined if note was just updated
+				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+
+				if (embeds) {
+					for (let embed of embeds) {
+						let file = this.getFileByLink(embed.link, note.path);						
+						if (!file) {
+							if (!allEmbeds[note.path])
+								allEmbeds[note.path] = [];
+							allEmbeds[note.path].push(embed);
+						}
+					}
+				}
+			}
+		}
+
+		return allEmbeds;
+	}
+
 
 	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false) {
 		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);

@@ -63,6 +63,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			callback: () => this.reorganizeVault()
 		});
 
+		this.addCommand({
+			id: 'check-consistent',
+			name: 'Check vault consistent',
+			callback: () => this.checkConsistent()
+		});
+
 		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
 		this.fh = new FilesHandler(this.app, this.lh, "Consistent attachments and links: ");
 	}
@@ -244,6 +250,57 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 	deleteEmptyFolders() {
 		this.fh.deleteEmptyFolders("/", this.settings.ignoreFolders)
+	}
+
+	async checkConsistent() {
+		let badLinks = this.lh.getAllBadLinks();
+		let badEmbeds = this.lh.getAllBadEmbeds();
+
+		let text = "";
+
+		let linksCount = Object.keys(badLinks).length;
+		let embedsCount = Object.keys(badEmbeds).length;
+
+		text += "# Bad links \n";
+
+		if (linksCount > 0) {
+			for (let key in badLinks) {
+				text += "[" + key + "](" + Utils.normalizePathForLink(key) + "): " + "\n"
+				for (let link of badLinks[key]) {
+					text += "- `" + link.link + "`\n";
+				}
+				text += "\n\n"
+			}
+		} else {
+			text += "No problems found\n\n"
+		}
+
+
+		text += "\n\n# Bad embeds \n";
+		if (embedsCount > 0) {
+			for (let key in badEmbeds) {
+				text += "[" + key + "](" + Utils.normalizePathForLink(key) + "): " + "\n"
+				for (let link of badEmbeds[key]) {
+					text += "- `" + link.link + "`\n";
+				}
+				text += "\n\n"
+			}
+		} else {
+			text += "No problems found\n\n"
+		}
+
+		let notePath = this.settings.consistantReportFile;
+		await this.app.vault.adapter.write(notePath, text);
+
+		let fileOpened = false;
+		this.app.workspace.iterateAllLeaves(leaf => {
+			if (leaf.getDisplayText() != "" && notePath.startsWith(leaf.getDisplayText())) {
+				fileOpened = true;
+			}
+		});
+
+		if (!fileOpened)
+			this.app.workspace.openLinkText(notePath, "/", true);
 	}
 
 	async reorganizeVault() {
