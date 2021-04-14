@@ -117,6 +117,7 @@ export class FilesHandler {
 				let newPath = (subfolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), subfolderName);
 				newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
 
+
 				if (newPath == file.path)//nothing to move
 					continue;
 
@@ -196,7 +197,7 @@ export class FilesHandler {
 				if (deleteExistFiles) {
 					//delete
 					console.log(this.consoleLogPrefix + "delete file: \n   " + file.path)
-					result.movedAttachments.push({ oldPath: file.path, newPath: "" })
+					result.movedAttachments.push({ oldPath: file.path, newPath: newLinkPath })
 					await this.app.vault.trash(file, true);
 				} else {
 					//move with new name

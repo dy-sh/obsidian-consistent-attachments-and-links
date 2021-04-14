@@ -178,7 +178,6 @@ export class LinksHandler {
 
 	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false) {
 		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);
-		console.warn(notes)
 		let links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
 		if (notes) {

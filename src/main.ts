@@ -149,6 +149,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 					this.settings.attachmentsSubfolder,
 					this.settings.deleteExistFilesWhenMoveNote);
 
+					
 				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
 					await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments)
 					movedAttachmentsCount += result.movedAttachments.length;
@@ -250,7 +251,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		//- Rename all attachments (using Unique attachments, optional)
 		await this.collectAllAttachments()
 		await this.deleteEmptyFolders()
-		new Notice("Reorganization of the vault completed"));
+		new Notice("Reorganization of the vault completed");
 	}
 
 
