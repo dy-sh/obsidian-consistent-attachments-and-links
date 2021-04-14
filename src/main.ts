@@ -254,38 +254,58 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 	async checkConsistent() {
 		let badLinks = this.lh.getAllBadLinks();
+		let badSectionLinks = await this.lh.getAllBadSectionLinks();
 		let badEmbeds = this.lh.getAllBadEmbeds();
 
 		let text = "";
 
-		let linksCount = Object.keys(badLinks).length;
-		let embedsCount = Object.keys(badEmbeds).length;
+		let badLinksCount = Object.keys(badLinks).length;
+		let badEmbedsCount = Object.keys(badEmbeds).length;
+		let badSectionLinksCount = Object.keys(badSectionLinks).length;
 
-		text += "# Bad links \n";
-
-		if (linksCount > 0) {
-			for (let key in badLinks) {
-				text += "[" + key + "](" + Utils.normalizePathForLink(key) + "): " + "\n"
-				for (let link of badLinks[key]) {
-					text += "- (line " +link.position.start.line +"): `"+ link.link + "`\n";
+		if (badLinksCount > 0) {
+			text += "# Bad links (" + badLinksCount + ")\n";
+			for (let note in badLinks) {
+				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
+				for (let link of badLinks[note]) {
+					text += "- (line " + link.position.start.line + "): `" + link.link + "`\n";
 				}
 				text += "\n\n"
 			}
 		} else {
+			text += "# Bad links \n";
 			text += "No problems found\n\n"
 		}
 
 
-		text += "\n\n# Bad embeds \n";
-		if (embedsCount > 0) {
-			for (let key in badEmbeds) {
-				text += "[" + key + "](" + Utils.normalizePathForLink(key) + "): " + "\n"
-				for (let link of badEmbeds[key]) {
-					text += "- (line " +link.position.start.line +"): `"+ link.link + "`\n";
+		if (badSectionLinksCount > 0) {
+			text += "\n\n# Bad note link sections (" + badSectionLinksCount + ")\n";
+			for (let note in badSectionLinks) {
+				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
+				for (let link of badSectionLinks[note]) {
+					let li = this.lh.splitLinkToPathAndSection(link.link);
+					let section = Utils.normalizeLinkSection(li.section);
+					text += "- (line " + link.position.start.line + "): `" + li.link + "#" + section + "`\n";
 				}
 				text += "\n\n"
 			}
 		} else {
+			text += "\n\n# Bad note link sections\n"
+			text += "No problems found\n\n"
+		}
+
+
+		if (badEmbedsCount > 0) {
+			text += "\n\n# Bad embeds (" + badEmbedsCount + ")\n";
+			for (let note in badEmbeds) {
+				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
+				for (let link of badEmbeds[note]) {
+					text += "- (line " + link.position.start.line + "): `" + link.link + "`\n";
+				}
+				text += "\n\n"
+			}
+		} else {
+			text += "\n\n# Bad embeds \n";
 			text += "No problems found\n\n"
 		}
 
@@ -300,7 +320,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		});
 
 		if (!fileOpened)
-			this.app.workspace.openLinkText(notePath, "/", true);
+			this.app.workspace.openLinkText(notePath, "/", false);
 	}
 
 	async reorganizeVault() {

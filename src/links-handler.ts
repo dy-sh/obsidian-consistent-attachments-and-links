@@ -26,7 +26,7 @@ export interface LinksAndEmbedsChangedInfo {
 export interface LinkSectionInfo {
 	hasSection: boolean
 	link: string
-	secntion: string
+	section: string
 }
 
 
@@ -193,7 +193,7 @@ export class LinksHandler {
 
 				if (links) {
 					for (let link of links) {
-						let file = this.getFileByLink(link.link, note.path);						
+						let file = this.getFileByLink(link.link, note.path);
 						if (!file) {
 							if (!allLinks[note.path])
 								allLinks[note.path] = [];
@@ -219,8 +219,103 @@ export class LinksHandler {
 
 				if (embeds) {
 					for (let embed of embeds) {
-						let file = this.getFileByLink(embed.link, note.path);						
+						let file = this.getFileByLink(embed.link, note.path);
 						if (!file) {
+							if (!allEmbeds[note.path])
+								allEmbeds[note.path] = [];
+							allEmbeds[note.path].push(embed);
+						}
+					}
+				}
+			}
+		}
+
+		return allEmbeds;
+	}
+
+
+	getAllGoodLinks(): { [notePath: string]: LinkCache[]; } {
+		let allLinks: { [notePath: string]: LinkCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+
+				//!!! this can return undefined if note was just updated
+				let links = this.app.metadataCache.getCache(note.path)?.links;
+
+				if (links) {
+					for (let link of links) {
+						let file = this.getFileByLink(link.link, note.path);
+						if (file) {
+							if (!allLinks[note.path])
+								allLinks[note.path] = [];
+							allLinks[note.path].push(link);
+						}
+					}
+				}
+			}
+		}
+
+		return allLinks;
+	}
+
+	async getAllBadSectionLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
+		let allLinks: { [notePath: string]: LinkCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+
+				//!!! this can return undefined if note was just updated
+				let links = this.app.metadataCache.getCache(note.path)?.links;
+				if (links) {
+					for (let link of links) {
+
+						let li = this.splitLinkToPathAndSection(link.link);
+						if (!li.hasSection)
+							continue;
+
+						let file = this.getFileByLink(link.link, note.path);
+						if (file) {
+							let text = await this.app.vault.read(file);
+							let section = Utils.normalizeLinkSection(li.section);
+
+							if (section.startsWith("^")) //skip ^ links
+								continue;
+
+							let regex=/[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
+							text = text.replace(regex, '');
+							section = section.replace(regex, '');
+
+							if (!text.contains("#" + section)) {
+								if (!allLinks[note.path])
+									allLinks[note.path] = [];
+								allLinks[note.path].push(link);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return allLinks;
+	}
+
+	getAllGoodEmbeds(): { [notePath: string]: EmbedCache[]; } {
+		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+
+				//!!! this can return undefined if note was just updated
+				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+
+				if (embeds) {
+					for (let embed of embeds) {
+						let file = this.getFileByLink(embed.link, note.path);
+						if (file) {
 							if (!allEmbeds[note.path])
 								allEmbeds[note.path] = [];
 							allEmbeds[note.path].push(embed);
@@ -293,7 +388,7 @@ export class LinksHandler {
 						}
 
 						if (li.hasSection)
-							text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + '#' + li.secntion + ')');
+							text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + '#' + li.section + ')');
 						else
 							text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
 
@@ -345,7 +440,7 @@ export class LinksHandler {
 				}
 
 				if (li.hasSection)
-					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + '#' + li.secntion + ')');
+					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + '#' + li.section + ')');
 				else
 					text = text.replace(el, '[' + alt + ']' + '(' + newRelLink + ')');
 
@@ -430,7 +525,7 @@ export class LinksHandler {
 		let res: LinkSectionInfo = {
 			hasSection: false,
 			link: link,
-			secntion: ""
+			section: ""
 		}
 
 		if (!link.contains('#'))
@@ -446,7 +541,7 @@ export class LinksHandler {
 			res = {
 				hasSection: true,
 				link: linkBeforeHash,
-				secntion: section
+				section: section
 			}
 		}
 
