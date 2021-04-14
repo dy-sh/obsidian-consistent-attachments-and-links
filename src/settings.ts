@@ -10,6 +10,7 @@ export interface PluginSettings {
     changeNoteBacklinksAlt: boolean;
     ignoreFolders: string[];
     attachmentsSubfolder: string;
+    consistantReportFile: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     changeNoteBacklinksAlt: false,
     ignoreFolders: [".git/", ".obsidian/"],
     attachmentsSubfolder: "",
+    consistantReportFile: "consistant-report.md",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -119,6 +121,18 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.attachmentsSubfolder)
                 .onChange((value) => {
                     this.plugin.settings.attachmentsSubfolder = value;
+                    this.plugin.saveSettings();
+                }));
+
+
+        new Setting(containerEl)
+            .setName("Consistant report file name")
+            .setDesc("")
+            .addText(cb => cb
+                .setPlaceholder("Example: consistant-report.md")
+                .setValue(this.plugin.settings.consistantReportFile)
+                .onChange((value) => {
+                    this.plugin.settings.consistantReportFile = value;
                     this.plugin.saveSettings();
                 }));
     }
