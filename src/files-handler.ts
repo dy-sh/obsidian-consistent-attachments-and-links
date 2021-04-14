@@ -131,7 +131,7 @@ export class FilesHandler {
 		let links = this.app.metadataCache.getCache(notePath)?.links;
 		if (links) {
 			for (let l of links) {
-				let link = l.link;
+				let link = this.lh.splitLinkToPathAndSection(l.link).link;
 
 				if (link.endsWith(".md"))
 					continue;

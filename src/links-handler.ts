@@ -96,7 +96,8 @@ export class LinksHandler {
 
 
 	getFileByLink(link: string, owningNotePath: string): TFile {
-		let fullPath = this.getFullPathForLink(link, owningNotePath);
+		let li = this.splitLinkToPathAndSection(link);
+		let fullPath = this.getFullPathForLink(li.link, owningNotePath);
 		let file = this.getFileByPath(fullPath);
 		return file;
 	}
@@ -111,6 +112,7 @@ export class LinksHandler {
 
 
 	getFullPathForLink(link: string, owningNotePath: string): string {
+		link = this.splitLinkToPathAndSection(link).link;
 		link = Utils.normalizePathForFile(link);
 		owningNotePath = Utils.normalizePathForFile(owningNotePath);
 
@@ -208,7 +210,7 @@ export class LinksHandler {
 			for (let el of elements) {
 				let alt = el.match(/\[(.*?)\]/)[1];
 				let link = el.match(/\((.*?)\)/)[1];
-				let li = this.getLinkSectionInfo(link);
+				let li = this.splitLinkToPathAndSection(link);
 
 				if (li.hasSection)  // for links with sections like [](note.md#section)
 					link = li.link;
@@ -267,7 +269,7 @@ export class LinksHandler {
 			for (let el of elements) {
 				let alt = el.match(/\[(.*?)\]/)[1];
 				let link = el.match(/\((.*?)\)/)[1];
-				let li = this.getLinkSectionInfo(link);
+				let li = this.splitLinkToPathAndSection(link);
 
 				if (li.hasSection)  // for links with sections like [](note.md#section)
 					link = li.link;
@@ -350,7 +352,7 @@ export class LinksHandler {
 
 				let links = await this.getLinksFromNote(notePath);
 				for (let link of links) {
-					let li = this.getLinkSectionInfo(link.link);
+					let li = this.splitLinkToPathAndSection(link.link);
 					let linkFullPath = this.getFullPathForLink(li.link, notePath);
 					if (linkFullPath == filePath) {
 						if (!notes.contains(notePath))
@@ -363,7 +365,7 @@ export class LinksHandler {
 		return notes;
 	}
 
-	getLinkSectionInfo(link: string): LinkSectionInfo {
+	splitLinkToPathAndSection(link: string): LinkSectionInfo {
 		let res: LinkSectionInfo = {
 			hasSection: false,
 			link: link,
