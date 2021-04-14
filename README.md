@@ -143,7 +143,7 @@ The plugin finds all the notes and moves all attachments in the note folder. Thi
 
 ### Delete empty folders
 
-Removes all empty folders in your library. In the "Ignore folders to delete" plugin settings parameter, you can specify folders in which you do not need to scan (all specified folders and their subfolders will be ignored).
+Removes all empty folders in your library. 
 
 
 

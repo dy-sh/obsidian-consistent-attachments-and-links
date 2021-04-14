@@ -69,12 +69,44 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			callback: () => this.checkConsistent()
 		});
 
-		this.lh = new LinksHandler(this.app, "Consistent attachments and links: ");
-		this.fh = new FilesHandler(this.app, this.lh, "Consistent attachments and links: ");
+		this.lh = new LinksHandler(
+			this.app,
+			"Consistent attachments and links: ",
+			this.settings.ignoreFolders,
+			this.settings.ignoreFiles
+		);
+
+		this.fh = new FilesHandler(
+			this.app,
+			this.lh,
+			"Consistent attachments and links: ",
+			this.settings.ignoreFolders,
+			this.settings.ignoreFiles
+		);
+	}
+
+	isPathIgnored(path: string): boolean {
+		if (path.startsWith("./"))
+			path = path.substring(2);
+
+		for (let folder of this.settings.ignoreFolders) {
+			if (path.startsWith(folder)) {
+				return true;
+			}
+		}
+
+		for (let file of this.settings.ignoreFiles) {
+			if (path == file) {
+				return true;
+			}
+		}
 	}
 
 
 	async handleDeletedFile(file: TAbstractFile) {
+		if (this.isPathIgnored(file.path))
+			return;
+
 		let fileExt = file.path.substring(file.path.lastIndexOf("."));
 		if (fileExt == ".md") {
 			if (this.settings.deleteAttachmentsWithNote) {
@@ -85,7 +117,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			if (this.settings.deleteEmptyFolders) {
 				let list = await this.app.vault.adapter.list(path.dirname(file.path));
 				for (let folder of list.folders) {
-					await this.fh.deleteEmptyFolders(folder, this.settings.ignoreFolders);
+					await this.fh.deleteEmptyFolders(folder);
 				}
 			}
 		}
@@ -94,6 +126,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 	async handleRenamedFile(file: TAbstractFile, oldPath: string) {
+		if (this.isPathIgnored(file.path) || this.isPathIgnored(oldPath))
+			return;
+
 		await Utils.delay(300); //waiting for update vault
 		let result: MovedAttachmentResult;
 
@@ -126,7 +161,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 					if (await this.app.vault.adapter.exists(path.dirname(oldPath))) {
 						let list = await this.app.vault.adapter.list(path.dirname(oldPath));
 						for (let folder of list.folders) {
-							await this.fh.deleteEmptyFolders(folder, this.settings.ignoreFolders);
+							await this.fh.deleteEmptyFolders(folder);
 						}
 					}
 				}
@@ -152,6 +187,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
 				let result = await this.fh.collectAttachmentsForCachedNote(
 					note.path,
 					this.settings.attachmentsSubfolder,
@@ -182,6 +220,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
 				let result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
 
 				if (result && result.length > 0) {
@@ -207,6 +248,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
 				let result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
 
 				if (result && result.length > 0) {
@@ -231,6 +275,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
 				let result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
 
 				if (result && (result.links.length > 0 || result.embeds.length > 0)) {
@@ -249,7 +296,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 	}
 
 	deleteEmptyFolders() {
-		this.fh.deleteEmptyFolders("/", this.settings.ignoreFolders)
+		this.fh.deleteEmptyFolders("/")
 	}
 
 	async checkConsistent() {
@@ -340,6 +387,21 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+
+		this.lh = new LinksHandler(
+			this.app,
+			"Consistent attachments and links: ",
+			this.settings.ignoreFolders,
+			this.settings.ignoreFiles
+		);
+
+		this.fh = new FilesHandler(
+			this.app,
+			this.lh,
+			"Consistent attachments and links: ",
+			this.settings.ignoreFolders,
+			this.settings.ignoreFiles
+		);
 	}
 
 

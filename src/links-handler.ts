@@ -61,8 +61,27 @@ export class LinksHandler {
 
 	constructor(
 		private app: App,
-		private consoleLogPrefix: string = ""
+		private consoleLogPrefix: string = "",
+		private ignoreFolders: string[] = [],
+		private ignoreFiles: string[] = [],
 	) { }
+
+	isPathIgnored(path: string): boolean {
+		if (path.startsWith("./"))
+			path = path.substring(2);
+
+		for (let folder of this.ignoreFolders) {
+			if (path.startsWith(folder)) {
+				return true;
+			}
+		}
+
+		for (let file of this.ignoreFiles) {
+			if (path == file) {
+				return true;
+			}
+		}
+	}
 
 	checkIsCorrectMarkdownEmbed(text: string) {
 		let elements = text.match(markdownEmbedRegexG);
@@ -181,12 +200,16 @@ export class LinksHandler {
 		return allEmbeds;
 	}
 
+
+
 	getAllBadLinks(): { [notePath: string]: LinkCache[]; } {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
 
 				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(note.path)?.links;
@@ -213,6 +236,8 @@ export class LinksHandler {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
 
 				//!!! this can return undefined if note was just updated
 				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
@@ -240,6 +265,8 @@ export class LinksHandler {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
 
 				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(note.path)?.links;
@@ -266,6 +293,8 @@ export class LinksHandler {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
 
 				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(note.path)?.links;
@@ -284,7 +313,7 @@ export class LinksHandler {
 							if (section.startsWith("^")) //skip ^ links
 								continue;
 
-							let regex=/[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
+							let regex = /[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
 							text = text.replace(regex, '');
 							section = section.replace(regex, '');
 
@@ -308,6 +337,8 @@ export class LinksHandler {
 
 		if (notes) {
 			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
 
 				//!!! this can return undefined if note was just updated
 				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
@@ -330,6 +361,9 @@ export class LinksHandler {
 
 
 	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false) {
+		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
+			return;
+
 		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);
 		let links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
@@ -342,12 +376,18 @@ export class LinksHandler {
 
 
 	async updateChangedPathInNote(notePath: string, oldLink: string, newLink: string, changelinksAlt = false) {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		let changes: PathChangeInfo[] = [{ oldPath: oldLink, newPath: newLink }];
 		return await this.updateChangedPathsInNote(notePath, changes, changelinksAlt);
 	}
 
 
 	async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[], changelinksAlt = false) {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		let file = this.getFileByPath(notePath);
 		if (!file) {
 			console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
@@ -407,6 +447,9 @@ export class LinksHandler {
 
 
 	async updateInternalLinksInMovedNote(oldNotePath: string, newNotePath: string, attachmentsAlreadyMoved: boolean) {
+		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
+			return;
+
 		let file = this.getFileByPath(newNotePath);
 		if (!file) {
 			console.error(this.consoleLogPrefix + "cant update internal links, file not found: " + newNotePath);
@@ -462,6 +505,9 @@ export class LinksHandler {
 
 		if (allNotes) {
 			for (let note of allNotes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
 				let notePath = note.path;
 				if (note.path == filePath)
 					continue;
@@ -502,6 +548,9 @@ export class LinksHandler {
 
 		if (allNotes) {
 			for (let note of allNotes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
 				let notePath = note.path;
 				if (notePath == filePath)
 					continue;
@@ -599,6 +648,9 @@ export class LinksHandler {
 
 
 	async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<EmbedChangeInfo[]> {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		let changedEmbeds: EmbedChangeInfo[] = [];
 
 		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
@@ -637,6 +689,9 @@ export class LinksHandler {
 
 
 	async convertAllNoteLinksPathsToRelative(notePath: string): Promise<LinkChangeInfo[]> {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		let changedLinks: LinkChangeInfo[] = [];
 
 		let links = this.app.metadataCache.getCache(notePath)?.links;
@@ -682,6 +737,9 @@ export class LinksHandler {
 
 
 	async updateChangedEmbedInNote(notePath: string, changedEmbeds: EmbedChangeInfo[]) {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		let noteFile = this.getFileByPath(notePath);
 		if (!noteFile) {
 			console.error(this.consoleLogPrefix + "cant update embeds in note, file not found: " + notePath);
@@ -718,6 +776,9 @@ export class LinksHandler {
 
 
 	async updateChangedLinkInNote(notePath: string, chandedLinks: LinkChangeInfo[]) {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		let noteFile = this.getFileByPath(notePath);
 		if (!noteFile) {
 			console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
@@ -754,6 +815,9 @@ export class LinksHandler {
 
 
 	async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string): Promise<LinksAndEmbedsChangedInfo> {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		let res: LinksAndEmbedsChangedInfo = {
 			links: [],
 			embeds: [],
