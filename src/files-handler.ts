@@ -12,10 +12,27 @@ export class FilesHandler {
 	constructor(
 		private app: App,
 		private lh: LinksHandler,
-		private consoleLogPrefix: string = ""
+		private consoleLogPrefix: string = "",
+		private ignoreFolders: string[] = [],
+		private ignoreFiles: string[] = [],
 	) { }
 
+	isPathIgnored(path: string): boolean {
+		if (path.startsWith("./"))
+			path = path.substring(2);
 
+		for (let folder of this.ignoreFolders) {
+			if (path.startsWith(folder)) {
+				return true;
+			}
+		}
+
+		for (let file of this.ignoreFiles) {
+			if (path == file) {
+				return true;
+			}
+		}
+	}
 
 	async createFolderForAttachmentFromLink(link: string, owningNotePath: string) {
 		let newFullPath = this.lh.getFullPathForLink(link, owningNotePath);
@@ -47,6 +64,9 @@ export class FilesHandler {
 
 	async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
 		deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
+
+		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
+			return;
 
 		//try to get embeds for old or new path (metadataCache can be updated or not)		
 		//!!! this can return undefined if note was just updated
@@ -92,6 +112,9 @@ export class FilesHandler {
 
 	async collectAttachmentsForCachedNote(notePath: string, subfolderName: string,
 		deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
+
+		if (this.isPathIgnored(notePath))
+			return;
 
 		let result: MovedAttachmentResult = {
 			movedAttachments: [],
@@ -165,6 +188,10 @@ export class FilesHandler {
 
 
 	async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
+		if (this.isPathIgnored(file.path))
+			return;
+
+
 		if (file.path == newLinkPath) {
 			console.warn(this.consoleLogPrefix + "Cant move file. Source and destination path the same.")
 			return;
@@ -237,19 +264,17 @@ export class FilesHandler {
 
 
 
-	async deleteEmptyFolders(dirName: string, ignoreFolders: string[]) {
+	async deleteEmptyFolders(dirName: string) {
+		if (this.isPathIgnored(dirName))
+			return;
+
 		if (dirName.startsWith("./"))
 			dirName = dirName.substring(2);
 
-		for (let ignoreFolder of ignoreFolders) {
-			if (dirName.startsWith(ignoreFolder)) {
-				return;
-			}
-		}
 
 		let list = await this.app.vault.adapter.list(dirName);
 		for (let folder of list.folders) {
-			await this.deleteEmptyFolders(folder, ignoreFolders)
+			await this.deleteEmptyFolders(folder)
 		}
 
 		list = await this.app.vault.adapter.list(dirName);
@@ -260,6 +285,9 @@ export class FilesHandler {
 	}
 
 	async deleteUnusedAttachmentsForCachedNote(notePath: string) {
+		if (this.isPathIgnored(notePath))
+			return;
+
 		//!!! this can return undefined if note was just updated
 		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
 		if (embeds) {

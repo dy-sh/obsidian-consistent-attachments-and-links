@@ -9,6 +9,7 @@ export interface PluginSettings {
     deleteExistFilesWhenMoveNote: boolean;
     changeNoteBacklinksAlt: boolean;
     ignoreFolders: string[];
+    ignoreFiles: string[];
     attachmentsSubfolder: string;
     consistantReportFile: string;
 }
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     deleteExistFilesWhenMoveNote: true,
     changeNoteBacklinksAlt: false,
     ignoreFolders: [".git/", ".obsidian/"],
+    ignoreFiles: ["consistant-report.md"],
     attachmentsSubfolder: "",
     consistantReportFile: "consistant-report.md",
 }
@@ -102,14 +104,26 @@ export class SettingTab extends PluginSettingTab {
 
 
         new Setting(containerEl)
-            .setName("Ignore folders to delete")
-            .setDesc("List of folders to ignore when deleting empty folders. Each folder on a new line.")
+            .setName("Ignore folders")
+            .setDesc("List of folders to ignore. Each folder on a new line.")
             .addTextArea(cb => cb
                 .setPlaceholder("Example: .git, .obsidian")
                 .setValue(this.plugin.settings.ignoreFolders.join("\n"))
                 .onChange((value) => {
                     let paths = value.trim().split("\n").map(value => this.getNormalizedPath(value) + "/");
                     this.plugin.settings.ignoreFolders = paths;
+                    this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName("Ignore files")
+            .setDesc("List of files to ignore. Each file on a new line.")
+            .addTextArea(cb => cb
+                .setPlaceholder("Example: consistant-report.md")
+                .setValue(this.plugin.settings.ignoreFiles.join("\n"))
+                .onChange((value) => {
+                    let paths = value.trim().split("\n").map(value => this.getNormalizedPath(value));
+                    this.plugin.settings.ignoreFiles = paths;
                     this.plugin.saveSettings();
                 }));
 
