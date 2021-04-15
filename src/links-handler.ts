@@ -216,6 +216,9 @@ export class LinksHandler {
 
 				if (links) {
 					for (let link of links) {
+						if (link.link.startsWith("#")) //internal section link
+							continue;
+
 						if (this.checkIsCorrectWikiLink(link.original))
 							continue;
 
@@ -279,6 +282,9 @@ export class LinksHandler {
 
 				if (links) {
 					for (let link of links) {
+						if (link.link.startsWith("#")) //internal section link
+							continue;
+
 						if (this.checkIsCorrectWikiLink(link.original))
 							continue;
 
@@ -308,7 +314,7 @@ export class LinksHandler {
 				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(note.path)?.links;
 				if (links) {
-					for (let link of links) {
+					for (let link of links) {						
 						if (this.checkIsCorrectWikiLink(link.original))
 							continue;
 
@@ -505,7 +511,7 @@ export class LinksHandler {
 
 						dirty = true;
 
-						console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
+						console.log(this.consoleLogPrefix + "link updated in cached note [note, old link, new link]: \n   "
 							+ file.path + "\n   " + link + "\n   " + newRelLink)
 					}
 				}
@@ -537,6 +543,9 @@ export class LinksHandler {
 				let link = el.match(markdownLinkOrEmbedRegex)[2];
 				let li = this.splitLinkToPathAndSection(link);
 
+				if (link.startsWith("#")) //internal section link
+					continue;
+
 				if (li.hasSection)  // for links with sections like [](note.md#section)
 					link = li.link;
 
@@ -545,8 +554,17 @@ export class LinksHandler {
 				if (attachmentsAlreadyMoved && !link.endsWith(".md") && !link.startsWith("../"))
 					continue;
 
-				let fullLink = this.getFullPathForLink(link, oldNotePath);
-				let newRelLink: string = path.relative(newNotePath, fullLink);
+				let file = this.getFileByLink(link, oldNotePath);
+				if (!file) {
+					file = this.getFileByLink(link, newNotePath);
+					if (!file) {
+						console.error(this.consoleLogPrefix + newNotePath + " has bad link (file does not exist): " + link);
+						continue;
+					}
+				}
+
+
+				let newRelLink: string = path.relative(newNotePath, file.path);
 				newRelLink = Utils.normalizePathForLink(newRelLink);
 
 				if (newRelLink.startsWith("../")) {
@@ -560,7 +578,7 @@ export class LinksHandler {
 
 				dirty = true;
 
-				console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
+				console.log(this.consoleLogPrefix + "link updated in moved note [note, old link, new link]: \n   "
 					+ file.path + "\n   " + link + "   \n" + newRelLink);
 			}
 		}
@@ -626,7 +644,7 @@ export class LinksHandler {
 				if (notePath == filePath)
 					continue;
 
-				let links = await this.getLinksFromNote(notePath);
+				let links = await this.getLinksFromNote(notePath);		
 				for (let link of links) {
 					let li = this.splitLinkToPathAndSection(link.link);
 					let linkFullPath = this.getFullPathForLink(li.link, notePath);
@@ -688,8 +706,8 @@ export class LinksHandler {
 		let elements = text.match(markdownLinkOrEmbedRegexG);
 		if (elements != null && elements.length > 0) {
 			for (let el of elements) {
-				let alt = el.match(/\[(.*?)\]/)[1];
-				let link = el.match(/\((.*?)\)/)[1];
+				let alt = el.match(markdownLinkOrEmbedRegex)[1];
+				let link = el.match(markdownLinkOrEmbedRegex)[2];
 
 				let emb: LinkCache = {
 					link: link,
@@ -873,7 +891,7 @@ export class LinksHandler {
 					continue;
 				}
 
-				console.log(this.consoleLogPrefix + "link updated in note [note, old link, new link]: \n   "
+				console.log(this.consoleLogPrefix + "cached link updated in note [note, old link, new link]: \n   "
 					+ noteFile.path + "\n   " + link.old.link + "\n   " + link.newLink)
 
 				dirty = true;

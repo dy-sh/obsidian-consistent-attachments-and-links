@@ -11,7 +11,7 @@ export interface PluginSettings {
     ignoreFolders: string[];
     ignoreFiles: string[];
     attachmentsSubfolder: string;
-    consistantReportFile: string;
+    consistentReportFile: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     ignoreFolders: [".git/", ".obsidian/"],
     ignoreFiles: ["consistant-report.md"],
     attachmentsSubfolder: "",
-    consistantReportFile: "consistant-report.md",
+    consistentReportFile: "consistant-report.md",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -144,9 +144,9 @@ export class SettingTab extends PluginSettingTab {
             .setDesc("")
             .addText(cb => cb
                 .setPlaceholder("Example: consistant-report.md")
-                .setValue(this.plugin.settings.consistantReportFile)
+                .setValue(this.plugin.settings.consistentReportFile)
                 .onChange((value) => {
-                    this.plugin.settings.consistantReportFile = value;
+                    this.plugin.settings.consistentReportFile = value;
                     this.plugin.saveSettings();
                 }));
     }

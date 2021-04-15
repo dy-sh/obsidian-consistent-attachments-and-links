@@ -91,8 +91,11 @@ export class FilesHandler {
 
 			let file = this.lh.getFileByLink(link, oldNotePath);
 			if (!file) {
-				console.error(this.consoleLogPrefix + oldNotePath + " has bad link (file does not exist): " + link);
-				continue;
+				file = this.lh.getFileByLink(link, newNotePath);
+				if (!file) {
+					console.error(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + link);
+					continue;
+				}
 			}
 
 			//if attachment not in the note folder, skip it
@@ -101,9 +104,14 @@ export class FilesHandler {
 				continue;
 
 			let newLinkPath = this.lh.getFullPathForLink(link, newNotePath);
+			if (newLinkPath == file.path)
+				continue; //nothing to change
+
+
 			let res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles);
 			result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
 			result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
+
 		}
 
 		return result;
@@ -280,7 +288,8 @@ export class FilesHandler {
 		list = await this.app.vault.adapter.list(dirName);
 		if (list.files.length == 0 && list.folders.length == 0) {
 			console.log(this.consoleLogPrefix + "delete empty folder: \n   " + dirName)
-			await this.app.vault.adapter.rmdir(dirName, false);
+			if (await this.app.vault.adapter.exists(dirName))
+				await this.app.vault.adapter.rmdir(dirName, false);
 		}
 	}
 
@@ -299,7 +308,9 @@ export class FilesHandler {
 				if (linkedNotes.length == 0) {
 					let file = this.lh.getFileByLink(link, notePath);
 					if (file) {
-						await this.app.vault.trash(file, true);
+						try {
+							await this.app.vault.trash(file, true);
+						} catch { }
 					}
 				}
 			}

@@ -13,6 +13,10 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 	lh: LinksHandler;
 	fh: FilesHandler;
 
+	recentlyRenamedFiles: PathChangeInfo[] = [];
+	currentlyRenamingFiles: PathChangeInfo[] = [];
+	timerId: NodeJS.Timeout;
+	renamingIsActive = false;
 
 	async onload() {
 		await this.loadSettings();
@@ -115,68 +119,108 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 			//delete child folders (do not delete parent)
 			if (this.settings.deleteEmptyFolders) {
-				let list = await this.app.vault.adapter.list(path.dirname(file.path));
-				for (let folder of list.folders) {
-					await this.fh.deleteEmptyFolders(folder);
+				if (await this.app.vault.adapter.exists(path.dirname(file.path))) {
+					let list = await this.app.vault.adapter.list(path.dirname(file.path));
+					for (let folder of list.folders) {
+						await this.fh.deleteEmptyFolders(folder);
+					}
 				}
 			}
 		}
 	}
-
-
 
 	async handleRenamedFile(file: TAbstractFile, oldPath: string) {
-		if (this.isPathIgnored(file.path) || this.isPathIgnored(oldPath))
+		this.recentlyRenamedFiles.push({ oldPath: oldPath, newPath: file.path });
+
+		clearTimeout(this.timerId);
+		this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles() }, 3000);
+	}
+
+	async HandleRecentlyRenamedFiles() {
+		if (!this.recentlyRenamedFiles || this.recentlyRenamedFiles.length == 0) //nothing to rename
 			return;
 
-		await Utils.delay(300); //waiting for update vault
-		let result: MovedAttachmentResult;
+		if (this.renamingIsActive) //already started
+			return;
 
-		let fileExt = oldPath.substring(oldPath.lastIndexOf("."));
+		this.renamingIsActive = true;
 
-		if (fileExt == ".md") {
-			// await Utils.delay(500);//waiting for update metadataCache
+		this.currentlyRenamingFiles = this.recentlyRenamedFiles; //clear array for pushing new files async
+		this.recentlyRenamedFiles = [];
 
-			if (path.dirname(oldPath) != path.dirname(file.path)) {
-				if (this.settings.moveAttachmentsWithNote) {
-					result = await this.fh.moveCachedNoteAttachments(
-						oldPath,
-						file.path,
-						this.settings.deleteExistFilesWhenMoveNote
-					)
+		new Notice("Fixing consistent for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
+		console.log("Consistent attachments and links:\nFixing consistent for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
 
-					if (this.settings.updateLinks) {
-						if (result && result.renamedFiles && result.renamedFiles.length > 0) {
-							await this.lh.updateChangedPathsInNote(file.path, result.renamedFiles)
+		try {
+			for (let file of this.currentlyRenamingFiles) {
+				if (this.isPathIgnored(file.newPath) || this.isPathIgnored(file.oldPath))
+					return;
+
+				// await Utils.delay(10); //waiting for update vault
+
+				let result: MovedAttachmentResult;
+
+				let fileExt = file.oldPath.substring(file.oldPath.lastIndexOf("."));
+
+				if (fileExt == ".md") {
+					// await Utils.delay(500);//waiting for update metadataCache
+
+					if (path.dirname(file.oldPath) != path.dirname(file.newPath)) {
+						if (this.settings.moveAttachmentsWithNote) {
+							result = await this.fh.moveCachedNoteAttachments(
+								file.oldPath,
+								file.newPath,
+								this.settings.deleteExistFilesWhenMoveNote
+							)
+
+							if (this.settings.updateLinks) {
+								if (result && result.renamedFiles && result.renamedFiles.length > 0) {
+									await this.lh.updateChangedPathsInNote(file.newPath, result.renamedFiles)
+								}
+							}
+						}
+
+						if (this.settings.updateLinks) {
+							await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath, this.settings.moveAttachmentsWithNote)
+						}
+
+						//delete child folders (do not delete parent)
+						if (this.settings.deleteEmptyFolders) {
+							if (await this.app.vault.adapter.exists(path.dirname(file.oldPath))) {
+								let list = await this.app.vault.adapter.list(path.dirname(file.oldPath));
+								for (let folder of list.folders) {
+									await this.fh.deleteEmptyFolders(folder);
+								}
+							}
 						}
 					}
 				}
 
+				let updateAlts = this.settings.changeNoteBacklinksAlt && fileExt == ".md";
 				if (this.settings.updateLinks) {
-					await this.lh.updateInternalLinksInMovedNote(oldPath, file.path, this.settings.moveAttachmentsWithNote)
+					await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts)
 				}
 
-				//delete child folders (do not delete parent)
-				if (this.settings.deleteEmptyFolders) {
-					if (await this.app.vault.adapter.exists(path.dirname(oldPath))) {
-						let list = await this.app.vault.adapter.list(path.dirname(oldPath));
-						for (let folder of list.folders) {
-							await this.fh.deleteEmptyFolders(folder);
-						}
-					}
+				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
+					new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
 				}
 			}
+		} catch (e) {
+			console.error("Consistent attachments and links: \n" + e);
 		}
 
-		let updateAlts = this.settings.changeNoteBacklinksAlt && fileExt == ".md";
-		if (this.settings.updateLinks) {
-			await this.lh.updateLinksToRenamedFile(oldPath, file.path, updateAlts)
-		}
+		new Notice("Fixing consistent complete");
+		console.log("Consistent attachments and links:\nFixing consistent complete");
 
-		if (result && result.movedAttachments && result.movedAttachments.length > 0) {
-			new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
+		this.renamingIsActive = false;
+
+		if (this.recentlyRenamedFiles && this.recentlyRenamedFiles.length > 0) {
+			clearTimeout(this.timerId);
+			this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles() }, 500);
 		}
 	}
+
+
 
 
 	async collectAllAttachments() {
@@ -391,7 +435,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 
-		let notePath = this.settings.consistantReportFile;
+		let notePath = this.settings.consistentReportFile;
 		await this.app.vault.adapter.write(notePath, text);
 
 		let fileOpened = false;
