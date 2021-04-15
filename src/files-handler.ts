@@ -165,6 +165,9 @@ export class FilesHandler {
 			for (let l of links) {
 				let link = this.lh.splitLinkToPathAndSection(l.link).link;
 
+				if (link.startsWith("#")) //internal section link
+					continue;
+
 				if (link.endsWith(".md"))
 					continue;
 
