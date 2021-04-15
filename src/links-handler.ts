@@ -314,7 +314,7 @@ export class LinksHandler {
 				//!!! this can return undefined if note was just updated
 				let links = this.app.metadataCache.getCache(note.path)?.links;
 				if (links) {
-					for (let link of links) {						
+					for (let link of links) {
 						if (this.checkIsCorrectWikiLink(link.original))
 							continue;
 
@@ -644,7 +644,7 @@ export class LinksHandler {
 				if (notePath == filePath)
 					continue;
 
-				let links = await this.getLinksFromNote(notePath);		
+				let links = await this.getLinksFromNote(notePath);
 				for (let link of links) {
 					let li = this.splitLinkToPathAndSection(link.link);
 					let linkFullPath = this.getFullPathForLink(li.link, notePath);
@@ -790,6 +790,9 @@ export class LinksHandler {
 				let isMarkdownLink = this.checkIsCorrectMarkdownLink(link.original);
 				let isWikiLink = this.checkIsCorrectWikiLink(link.original);
 				if (isMarkdownLink || isWikiLink) {
+					if (link.link.startsWith("#")) //internal section link
+						continue;
+
 					let file = this.getFileByLink(link.link, notePath);
 					if (file)
 						continue;
