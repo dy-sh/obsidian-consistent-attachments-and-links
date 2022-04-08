@@ -129,7 +129,7 @@ export class SettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Attachments subfolder")
-            .setDesc("Collect attachments in this subfolder of the note folder (when using the \"Collect all attachments\" hotkey). Leave empty to collect attachments to the note folder without subfolders.")
+            .setDesc("Collect attachments in this subfolder of the note folder (when using the \"Collect all attachments\" hotkey). Leave empty to collect attachments to the note folder without subfolders. You can use ${filename} as a placeholder for current note name")
             .addText(cb => cb
                 .setPlaceholder("Example: _attachments")
                 .setValue(this.plugin.settings.attachmentsSubfolder)

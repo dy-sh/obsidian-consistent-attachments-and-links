@@ -145,7 +145,9 @@ export class FilesHandler {
 					continue;
 				}
 
-				let newPath = (subfolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), subfolderName);
+				let resolvedSubFolderName = subfolderName.replace(/\${filename}/g, path.basename(notePath, ".md"));
+
+				let newPath = (resolvedSubFolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), resolvedSubFolderName);
 				newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
 
 
