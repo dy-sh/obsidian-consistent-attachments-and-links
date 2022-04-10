@@ -63,7 +63,7 @@ export class FilesHandler {
 
 
 	async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
-		deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
+		deleteExistFiles: boolean, attachmentsSubfolder: string): Promise<MovedAttachmentResult> {
 
 		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
 			return;
@@ -104,6 +104,14 @@ export class FilesHandler {
 				continue;
 
 			let newLinkPath = this.lh.getFullPathForLink(link, newNotePath);
+
+			if (attachmentsSubfolder.contains("${filename}")) {
+				let oldLinkPathBySetting = this.getNewAttachmentPath(file.path, oldNotePath, attachmentsSubfolder);
+				if (oldLinkPath == oldLinkPathBySetting) {
+					newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
+				}
+			}
+
 			if (newLinkPath == file.path)
 				continue; //nothing to change
 
@@ -115,6 +123,13 @@ export class FilesHandler {
 		}
 
 		return result;
+	}
+
+	getNewAttachmentPath(oldAttachmentPath: string, notePath: string, subfolderName: string): string {
+		let resolvedSubFolderName = subfolderName.replace(/\${filename}/g, path.basename(notePath, ".md"));
+		let newPath = (resolvedSubFolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), resolvedSubFolderName);
+		newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(oldAttachmentPath)));
+		return newPath;
 	}
 
 
@@ -145,10 +160,9 @@ export class FilesHandler {
 					continue;
 				}
 
-				let resolvedSubFolderName = subfolderName.replace(/\${filename}/g, path.basename(notePath, ".md"));
+				
 
-				let newPath = (resolvedSubFolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), resolvedSubFolderName);
-				newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
+				let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
 
 
 				if (newPath == file.path)//nothing to move

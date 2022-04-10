@@ -165,17 +165,19 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 				if (fileExt == ".md") {
 					// await Utils.delay(500);//waiting for update metadataCache
 
-					if (path.dirname(file.oldPath) != path.dirname(file.newPath)) {
+					if ((path.dirname(file.oldPath) != path.dirname(file.newPath)) || (this.settings.attachmentsSubfolder.contains("${filename}"))) {
 						if (this.settings.moveAttachmentsWithNote) {
 							result = await this.fh.moveCachedNoteAttachments(
 								file.oldPath,
 								file.newPath,
-								this.settings.deleteExistFilesWhenMoveNote
+								this.settings.deleteExistFilesWhenMoveNote,
+								this.settings.attachmentsSubfolder
 							)
 
-							if (this.settings.updateLinks) {
-								if (result && result.renamedFiles && result.renamedFiles.length > 0) {
-									await this.lh.updateChangedPathsInNote(file.newPath, result.renamedFiles)
+							if (this.settings.updateLinks && result) {
+								let changedFiles = result.renamedFiles.concat(result.movedAttachments);
+								if (changedFiles.length > 0) {
+									await this.lh.updateChangedPathsInNote(file.newPath, changedFiles)
 								}
 							}
 						}
