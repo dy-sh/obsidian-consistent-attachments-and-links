@@ -197,8 +197,7 @@ export class FilesHandler {
 					continue;
 				}
 
-				let newPath = (subfolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), subfolderName);
-				newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(file.path)));
+				let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
 
 				if (newPath == file.path)//nothing to move
 					continue;
