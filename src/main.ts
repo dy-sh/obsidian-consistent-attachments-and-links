@@ -1,4 +1,4 @@
-import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache, Notice } from 'obsidian';
+import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache, Notice, Editor, MarkdownView } from 'obsidian';
 import { PluginSettings, DEFAULT_SETTINGS, SettingTab } from './settings';
 import { Utils } from './utils';
 import { LinksHandler, PathChangeInfo } from './links-handler';
@@ -35,6 +35,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			id: 'collect-all-attachments',
 			name: 'Collect all attachments',
 			callback: () => this.collectAllAttachments()
+		});
+
+		this.addCommand({
+			id: 'collect-attachments-current-note',
+			name: 'Collect attachments in current note',
+			editorCallback: (editor: Editor, view: MarkdownView) => this.collectAttachmentsCurrentNote(editor, view)
 		});
 
 		this.addCommand({
@@ -165,17 +171,19 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 				if (fileExt == ".md") {
 					// await Utils.delay(500);//waiting for update metadataCache
 
-					if (path.dirname(file.oldPath) != path.dirname(file.newPath)) {
+					if ((path.dirname(file.oldPath) != path.dirname(file.newPath)) || (this.settings.attachmentsSubfolder.contains("${filename}"))) {
 						if (this.settings.moveAttachmentsWithNote) {
 							result = await this.fh.moveCachedNoteAttachments(
 								file.oldPath,
 								file.newPath,
-								this.settings.deleteExistFilesWhenMoveNote
+								this.settings.deleteExistFilesWhenMoveNote,
+								this.settings.attachmentsSubfolder
 							)
 
-							if (this.settings.updateLinks) {
-								if (result && result.renamedFiles && result.renamedFiles.length > 0) {
-									await this.lh.updateChangedPathsInNote(file.newPath, result.renamedFiles)
+							if (this.settings.updateLinks && result) {
+								let changedFiles = result.renamedFiles.concat(result.movedAttachments);
+								if (changedFiles.length > 0) {
+									await this.lh.updateChangedPathsInNote(file.newPath, changedFiles)
 								}
 							}
 						}
@@ -221,6 +229,27 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 	}
 
 
+	async collectAttachmentsCurrentNote(editor: Editor, view: MarkdownView) {
+		let note = view.file;
+		if (this.isPathIgnored(note.path)) {
+			new Notice("Note path is ignored");
+			return;
+		}
+
+		let result = await this.fh.collectAttachmentsForCachedNote(
+			note.path,
+			this.settings.attachmentsSubfolder,
+			this.settings.deleteExistFilesWhenMoveNote);
+
+		if (result && result.movedAttachments && result.movedAttachments.length > 0) {
+			await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments)
+		}
+
+		if (result.movedAttachments.length == 0)
+			new Notice("No files found that need to be moved");
+		else
+			new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
+	}
 
 
 	async collectAllAttachments() {
