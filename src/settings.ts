@@ -12,6 +12,7 @@ export interface PluginSettings {
     ignoreFiles: string[];
     attachmentsSubfolder: string;
     consistentReportFile: string;
+    useBuiltInObsidianLinkCaching: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -25,6 +26,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     ignoreFiles: ["consistant-report.md"],
     attachmentsSubfolder: "",
     consistentReportFile: "consistant-report.md",
+    useBuiltInObsidianLinkCaching: false,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -149,6 +151,16 @@ export class SettingTab extends PluginSettingTab {
                     this.plugin.settings.consistentReportFile = value;
                     this.plugin.saveSettings();
                 }));
+
+
+        new Setting(containerEl)
+            .setName("EXPERIMENTAL: Use built-in Obsidian link caching to process moved notes")
+            .setDesc("Turn it off if plugin misbehaves")
+            .addToggle(cb => cb.onChange(value => {
+                this.plugin.settings.useBuiltInObsidianLinkCaching = value;
+                this.plugin.saveSettings();
+            }
+            ).setValue(this.plugin.settings.useBuiltInObsidianLinkCaching));
     }
 
     getNormalizedPath(path: string): string {
