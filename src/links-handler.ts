@@ -441,7 +441,7 @@ export class LinksHandler {
 		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
 			return;
 
-		let notes = this.getCachedNotesThatHaveLinkToFile(oldNotePath);
+		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);
 		let links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
 		if (notes) {
