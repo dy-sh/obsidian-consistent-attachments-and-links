@@ -206,7 +206,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 				let updateAlts = this.settings.changeNoteBacklinksAlt && fileExt == ".md";
 				if (this.settings.updateLinks) {
-					await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts)
+					await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts, this.settings.useBuiltInObsidianLinkCaching);
 				}
 
 				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
