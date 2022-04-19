@@ -437,11 +437,11 @@ export class LinksHandler {
 	}
 
 
-	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false) {
+	async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changelinksAlt = false, useBuiltInObsidianLinkCaching = false) {
 		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
 			return;
 
-		let notes = await this.getNotesThatHaveLinkToFile(oldNotePath);
+		let notes = useBuiltInObsidianLinkCaching ? this.getCachedNotesThatHaveLinkToFile(oldNotePath) : await this.getNotesThatHaveLinkToFile(oldNotePath);
 		let links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
 		if (notes) {
