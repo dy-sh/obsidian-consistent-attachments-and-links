@@ -673,9 +673,10 @@ export class LinksHandler {
 		let linkBeforeHash = link.match(/(.*?)#(.*?)$/)[1];
 		let section = link.match(/(.*?)#(.*?)$/)[2];
 
+		let isMarkdownSection = section != "" && linkBeforeHash.endsWith(".md"); // for links with sections like [](note.md#section)
+		let isPdfPageSection = section.startsWith("page=") && linkBeforeHash.endsWith(".pdf"); // for links with sections like [](note.pdf#page=42)
 
-
-		if (section != "" && linkBeforeHash.endsWith(".md")) { // for links with sections like [](note.md#section)
+		if (isMarkdownSection || isPdfPageSection) {
 			res = {
 				hasSection: true,
 				link: linkBeforeHash,
