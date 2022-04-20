@@ -324,6 +324,10 @@ export class LinksHandler {
 
 						let file = this.getFileByLink(link.link, note.path);
 						if (file) {
+							if (file.extension === "pdf" && li.section.startsWith("page=")) {
+								continue;
+							}
+
 							let text = await this.app.vault.read(file);
 							let section = Utils.normalizeLinkSection(li.section);
 
