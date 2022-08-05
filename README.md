@@ -25,7 +25,7 @@ If you still want to have link compatibility with some Obsidian features, write 
 ## How to configure Obsidian
 Required Obsidian settings for the plugin to work properly:
 
-- **"Files & Linsks > Automatically update internal links": disabled.** The plugin itself is responsible for updating the links. When Obsidian shows a dialog asking to update links, refuse.
+- **"Files & Links > Automatically update internal links": disabled.** The plugin itself is responsible for updating the links. When Obsidian shows a dialog asking to update links, refuse.
 
 - **"New link format": Relative path to file.** Otherwise, strict compliance of the links cannot be guaranteed.
 
