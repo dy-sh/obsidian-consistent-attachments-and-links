@@ -28,9 +28,12 @@ export class FilesHandler {
 		}
 
 		for (let file of this.ignoreFiles) {
-			if (path == file) {
-				return true;
-			}
+			let fileRegex = new RegExp(file)
+            let testResult = fileRegex.test(path)
+            // console.log(path,fileRegex,testResult)
+            if(testResult) {
+                return true;
+            }
 		}
 	}
 
