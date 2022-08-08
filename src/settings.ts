@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     deleteExistFilesWhenMoveNote: true,
     changeNoteBacklinksAlt: false,
     ignoreFolders: [".git/", ".obsidian/"],
-    ignoreFiles: ["consistant-report.md"],
+    ignoreFiles: ["consistant\-report\.md"],
     attachmentsSubfolder: "",
     consistentReportFile: "consistant-report.md",
     useBuiltInObsidianLinkCaching: false,
@@ -124,7 +124,7 @@ export class SettingTab extends PluginSettingTab {
                 .setPlaceholder("Example: consistant-report.md")
                 .setValue(this.plugin.settings.ignoreFiles.join("\n"))
                 .onChange((value) => {
-                    let paths = value.trim().split("\n").map(value => this.getNormalizedPath(value));
+                    let paths = value.trim().split("\n")
                     this.plugin.settings.ignoreFiles = paths;
                     this.plugin.saveSettings();
                 }));
