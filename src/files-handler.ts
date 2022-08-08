@@ -14,7 +14,7 @@ export class FilesHandler {
 		private lh: LinksHandler,
 		private consoleLogPrefix: string = "",
 		private ignoreFolders: string[] = [],
-		private ignoreFiles: string[] = [],
+		private ignoreFilesRegex: RegExp[] = [],
 	) { }
 
 	isPathIgnored(path: string): boolean {
@@ -27,8 +27,7 @@ export class FilesHandler {
 			}
 		}
 
-		for (let file of this.ignoreFiles) {
-			let fileRegex = new RegExp(file)
+		for (let fileRegex of this.ignoreFilesRegex) {
 			let testResult = fileRegex.test(path)
 			// console.log(path,fileRegex,testResult)
 			if(testResult) {

@@ -6,7 +6,7 @@ export class Utils {
 
 
 	static normalizePathForFile(path: string): string {
-		// path = path.replace(/\\/gi, "/"); //replace \ to /
+		path = path.replace(/\\/gi, "/"); //replace \ to /
 		path = path.replace(/%20/gi, " "); //replace %20 to space
 		return path;
 	}

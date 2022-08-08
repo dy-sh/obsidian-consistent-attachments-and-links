@@ -79,11 +79,14 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			callback: () => this.checkConsistent()
 		});
 
+		// make regex from given strings 
+		this.settings.ignoreFilesRegex = this.settings.ignoreFiles.map(val=>RegExp(val))
+
 		this.lh = new LinksHandler(
 			this.app,
 			"Consistent attachments and links: ",
 			this.settings.ignoreFolders,
-			this.settings.ignoreFiles
+			this.settings.ignoreFilesRegex
 		);
 
 		this.fh = new FilesHandler(
@@ -91,7 +94,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			this.lh,
 			"Consistent attachments and links: ",
 			this.settings.ignoreFolders,
-			this.settings.ignoreFiles
+			this.settings.ignoreFilesRegex
 		);
 	}
 
@@ -105,8 +108,8 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			}
 		}
 
-		for (let file of this.settings.ignoreFiles) {
-			if (path == file) {
+		for (let fileRegex of this.settings.ignoreFilesRegex) {
+			if (fileRegex.test(path)) {
 				return true;
 			}
 		}
@@ -500,7 +503,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			this.app,
 			"Consistent attachments and links: ",
 			this.settings.ignoreFolders,
-			this.settings.ignoreFiles
+			this.settings.ignoreFilesRegex
 		);
 
 		this.fh = new FilesHandler(
@@ -508,7 +511,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			this.lh,
 			"Consistent attachments and links: ",
 			this.settings.ignoreFolders,
-			this.settings.ignoreFiles
+			this.settings.ignoreFilesRegex,
 		);
 	}
 
