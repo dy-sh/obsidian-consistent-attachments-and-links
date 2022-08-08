@@ -63,7 +63,7 @@ export class LinksHandler {
 		private app: App,
 		private consoleLogPrefix: string = "",
 		private ignoreFolders: string[] = [],
-		private ignoreFiles: string[] = [],
+		private ignoreFilesRegex: RegExp[] = [],
 	) { }
 
 	isPathIgnored(path: string): boolean {
@@ -76,9 +76,8 @@ export class LinksHandler {
 			}
 		}
 
-		for (let file of this.ignoreFiles) {
-			let regexFile = new RegExp(file)
-			if (regexFile.test(path)) {
+		for (let fileRegex of this.ignoreFilesRegex) {
+			if (fileRegex.test(path)) {
 				return true;
 			}
 		}
