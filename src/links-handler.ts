@@ -77,7 +77,8 @@ export class LinksHandler {
 		}
 
 		for (let file of this.ignoreFiles) {
-			if (path == file) {
+			let regexFile = new RegExp(file)
+			if (regexFile.test(file)) {
 				return true;
 			}
 		}
