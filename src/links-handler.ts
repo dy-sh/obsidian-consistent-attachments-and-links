@@ -115,10 +115,7 @@ export class LinksHandler {
 
 
 	getFileByLink(link: string, owningNotePath: string): TFile {
-		let li = this.splitLinkToPathAndSection(link);
-		let fullPath = this.getFullPathForLink(li.link, owningNotePath);
-		let file = this.getFileByPath(fullPath);
-		return file;
+		return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath);
 	}
 
 
