@@ -5,7 +5,7 @@ The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your va
 
 ## What's the idea
 
-The idea is to have all links between notes and attachments in strict accordance with the mardown format and support their relative paths. This is useful when you want to open a note in another program that does not know where your vault folder is, or for example you want to publish and read your notes on GitHub or another site that allows you to upload markdown files and you need compatibility.
+The idea is to have all links between notes and attachments in strict accordance with the markdown format and support their relative paths. This is useful when you want to open a note in another program that does not know where your vault folder is, or for example you want to publish and read your notes on GitHub or another site that allows you to upload markdown files and you need compatibility.
 
 Ideally, all attachments should be located in the note folder or its subfolders. It is not necessary, but in this case, you can easily export a note to a separate folder outside of your vault, knowing that all its attachments are with it. By deleting a note, you will know for sure that you will not delete the attachments you need or leave unnecessary garbage in your library.
 
