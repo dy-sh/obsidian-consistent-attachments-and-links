@@ -115,6 +115,7 @@ export class LinksHandler {
 
 
 	getFileByLink(link: string, owningNotePath: string): TFile {
+		link = link.replace(/#.+/, '');
 		return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath);
 	}
 
