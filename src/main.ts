@@ -395,7 +395,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			for (let note in badLinks) {
 				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
 				for (let link of badLinks[note]) {
-					text += "- (line " + link.position.start.line + "): `" + link.link + "`\n";
+					text += "- (line " + (link.position.start.line + 1) + "): `" + link.link + "`\n";
 				}
 				text += "\n\n"
 			}
@@ -412,7 +412,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 				for (let link of badSectionLinks[note]) {
 					let li = this.lh.splitLinkToPathAndSection(link.link);
 					let section = Utils.normalizeLinkSection(li.section);
-					text += "- (line " + link.position.start.line + "): `" + li.link + "#" + section + "`\n";
+					text += "- (line " + (link.position.start.line + 1) + "): `" + li.link + "#" + section + "`\n";
 				}
 				text += "\n\n"
 			}
@@ -427,7 +427,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			for (let note in badEmbeds) {
 				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
 				for (let link of badEmbeds[note]) {
-					text += "- (line " + link.position.start.line + "): `" + link.link + "`\n";
+					text += "- (line " + (link.position.start.line + 1) + "): `" + link.link + "`\n";
 				}
 				text += "\n\n"
 			}
@@ -442,7 +442,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			for (let note in wikiLinks) {
 				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
 				for (let link of wikiLinks[note]) {
-					text += "- (line " + link.position.start.line + "): `" + link.original + "`\n";
+					text += "- (line " + (link.position.start.line + 1) + "): `" + link.original + "`\n";
 				}
 				text += "\n\n"
 			}
@@ -456,7 +456,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			for (let note in wikiEmbeds) {
 				text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
 				for (let link of wikiEmbeds[note]) {
-					text += "- (line " + link.position.start.line + "): `" + link.original + "`\n";
+					text += "- (line " + (link.position.start.line + 1) + "): `" + link.original + "`\n";
 				}
 				text += "\n\n"
 			}
