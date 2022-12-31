@@ -114,9 +114,13 @@ export class LinksHandler {
 	}
 
 
-	getFileByLink(link: string, owningNotePath: string): TFile {
-		link = link.replace(/#.+/, '');
-		return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath);
+	getFileByLink(link: string, owningNotePath: string, allowInvalidLink: boolean = true): TFile {
+		link = this.splitLinkToPathAndSection(link).link;
+		if (allowInvalidLink) {
+			return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath);
+		}
+		let fullPath = this.getFullPathForLink(link, owningNotePath);
+		return this.getFileByPath(fullPath);
 	}
 
 
@@ -220,7 +224,7 @@ export class LinksHandler {
 						if (this.checkIsCorrectWikiLink(link.original))
 							continue;
 
-						let file = this.getFileByLink(link.link, note.path);
+						let file = this.getFileByLink(link.link, note.path, false);
 						if (!file) {
 							if (!allLinks[note.path])
 								allLinks[note.path] = [];
@@ -251,7 +255,7 @@ export class LinksHandler {
 						if (this.checkIsCorrectWikiEmbed(embed.original))
 							continue;
 
-						let file = this.getFileByLink(embed.link, note.path);
+						let file = this.getFileByLink(embed.link, note.path, false);
 						if (!file) {
 							if (!allEmbeds[note.path])
 								allEmbeds[note.path] = [];
@@ -320,7 +324,7 @@ export class LinksHandler {
 						if (!li.hasSection)
 							continue;
 
-						let file = this.getFileByLink(link.link, note.path);
+						let file = this.getFileByLink(link.link, note.path, false);
 						if (file) {
 							if (file.extension === "pdf" && li.section.startsWith("page=")) {
 								continue;
