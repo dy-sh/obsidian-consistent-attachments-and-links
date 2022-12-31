@@ -126,9 +126,7 @@ export class LinksHandler {
 
 	getFileByPath(path: string): TFile {
 		path = Utils.normalizePathForFile(path);
-		let files = this.app.vault.getFiles();
-		let file = files.find(file => Utils.normalizePathForFile(file.path) === path);
-		return file;
+		return app.vault.getAbstractFileByPath(path) as TFile;
 	}
 
 
