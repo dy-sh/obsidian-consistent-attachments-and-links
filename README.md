@@ -14,6 +14,8 @@ If you store attachments in a folder with a note or its subfolders, the plugin w
 
 ## Disclaimer
 
+**Please backup your library before using this plugin! Once converted links cannot be converted back.**
+
 **To use this plugin, you will have to give up all the proprietary things that Obsidian uses in the link format.** 
 
 Obsidian has a very clever file link search, but this can be a problem for you if you want your notes to be compatible with other programs. This is the main point of the plugin.
