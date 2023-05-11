@@ -218,19 +218,19 @@ export class FilesHandler {
 	async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
 		const path = file.path;
 
-		if (this.isPathIgnored(path))
-			return;
-
-
-		if (path == newLinkPath) {
-			console.warn(this.consoleLogPrefix + "Cant move file. Source and destination path the same.")
-			return;
-		}
-
 		let result: MovedAttachmentResult = {
 			movedAttachments: [],
 			renamedFiles: []
 		};
+
+		if (this.isPathIgnored(path))
+			return result;
+
+
+		if (path == newLinkPath) {
+			console.warn(this.consoleLogPrefix + "Cant move file. Source and destination path the same.")
+			return result;
+		}
 
 		await this.createFolderForAttachmentFromPath(newLinkPath);
 
