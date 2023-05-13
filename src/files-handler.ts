@@ -216,27 +216,34 @@ export class FilesHandler {
 
 
 	async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
-		if (this.isPathIgnored(file.path))
-			return;
-
-
-		if (file.path == newLinkPath) {
-			console.warn(this.consoleLogPrefix + "Cant move file. Source and destination path the same.")
-			return;
-		}
+		const path = file.path;
 
 		let result: MovedAttachmentResult = {
 			movedAttachments: [],
 			renamedFiles: []
 		};
 
+		if (this.isPathIgnored(path))
+			return result;
+
+
+		if (path == newLinkPath) {
+			console.warn(this.consoleLogPrefix + "Cant move file. Source and destination path the same.")
+			return result;
+		}
+
 		await this.createFolderForAttachmentFromPath(newLinkPath);
 
-		let linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(file.path);
+		let linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(path);
 		if (parentNotePaths) {
 			for (let notePath of parentNotePaths) {
 				linkedNotes.remove(notePath);
 			}
+		}
+
+		if (path !== file.path) {
+			console.warn(this.consoleLogPrefix + "File was moved already")
+			return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles);
 		}
 
 		//if no other file has link to this file - try to move file
@@ -245,20 +252,20 @@ export class FilesHandler {
 			let existFile = this.lh.getFileByPath(newLinkPath);
 			if (!existFile) {
 				//move
-				console.log(this.consoleLogPrefix + "move file [from, to]: \n   " + file.path + "\n   " + newLinkPath)
-				result.movedAttachments.push({ oldPath: file.path, newPath: newLinkPath })
+				console.log(this.consoleLogPrefix + "move file [from, to]: \n   " + path + "\n   " + newLinkPath)
+				result.movedAttachments.push({ oldPath: path, newPath: newLinkPath })
 				await this.app.vault.rename(file, newLinkPath);
 			} else {
 				if (deleteExistFiles) {
 					//delete
-					console.log(this.consoleLogPrefix + "delete file: \n   " + file.path)
-					result.movedAttachments.push({ oldPath: file.path, newPath: newLinkPath })
+					console.log(this.consoleLogPrefix + "delete file: \n   " + path)
+					result.movedAttachments.push({ oldPath: path, newPath: newLinkPath })
 					await this.app.vault.trash(file, true);
 				} else {
 					//move with new name
 					let newFileCopyName = this.generateFileCopyName(newLinkPath)
-					console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
-					result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName })
+					console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + path + "\n   " + newFileCopyName)
+					result.movedAttachments.push({ oldPath: path, newPath: newFileCopyName })
 					await this.app.vault.rename(file, newFileCopyName);
 					result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName })
 				}
@@ -270,8 +277,8 @@ export class FilesHandler {
 			let existFile = this.lh.getFileByPath(newLinkPath);
 			if (!existFile) {
 				//copy
-				console.log(this.consoleLogPrefix + "copy file [from, to]: \n   " + file.path + "\n   " + newLinkPath)
-				result.movedAttachments.push({ oldPath: file.path, newPath: newLinkPath })
+				console.log(this.consoleLogPrefix + "copy file [from, to]: \n   " + path + "\n   " + newLinkPath)
+				result.movedAttachments.push({ oldPath: path, newPath: newLinkPath })
 				await this.app.vault.copy(file, newLinkPath);
 			} else {
 				if (deleteExistFiles) {
@@ -279,7 +286,7 @@ export class FilesHandler {
 				} else {
 					//copy with new name
 					let newFileCopyName = this.generateFileCopyName(newLinkPath)
-					console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + file.path + "\n   " + newFileCopyName)
+					console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + path + "\n   " + newFileCopyName)
 					result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName })
 					await this.app.vault.copy(file, newFileCopyName);
 					result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName })
