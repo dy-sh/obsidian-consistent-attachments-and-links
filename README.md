@@ -1,4 +1,4 @@
-# Consistent attachments and links
+# Consistent Attachments and Links
 
 The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your vault to make it more consistent. Next, the plugin will automatically maintain the consistency of your library.
 <br>
@@ -43,7 +43,7 @@ Recommended additional settings (not required for the plugin to work):
 
 ## How to check the consistency of the library
 
-Run "Check vault consistent" command and see the report.
+Run "Check Vault Consistency" command and see the report.
 
 
 ## How to achieve consistency of an existing library
@@ -53,14 +53,14 @@ Run "Check vault consistent" command and see the report.
 Specify "Attachments subfolder" name in the plugin settings.
 
 Run the commands in the following order to reorganize vault:
-- Replace all wikilinks with markdown links
-- Convert all embed paths to relative
-- Convert all link paths to relative
-- Rename all attachments (using Unique attachments plugin, optional)
-- Collect all attachments
-- Delete empty folders
+- Replace All Wiki Links with Markdown Links
+- Convert All Embed Paths to Relative
+- Convert All Link Paths to Relative
+- Rename All Attachments (using Unique attachments plugin, optional)
+- Collect All Attachments
+- Delete Empty Folders
 
-Or just run "Reorganize vault" command, then rename all attachments using Unique attachments (optional)
+Or just run "Reorganize Vault" command, then rename all attachments using Unique attachments (optional)
 
 You can look at the console log to make sure everything worked out without errors. Errors can point to broken links (paths to files that no longer exist).
 <br>
@@ -72,7 +72,7 @@ When you move a note in Obsidian, the plugin checks if attachments need to be mo
 It does this safely, making sure not to move attachments that are referenced by other notes. If you move a note with attachments that are used in other notes, the plugin automatically creates a copy of this files and redirects the moved note to them. 
 
 If you move a note to a folder where there are already attachments with the same names, the plugin 
-can work in two modes, depending on "**Delete duplicate attachments while note moving**" setting:
+can work in two modes, depending on "**Delete Duplicate Attachments on Note Move**" setting:
 - **Disabled**: Duplicate files will be renamed (new names are generated), and then moved to a new folder with a note.
 - **Enabled**: It will remove the duplicate files that you move, leaving the ones that are already in the target folder. This is useful if you have unique names for all attachments. You can use [Unique attachments](https://github.com/derwish-pro/obsidian-unique-attachments) plugin which renames attachments by generating file names based on hashing of file content (it's great to use both of these plugins in conjunction with this option enabled).
 
@@ -86,7 +86,7 @@ The plugin is also able to automatically delete empty folders that result from m
 The plugin has the following commands that you can call:
 <br>
 
-### Check vault consistent
+### Check Vault Consistency
 
 Check if there are vault consistency problems and print the report. The report will contain:
 - Bad links
@@ -96,21 +96,21 @@ Check if there are vault consistency problems and print the report. The report w
 - Wiki-embeds
 
 
-### Reorganize vault
+### Reorganize Vault
 
 Runs the following commands one by one:
-- Replace all wikilinks with markdown links
-- Convert all embed paths to relative
-- Convert all link paths to relative
-- Collect all attachments
-- Delete empty folders
+- Replace All Wiki Links with Markdown Links
+- Convert All Embed Paths to Relative
+- Convert All Link Paths to Relative
+- Collect All Attachments
+- Delete Empty Folders
 
 This is the fastest way to clean up your library.
 <br>
 
-### Replace all wikilinks with markdown links
+### Replace All Wiki Links with Markdown Links
 
-Searches for all wikilinks in notes and converts them into regular markdown links.
+Searches for all wiki links in notes and converts them into regular markdown links.
 
 Example:  
 `[[readme]]`  
@@ -118,7 +118,7 @@ will turn into this:
 `[readme](readme.md)`  
 <br>
 
-### Convert all embed paths to relative
+### Convert All Embed Paths to Relative
 
 Searches for all embeds in notes and converts their paths to relative format.
 
@@ -130,7 +130,7 @@ will turn into this:
 This is one of the most important steps on the road to consistency, ensuring that all embed links now point to the correct files accurately.
 <br>
 
-### Convert all link paths to relative
+### Convert All Link Paths to Relative
 
 Does the same as "Convert all embed paths to relative" for links.
 
@@ -140,12 +140,12 @@ will turn into this:
 `[](../readme.md)`  
 <br>
 
-### Collect all attachments
+### Collect All Attachments
 
 The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. In the "Attachments subfolder" plugin settings parameter, you can specify how the subfolder named in order to move attachments to it. If you leave this field blank, then attachments will be moved directly to the folder with the note, without subfolders. At any time, we can change this name and reorganize the folder structure in one click, the attachments will be moved to new folders.
 <br>
 
-### Delete empty folders
+### Delete Empty Folders
 
 Removes all empty folders in your library. 
 
