@@ -33,50 +33,50 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		this.addCommand({
 			id: 'collect-all-attachments',
-			name: 'Collect all attachments',
+			name: 'Collect All Attachments',
 			callback: () => this.collectAllAttachments()
 		});
 
 		this.addCommand({
 			id: 'collect-attachments-current-note',
-			name: 'Collect attachments in current note',
+			name: 'Collect Attachments in Current Note',
 			editorCallback: (editor: Editor, view: MarkdownView) => this.collectAttachmentsCurrentNote(editor, view)
 		});
 
 		this.addCommand({
 			id: 'delete-empty-folders',
-			name: 'Delete empty folders',
+			name: 'Delete Empty Folders',
 			callback: () => this.deleteEmptyFolders()
 		});
 
 		this.addCommand({
 			id: 'convert-all-link-paths-to-relative',
-			name: 'Convert all link paths to relative',
+			name: 'Convert All Link Paths to Relative',
 			callback: () => this.convertAllLinkPathsToRelative()
 		});
 
 		this.addCommand({
 			id: 'convert-all-embed-paths-to-relative',
-			name: 'Convert all embed paths to relative',
+			name: 'Convert All Embed Paths to Relative',
 			callback: () => this.convertAllEmbedsPathsToRelative()
 		});
 
 		this.addCommand({
 			id: 'replace-all-wikilinks-with-markdown-links',
-			name: 'Replace all wikilinks with markdown links',
+			name: 'Replace All Wiki Links with Markdown Links',
 			callback: () => this.replaceAllWikilinksWithMarkdownLinks()
 		});
 
 		this.addCommand({
 			id: 'reorganize-vault',
-			name: 'Reorganize vault',
+			name: 'Reorganize Vault',
 			callback: () => this.reorganizeVault()
 		});
 
 		this.addCommand({
-			id: 'check-consistent',
-			name: 'Check vault consistent',
-			callback: () => this.checkConsistent()
+			id: 'check-consistency',
+			name: 'Check Vault consistency',
+			callback: () => this.checkConsistency()
 		});
 
 		// make regex from given strings 
@@ -84,7 +84,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		this.lh = new LinksHandler(
 			this.app,
-			"Consistent attachments and links: ",
+			"Consistent Attachments and Links: ",
 			this.settings.ignoreFolders,
 			this.settings.ignoreFilesRegex
 		);
@@ -92,7 +92,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		this.fh = new FilesHandler(
 			this.app,
 			this.lh,
-			"Consistent attachments and links: ",
+			"Consistent Attachments and Links: ",
 			this.settings.ignoreFolders,
 			this.settings.ignoreFilesRegex
 		);
@@ -157,8 +157,8 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		this.currentlyRenamingFiles = this.recentlyRenamedFiles; //clear array for pushing new files async
 		this.recentlyRenamedFiles = [];
 
-		new Notice("Fixing consistent for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
-		console.log("Consistent attachments and links:\nFixing consistent for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
+		new Notice("Fixing consistency for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
+		console.log("Consistent Attachments and Links:\nFixing consistency for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
 
 		try {
 			for (let file of this.currentlyRenamingFiles) {
@@ -217,11 +217,11 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 				}
 			}
 		} catch (e) {
-			console.error("Consistent attachments and links: \n" + e);
+			console.error("Consistent Attachments and Links: \n" + e);
 		}
 
-		new Notice("Fixing consistent complete");
-		console.log("Consistent attachments and links:\nFixing consistent complete");
+		new Notice("Fixing Consistency Complete");
+		console.log("Consistent Attachments and Links:\nFixing consistency complete");
 
 		this.renamingIsActive = false;
 
@@ -365,7 +365,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		}
 
 		if (changedLinksCount == 0)
-			new Notice("No wikilinks found that need to be replaced");
+			new Notice("No wiki links found that need to be replaced");
 		else
 			new Notice("Replaced " + changedLinksCount + " wikilink" + (changedLinksCount > 1 ? "s" : "")
 				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
@@ -375,7 +375,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		this.fh.deleteEmptyFolders("/")
 	}
 
-	async checkConsistent() {
+	async checkConsistency() {
 		let badLinks = this.lh.getAllBadLinks();
 		let badSectionLinks = await this.lh.getAllBadSectionLinks();
 		let badEmbeds = this.lh.getAllBadEmbeds();
@@ -467,7 +467,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
 
-		let notePath = this.settings.consistentReportFile;
+		let notePath = this.settings.consistencyReportFile;
 		await this.app.vault.adapter.write(notePath, text);
 
 		let fileOpened = false;
@@ -501,7 +501,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 		this.lh = new LinksHandler(
 			this.app,
-			"Consistent attachments and links: ",
+			"Consistent Attachments and Links: ",
 			this.settings.ignoreFolders,
 			this.settings.ignoreFilesRegex
 		);
@@ -509,7 +509,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		this.fh = new FilesHandler(
 			this.app,
 			this.lh,
-			"Consistent attachments and links: ",
+			"Consistent Attachments and Links: ",
 			this.settings.ignoreFolders,
 			this.settings.ignoreFilesRegex,
 		);
