@@ -533,7 +533,7 @@ export class LinksHandler {
 
 		let file = this.getFileByPath(newNotePath);
 		if (!file) {
-			console.error(this.consoleLogPrefix + "cant update internal links, file not found: " + newNotePath);
+			console.error(this.consoleLogPrefix + "can't update internal links, file not found: " + newNotePath);
 			return;
 		}
 
@@ -700,7 +700,7 @@ export class LinksHandler {
 	async getLinksFromNote(notePath: string): Promise<LinkCache[]> {
 		let file = this.getFileByPath(notePath);
 		if (!file) {
-			console.error(this.consoleLogPrefix + "cant get embeds, file not found: " + notePath);
+			console.error(this.consoleLogPrefix + "can't get embeds, file not found: " + notePath);
 			return;
 		}
 
@@ -772,7 +772,7 @@ export class LinksHandler {
 						console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
 					}
 				} else {
-					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wikilink): " + embed.original);
+					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wiki link): " + embed.original);
 				}
 			}
 		}
@@ -823,7 +823,7 @@ export class LinksHandler {
 						console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
 					}
 				} else {
-					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wikilink): " + link.original);
+					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wiki link): " + link.original);
 				}
 			}
 		}
@@ -839,7 +839,7 @@ export class LinksHandler {
 
 		let noteFile = this.getFileByPath(notePath);
 		if (!noteFile) {
-			console.error(this.consoleLogPrefix + "cant update embeds in note, file not found: " + notePath);
+			console.error(this.consoleLogPrefix + "can't update embeds in note, file not found: " + notePath);
 			return;
 		}
 
@@ -856,7 +856,7 @@ export class LinksHandler {
 				} else if (this.checkIsCorrectWikiEmbed(embed.old.original)) {
 					text = text.replace(embed.old.original, '![[' + embed.newLink + ']]');
 				} else {
-					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not maekdown or wikilink): " + embed.old.original);
+					console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not maekdown or wiki link): " + embed.old.original);
 					continue;
 				}
 
@@ -878,7 +878,7 @@ export class LinksHandler {
 
 		let noteFile = this.getFileByPath(notePath);
 		if (!noteFile) {
-			console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
+			console.error(this.consoleLogPrefix + "can't update links in note, file not found: " + notePath);
 			return;
 		}
 
@@ -895,7 +895,7 @@ export class LinksHandler {
 				} else if (this.checkIsCorrectWikiLink(link.old.original)) {
 					text = text.replace(link.old.original, '[[' + link.newLink + ']]');
 				} else {
-					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not maekdown or wikilink): " + link.old.original);
+					console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not maekdown or wiki link): " + link.old.original);
 					continue;
 				}
 
@@ -922,7 +922,7 @@ export class LinksHandler {
 
 		let noteFile = this.getFileByPath(notePath);
 		if (!noteFile) {
-			console.error(this.consoleLogPrefix + "cant update wikilinks in note, file not found: " + notePath);
+			console.error(this.consoleLogPrefix + "can't update wikilinks in note, file not found: " + notePath);
 			return;
 		}
 
@@ -939,7 +939,7 @@ export class LinksHandler {
 					let newLink = '![' + ']' + '(' + newPath + ')'
 					text = text.replace(embed.original, newLink);
 
-					console.log(this.consoleLogPrefix + "wikilink (embed) replaced in note [note, old link, new link]: \n   "
+					console.log(this.consoleLogPrefix + "wiki link (embed) replaced in note [note, old link, new link]: \n   "
 						+ noteFile.path + "\n   " + embed.original + "\n   " + newLink)
 
 					res.embeds.push({ old: embed, newLink: newLink })
@@ -961,7 +961,7 @@ export class LinksHandler {
 					let newLink = '[' + link.displayText + ']' + '(' + newPath + ')'
 					text = text.replace(link.original, newLink);
 
-					console.log(this.consoleLogPrefix + "wikilink replaced in note [note, old link, new link]: \n   "
+					console.log(this.consoleLogPrefix + "wiki link replaced in note [note, old link, new link]: \n   "
 						+ noteFile.path + "\n   " + link.original + "\n   " + newLink)
 
 					res.links.push({ old: link, newLink: newLink })

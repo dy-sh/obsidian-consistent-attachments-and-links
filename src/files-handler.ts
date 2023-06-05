@@ -228,7 +228,7 @@ export class FilesHandler {
 
 
 		if (path == newLinkPath) {
-			console.warn(this.consoleLogPrefix + "Cant move file. Source and destination path the same.")
+			console.warn(this.consoleLogPrefix + "Can't move file. Source and destination path the same.")
 			return result;
 		}
 
