@@ -333,7 +333,7 @@ export class FilesHandler {
 				let fullPath = this.lh.getFullPathForLink(link, notePath);
 				let linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(fullPath);
 				if (linkedNotes.length == 0) {
-					let file = this.lh.getFileByLink(link, notePath);
+					let file = this.lh.getFileByLink(link, notePath, false);
 					if (file) {
 						try {
 							await this.app.vault.trash(file, true);
