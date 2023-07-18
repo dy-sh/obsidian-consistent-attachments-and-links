@@ -3,6 +3,8 @@
 The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your vault to make it more consistent. Next, the plugin will automatically maintain the consistency of your library.
 <br>
 
+⚠️⚠️⚠️ Be sure to backup your library before using the plugin for the first time! ⚠️⚠️⚠️
+
 ## What's the idea
 
 The idea is to have all links between notes and attachments in strict accordance with the markdown format and support their relative paths. This is useful when you want to open a note in another program that does not know where your vault folder is, or for example you want to publish and read your notes on GitHub or another site that allows you to upload markdown files and you need compatibility.
