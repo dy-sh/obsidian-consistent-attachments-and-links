@@ -1,6 +1,6 @@
 {
   "name": "consistent-attachments-and-links",
-  "version": "0.9.7",
+  "version": "1.0.9",
   "description": "This plugin ensures the consistency of attachments and links",
   "main": "main.js",
   "scripts": {
