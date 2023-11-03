@@ -1023,7 +1023,7 @@ export class LinksHandler {
 
 					let file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
 					if (file && file.extension == "md" && newPath.endsWith(".md"))
-						newPath.replace("\.md$", "");
+						newPath = newPath.replace(/\.md$/, "");
 
 					let newLink = '[[' + newPath + ']]';
 					if (link.displayText && link.displayText != newPath) {
