@@ -68,6 +68,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		});
 
 		this.addCommand({
+			id: 'replace-all-markdown-links-with-wikilinks',
+			name: 'Replace All Markdown Links with Wiki Links',
+			callback: () => this.replaceAllMarkdownLinksWithWikilinks()
+		});
+
+		this.addCommand({
 			id: 'reorganize-vault',
 			name: 'Reorganize Vault',
 			callback: () => this.reorganizeVault()
@@ -79,7 +85,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			callback: () => this.checkConsistency()
 		});
 
-		// make regex from given strings 
+		// make regex from given strings
 		this.settings.ignoreFilesRegex = this.settings.ignoreFiles.map(val=>RegExp(val))
 
 		this.lh = new LinksHandler(
@@ -368,6 +374,34 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			new Notice("No wiki links found that need to be replaced");
 		else
 			new Notice("Replaced " + changedLinksCount + " wikilink" + (changedLinksCount > 1 ? "s" : "")
+				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+	}
+
+	async replaceAllMarkdownLinksWithWikilinks() {
+		let changedLinksCount = 0;
+		let processedNotesCount = 0;
+
+		let notes = this.app.vault.getMarkdownFiles();
+
+		if (notes) {
+			for (let note of notes) {
+				if (this.isPathIgnored(note.path))
+					continue;
+
+				let result = await this.lh.replaceAllNoteMarkdownLinksWithWikilinks(note.path);
+
+				if (result && (result.links.length > 0 || result.embeds.length > 0)) {
+					changedLinksCount += result.links.length;
+					changedLinksCount += result.embeds.length;
+					processedNotesCount++;
+				}
+			}
+		}
+
+		if (changedLinksCount == 0)
+			new Notice("No markdown links found that need to be replaced");
+		else
+			new Notice("Replaced " + changedLinksCount + " markdown links" + (changedLinksCount > 1 ? "s" : "")
 				+ " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
 	}
 

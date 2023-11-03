@@ -739,8 +739,6 @@ export class LinksHandler {
 	}
 
 
-
-
 	async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<EmbedChangeInfo[]> {
 		if (this.isPathIgnored(notePath))
 			return;
@@ -936,7 +934,7 @@ export class LinksHandler {
 				if (this.checkIsCorrectWikiEmbed(embed.original)) {
 
 					let newPath = Utils.normalizePathForLink(embed.link)
-					let newLink = '![' + ']' + '(' + newPath + ')'
+					let newLink = '![' + embed.displayText + ']' + '(' + newPath + ')'
 					text = text.replace(embed.original, newLink);
 
 					console.log(this.consoleLogPrefix + "wiki link (embed) replaced in note [note, old link, new link]: \n   "
@@ -962,6 +960,79 @@ export class LinksHandler {
 					text = text.replace(link.original, newLink);
 
 					console.log(this.consoleLogPrefix + "wiki link replaced in note [note, old link, new link]: \n   "
+						+ noteFile.path + "\n   " + link.original + "\n   " + newLink)
+
+					res.links.push({ old: link, newLink: newLink })
+
+					dirty = true;
+				}
+			}
+		}
+
+		if (dirty)
+			await this.app.vault.modify(noteFile, text);
+
+		return res;
+	}
+
+	async replaceAllNoteMarkdownLinksWithWikilinks(notePath: string): Promise<LinksAndEmbedsChangedInfo> {
+		if (this.isPathIgnored(notePath))
+			return;
+
+		let res: LinksAndEmbedsChangedInfo = {
+			links: [],
+			embeds: [],
+		}
+
+		let noteFile = this.getFileByPath(notePath);
+		if (!noteFile) {
+			console.error(this.consoleLogPrefix + "can't update markdown links in note, file not found: " + notePath);
+			return;
+		}
+
+		let links = this.app.metadataCache.getCache(notePath)?.links;
+		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+		let text = await this.app.vault.read(noteFile);
+		let dirty = false;
+
+		if (embeds) { //embeds must go first!
+			for (let embed of embeds) {
+				if (this.checkIsCorrectMarkdownEmbed(embed.original)) {
+
+					let newPath = Utils.unnormalizePathForLink(embed.link)
+					let newLink = '![[' + newPath + ']]';
+					if (embed.displayText && embed.displayText != embed.link) {
+						newLink = '![[' + newPath + '|' + embed.displayText + ']]';
+					}
+					text = text.replace(embed.original, newLink);
+
+					console.log(this.consoleLogPrefix + "markdown link (embed) replaced in note [note, old link, new link]: \n   "
+						+ noteFile.path + "\n   " + embed.original + "\n   " + newLink)
+
+					res.embeds.push({ old: embed, newLink: newLink })
+
+					dirty = true;
+				}
+			}
+		}
+
+		if (links) {
+			for (let link of links) {
+				if (this.checkIsCorrectMarkdownLink(link.original)) {
+					let newPath = Utils.unnormalizePathForLink(link.link)
+
+					let file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
+					if (file && file.extension == "md" && newPath.endsWith(".md"))
+						newPath.replace("\.md$", "");
+
+					let newLink = '[[' + newPath + ']]';
+					if (link.displayText && link.displayText != newPath) {
+						newLink = '[[' + newPath + '|' + link.displayText + ']]';
+					}
+
+					text = text.replace(link.original, newLink);
+
+					console.log(this.consoleLogPrefix + "markdown link replaced in note [note, old link, new link]: \n   "
 						+ noteFile.path + "\n   " + link.original + "\n   " + newLink)
 
 					res.links.push({ old: link, newLink: newLink })
