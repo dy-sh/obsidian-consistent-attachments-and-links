@@ -70,7 +70,7 @@ export class FilesHandler {
 		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
 			return;
 
-		//try to get embeds for old or new path (metadataCache can be updated or not)		
+		//try to get embeds for old or new path (metadataCache can be updated or not)
 		//!!! this can return undefined if note was just updated
 		let embeds = this.app.metadataCache.getCache(newNotePath)?.embeds;
 		if (!embeds)
@@ -154,7 +154,7 @@ export class FilesHandler {
 
 				let fillPathLink = this.lh.getFullPathForLink(link, notePath);
 				if (result.movedAttachments.findIndex(x => x.oldPath == fillPathLink) != -1)
-					continue;//already moved	
+					continue; //already moved
 
 				let file = this.lh.getFileByLink(link, notePath)
 				if (!file) {
@@ -162,12 +162,12 @@ export class FilesHandler {
 					continue;
 				}
 
-				
+
 
 				let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
 
 
-				if (newPath == file.path)//nothing to move
+				if (newPath == file.path) //nothing to move
 					continue;
 
 				let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
@@ -186,18 +186,21 @@ export class FilesHandler {
 				if (link.startsWith("#")) //internal section link
 					continue;
 
-				if (link.endsWith(".md"))
+				if (link.endsWith(".md") || link.endsWith(".canvas")) //internal file link
 					continue;
 
 				let fillPathLink = this.lh.getFullPathForLink(link, notePath);
 				if (result.movedAttachments.findIndex(x => x.oldPath == fillPathLink) != -1)
-					continue;//already moved	
+					continue;//already moved
 
 				let file = this.lh.getFileByLink(link, notePath)
 				if (!file) {
 					console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link);
 					continue;
 				}
+
+				if (file.extension == "md" || file.extension == "canvas") //internal file link
+					continue;
 
 				let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
 
