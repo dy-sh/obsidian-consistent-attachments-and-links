@@ -105,18 +105,10 @@ export class FilesHandler {
 			if (path.dirname(oldNotePath) != "." && !path.dirname(oldLinkPath).startsWith(path.dirname(oldNotePath)))
 				continue;
 
-			let newLinkPath = this.lh.getFullPathForLink(link, newNotePath);
+			let newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
 
-			if (attachmentsSubfolder.contains("${filename}")) {
-				let oldLinkPathBySetting = this.getNewAttachmentPath(file.path, oldNotePath, attachmentsSubfolder);
-				if (oldLinkPath == oldLinkPathBySetting) {
-					newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
-				}
-			}
-
-			if (newLinkPath == file.path)
-				continue; //nothing to change
-
+			if (newLinkPath == file.path) //nothing to move
+				continue;
 
 			let res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles);
 			result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
