@@ -1,11 +1,12 @@
 {
   "name": "consistent-attachments-and-links",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "description": "This plugin ensures the consistency of attachments and links",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js"
+    "build": "rollup --config rollup.config.js",
+    "version": "node version-bump.mjs && git add manifest.json versions.json"
   },
   "keywords": [],
   "author": "",
