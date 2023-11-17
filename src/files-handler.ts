@@ -62,8 +62,6 @@ export class FilesHandler {
 		return "";
 	}
 
-
-
 	async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
 		deleteExistFiles: boolean, attachmentsSubfolder: string): Promise<MovedAttachmentResult> {
 
@@ -105,18 +103,10 @@ export class FilesHandler {
 			if (path.dirname(oldNotePath) != "." && !path.dirname(oldLinkPath).startsWith(path.dirname(oldNotePath)))
 				continue;
 
-			let newLinkPath = this.lh.getFullPathForLink(link, newNotePath);
+			let newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
 
-			if (attachmentsSubfolder.contains("${filename}")) {
-				let oldLinkPathBySetting = this.getNewAttachmentPath(file.path, oldNotePath, attachmentsSubfolder);
-				if (oldLinkPath == oldLinkPathBySetting) {
-					newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
-				}
-			}
-
-			if (newLinkPath == file.path)
-				continue; //nothing to change
-
+			if (newLinkPath == file.path) //nothing to move
+				continue;
 
 			let res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles);
 			result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
@@ -152,8 +142,8 @@ export class FilesHandler {
 			for (let embed of embeds) {
 				let link = embed.link;
 
-				let fillPathLink = this.lh.getFullPathForLink(link, notePath);
-				if (result.movedAttachments.findIndex(x => x.oldPath == fillPathLink) != -1)
+				let fullPathLink = this.lh.getFullPathForLink(link, notePath);
+				if (result.movedAttachments.findIndex(x => x.oldPath == fullPathLink) != -1)
 					continue; //already moved
 
 				let file = this.lh.getFileByLink(link, notePath)
@@ -162,10 +152,7 @@ export class FilesHandler {
 					continue;
 				}
 
-
-
 				let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
-
 
 				if (newPath == file.path) //nothing to move
 					continue;
@@ -189,8 +176,8 @@ export class FilesHandler {
 				if (link.endsWith(".md") || link.endsWith(".canvas")) //internal file link
 					continue;
 
-				let fillPathLink = this.lh.getFullPathForLink(link, notePath);
-				if (result.movedAttachments.findIndex(x => x.oldPath == fillPathLink) != -1)
+				let fullPathLink = this.lh.getFullPathForLink(link, notePath);
+				if (result.movedAttachments.findIndex(x => x.oldPath == fullPathLink) != -1)
 					continue;//already moved
 
 				let file = this.lh.getFileByLink(link, notePath)
