@@ -1,3 +1,5 @@
+import { TFile } from "obsidian";
+
 export class Utils {
 
 	static async delay(ms: number) {
@@ -21,5 +23,35 @@ export class Utils {
 	static normalizeLinkSection(section: string): string {
 		section = decodeURI(section);
 		return section;
+	}
+
+	static async getCacheSafe(fileOrPath: TFile | string) {
+		const file = Utils.getFile(fileOrPath);
+
+		while (true) {
+			const cache = app.metadataCache.getFileCache(file);
+			if (cache) {
+				return cache;
+			}
+	
+			await Utils.delay(100);
+		}
+	}
+
+	static getFile(fileOrPath: TFile | string) {
+		if (fileOrPath instanceof TFile) {
+			return fileOrPath;
+		}
+
+		const abstractFile = app.vault.getAbstractFileByPath(fileOrPath);
+		if (!abstractFile) {
+			throw `File ${fileOrPath} does not exist`;
+		}
+
+		if (!(abstractFile instanceof TFile)) {
+			throw `${fileOrPath} is not a file`;
+		}
+
+		return abstractFile;
 	}
 }
