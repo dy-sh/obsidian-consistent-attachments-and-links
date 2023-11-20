@@ -136,69 +136,49 @@ export class FilesHandler {
 			renamedFiles: []
 		};
 
-		//!!! this can return undefined if note was just updated
-		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
-		if (embeds) {
-			for (let embed of embeds) {
-				let link = embed.link;
+		const cache = await Utils.getCacheSafe(notePath);
 
-				let fullPathLink = this.lh.getFullPathForLink(link, notePath);
-				if (result.movedAttachments.findIndex(x => x.oldPath == fullPathLink) != -1)
-					continue; //already moved
+		const linkObjs = [...(cache.embeds ?? []), ...(cache.links ?? [])];
 
-				let file = this.lh.getFileByLink(link, notePath)
-				if (!file) {
-					console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + link);
-					continue;
-				}
+		for (let linkObj of linkObjs) {
+			let link = this.lh.splitLinkToPathAndSection(linkObj.link).link;
 
-				let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
-
-				if (newPath == file.path) //nothing to move
-					continue;
-
-				let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
-
-				result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
-				result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
+			if (link.startsWith("#")) {
+				// internal section link
+				continue;
 			}
-		}
 
-		//!!! this can return undefined if note was just updated
-		let links = this.app.metadataCache.getCache(notePath)?.links;
-		if (links) {
-			for (let l of links) {
-				let link = this.lh.splitLinkToPathAndSection(l.link).link;
-
-				if (link.startsWith("#")) //internal section link
-					continue;
-
-				if (link.endsWith(".md") || link.endsWith(".canvas")) //internal file link
-					continue;
-
-				let fullPathLink = this.lh.getFullPathForLink(link, notePath);
-				if (result.movedAttachments.findIndex(x => x.oldPath == fullPathLink) != -1)
-					continue;//already moved
-
-				let file = this.lh.getFileByLink(link, notePath)
-				if (!file) {
-					console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link);
-					continue;
-				}
-
-				if (file.extension == "md" || file.extension == "canvas") //internal file link
-					continue;
-
-				let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
-
-				if (newPath == file.path)//nothing to move
-					continue;
-
-				let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
-
-				result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
-				result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
+			let fullPathLink = this.lh.getFullPathForLink(link, notePath);
+			if (result.movedAttachments.findIndex(x => x.oldPath == fullPathLink) != -1) {
+				// already moved
+				continue;
 			}
+
+			let file = this.lh.getFileByLink(link, notePath)
+			if (!file) {
+				const type = linkObj.original.startsWith("!") ? "embed" : "link";
+				console.error(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${link}`);
+				continue;
+			}
+
+			const extension = file.extension.toLowerCase();
+
+			if (extension === "md" || file.extension === "canvas") {
+				// internal file link
+				continue;
+			}
+
+			let newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
+
+			if (newPath == file.path) {
+				// nothing to move
+				continue;
+			}
+
+			let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
+
+			result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
+			result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
 		}
 
 		return result;
