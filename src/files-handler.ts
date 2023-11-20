@@ -70,9 +70,8 @@ export class FilesHandler {
 
 		//try to get embeds for old or new path (metadataCache can be updated or not)
 		//!!! this can return undefined if note was just updated
-		let embeds = this.app.metadataCache.getCache(newNotePath)?.embeds;
-		if (!embeds)
-			embeds = this.app.metadataCache.getCache(oldNotePath)?.embeds;
+
+		let embeds = (await Utils.getCacheSafe(newNotePath)).embeds;
 
 		if (!embeds)
 			return;
@@ -204,7 +203,7 @@ export class FilesHandler {
 
 		await this.createFolderForAttachmentFromPath(newLinkPath);
 
-		let linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(path);
+		let linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(path);
 		if (parentNotePaths) {
 			for (let notePath of parentNotePaths) {
 				linkedNotes.remove(notePath);
@@ -295,13 +294,13 @@ export class FilesHandler {
 			return;
 
 		//!!! this can return undefined if note was just updated
-		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+		let embeds = (await Utils.getCacheSafe(notePath)).embeds;
 		if (embeds) {
 			for (let embed of embeds) {
 				let link = embed.link;
 
 				let fullPath = this.lh.getFullPathForLink(link, notePath);
-				let linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(fullPath);
+				let linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(fullPath);
 				if (linkedNotes.length == 0) {
 					let file = this.lh.getFileByLink(link, notePath, false);
 					if (file) {

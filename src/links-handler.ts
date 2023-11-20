@@ -143,7 +143,7 @@ export class LinksHandler {
 	}
 
 
-	getAllCachedLinksToFile(filePath: string): { [notePath: string]: LinkCache[]; } {
+	async getAllCachedLinksToFile(filePath: string): Promise<{ [notePath: string]: LinkCache[]; }> {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -152,8 +152,7 @@ export class LinksHandler {
 				if (note.path == filePath)
 					continue;
 
-				//!!! this can return undefined if note was just updated
-				let links = this.app.metadataCache.getCache(note.path)?.links;
+				let links = (await Utils.getCacheSafe(note.path)).links;
 
 				if (links) {
 					for (let link of links) {
@@ -172,7 +171,7 @@ export class LinksHandler {
 	}
 
 
-	getAllCachedEmbedsToFile(filePath: string): { [notePath: string]: EmbedCache[]; } {
+	async getAllCachedEmbedsToFile(filePath: string): Promise<{ [notePath: string]: EmbedCache[]; }> {
 		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -182,7 +181,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+				let embeds = (await Utils.getCacheSafe(note.path)).embeds;
 
 				if (embeds) {
 					for (let embed of embeds) {
@@ -202,7 +201,7 @@ export class LinksHandler {
 
 
 
-	getAllBadLinks(): { [notePath: string]: LinkCache[]; } {
+	async getAllBadLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -212,7 +211,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let links = this.app.metadataCache.getCache(note.path)?.links;
+				let links = (await Utils.getCacheSafe(note.path)).links;
 
 				if (links) {
 					for (let link of links) {
@@ -236,7 +235,7 @@ export class LinksHandler {
 		return allLinks;
 	}
 
-	getAllBadEmbeds(): { [notePath: string]: EmbedCache[]; } {
+	async getAllBadEmbeds(): Promise<{ [notePath: string]: EmbedCache[]; }> {
 		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -246,7 +245,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+				let embeds = (await Utils.getCacheSafe(note.path)).embeds;
 
 				if (embeds) {
 					for (let embed of embeds) {
@@ -268,7 +267,7 @@ export class LinksHandler {
 	}
 
 
-	getAllGoodLinks(): { [notePath: string]: LinkCache[]; } {
+	async getAllGoodLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -278,7 +277,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let links = this.app.metadataCache.getCache(note.path)?.links;
+				let links = (await Utils.getCacheSafe(note.path)).links;
 
 				if (links) {
 					for (let link of links) {
@@ -312,7 +311,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let links = this.app.metadataCache.getCache(note.path)?.links;
+				let links = (await Utils.getCacheSafe(note.path)).links;
 				if (links) {
 					for (let link of links) {
 						if (this.checkIsCorrectWikiLink(link.original))
@@ -352,7 +351,7 @@ export class LinksHandler {
 		return allLinks;
 	}
 
-	getAllGoodEmbeds(): { [notePath: string]: EmbedCache[]; } {
+	async getAllGoodEmbeds(): Promise<{ [notePath: string]: EmbedCache[]; }> {
 		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -362,7 +361,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+				let embeds = (await Utils.getCacheSafe(note.path)).embeds;
 
 				if (embeds) {
 					for (let embed of embeds) {
@@ -383,7 +382,7 @@ export class LinksHandler {
 		return allEmbeds;
 	}
 
-	getAllWikiLinks(): { [notePath: string]: LinkCache[]; } {
+	async getAllWikiLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
 		let allLinks: { [notePath: string]: LinkCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -393,7 +392,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let links = this.app.metadataCache.getCache(note.path)?.links;
+				let links = (await Utils.getCacheSafe(note.path)).links;
 
 				if (links) {
 					for (let link of links) {
@@ -412,7 +411,7 @@ export class LinksHandler {
 		return allLinks;
 	}
 
-	getAllWikiEmbeds(): { [notePath: string]: EmbedCache[]; } {
+	async getAllWikiEmbeds(): Promise<{ [notePath: string]: EmbedCache[]; }> {
 		let allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
 		let notes = this.app.vault.getMarkdownFiles();
 
@@ -422,7 +421,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let embeds = this.app.metadataCache.getCache(note.path)?.embeds;
+				let embeds = (await Utils.getCacheSafe(note.path)).embeds;
 
 				if (embeds) {
 					for (let embed of embeds) {
@@ -445,7 +444,7 @@ export class LinksHandler {
 		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
 			return;
 
-		let notes = useBuiltInObsidianLinkCaching ? this.getCachedNotesThatHaveLinkToFile(oldNotePath) : await this.getNotesThatHaveLinkToFile(oldNotePath);
+		let notes = useBuiltInObsidianLinkCaching ? await this.getCachedNotesThatHaveLinkToFile(oldNotePath) : await this.getNotesThatHaveLinkToFile(oldNotePath);
 		let links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
 		if (notes) {
@@ -592,7 +591,7 @@ export class LinksHandler {
 	}
 
 
-	getCachedNotesThatHaveLinkToFile(filePath: string): string[] {
+	async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
 		let notes: string[] = [];
 		let allNotes = this.app.vault.getMarkdownFiles();
 
@@ -606,7 +605,7 @@ export class LinksHandler {
 					continue;
 
 				//!!! this can return undefined if note was just updated
-				let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+				let embeds = (await Utils.getCacheSafe(notePath)).embeds;
 				if (embeds) {
 					for (let embed of embeds) {
 						let linkPath = this.getFullPathForLink(embed.link, note.path);
@@ -618,7 +617,7 @@ export class LinksHandler {
 				}
 
 				//!!! this can return undefined if note was just updated
-				let links = this.app.metadataCache.getCache(notePath)?.links;
+				let links = (await Utils.getCacheSafe(notePath)).links;
 				if (links) {
 					for (let link of links) {
 						let linkPath = this.getFullPathForLink(link.link, note.path);
@@ -747,7 +746,7 @@ export class LinksHandler {
 
 		let changedEmbeds: EmbedChangeInfo[] = [];
 
-		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+		let embeds = (await Utils.getCacheSafe(notePath)).embeds;
 
 		if (embeds) {
 			for (let embed of embeds) {
@@ -788,7 +787,7 @@ export class LinksHandler {
 
 		let changedLinks: LinkChangeInfo[] = [];
 
-		let links = this.app.metadataCache.getCache(notePath)?.links;
+		let links = (await Utils.getCacheSafe(notePath)).links;
 
 		if (links) {
 			for (let link of links) {
@@ -926,8 +925,9 @@ export class LinksHandler {
 			return;
 		}
 
-		let links = this.app.metadataCache.getCache(notePath)?.links;
-		let embeds = this.app.metadataCache.getCache(notePath)?.embeds;
+		const cache = await Utils.getCacheSafe(notePath);
+		let links = cache.links;
+		let embeds = cache.embeds;
 		let text = await this.app.vault.read(noteFile);
 		let dirty = false;
 
