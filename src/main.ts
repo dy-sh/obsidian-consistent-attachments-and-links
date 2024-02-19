@@ -122,7 +122,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 	}
 
 	async handleDeletedMetadata(file: TFile, prevCache: CachedMetadata) {
-		if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
+		if (!prevCache || !this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
 			return;
 		}
 
@@ -137,6 +137,13 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		if (fileExt == ".md") {
 			if (this.settings.deleteAttachmentsWithNote) {
 				const cache = this.deletedNoteCache.get(file.path);
+
+				if (!cache) {
+					await Utils.delay(100);
+					await this.handleDeletedFile(file);
+					return;
+				}
+
 				this.deletedNoteCache.delete(file.path);
 				await this.fh.deleteUnusedAttachmentsForCachedNote(file.path, cache, this.settings.deleteEmptyFolders);
 			}
