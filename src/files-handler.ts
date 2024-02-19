@@ -63,7 +63,7 @@ export class FilesHandler {
 	}
 
 	async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
-		deleteExistFiles: boolean, attachmentsSubfolder: string): Promise<MovedAttachmentResult> {
+		deleteExistFiles: boolean, attachmentsSubfolder: string, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 
 		if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
 			return;
@@ -107,7 +107,7 @@ export class FilesHandler {
 			if (newLinkPath == file.path) //nothing to move
 				continue;
 
-			let res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles);
+			let res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles, deleteEmptyFolders);
 			result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
 			result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
 
@@ -125,7 +125,7 @@ export class FilesHandler {
 
 
 	async collectAttachmentsForCachedNote(notePath: string, subfolderName: string,
-		deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
+		deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 
 		if (this.isPathIgnored(notePath))
 			return;
@@ -172,7 +172,7 @@ export class FilesHandler {
 				continue;
 			}
 
-			let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles);
+			let res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles, deleteEmptyFolders);
 
 			result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
 			result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
@@ -182,7 +182,7 @@ export class FilesHandler {
 	}
 
 
-	async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean): Promise<MovedAttachmentResult> {
+	async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 		const path = file.path;
 
 		let result: MovedAttachmentResult = {
@@ -210,7 +210,7 @@ export class FilesHandler {
 
 		if (path !== file.path) {
 			console.warn(this.consoleLogPrefix + "File was moved already")
-			return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles);
+			return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles, deleteEmptyFolders);
 		}
 
 		//if no other file has link to this file - try to move file
@@ -227,7 +227,7 @@ export class FilesHandler {
 					//delete
 					console.log(this.consoleLogPrefix + "delete file: \n   " + path)
 					result.movedAttachments.push({ oldPath: path, newPath: newLinkPath })
-					await this.app.vault.trash(file, true);
+					await this.deleteFile(file, deleteEmptyFolders);
 				} else {
 					//move with new name
 					let newFileCopyName = this.generateFileCopyName(newLinkPath)
@@ -287,7 +287,7 @@ export class FilesHandler {
 		}
 	}
 
-	async deleteUnusedAttachmentsForCachedNote(notePath: string, cache: CachedMetadata) {
+	async deleteUnusedAttachmentsForCachedNote(notePath: string, cache: CachedMetadata, deleteEmptyFolders: boolean) {
 		if (this.isPathIgnored(notePath))
 			return;
 
@@ -300,7 +300,7 @@ export class FilesHandler {
 				let file = this.lh.getFileByLink(link, notePath, false);
 				if (file) {
 					try {
-						await this.app.vault.trash(file, true);
+						await this.deleteFile(file, deleteEmptyFolders);
 					} catch { }
 				}
 			}
@@ -310,6 +310,15 @@ export class FilesHandler {
 	getReferences(cache: CachedMetadata): ReferenceCache[] {
 		return [...(cache.embeds ?? []), ...(cache.links ?? [])];
 	}
+
+	async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
+		await this.app.vault.trash(file, true);
+		if (deleteEmptyFolders) {
+			let dir = file.parent;
+			while (dir.children.length === 0) {
+				await this.app.vault.trash(dir, true);
+				dir = dir.parent;
+			}
+		}
+	}
 }
-
-
