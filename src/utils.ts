@@ -26,7 +26,10 @@ export class Utils {
 	}
 
 	static async getCacheSafe(fileOrPath: TFile | string) {
-		const file = Utils.getFile(fileOrPath);
+		const file = Utils.getFileOrNull(fileOrPath);
+		if (!file) {
+			return {};
+		}
 
 		while (true) {
 			const cache = app.metadataCache.getFileCache(file);
@@ -38,14 +41,14 @@ export class Utils {
 		}
 	}
 
-	static getFile(fileOrPath: TFile | string) {
+	static getFileOrNull(fileOrPath: TFile | string): TFile | null {
 		if (fileOrPath instanceof TFile) {
 			return fileOrPath;
 		}
 
 		const abstractFile = app.vault.getAbstractFileByPath(fileOrPath);
 		if (!abstractFile) {
-			throw `File ${fileOrPath} does not exist`;
+			return null;
 		}
 
 		if (!(abstractFile instanceof TFile)) {
