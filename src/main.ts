@@ -138,7 +138,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 			if (this.settings.deleteAttachmentsWithNote) {
 				const cache = this.deletedNoteCache.get(file.path);
 				this.deletedNoteCache.delete(file.path);
-				await this.fh.deleteUnusedAttachmentsForCachedNote(file.path, cache);
+				await this.fh.deleteUnusedAttachmentsForCachedNote(file.path, cache, this.settings.deleteEmptyFolders);
 			}
 
 			//delete child folders (do not delete parent)
@@ -195,7 +195,8 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 								file.oldPath,
 								file.newPath,
 								this.settings.deleteExistFilesWhenMoveNote,
-								this.settings.attachmentsSubfolder
+								this.settings.attachmentsSubfolder,
+								this.settings.deleteEmptyFolders
 							)
 
 							if (this.settings.updateLinks && result) {
@@ -257,7 +258,8 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		let result = await this.fh.collectAttachmentsForCachedNote(
 			note.path,
 			this.settings.attachmentsSubfolder,
-			this.settings.deleteExistFilesWhenMoveNote);
+			this.settings.deleteExistFilesWhenMoveNote,
+			this.settings.deleteEmptyFolders);
 
 		if (result && result.movedAttachments && result.movedAttachments.length > 0) {
 			await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments)
@@ -284,7 +286,8 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 				let result = await this.fh.collectAttachmentsForCachedNote(
 					note.path,
 					this.settings.attachmentsSubfolder,
-					this.settings.deleteExistFilesWhenMoveNote);
+					this.settings.deleteExistFilesWhenMoveNote,
+					this.settings.deleteEmptyFolders);
 
 
 				if (result && result.movedAttachments && result.movedAttachments.length > 0) {
