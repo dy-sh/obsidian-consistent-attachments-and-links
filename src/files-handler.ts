@@ -293,16 +293,17 @@ export class FilesHandler {
 
 		for (let reference of this.getReferences(cache)) {
 			let link = reference.link;
+			const file = this.lh.getFileByLink(link, notePath, false);
 
-			let fullPath = this.lh.getFullPathForLink(link, notePath);
-			let linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(fullPath);
+			if (!file || file.extension.toLowerCase() === "md") {
+				continue;
+			}
+
+			let linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(file.path);
 			if (linkedNotes.length == 0) {
-				let file = this.lh.getFileByLink(link, notePath, false);
-				if (file) {
-					try {
-						await this.deleteFile(file, deleteEmptyFolders);
-					} catch { }
-				}
+				try {
+					await this.deleteFile(file, deleteEmptyFolders);
+				} catch { }
 			}
 		}
 	}
