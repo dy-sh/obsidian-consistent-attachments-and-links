@@ -1,4 +1,4 @@
-import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache, Notice, Editor, MarkdownView } from 'obsidian';
+import { App, Plugin, TAbstractFile, TFile, EmbedCache, LinkCache, Notice, Editor, MarkdownView, CachedMetadata } from 'obsidian';
 import { PluginSettings, DEFAULT_SETTINGS, SettingTab } from './settings';
 import { Utils } from './utils';
 import { LinksHandler, PathChangeInfo } from './links-handler';
@@ -18,10 +18,16 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 	timerId: NodeJS.Timeout;
 	renamingIsActive = false;
 
+	deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
+
 	async onload() {
 		await this.loadSettings();
 
 		this.addSettingTab(new SettingTab(this.app, this));
+
+		this.registerEvent(
+			this.app.metadataCache.on('deleted', (file, prevCache) => this.handleDeletedMetadata(file, prevCache)),
+		);
 
 		this.registerEvent(
 			this.app.vault.on('delete', (file) => this.handleDeletedFile(file)),
@@ -115,6 +121,13 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		}
 	}
 
+	async handleDeletedMetadata(file: TFile, prevCache: CachedMetadata) {
+		if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
+			return;
+		}
+
+		this.deletedNoteCache.set(file.path, prevCache);
+	}
 
 	async handleDeletedFile(file: TAbstractFile) {
 		if (this.isPathIgnored(file.path))
@@ -123,7 +136,9 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 		let fileExt = file.path.substring(file.path.lastIndexOf("."));
 		if (fileExt == ".md") {
 			if (this.settings.deleteAttachmentsWithNote) {
-				await this.fh.deleteUnusedAttachmentsForCachedNote(file.path);
+				const cache = this.deletedNoteCache.get(file.path);
+				this.deletedNoteCache.delete(file.path);
+				await this.fh.deleteUnusedAttachmentsForCachedNote(file.path, cache);
 			}
 
 			//delete child folders (do not delete parent)

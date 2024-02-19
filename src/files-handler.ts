@@ -1,4 +1,4 @@
-import { App, TAbstractFile, TFile } from 'obsidian';
+import { App, CachedMetadata, ReferenceCache, TAbstractFile, TFile } from 'obsidian';
 import { LinksHandler, PathChangeInfo } from './links-handler';
 import { Utils } from './utils';
 import { path } from './path';
@@ -137,10 +137,8 @@ export class FilesHandler {
 
 		const cache = await Utils.getCacheSafe(notePath);
 
-		const linkObjs = [...(cache.embeds ?? []), ...(cache.links ?? [])];
-
-		for (let linkObj of linkObjs) {
-			let link = this.lh.splitLinkToPathAndSection(linkObj.link).link;
+		for (let reference of this.getReferences(cache)) {
+			let link = this.lh.splitLinkToPathAndSection(reference.link).link;
 
 			if (link.startsWith("#")) {
 				// internal section link
@@ -155,7 +153,7 @@ export class FilesHandler {
 
 			let file = this.lh.getFileByLink(link, notePath)
 			if (!file) {
-				const type = linkObj.original.startsWith("!") ? "embed" : "link";
+				const type = reference.original.startsWith("!") ? "embed" : "link";
 				console.error(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${link}`);
 				continue;
 			}
@@ -289,29 +287,28 @@ export class FilesHandler {
 		}
 	}
 
-	async deleteUnusedAttachmentsForCachedNote(notePath: string) {
+	async deleteUnusedAttachmentsForCachedNote(notePath: string, cache: CachedMetadata) {
 		if (this.isPathIgnored(notePath))
 			return;
 
-		//!!! this can return undefined if note was just updated
-		let embeds = (await Utils.getCacheSafe(notePath)).embeds;
-		if (embeds) {
-			for (let embed of embeds) {
-				let link = embed.link;
+		for (let reference of this.getReferences(cache)) {
+			let link = reference.link;
 
-				let fullPath = this.lh.getFullPathForLink(link, notePath);
-				let linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(fullPath);
-				if (linkedNotes.length == 0) {
-					let file = this.lh.getFileByLink(link, notePath, false);
-					if (file) {
-						try {
-							await this.app.vault.trash(file, true);
-						} catch { }
-					}
+			let fullPath = this.lh.getFullPathForLink(link, notePath);
+			let linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(fullPath);
+			if (linkedNotes.length == 0) {
+				let file = this.lh.getFileByLink(link, notePath, false);
+				if (file) {
+					try {
+						await this.app.vault.trash(file, true);
+					} catch { }
 				}
 			}
 		}
+	}
 
+	getReferences(cache: CachedMetadata): ReferenceCache[] {
+		return [...(cache.embeds ?? []), ...(cache.links ?? [])];
 	}
 }
 
