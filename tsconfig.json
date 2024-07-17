@@ -1,20 +1,28 @@
 {
+  "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "inlineSourceMap": true,
     "inlineSources": true,
-    "module": "ESNext",
-    "target": "es6",
+    "module": "NodeNext",
+    "target": "ESNext",
     "allowJs": true,
     "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "importHelpers": true,
     "lib": [
-      "dom",
-      "es5",
-      "scripthost",
-      "es2015"
-    ]
+      "DOM",
+      "ESNext"
+    ],
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "skipLibCheck": false,
+    "types": [
+      "node",
+      "obsidian-typings"
+    ],
+    "verbatimModuleSyntax": true
   },
   "include": [
     "**/*.ts"
