@@ -2,59 +2,59 @@ import { TFile } from "obsidian";
 
 export class Utils {
 
-	static async delay(ms: number) {
-		return new Promise(resolve => setTimeout(resolve, ms));
-	}
+  static async delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
 
-	static normalizePathForFile(path: string): string {
-		path = path.replace(/\\/gi, "/"); //replace \ to /
-		path = path.replace(/%20/gi, " "); //replace %20 to space
-		return path;
-	}
+  static normalizePathForFile(path: string): string {
+    path = path.replace(/\\/gi, "/"); //replace \ to /
+    path = path.replace(/%20/gi, " "); //replace %20 to space
+    return path;
+  }
 
 
-	static normalizePathForLink(path: string): string {
-		path = path.replace(/\\/gi, "/"); //replace \ to /
-		path = path.replace(/ /gi, "%20"); //replace space to %20
-		return path;
-	}
+  static normalizePathForLink(path: string): string {
+    path = path.replace(/\\/gi, "/"); //replace \ to /
+    path = path.replace(/ /gi, "%20"); //replace space to %20
+    return path;
+  }
 
-	static normalizeLinkSection(section: string): string {
-		section = decodeURI(section);
-		return section;
-	}
+  static normalizeLinkSection(section: string): string {
+    section = decodeURI(section);
+    return section;
+  }
 
-	static async getCacheSafe(fileOrPath: TFile | string) {
-		const file = Utils.getFileOrNull(fileOrPath);
-		if (!file) {
-			return {};
-		}
+  static async getCacheSafe(fileOrPath: TFile | string) {
+    const file = Utils.getFileOrNull(fileOrPath);
+    if (!file) {
+      return {};
+    }
 
-		while (true) {
-			const cache = app.metadataCache.getFileCache(file);
-			if (cache) {
-				return cache;
-			}
-	
-			await Utils.delay(100);
-		}
-	}
+    while (true) {
+      const cache = app.metadataCache.getFileCache(file);
+      if (cache) {
+        return cache;
+      }
 
-	static getFileOrNull(fileOrPath: TFile | string): TFile | null {
-		if (fileOrPath instanceof TFile) {
-			return fileOrPath;
-		}
+      await Utils.delay(100);
+    }
+  }
 
-		const abstractFile = app.vault.getAbstractFileByPath(fileOrPath);
-		if (!abstractFile) {
-			return null;
-		}
+  static getFileOrNull(fileOrPath: TFile | string): TFile | null {
+    if (fileOrPath instanceof TFile) {
+      return fileOrPath;
+    }
 
-		if (!(abstractFile instanceof TFile)) {
-			throw `${fileOrPath} is not a file`;
-		}
+    const abstractFile = app.vault.getAbstractFileByPath(fileOrPath);
+    if (!abstractFile) {
+      return null;
+    }
 
-		return abstractFile;
-	}
+    if (!(abstractFile instanceof TFile)) {
+      throw `${fileOrPath} is not a file`;
+    }
+
+    return abstractFile;
+  }
 }
