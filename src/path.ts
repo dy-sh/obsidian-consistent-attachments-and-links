@@ -1,10 +1,10 @@
 export class path {
-  static join(..._parts: string[]) {
-    if (arguments.length === 0)
+  public static join(...parts: string[]): string {
+    if (parts.length === 0)
       return ".";
     let joined;
-    for (let i = 0; i < arguments.length; ++i) {
-      const arg = arguments[i];
+    for (let i = 0; i < parts.length; ++i) {
+      const arg = parts[i]!;
       if (arg.length > 0) {
         if (joined === undefined)
           joined = arg;
@@ -17,7 +17,7 @@ export class path {
     return this.posixNormalize(joined);
   }
 
-  static dirname(path: string) {
+  public static dirname(path: string): string {
     if (path.length === 0) return ".";
     let code = path.charCodeAt(0);
     const hasRoot = code === 47 /*/*/;
@@ -41,7 +41,7 @@ export class path {
     return path.slice(0, end);
   }
 
-  static basename(path: string, ext?: string) {
+  public static basename(path: string, ext?: string): string {
     if (ext !== undefined && typeof ext !== "string") throw new TypeError("\"ext\" argument must be a string");
 
     let start = 0;
@@ -111,7 +111,7 @@ export class path {
     }
   }
 
-  static extname(path: string) {
+  public static extname(path: string): string {
     let startDot = -1;
     let startPart = 0;
     let end = -1;
@@ -159,10 +159,7 @@ export class path {
     return path.slice(startDot, end);
   }
 
-
-
-  static parse(path: string) {
-
+  public static parse(path: string): { root: string, dir: string, base: string, ext: string, name: string } {
     const ret = { root: "", dir: "", base: "", ext: "", name: "" };
     if (path.length === 0) return ret;
     let code = path.charCodeAt(0);
@@ -236,11 +233,7 @@ export class path {
     return ret;
   }
 
-
-
-
-  static posixNormalize(path: string) {
-
+  public static posixNormalize(path: string): string {
     if (path.length === 0) return ".";
 
     const isAbsolute = path.charCodeAt(0) === 47 /*/*/;
@@ -256,7 +249,7 @@ export class path {
     return path;
   }
 
-  static normalizeStringPosix(path: string, allowAboveRoot: boolean) {
+  public static normalizeStringPosix(path: string, allowAboveRoot: boolean): string {
     let res = "";
     let lastSegmentLength = 0;
     let lastSlash = -1;
@@ -321,7 +314,7 @@ export class path {
     return res;
   }
 
-  static posixResolve(...args: string[]) {
+  public static posixResolve(...args: string[]): string {
     let resolvedPath = "";
     let resolvedAbsolute = false;
     let cwd;
@@ -364,7 +357,7 @@ export class path {
     }
   }
 
-  static relative(from: string, to: string) {
+  public static relative(from: string, to: string): string {
 
     if (from === to) return "";
 

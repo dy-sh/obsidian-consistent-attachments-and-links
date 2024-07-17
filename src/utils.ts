@@ -1,32 +1,33 @@
-import { TFile } from "obsidian";
+import {
+  App,
+  TFile,
+  type CachedMetadata
+} from "obsidian";
 
 export class Utils {
-
-  static async delay(ms: number) {
+  public static async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-
-  static normalizePathForFile(path: string): string {
+  public static normalizePathForFile(path: string): string {
     path = path.replace(/\\/gi, "/"); //replace \ to /
     path = path.replace(/%20/gi, " "); //replace %20 to space
     return path;
   }
 
-
-  static normalizePathForLink(path: string): string {
+  public static normalizePathForLink(path: string): string {
     path = path.replace(/\\/gi, "/"); //replace \ to /
     path = path.replace(/ /gi, "%20"); //replace space to %20
     return path;
   }
 
-  static normalizeLinkSection(section: string): string {
+  public static normalizeLinkSection(section: string): string {
     section = decodeURI(section);
     return section;
   }
 
-  static async getCacheSafe(fileOrPath: TFile | string) {
-    const file = Utils.getFileOrNull(fileOrPath);
+  public static async getCacheSafe(app: App, fileOrPath: TFile | string): Promise<CachedMetadata> {
+    const file = Utils.getFileOrNull(app, fileOrPath);
     if (!file) {
       return {};
     }
@@ -41,7 +42,7 @@ export class Utils {
     }
   }
 
-  static getFileOrNull(fileOrPath: TFile | string): TFile | null {
+  public static getFileOrNull(app: App, fileOrPath: TFile | string): TFile | null {
     if (fileOrPath instanceof TFile) {
       return fileOrPath;
     }

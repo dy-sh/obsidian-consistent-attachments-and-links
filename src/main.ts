@@ -23,20 +23,21 @@ import {
   type MovedAttachmentResult
 } from "./files-handler.ts";
 import { path } from "./path.ts";
+import { convertToSync } from "./Async.ts";
 
 export default class ConsistentAttachmentsAndLinks extends Plugin {
-  settings!: PluginSettings;
-  lh!: LinksHandler;
-  fh!: FilesHandler;
+  public settings!: PluginSettings;
+  private lh!: LinksHandler;
+  private fh!: FilesHandler;
 
-  recentlyRenamedFiles: PathChangeInfo[] = [];
-  currentlyRenamingFiles: PathChangeInfo[] = [];
-  timerId!: NodeJS.Timeout;
-  renamingIsActive = false;
+  private recentlyRenamedFiles: PathChangeInfo[] = [];
+  private currentlyRenamingFiles: PathChangeInfo[] = [];
+  private timerId!: NodeJS.Timeout;
+  private renamingIsActive = false;
 
-  deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
+  private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
-  override async onload() {
+  public override async onload(): Promise<void> {
     await this.loadSettings();
 
     this.addSettingTab(new SettingTab(this.app, this));
@@ -46,7 +47,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     );
 
     this.registerEvent(
-      this.app.vault.on("delete", (file) => this.handleDeletedFile(file)),
+      this.app.vault.on("delete", (file) => convertToSync(this.handleDeletedFile(file))),
     );
 
     this.registerEvent(
@@ -120,7 +121,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     );
   }
 
-  isPathIgnored(path: string): boolean {
+  public isPathIgnored(path: string): boolean {
     if (path.startsWith("./"))
       path = path.substring(2);
 
@@ -139,7 +140,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     return false;
   }
 
-  async handleDeletedMetadata(file: TFile, prevCache: CachedMetadata) {
+  public handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
     if (!prevCache || !this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
       return;
     }
@@ -147,7 +148,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     this.deletedNoteCache.set(file.path, prevCache);
   }
 
-  async handleDeletedFile(file: TAbstractFile) {
+  public async handleDeletedFile(file: TAbstractFile): Promise<void> {
     if (this.isPathIgnored(file.path))
       return;
 
@@ -178,14 +179,14 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     }
   }
 
-  async handleRenamedFile(file: TAbstractFile, oldPath: string) {
+  public handleRenamedFile(file: TAbstractFile, oldPath: string): void {
     this.recentlyRenamedFiles.push({ oldPath: oldPath, newPath: file.path });
 
     clearTimeout(this.timerId);
-    this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles(); }, 3000);
+    this.timerId = setTimeout(() => { convertToSync(this.HandleRecentlyRenamedFiles()); }, 3000);
   }
 
-  async HandleRecentlyRenamedFiles() {
+  public async HandleRecentlyRenamedFiles(): Promise<void> {
     if (!this.recentlyRenamedFiles || this.recentlyRenamedFiles.length == 0) //nothing to rename
       return;
 
@@ -258,7 +259,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
         }
       }
     } catch (e) {
-      console.error("Consistent Attachments and Links: \n" + e);
+      console.error("Consistent Attachments and Links:", e);
     }
 
     new Notice("Fixing Consistency Complete");
@@ -268,12 +269,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
     if (this.recentlyRenamedFiles && this.recentlyRenamedFiles.length > 0) {
       clearTimeout(this.timerId);
-      this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles(); }, 500);
+      this.timerId = setTimeout(() => { convertToSync(this.HandleRecentlyRenamedFiles()); }, 500);
     }
   }
 
 
-  async collectAttachmentsCurrentNote(_: Editor, view: MarkdownView) {
+  public async collectAttachmentsCurrentNote(_: Editor, view: MarkdownView): Promise<void> {
     const note = view.file as TFile;
     if (this.isPathIgnored(note.path)) {
       new Notice("Note path is ignored");
@@ -297,7 +298,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
   }
 
 
-  async collectAllAttachments() {
+  public async collectAllAttachments(): Promise<void> {
     let movedAttachmentsCount = 0;
     let processedNotesCount = 0;
 
@@ -331,7 +332,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
   }
 
 
-  async convertAllEmbedsPathsToRelative() {
+  public async convertAllEmbedsPathsToRelative(): Promise<void> {
     let changedEmbedCount = 0;
     let processedNotesCount = 0;
 
@@ -359,7 +360,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
   }
 
 
-  async convertAllLinkPathsToRelative() {
+  public async convertAllLinkPathsToRelative(): Promise<void> {
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
@@ -386,7 +387,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
         + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
   }
 
-  async replaceAllWikilinksWithMarkdownLinks() {
+  public async replaceAllWikilinksWithMarkdownLinks(): Promise<void> {
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
@@ -414,11 +415,11 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
         + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
   }
 
-  deleteEmptyFolders() {
-    this.fh.deleteEmptyFolders("/");
+  public async deleteEmptyFolders(): Promise<void> {
+    await this.fh.deleteEmptyFolders("/");
   }
 
-  async checkConsistency() {
+  public async checkConsistency(): Promise<void> {
     const badLinks = await this.lh.getAllBadLinks();
     const badSectionLinks = await this.lh.getAllBadSectionLinks();
     const badEmbeds = await this.lh.getAllBadEmbeds();
@@ -520,11 +521,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
       }
     });
 
-    if (!fileOpened)
-      this.app.workspace.openLinkText(notePath, "/", false);
+    if (!fileOpened) {
+      await this.app.workspace.openLinkText(notePath, "/", false);
+    }
   }
 
-  async reorganizeVault() {
+  public async reorganizeVault(): Promise<void> {
     await this.replaceAllWikilinksWithMarkdownLinks();
     await this.convertAllEmbedsPathsToRelative();
     await this.convertAllLinkPathsToRelative();
@@ -535,11 +537,11 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
   }
 
 
-  async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  public async loadSettings(): Promise<void> {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as unknown);
   }
 
-  async saveSettings() {
+  public async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
 
     this.lh = new LinksHandler(
@@ -557,10 +559,4 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
       this.settings.ignoreFilesRegex,
     );
   }
-
-
 }
-
-
-
-

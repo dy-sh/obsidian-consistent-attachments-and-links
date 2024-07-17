@@ -17,7 +17,7 @@ export interface MovedAttachmentResult {
 }
 
 export class FilesHandler {
-  constructor(
+  public constructor(
     private app: App,
     private lh: LinksHandler,
     private consoleLogPrefix: string = "",
@@ -25,7 +25,7 @@ export class FilesHandler {
     private ignoreFilesRegex: RegExp[] = [],
   ) { }
 
-  isPathIgnored(path: string): boolean {
+  public isPathIgnored(path: string): boolean {
     if (path.startsWith("./"))
       path = path.substring(2);
 
@@ -46,12 +46,12 @@ export class FilesHandler {
     return false;
   }
 
-  async createFolderForAttachmentFromLink(link: string, owningNotePath: string) {
+  public async createFolderForAttachmentFromLink(link: string, owningNotePath: string): Promise<void> {
     const newFullPath = this.lh.getFullPathForLink(link, owningNotePath);
     return await this.createFolderForAttachmentFromPath(newFullPath);
   }
 
-  async createFolderForAttachmentFromPath(filePath: string) {
+  public async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
     const newParentFolder = filePath.substring(0, filePath.lastIndexOf("/"));
     try {
       //todo check folder exist
@@ -59,7 +59,7 @@ export class FilesHandler {
     } catch { }
   }
 
-  generateFileCopyName(originalName: string): string {
+  public generateFileCopyName(originalName: string): string {
     const ext = path.extname(originalName);
     const baseName = path.basename(originalName, ext);
     const dir = path.dirname(originalName);
@@ -72,7 +72,7 @@ export class FilesHandler {
     return "";
   }
 
-  async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
+  public async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
     deleteExistFiles: boolean, attachmentsSubfolder: string, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 
     if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath)) {
@@ -82,7 +82,7 @@ export class FilesHandler {
     //try to get embeds for old or new path (metadataCache can be updated or not)
     //!!! this can return undefined if note was just updated
 
-    const embeds = (await Utils.getCacheSafe(newNotePath)).embeds;
+    const embeds = (await Utils.getCacheSafe(this.app, newNotePath)).embeds;
 
     if (!embeds) {
       return { movedAttachments: [], renamedFiles: [] };
@@ -128,15 +128,14 @@ export class FilesHandler {
     return result;
   }
 
-  getNewAttachmentPath(oldAttachmentPath: string, notePath: string, subfolderName: string): string {
+  public getNewAttachmentPath(oldAttachmentPath: string, notePath: string, subfolderName: string): string {
     const resolvedSubFolderName = subfolderName.replace(/\${filename}/g, path.basename(notePath, ".md"));
     let newPath = (resolvedSubFolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), resolvedSubFolderName);
     newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(oldAttachmentPath)));
     return newPath;
   }
 
-
-  async collectAttachmentsForCachedNote(notePath: string, subfolderName: string,
+  public async collectAttachmentsForCachedNote(notePath: string, subfolderName: string,
     deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 
     if (this.isPathIgnored(notePath)) {
@@ -148,7 +147,7 @@ export class FilesHandler {
       renamedFiles: []
     };
 
-    const cache = await Utils.getCacheSafe(notePath);
+    const cache = await Utils.getCacheSafe(this.app, notePath);
 
     for (const reference of this.getReferences(cache)) {
       const link = this.lh.splitLinkToPathAndSection(reference.link).link;
@@ -194,8 +193,7 @@ export class FilesHandler {
     return result;
   }
 
-
-  async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+  public async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
     const path = file.path;
 
     const result: MovedAttachmentResult = {
@@ -276,16 +274,14 @@ export class FilesHandler {
     return result;
   }
 
-
-
-
-  async deleteEmptyFolders(dirName: string) {
-    if (this.isPathIgnored(dirName))
+  public async deleteEmptyFolders(dirName: string): Promise<void> {
+    if (this.isPathIgnored(dirName)) {
       return;
+    }
 
-    if (dirName.startsWith("./"))
+    if (dirName.startsWith("./")) {
       dirName = dirName.substring(2);
-
+    }
 
     let list = await this.app.vault.adapter.list(dirName);
     for (const folder of list.folders) {
@@ -300,9 +296,10 @@ export class FilesHandler {
     }
   }
 
-  async deleteUnusedAttachmentsForCachedNote(notePath: string, cache: CachedMetadata, deleteEmptyFolders: boolean) {
-    if (this.isPathIgnored(notePath))
+  public async deleteUnusedAttachmentsForCachedNote(notePath: string, cache: CachedMetadata, deleteEmptyFolders: boolean): Promise<void> {
+    if (this.isPathIgnored(notePath)) {
       return;
+    }
 
     for (const reference of this.getReferences(cache)) {
       const link = reference.link;
@@ -321,11 +318,11 @@ export class FilesHandler {
     }
   }
 
-  getReferences(cache: CachedMetadata): ReferenceCache[] {
+  public getReferences(cache: CachedMetadata): ReferenceCache[] {
     return [...(cache.embeds ?? []), ...(cache.links ?? [])];
   }
 
-  async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
+  public async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
     await this.app.vault.trash(file, true);
     if (deleteEmptyFolders) {
       let dir = file.parent!;
