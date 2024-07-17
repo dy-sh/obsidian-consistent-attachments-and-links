@@ -4,7 +4,7 @@ import {
   PluginSettingTab,
   Setting,
 } from "obsidian";
-import ConsistentAttachmentsAndLinks from "./main.ts";
+import ConsistentAttachmentsAndLinksPlugin from "./ConsistentAttachmentsAndLinksPlugin.ts";
 
 export interface PluginSettings {
   moveAttachmentsWithNote: boolean;
@@ -37,9 +37,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 };
 
 export class SettingTab extends PluginSettingTab {
-  public override plugin!: ConsistentAttachmentsAndLinks;
+  public override plugin!: ConsistentAttachmentsAndLinksPlugin;
 
-  public constructor(app: App, plugin: ConsistentAttachmentsAndLinks) {
+  public constructor(app: App, plugin: ConsistentAttachmentsAndLinksPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
