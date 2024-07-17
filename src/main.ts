@@ -1,7 +1,8 @@
 import {
   Plugin,
   TAbstractFile,
-  TFile, Notice,
+  TFile,
+  Notice,
   Editor,
   MarkdownView,
   type CachedMetadata,
@@ -12,16 +13,16 @@ import {
   DEFAULT_SETTINGS,
   SettingTab
 } from "./settings.ts";
-import { Utils } from './utils.ts';
+import { Utils } from "./utils.ts";
 import {
   LinksHandler,
   type PathChangeInfo
-} from './links-handler.ts';
+} from "./links-handler.ts";
 import {
   FilesHandler,
   type MovedAttachmentResult
-} from './files-handler.ts';
-import { path } from './path.ts';
+} from "./files-handler.ts";
+import { path } from "./path.ts";
 
 export default class ConsistentAttachmentsAndLinks extends Plugin {
   settings!: PluginSettings;
@@ -41,67 +42,67 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     this.addSettingTab(new SettingTab(this.app, this));
 
     this.registerEvent(
-      this.app.metadataCache.on('deleted', (file, prevCache) => this.handleDeletedMetadata(file, prevCache!)),
+      this.app.metadataCache.on("deleted", (file, prevCache) => this.handleDeletedMetadata(file, prevCache!)),
     );
 
     this.registerEvent(
-      this.app.vault.on('delete', (file) => this.handleDeletedFile(file)),
+      this.app.vault.on("delete", (file) => this.handleDeletedFile(file)),
     );
 
     this.registerEvent(
-      this.app.vault.on('rename', (file, oldPath) => this.handleRenamedFile(file, oldPath)),
+      this.app.vault.on("rename", (file, oldPath) => this.handleRenamedFile(file, oldPath)),
     );
 
     this.addCommand({
-      id: 'collect-all-attachments',
-      name: 'Collect All Attachments',
+      id: "collect-all-attachments",
+      name: "Collect All Attachments",
       callback: () => this.collectAllAttachments()
     });
 
     this.addCommand({
-      id: 'collect-attachments-current-note',
-      name: 'Collect Attachments in Current Note',
+      id: "collect-attachments-current-note",
+      name: "Collect Attachments in Current Note",
       editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => this.collectAttachmentsCurrentNote(editor, view as MarkdownView)
     });
 
     this.addCommand({
-      id: 'delete-empty-folders',
-      name: 'Delete Empty Folders',
+      id: "delete-empty-folders",
+      name: "Delete Empty Folders",
       callback: () => this.deleteEmptyFolders()
     });
 
     this.addCommand({
-      id: 'convert-all-link-paths-to-relative',
-      name: 'Convert All Link Paths to Relative',
+      id: "convert-all-link-paths-to-relative",
+      name: "Convert All Link Paths to Relative",
       callback: () => this.convertAllLinkPathsToRelative()
     });
 
     this.addCommand({
-      id: 'convert-all-embed-paths-to-relative',
-      name: 'Convert All Embed Paths to Relative',
+      id: "convert-all-embed-paths-to-relative",
+      name: "Convert All Embed Paths to Relative",
       callback: () => this.convertAllEmbedsPathsToRelative()
     });
 
     this.addCommand({
-      id: 'replace-all-wikilinks-with-markdown-links',
-      name: 'Replace All Wiki Links with Markdown Links',
+      id: "replace-all-wikilinks-with-markdown-links",
+      name: "Replace All Wiki Links with Markdown Links",
       callback: () => this.replaceAllWikilinksWithMarkdownLinks()
     });
 
     this.addCommand({
-      id: 'reorganize-vault',
-      name: 'Reorganize Vault',
+      id: "reorganize-vault",
+      name: "Reorganize Vault",
       callback: () => this.reorganizeVault()
     });
 
     this.addCommand({
-      id: 'check-consistency',
-      name: 'Check Vault consistency',
+      id: "check-consistency",
+      name: "Check Vault consistency",
       callback: () => this.checkConsistency()
     });
 
     // make regex from given strings
-    this.settings.ignoreFilesRegex = this.settings.ignoreFiles.map(val => RegExp(val))
+    this.settings.ignoreFilesRegex = this.settings.ignoreFiles.map(val => RegExp(val));
 
     this.lh = new LinksHandler(
       this.app,
@@ -123,13 +124,13 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     if (path.startsWith("./"))
       path = path.substring(2);
 
-    for (let folder of this.settings.ignoreFolders) {
+    for (const folder of this.settings.ignoreFolders) {
       if (path.startsWith(folder)) {
         return true;
       }
     }
 
-    for (let fileRegex of this.settings.ignoreFilesRegex) {
+    for (const fileRegex of this.settings.ignoreFilesRegex) {
       if (fileRegex.test(path)) {
         return true;
       }
@@ -150,7 +151,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     if (this.isPathIgnored(file.path))
       return;
 
-    let fileExt = file.path.substring(file.path.lastIndexOf("."));
+    const fileExt = file.path.substring(file.path.lastIndexOf("."));
     if (fileExt == ".md") {
       if (this.settings.deleteAttachmentsWithNote) {
         const cache = this.deletedNoteCache.get(file.path);
@@ -168,8 +169,8 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
       //delete child folders (do not delete parent)
       if (this.settings.deleteEmptyFolders) {
         if (await this.app.vault.adapter.exists(path.dirname(file.path))) {
-          let list = await this.app.vault.adapter.list(path.dirname(file.path));
-          for (let folder of list.folders) {
+          const list = await this.app.vault.adapter.list(path.dirname(file.path));
+          for (const folder of list.folders) {
             await this.fh.deleteEmptyFolders(folder);
           }
         }
@@ -181,7 +182,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     this.recentlyRenamedFiles.push({ oldPath: oldPath, newPath: file.path });
 
     clearTimeout(this.timerId);
-    this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles() }, 3000);
+    this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles(); }, 3000);
   }
 
   async HandleRecentlyRenamedFiles() {
@@ -200,7 +201,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     console.log("Consistent Attachments and Links:\nFixing consistency for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
 
     try {
-      for (let file of this.currentlyRenamingFiles) {
+      for (const file of this.currentlyRenamingFiles) {
         if (this.isPathIgnored(file.newPath) || this.isPathIgnored(file.oldPath))
           return;
 
@@ -208,7 +209,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
         let result: MovedAttachmentResult | null = null;
 
-        let fileExt = file.oldPath.substring(file.oldPath.lastIndexOf("."));
+        const fileExt = file.oldPath.substring(file.oldPath.lastIndexOf("."));
 
         if (fileExt == ".md") {
           // await Utils.delay(500);//waiting for update metadataCache
@@ -221,25 +222,25 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
                 this.settings.deleteExistFilesWhenMoveNote,
                 this.settings.attachmentsSubfolder,
                 this.settings.deleteEmptyFolders
-              )
+              );
 
               if (this.settings.updateLinks && result) {
-                let changedFiles = result.renamedFiles.concat(result.movedAttachments);
+                const changedFiles = result.renamedFiles.concat(result.movedAttachments);
                 if (changedFiles.length > 0) {
-                  await this.lh.updateChangedPathsInNote(file.newPath, changedFiles)
+                  await this.lh.updateChangedPathsInNote(file.newPath, changedFiles);
                 }
               }
             }
 
             if (this.settings.updateLinks) {
-              await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath, this.settings.moveAttachmentsWithNote)
+              await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath, this.settings.moveAttachmentsWithNote);
             }
 
             //delete child folders (do not delete parent)
             if (this.settings.deleteEmptyFolders) {
               if (await this.app.vault.adapter.exists(path.dirname(file.oldPath))) {
-                let list = await this.app.vault.adapter.list(path.dirname(file.oldPath));
-                for (let folder of list.folders) {
+                const list = await this.app.vault.adapter.list(path.dirname(file.oldPath));
+                for (const folder of list.folders) {
                   await this.fh.deleteEmptyFolders(folder);
                 }
               }
@@ -247,7 +248,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
           }
         }
 
-        let updateAlts = this.settings.changeNoteBacklinksAlt && fileExt == ".md";
+        const updateAlts = this.settings.changeNoteBacklinksAlt && fileExt == ".md";
         if (this.settings.updateLinks) {
           await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts, this.settings.useBuiltInObsidianLinkCaching);
         }
@@ -267,26 +268,26 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
     if (this.recentlyRenamedFiles && this.recentlyRenamedFiles.length > 0) {
       clearTimeout(this.timerId);
-      this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles() }, 500);
+      this.timerId = setTimeout(() => { this.HandleRecentlyRenamedFiles(); }, 500);
     }
   }
 
 
   async collectAttachmentsCurrentNote(_: Editor, view: MarkdownView) {
-    let note = view.file as TFile;
+    const note = view.file as TFile;
     if (this.isPathIgnored(note.path)) {
       new Notice("Note path is ignored");
       return;
     }
 
-    let result = await this.fh.collectAttachmentsForCachedNote(
+    const result = await this.fh.collectAttachmentsForCachedNote(
       note.path,
       this.settings.attachmentsSubfolder,
       this.settings.deleteExistFilesWhenMoveNote,
       this.settings.deleteEmptyFolders);
 
     if (result && result.movedAttachments && result.movedAttachments.length > 0) {
-      await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments)
+      await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
     }
 
     if (result.movedAttachments.length == 0)
@@ -300,14 +301,14 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     let movedAttachmentsCount = 0;
     let processedNotesCount = 0;
 
-    let notes = this.app.vault.getMarkdownFiles();
+    const notes = this.app.vault.getMarkdownFiles();
 
     if (notes) {
-      for (let note of notes) {
+      for (const note of notes) {
         if (this.isPathIgnored(note.path))
           continue;
 
-        let result = await this.fh.collectAttachmentsForCachedNote(
+        const result = await this.fh.collectAttachmentsForCachedNote(
           note.path,
           this.settings.attachmentsSubfolder,
           this.settings.deleteExistFilesWhenMoveNote,
@@ -315,7 +316,7 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
 
 
         if (result && result.movedAttachments && result.movedAttachments.length > 0) {
-          await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments)
+          await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
           movedAttachmentsCount += result.movedAttachments.length;
           processedNotesCount++;
         }
@@ -334,14 +335,14 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     let changedEmbedCount = 0;
     let processedNotesCount = 0;
 
-    let notes = this.app.vault.getMarkdownFiles();
+    const notes = this.app.vault.getMarkdownFiles();
 
     if (notes) {
-      for (let note of notes) {
+      for (const note of notes) {
         if (this.isPathIgnored(note.path))
           continue;
 
-        let result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
+        const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
 
         if (result && result.length > 0) {
           changedEmbedCount += result.length;
@@ -362,14 +363,14 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
-    let notes = this.app.vault.getMarkdownFiles();
+    const notes = this.app.vault.getMarkdownFiles();
 
     if (notes) {
-      for (let note of notes) {
+      for (const note of notes) {
         if (this.isPathIgnored(note.path))
           continue;
 
-        let result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
+        const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
 
         if (result && result.length > 0) {
           changedLinksCount += result.length;
@@ -389,14 +390,14 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
-    let notes = this.app.vault.getMarkdownFiles();
+    const notes = this.app.vault.getMarkdownFiles();
 
     if (notes) {
-      for (let note of notes) {
+      for (const note of notes) {
         if (this.isPathIgnored(note.path))
           continue;
 
-        let result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
+        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
 
         if (result && (result.links.length > 0 || result.embeds.length > 0)) {
           changedLinksCount += result.links.length;
@@ -414,102 +415,102 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
   }
 
   deleteEmptyFolders() {
-    this.fh.deleteEmptyFolders("/")
+    this.fh.deleteEmptyFolders("/");
   }
 
   async checkConsistency() {
-    let badLinks = await this.lh.getAllBadLinks();
-    let badSectionLinks = await this.lh.getAllBadSectionLinks();
-    let badEmbeds = await this.lh.getAllBadEmbeds();
-    let wikiLinks = await this.lh.getAllWikiLinks();
-    let wikiEmbeds = await this.lh.getAllWikiEmbeds();
+    const badLinks = await this.lh.getAllBadLinks();
+    const badSectionLinks = await this.lh.getAllBadSectionLinks();
+    const badEmbeds = await this.lh.getAllBadEmbeds();
+    const wikiLinks = await this.lh.getAllWikiLinks();
+    const wikiEmbeds = await this.lh.getAllWikiEmbeds();
 
     let text = "";
 
-    let badLinksCount = Object.keys(badLinks).length;
-    let badEmbedsCount = Object.keys(badEmbeds).length;
-    let badSectionLinksCount = Object.keys(badSectionLinks).length;
-    let wikiLinksCount = Object.keys(wikiLinks).length;
-    let wikiEmbedsCount = Object.keys(wikiEmbeds).length;
+    const badLinksCount = Object.keys(badLinks).length;
+    const badEmbedsCount = Object.keys(badEmbeds).length;
+    const badSectionLinksCount = Object.keys(badSectionLinks).length;
+    const wikiLinksCount = Object.keys(wikiLinks).length;
+    const wikiEmbedsCount = Object.keys(wikiEmbeds).length;
 
     if (badLinksCount > 0) {
       text += "# Bad links (" + badLinksCount + " files)\n";
-      for (let note in badLinks) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
-        for (let link of badLinks[note]!) {
+      for (const note in badLinks) {
+        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
+        for (const link of badLinks[note]!) {
           text += "- (line " + (link.position.start.line + 1) + "): `" + link.link + "`\n";
         }
-        text += "\n\n"
+        text += "\n\n";
       }
     } else {
       text += "# Bad links \n";
-      text += "No problems found\n\n"
+      text += "No problems found\n\n";
     }
 
 
     if (badSectionLinksCount > 0) {
       text += "\n\n# Bad note link sections (" + badSectionLinksCount + " files)\n";
-      for (let note in badSectionLinks) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
-        for (let link of badSectionLinks[note]!) {
-          let li = this.lh.splitLinkToPathAndSection(link.link);
-          let section = Utils.normalizeLinkSection(li.section);
+      for (const note in badSectionLinks) {
+        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
+        for (const link of badSectionLinks[note]!) {
+          const li = this.lh.splitLinkToPathAndSection(link.link);
+          const section = Utils.normalizeLinkSection(li.section);
           text += "- (line " + (link.position.start.line + 1) + "): `" + li.link + "#" + section + "`\n";
         }
-        text += "\n\n"
+        text += "\n\n";
       }
     } else {
-      text += "\n\n# Bad note link sections\n"
-      text += "No problems found\n\n"
+      text += "\n\n# Bad note link sections\n";
+      text += "No problems found\n\n";
     }
 
 
     if (badEmbedsCount > 0) {
       text += "\n\n# Bad embeds (" + badEmbedsCount + " files)\n";
-      for (let note in badEmbeds) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
-        for (let link of badEmbeds[note]!) {
+      for (const note in badEmbeds) {
+        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
+        for (const link of badEmbeds[note]!) {
           text += "- (line " + (link.position.start.line + 1) + "): `" + link.link + "`\n";
         }
-        text += "\n\n"
+        text += "\n\n";
       }
     } else {
       text += "\n\n# Bad embeds \n";
-      text += "No problems found\n\n"
+      text += "No problems found\n\n";
     }
 
 
     if (wikiLinksCount > 0) {
       text += "# Wiki links (" + wikiLinksCount + " files)\n";
-      for (let note in wikiLinks) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
-        for (let link of wikiLinks[note]!) {
+      for (const note in wikiLinks) {
+        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
+        for (const link of wikiLinks[note]!) {
           text += "- (line " + (link.position.start.line + 1) + "): `" + link.original + "`\n";
         }
-        text += "\n\n"
+        text += "\n\n";
       }
     } else {
       text += "# Wiki links \n";
-      text += "No problems found\n\n"
+      text += "No problems found\n\n";
     }
 
     if (wikiEmbedsCount > 0) {
       text += "\n\n# Wiki embeds (" + wikiEmbedsCount + " files)\n";
-      for (let note in wikiEmbeds) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n"
-        for (let link of wikiEmbeds[note]!) {
+      for (const note in wikiEmbeds) {
+        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
+        for (const link of wikiEmbeds[note]!) {
           text += "- (line " + (link.position.start.line + 1) + "): `" + link.original + "`\n";
         }
-        text += "\n\n"
+        text += "\n\n";
       }
     } else {
       text += "\n\n# Wiki embeds \n";
-      text += "No problems found\n\n"
+      text += "No problems found\n\n";
     }
 
 
 
-    let notePath = this.settings.consistencyReportFile;
+    const notePath = this.settings.consistencyReportFile;
     await this.app.vault.adapter.write(notePath, text);
 
     let fileOpened = false;
@@ -524,12 +525,12 @@ export default class ConsistentAttachmentsAndLinks extends Plugin {
   }
 
   async reorganizeVault() {
-    await this.replaceAllWikilinksWithMarkdownLinks()
-    await this.convertAllEmbedsPathsToRelative()
-    await this.convertAllLinkPathsToRelative()
+    await this.replaceAllWikilinksWithMarkdownLinks();
+    await this.convertAllEmbedsPathsToRelative();
+    await this.convertAllLinkPathsToRelative();
     //- Rename all attachments (using Unique attachments, optional)
-    await this.collectAllAttachments()
-    await this.deleteEmptyFolders()
+    await this.collectAllAttachments();
+    await this.deleteEmptyFolders();
     new Notice("Reorganization of the vault completed");
   }
 

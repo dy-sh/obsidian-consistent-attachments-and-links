@@ -3,8 +3,8 @@ import {
   normalizePath,
   PluginSettingTab,
   Setting,
-} from 'obsidian';
-import ConsistentAttachmentsAndLinks from './main.ts';
+} from "obsidian";
+import ConsistentAttachmentsAndLinks from "./main.ts";
 
 export interface PluginSettings {
   moveAttachmentsWithNote: boolean;
@@ -34,7 +34,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   attachmentsSubfolder: "",
   consistencyReportFile: "consistency-report.md",
   useBuiltInObsidianLinkCaching: false,
-}
+};
 
 export class SettingTab extends PluginSettingTab {
   public override plugin!: ConsistentAttachmentsAndLinks;
@@ -45,16 +45,16 @@ export class SettingTab extends PluginSettingTab {
   }
 
   display(): void {
-    let { containerEl } = this;
+    const { containerEl } = this;
 
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'Consistent attachments and links - Settings' });
+    containerEl.createEl("h2", { text: "Consistent attachments and links - Settings" });
 
 
     new Setting(containerEl)
-      .setName('Move Attachments with Note')
-      .setDesc('Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.')
+      .setName("Move Attachments with Note")
+      .setDesc("Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.")
       .addToggle(cb => cb.onChange(value => {
         this.plugin.settings.moveAttachmentsWithNote = value;
         this.plugin.saveSettings();
@@ -63,8 +63,8 @@ export class SettingTab extends PluginSettingTab {
 
 
     new Setting(containerEl)
-      .setName('Delete Unused Attachments with Note')
-      .setDesc('Automatically remove attachments that are no longer referenced in other notes when the note is deleted.')
+      .setName("Delete Unused Attachments with Note")
+      .setDesc("Automatically remove attachments that are no longer referenced in other notes when the note is deleted.")
       .addToggle(cb => cb.onChange(value => {
         this.plugin.settings.deleteAttachmentsWithNote = value;
         this.plugin.saveSettings();
@@ -73,8 +73,8 @@ export class SettingTab extends PluginSettingTab {
 
 
     new Setting(containerEl)
-      .setName('Update Links')
-      .setDesc('Automatically update links to attachments and other notes when moving notes or attachments.')
+      .setName("Update Links")
+      .setDesc("Automatically update links to attachments and other notes when moving notes or attachments.")
       .addToggle(cb => cb.onChange(value => {
         this.plugin.settings.updateLinks = value;
         this.plugin.saveSettings();
@@ -82,8 +82,8 @@ export class SettingTab extends PluginSettingTab {
       ).setValue(this.plugin.settings.updateLinks));
 
     new Setting(containerEl)
-      .setName('Delete Empty Folders')
-      .setDesc('Automatically remove empty folders after moving notes with attachments.')
+      .setName("Delete Empty Folders")
+      .setDesc("Automatically remove empty folders after moving notes with attachments.")
       .addToggle(cb => cb.onChange(value => {
         this.plugin.settings.deleteEmptyFolders = value;
         this.plugin.saveSettings();
@@ -92,8 +92,8 @@ export class SettingTab extends PluginSettingTab {
 
 
     new Setting(containerEl)
-      .setName('Delete Duplicate Attachments on Note Move')
-      .setDesc('Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.')
+      .setName("Delete Duplicate Attachments on Note Move")
+      .setDesc("Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.")
       .addToggle(cb => cb.onChange(value => {
         this.plugin.settings.deleteExistFilesWhenMoveNote = value;
         this.plugin.saveSettings();
@@ -102,8 +102,8 @@ export class SettingTab extends PluginSettingTab {
 
 
     new Setting(containerEl)
-      .setName('Update Backlink Text on Note Rename')
-      .setDesc('When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.')
+      .setName("Update Backlink Text on Note Rename")
+      .setDesc("When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.")
       .addToggle(cb => cb.onChange(value => {
         this.plugin.settings.changeNoteBacklinksAlt = value;
         this.plugin.saveSettings();
@@ -119,7 +119,7 @@ export class SettingTab extends PluginSettingTab {
         .setPlaceholder("Example: .git, .obsidian")
         .setValue(this.plugin.settings.ignoreFolders.join("\n"))
         .onChange((value) => {
-          let paths = value.trim().split("\n").map(value => this.getNormalizedPath(value) + "/");
+          const paths = value.trim().split("\n").map(value => this.getNormalizedPath(value) + "/");
           this.plugin.settings.ignoreFolders = paths;
           this.plugin.saveSettings();
         }));
@@ -131,7 +131,7 @@ export class SettingTab extends PluginSettingTab {
         .setPlaceholder("Example: consistent-report.md")
         .setValue(this.plugin.settings.ignoreFiles.join("\n"))
         .onChange((value) => {
-          let paths = value.trim().split("\n");
+          const paths = value.trim().split("\n");
           this.plugin.settings.ignoreFiles = paths;
           this.plugin.settings.ignoreFilesRegex = paths.map(file => RegExp(file));
           this.plugin.saveSettings();
