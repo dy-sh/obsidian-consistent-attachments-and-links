@@ -147,16 +147,14 @@ export class LinksHandler {
       if (note.path == filePath)
         continue;
 
-      const links = (await getCacheSafe(this.app, note.path)).links;
+      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
 
-      if (links) {
-        for (const link of links) {
-          const linkFullPath = this.getFullPathForLink(link.link, note.path);
-          if (linkFullPath == filePath) {
-            if (!allLinks[note.path])
-              allLinks[note.path] = [];
-            allLinks[note.path]!.push(link);
-          }
+      for (const link of links) {
+        const linkFullPath = this.getFullPathForLink(link.link, note.path);
+        if (linkFullPath == filePath) {
+          if (!allLinks[note.path])
+            allLinks[note.path] = [];
+          allLinks[note.path]!.push(link);
         }
       }
     }
@@ -172,17 +170,14 @@ export class LinksHandler {
       if (note.path == filePath)
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
 
-      if (embeds) {
-        for (const embed of embeds) {
-          const linkFullPath = this.getFullPathForLink(embed.link, note.path);
-          if (linkFullPath == filePath) {
-            if (!allEmbeds[note.path])
-              allEmbeds[note.path] = [];
-            allEmbeds[note.path]!.push(embed);
-          }
+      for (const embed of embeds) {
+        const linkFullPath = this.getFullPathForLink(embed.link, note.path);
+        if (linkFullPath == filePath) {
+          if (!allEmbeds[note.path])
+            allEmbeds[note.path] = [];
+          allEmbeds[note.path]!.push(embed);
         }
       }
     }
@@ -198,23 +193,20 @@ export class LinksHandler {
       if (this.isPathIgnored(note.path))
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const links = (await getCacheSafe(this.app, note.path)).links;
+      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
 
-      if (links) {
-        for (const link of links) {
-          if (link.link.startsWith("#")) //internal section link
-            continue;
+      for (const link of links) {
+        if (link.link.startsWith("#")) //internal section link
+          continue;
 
-          if (this.checkIsCorrectWikiLink(link.original))
-            continue;
+        if (this.checkIsCorrectWikiLink(link.original))
+          continue;
 
-          const file = this.getFileByLink(link.link, note.path, false);
-          if (!file) {
-            if (!allLinks[note.path])
-              allLinks[note.path] = [];
-            allLinks[note.path]!.push(link);
-          }
+        const file = this.getFileByLink(link.link, note.path, false);
+        if (!file) {
+          if (!allLinks[note.path])
+            allLinks[note.path] = [];
+          allLinks[note.path]!.push(link);
         }
       }
     }
@@ -230,20 +222,17 @@ export class LinksHandler {
       if (this.isPathIgnored(note.path))
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
 
-      if (embeds) {
-        for (const embed of embeds) {
-          if (this.checkIsCorrectWikiEmbed(embed.original))
-            continue;
+      for (const embed of embeds) {
+        if (this.checkIsCorrectWikiEmbed(embed.original))
+          continue;
 
-          const file = this.getFileByLink(embed.link, note.path, false);
-          if (!file) {
-            if (!allEmbeds[note.path])
-              allEmbeds[note.path] = [];
-            allEmbeds[note.path]!.push(embed);
-          }
+        const file = this.getFileByLink(embed.link, note.path, false);
+        if (!file) {
+          if (!allEmbeds[note.path])
+            allEmbeds[note.path] = [];
+          allEmbeds[note.path]!.push(embed);
         }
       }
     }
@@ -259,23 +248,20 @@ export class LinksHandler {
       if (this.isPathIgnored(note.path))
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const links = (await getCacheSafe(this.app, note.path)).links;
+      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
 
-      if (links) {
-        for (const link of links) {
-          if (link.link.startsWith("#")) //internal section link
-            continue;
+      for (const link of links) {
+        if (link.link.startsWith("#")) //internal section link
+          continue;
 
-          if (this.checkIsCorrectWikiLink(link.original))
-            continue;
+        if (this.checkIsCorrectWikiLink(link.original))
+          continue;
 
-          const file = this.getFileByLink(link.link, note.path);
-          if (file) {
-            if (!allLinks[note.path])
-              allLinks[note.path] = [];
-            allLinks[note.path]!.push(link);
-          }
+        const file = this.getFileByLink(link.link, note.path);
+        if (file) {
+          if (!allLinks[note.path])
+            allLinks[note.path] = [];
+          allLinks[note.path]!.push(link);
         }
       }
     }
@@ -291,38 +277,36 @@ export class LinksHandler {
       if (this.isPathIgnored(note.path))
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const links = (await getCacheSafe(this.app, note.path)).links;
-      if (links) {
-        for (const link of links) {
-          if (this.checkIsCorrectWikiLink(link.original))
+      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
+
+      for (const link of links) {
+        if (this.checkIsCorrectWikiLink(link.original))
+          continue;
+
+        const li = this.splitLinkToPathAndSection(link.link);
+        if (!li.hasSection)
+          continue;
+
+        const file = this.getFileByLink(link.link, note.path, false);
+        if (file) {
+          if (file.extension === "pdf" && li.section.startsWith("page=")) {
+            continue;
+          }
+
+          let text = await this.app.vault.read(file);
+          let section = Utils.normalizeLinkSection(li.section);
+
+          if (section.startsWith("^")) //skip ^ links
             continue;
 
-          const li = this.splitLinkToPathAndSection(link.link);
-          if (!li.hasSection)
-            continue;
+          const regex = /[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
+          text = text.replace(regex, "");
+          section = section.replace(regex, "");
 
-          const file = this.getFileByLink(link.link, note.path, false);
-          if (file) {
-            if (file.extension === "pdf" && li.section.startsWith("page=")) {
-              continue;
-            }
-
-            let text = await this.app.vault.read(file);
-            let section = Utils.normalizeLinkSection(li.section);
-
-            if (section.startsWith("^")) //skip ^ links
-              continue;
-
-            const regex = /[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
-            text = text.replace(regex, "");
-            section = section.replace(regex, "");
-
-            if (!text.contains("#" + section)) {
-              if (!allLinks[note.path])
-                allLinks[note.path] = [];
-              allLinks[note.path]!.push(link);
-            }
+          if (!text.contains("#" + section)) {
+            if (!allLinks[note.path])
+              allLinks[note.path] = [];
+            allLinks[note.path]!.push(link);
           }
         }
       }
@@ -339,20 +323,17 @@ export class LinksHandler {
       if (this.isPathIgnored(note.path))
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
 
-      if (embeds) {
-        for (const embed of embeds) {
-          if (this.checkIsCorrectWikiEmbed(embed.original))
-            continue;
+      for (const embed of embeds) {
+        if (this.checkIsCorrectWikiEmbed(embed.original))
+          continue;
 
-          const file = this.getFileByLink(embed.link, note.path);
-          if (file) {
-            if (!allEmbeds[note.path])
-              allEmbeds[note.path] = [];
-            allEmbeds[note.path]!.push(embed);
-          }
+        const file = this.getFileByLink(embed.link, note.path);
+        if (file) {
+          if (!allEmbeds[note.path])
+            allEmbeds[note.path] = [];
+          allEmbeds[note.path]!.push(embed);
         }
       }
     }
@@ -368,19 +349,16 @@ export class LinksHandler {
       if (this.isPathIgnored(note.path))
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const links = (await getCacheSafe(this.app, note.path)).links;
+      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
 
-      if (links) {
-        for (const link of links) {
-          if (!this.checkIsCorrectWikiLink(link.original))
-            continue;
+      for (const link of links) {
+        if (!this.checkIsCorrectWikiLink(link.original))
+          continue;
 
-          if (!allLinks[note.path])
-            allLinks[note.path] = [];
-          allLinks[note.path]!.push(link);
+        if (!allLinks[note.path])
+          allLinks[note.path] = [];
+        allLinks[note.path]!.push(link);
 
-        }
       }
     }
 
@@ -395,18 +373,15 @@ export class LinksHandler {
       if (this.isPathIgnored(note.path))
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
 
-      if (embeds) {
-        for (const embed of embeds) {
-          if (!this.checkIsCorrectWikiEmbed(embed.original))
-            continue;
+      for (const embed of embeds) {
+        if (!this.checkIsCorrectWikiEmbed(embed.original))
+          continue;
 
-          if (!allEmbeds[note.path])
-            allEmbeds[note.path] = [];
-          allEmbeds[note.path]!.push(embed);
-        }
+        if (!allEmbeds[note.path])
+          allEmbeds[note.path] = [];
+        allEmbeds[note.path]!.push(embed);
       }
     }
 
@@ -571,27 +546,23 @@ export class LinksHandler {
       if (note.path == filePath)
         continue;
 
-      //!!! this can return undefined if note was just updated
-      const embeds = (await getCacheSafe(this.app, notePath)).embeds;
-      if (embeds) {
-        for (const embed of embeds) {
-          const linkPath = this.getFullPathForLink(embed.link, note.path);
-          if (linkPath == filePath) {
-            if (!notes.contains(notePath))
-              notes.push(notePath);
-          }
+      const embeds = (await getCacheSafe(this.app, notePath)).embeds ?? [];
+
+      for (const embed of embeds) {
+        const linkPath = this.getFullPathForLink(embed.link, note.path);
+        if (linkPath == filePath) {
+          if (!notes.contains(notePath))
+            notes.push(notePath);
         }
       }
 
-      //!!! this can return undefined if note was just updated
-      const links = (await getCacheSafe(this.app, notePath)).links;
-      if (links) {
-        for (const link of links) {
-          const linkPath = this.getFullPathForLink(link.link, note.path);
-          if (linkPath == filePath) {
-            if (!notes.contains(notePath))
-              notes.push(notePath);
-          }
+      const links = (await getCacheSafe(this.app, notePath)).links ?? [];
+
+      for (const link of links) {
+        const linkPath = this.getFullPathForLink(link.link, note.path);
+        if (linkPath == filePath) {
+          if (!notes.contains(notePath))
+            notes.push(notePath);
         }
       }
     }
@@ -704,33 +675,31 @@ export class LinksHandler {
     }
     const changedEmbeds: EmbedChangeInfo[] = [];
 
-    const embeds = (await getCacheSafe(this.app, notePath)).embeds;
+    const embeds = (await getCacheSafe(this.app, notePath)).embeds ?? [];
 
-    if (embeds) {
-      for (const embed of embeds) {
-        const isMarkdownEmbed = this.checkIsCorrectMarkdownEmbed(embed.original);
-        const isWikiEmbed = this.checkIsCorrectWikiEmbed(embed.original);
-        if (isMarkdownEmbed || isWikiEmbed) {
-          let file = this.getFileByLink(embed.link, notePath);
-          if (file)
-            continue;
+    for (const embed of embeds) {
+      const isMarkdownEmbed = this.checkIsCorrectMarkdownEmbed(embed.original);
+      const isWikiEmbed = this.checkIsCorrectWikiEmbed(embed.original);
+      if (isMarkdownEmbed || isWikiEmbed) {
+        let file = this.getFileByLink(embed.link, notePath);
+        if (file)
+          continue;
 
-          file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath)!;
-          if (file) {
-            let newRelLink: string = path.relative(notePath, file.path);
-            newRelLink = isMarkdownEmbed ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
+        file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath)!;
+        if (file) {
+          let newRelLink: string = path.relative(notePath, file.path);
+          newRelLink = isMarkdownEmbed ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
 
-            if (newRelLink.startsWith("../")) {
-              newRelLink = newRelLink.substring(3);
-            }
-
-            changedEmbeds.push({ old: embed, newLink: newRelLink });
-          } else {
-            console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
+          if (newRelLink.startsWith("../")) {
+            newRelLink = newRelLink.substring(3);
           }
+
+          changedEmbeds.push({ old: embed, newLink: newRelLink });
         } else {
-          console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wiki link): " + embed.original);
+          console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
         }
+      } else {
+        console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wiki link): " + embed.original);
       }
     }
 
@@ -744,43 +713,41 @@ export class LinksHandler {
 
     const changedLinks: LinkChangeInfo[] = [];
 
-    const links = (await getCacheSafe(this.app, notePath)).links;
+    const links = (await getCacheSafe(this.app, notePath)).links ?? [];
 
-    if (links) {
-      for (const link of links) {
-        const isMarkdownLink = this.checkIsCorrectMarkdownLink(link.original);
-        const isWikiLink = this.checkIsCorrectWikiLink(link.original);
-        if (isMarkdownLink || isWikiLink) {
-          if (link.link.startsWith("#")) //internal section link
-            continue;
+    for (const link of links) {
+      const isMarkdownLink = this.checkIsCorrectMarkdownLink(link.original);
+      const isWikiLink = this.checkIsCorrectWikiLink(link.original);
+      if (isMarkdownLink || isWikiLink) {
+        if (link.link.startsWith("#")) //internal section link
+          continue;
 
-          let file = this.getFileByLink(link.link, notePath);
-          if (file)
-            continue;
+        let file = this.getFileByLink(link.link, notePath);
+        if (file)
+          continue;
 
-          //!!! link.displayText is always "" - OBSIDIAN BUG?, so get display text manually
-          if (isMarkdownLink) {
-            const elements = link.original.match(markdownLinkRegex);
-            if (elements)
-              link.displayText = elements[1]!;
-          }
-
-          file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath)!;
-          if (file) {
-            let newRelLink: string = path.relative(notePath, file.path);
-            newRelLink = isMarkdownLink ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
-
-            if (newRelLink.startsWith("../")) {
-              newRelLink = newRelLink.substring(3);
-            }
-
-            changedLinks.push({ old: link, newLink: newRelLink });
-          } else {
-            console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
-          }
-        } else {
-          console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wiki link): " + link.original);
+        //!!! link.displayText is always "" - OBSIDIAN BUG?, so get display text manually
+        if (isMarkdownLink) {
+          const elements = link.original.match(markdownLinkRegex);
+          if (elements)
+            link.displayText = elements[1]!;
         }
+
+        file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath)!;
+        if (file) {
+          let newRelLink: string = path.relative(notePath, file.path);
+          newRelLink = isMarkdownLink ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
+
+          if (newRelLink.startsWith("../")) {
+            newRelLink = newRelLink.substring(3);
+          }
+
+          changedLinks.push({ old: link, newLink: newRelLink });
+        } else {
+          console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
+        }
+      } else {
+        console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wiki link): " + link.original);
       }
     }
 
@@ -880,53 +847,50 @@ export class LinksHandler {
     }
 
     const cache = await getCacheSafe(this.app, notePath);
-    const links = cache.links;
-    const embeds = cache.embeds;
+    const links = cache.links ?? [];
+    const embeds = cache.embeds ?? [];
     let text = await this.app.vault.read(noteFile);
     let dirty = false;
 
-    if (embeds) { //embeds must go first!
-      for (const embed of embeds) {
-        if (this.checkIsCorrectWikiEmbed(embed.original)) {
+    for (const embed of embeds) {
+      if (this.checkIsCorrectWikiEmbed(embed.original)) {
 
-          const newPath = Utils.normalizePathForLink(embed.link);
-          const newLink = "![" + "]" + "(" + newPath + ")";
-          text = text.replace(embed.original, newLink);
+        const newPath = Utils.normalizePathForLink(embed.link);
+        const newLink = "![" + "]" + "(" + newPath + ")";
+        text = text.replace(embed.original, newLink);
 
-          console.log(this.consoleLogPrefix + "wiki link (embed) replaced in note [note, old link, new link]: \n   "
-            + noteFile.path + "\n   " + embed.original + "\n   " + newLink);
+        console.log(this.consoleLogPrefix + "wiki link (embed) replaced in note [note, old link, new link]: \n   "
+          + noteFile.path + "\n   " + embed.original + "\n   " + newLink);
 
-          res.embeds.push({ old: embed, newLink: newLink });
+        res.embeds.push({ old: embed, newLink: newLink });
 
-          dirty = true;
-        }
+        dirty = true;
       }
     }
 
-    if (links) {
-      for (const link of links) {
-        if (this.checkIsCorrectWikiLink(link.original)) {
-          let newPath = Utils.normalizePathForLink(link.link);
+    for (const link of links) {
+      if (this.checkIsCorrectWikiLink(link.original)) {
+        let newPath = Utils.normalizePathForLink(link.link);
 
-          const file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
-          if (file && file.extension == "md" && !newPath.endsWith(".md"))
-            newPath = newPath + ".md";
+        const file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
+        if (file && file.extension == "md" && !newPath.endsWith(".md"))
+          newPath = newPath + ".md";
 
-          const newLink = "[" + link.displayText + "]" + "(" + newPath + ")";
-          text = text.replace(link.original, newLink);
+        const newLink = "[" + link.displayText + "]" + "(" + newPath + ")";
+        text = text.replace(link.original, newLink);
 
-          console.log(this.consoleLogPrefix + "wiki link replaced in note [note, old link, new link]: \n   "
-            + noteFile.path + "\n   " + link.original + "\n   " + newLink);
+        console.log(this.consoleLogPrefix + "wiki link replaced in note [note, old link, new link]: \n   "
+          + noteFile.path + "\n   " + link.original + "\n   " + newLink);
 
-          res.links.push({ old: link, newLink: newLink });
+        res.links.push({ old: link, newLink: newLink });
 
-          dirty = true;
-        }
+        dirty = true;
       }
     }
 
-    if (dirty)
+    if (dirty) {
       await this.app.vault.modify(noteFile, text);
+    }
 
     return res;
   }
