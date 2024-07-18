@@ -156,7 +156,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         const cache = this.deletedNoteCache.get(file.path);
 
         if (!cache) {
-          await Utils.delay(100);
+          await sleep(100);
           await this.handleDeletedFile(file);
           return;
         }
