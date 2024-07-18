@@ -302,23 +302,21 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        const result = await this.fh.collectAttachmentsForCachedNote(
-          note.path,
-          this._settings.attachmentsSubfolder,
-          this._settings.deleteExistFilesWhenMoveNote,
-          this._settings.deleteEmptyFolders);
+      const result = await this.fh.collectAttachmentsForCachedNote(
+        note.path,
+        this._settings.attachmentsSubfolder,
+        this._settings.deleteExistFilesWhenMoveNote,
+        this._settings.deleteEmptyFolders);
 
 
-        if (result && result.movedAttachments && result.movedAttachments.length > 0) {
-          await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
-          movedAttachmentsCount += result.movedAttachments.length;
-          processedNotesCount++;
-        }
+      if (result && result.movedAttachments && result.movedAttachments.length > 0) {
+        await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
+        movedAttachmentsCount += result.movedAttachments.length;
+        processedNotesCount++;
       }
     }
 
@@ -336,17 +334,15 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
+      const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
 
-        if (result && result.length > 0) {
-          changedEmbedCount += result.length;
-          processedNotesCount++;
-        }
+      if (result && result.length > 0) {
+        changedEmbedCount += result.length;
+        processedNotesCount++;
       }
     }
 
@@ -364,17 +360,15 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
+      const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
 
-        if (result && result.length > 0) {
-          changedLinksCount += result.length;
-          processedNotesCount++;
-        }
+      if (result && result.length > 0) {
+        changedLinksCount += result.length;
+        processedNotesCount++;
       }
     }
 
@@ -391,18 +385,16 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
+      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
 
-        if (result && (result.links.length > 0 || result.embeds.length > 0)) {
-          changedLinksCount += result.links.length;
-          changedLinksCount += result.embeds.length;
-          processedNotesCount++;
-        }
+      if (result && (result.links.length > 0 || result.embeds.length > 0)) {
+        changedLinksCount += result.links.length;
+        changedLinksCount += result.embeds.length;
+        processedNotesCount++;
       }
     }
 

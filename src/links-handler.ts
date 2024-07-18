@@ -143,21 +143,19 @@ export class LinksHandler {
     const allLinks: { [notePath: string]: LinkCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (note.path == filePath)
-          continue;
+    for (const note of notes) {
+      if (note.path == filePath)
+        continue;
 
-        const links = (await getCacheSafe(this.app, note.path)).links;
+      const links = (await getCacheSafe(this.app, note.path)).links;
 
-        if (links) {
-          for (const link of links) {
-            const linkFullPath = this.getFullPathForLink(link.link, note.path);
-            if (linkFullPath == filePath) {
-              if (!allLinks[note.path])
-                allLinks[note.path] = [];
-              allLinks[note.path]!.push(link);
-            }
+      if (links) {
+        for (const link of links) {
+          const linkFullPath = this.getFullPathForLink(link.link, note.path);
+          if (linkFullPath == filePath) {
+            if (!allLinks[note.path])
+              allLinks[note.path] = [];
+            allLinks[note.path]!.push(link);
           }
         }
       }
@@ -170,22 +168,20 @@ export class LinksHandler {
     const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (note.path == filePath)
-          continue;
+    for (const note of notes) {
+      if (note.path == filePath)
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      //!!! this can return undefined if note was just updated
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
-        if (embeds) {
-          for (const embed of embeds) {
-            const linkFullPath = this.getFullPathForLink(embed.link, note.path);
-            if (linkFullPath == filePath) {
-              if (!allEmbeds[note.path])
-                allEmbeds[note.path] = [];
-              allEmbeds[note.path]!.push(embed);
-            }
+      if (embeds) {
+        for (const embed of embeds) {
+          const linkFullPath = this.getFullPathForLink(embed.link, note.path);
+          if (linkFullPath == filePath) {
+            if (!allEmbeds[note.path])
+              allEmbeds[note.path] = [];
+            allEmbeds[note.path]!.push(embed);
           }
         }
       }
@@ -198,28 +194,26 @@ export class LinksHandler {
     const allLinks: { [notePath: string]: LinkCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const links = (await getCacheSafe(this.app, note.path)).links;
+      //!!! this can return undefined if note was just updated
+      const links = (await getCacheSafe(this.app, note.path)).links;
 
-        if (links) {
-          for (const link of links) {
-            if (link.link.startsWith("#")) //internal section link
-              continue;
+      if (links) {
+        for (const link of links) {
+          if (link.link.startsWith("#")) //internal section link
+            continue;
 
-            if (this.checkIsCorrectWikiLink(link.original))
-              continue;
+          if (this.checkIsCorrectWikiLink(link.original))
+            continue;
 
-            const file = this.getFileByLink(link.link, note.path, false);
-            if (!file) {
-              if (!allLinks[note.path])
-                allLinks[note.path] = [];
-              allLinks[note.path]!.push(link);
-            }
+          const file = this.getFileByLink(link.link, note.path, false);
+          if (!file) {
+            if (!allLinks[note.path])
+              allLinks[note.path] = [];
+            allLinks[note.path]!.push(link);
           }
         }
       }
@@ -232,25 +226,23 @@ export class LinksHandler {
     const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      //!!! this can return undefined if note was just updated
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
-        if (embeds) {
-          for (const embed of embeds) {
-            if (this.checkIsCorrectWikiEmbed(embed.original))
-              continue;
+      if (embeds) {
+        for (const embed of embeds) {
+          if (this.checkIsCorrectWikiEmbed(embed.original))
+            continue;
 
-            const file = this.getFileByLink(embed.link, note.path, false);
-            if (!file) {
-              if (!allEmbeds[note.path])
-                allEmbeds[note.path] = [];
-              allEmbeds[note.path]!.push(embed);
-            }
+          const file = this.getFileByLink(embed.link, note.path, false);
+          if (!file) {
+            if (!allEmbeds[note.path])
+              allEmbeds[note.path] = [];
+            allEmbeds[note.path]!.push(embed);
           }
         }
       }
@@ -263,28 +255,26 @@ export class LinksHandler {
     const allLinks: { [notePath: string]: LinkCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const links = (await getCacheSafe(this.app, note.path)).links;
+      //!!! this can return undefined if note was just updated
+      const links = (await getCacheSafe(this.app, note.path)).links;
 
-        if (links) {
-          for (const link of links) {
-            if (link.link.startsWith("#")) //internal section link
-              continue;
+      if (links) {
+        for (const link of links) {
+          if (link.link.startsWith("#")) //internal section link
+            continue;
 
-            if (this.checkIsCorrectWikiLink(link.original))
-              continue;
+          if (this.checkIsCorrectWikiLink(link.original))
+            continue;
 
-            const file = this.getFileByLink(link.link, note.path);
-            if (file) {
-              if (!allLinks[note.path])
-                allLinks[note.path] = [];
-              allLinks[note.path]!.push(link);
-            }
+          const file = this.getFileByLink(link.link, note.path);
+          if (file) {
+            if (!allLinks[note.path])
+              allLinks[note.path] = [];
+            allLinks[note.path]!.push(link);
           }
         }
       }
@@ -297,43 +287,41 @@ export class LinksHandler {
     const allLinks: { [notePath: string]: LinkCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const links = (await getCacheSafe(this.app, note.path)).links;
-        if (links) {
-          for (const link of links) {
-            if (this.checkIsCorrectWikiLink(link.original))
+      //!!! this can return undefined if note was just updated
+      const links = (await getCacheSafe(this.app, note.path)).links;
+      if (links) {
+        for (const link of links) {
+          if (this.checkIsCorrectWikiLink(link.original))
+            continue;
+
+          const li = this.splitLinkToPathAndSection(link.link);
+          if (!li.hasSection)
+            continue;
+
+          const file = this.getFileByLink(link.link, note.path, false);
+          if (file) {
+            if (file.extension === "pdf" && li.section.startsWith("page=")) {
+              continue;
+            }
+
+            let text = await this.app.vault.read(file);
+            let section = Utils.normalizeLinkSection(li.section);
+
+            if (section.startsWith("^")) //skip ^ links
               continue;
 
-            const li = this.splitLinkToPathAndSection(link.link);
-            if (!li.hasSection)
-              continue;
+            const regex = /[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
+            text = text.replace(regex, "");
+            section = section.replace(regex, "");
 
-            const file = this.getFileByLink(link.link, note.path, false);
-            if (file) {
-              if (file.extension === "pdf" && li.section.startsWith("page=")) {
-                continue;
-              }
-
-              let text = await this.app.vault.read(file);
-              let section = Utils.normalizeLinkSection(li.section);
-
-              if (section.startsWith("^")) //skip ^ links
-                continue;
-
-              const regex = /[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
-              text = text.replace(regex, "");
-              section = section.replace(regex, "");
-
-              if (!text.contains("#" + section)) {
-                if (!allLinks[note.path])
-                  allLinks[note.path] = [];
-                allLinks[note.path]!.push(link);
-              }
+            if (!text.contains("#" + section)) {
+              if (!allLinks[note.path])
+                allLinks[note.path] = [];
+              allLinks[note.path]!.push(link);
             }
           }
         }
@@ -347,25 +335,23 @@ export class LinksHandler {
     const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      //!!! this can return undefined if note was just updated
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
-        if (embeds) {
-          for (const embed of embeds) {
-            if (this.checkIsCorrectWikiEmbed(embed.original))
-              continue;
+      if (embeds) {
+        for (const embed of embeds) {
+          if (this.checkIsCorrectWikiEmbed(embed.original))
+            continue;
 
-            const file = this.getFileByLink(embed.link, note.path);
-            if (file) {
-              if (!allEmbeds[note.path])
-                allEmbeds[note.path] = [];
-              allEmbeds[note.path]!.push(embed);
-            }
+          const file = this.getFileByLink(embed.link, note.path);
+          if (file) {
+            if (!allEmbeds[note.path])
+              allEmbeds[note.path] = [];
+            allEmbeds[note.path]!.push(embed);
           }
         }
       }
@@ -378,24 +364,22 @@ export class LinksHandler {
     const allLinks: { [notePath: string]: LinkCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const links = (await getCacheSafe(this.app, note.path)).links;
+      //!!! this can return undefined if note was just updated
+      const links = (await getCacheSafe(this.app, note.path)).links;
 
-        if (links) {
-          for (const link of links) {
-            if (!this.checkIsCorrectWikiLink(link.original))
-              continue;
+      if (links) {
+        for (const link of links) {
+          if (!this.checkIsCorrectWikiLink(link.original))
+            continue;
 
-            if (!allLinks[note.path])
-              allLinks[note.path] = [];
-            allLinks[note.path]!.push(link);
+          if (!allLinks[note.path])
+            allLinks[note.path] = [];
+          allLinks[note.path]!.push(link);
 
-          }
         }
       }
     }
@@ -407,23 +391,21 @@ export class LinksHandler {
     const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
     const notes = this.app.vault.getMarkdownFiles();
 
-    if (notes) {
-      for (const note of notes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of notes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
+      //!!! this can return undefined if note was just updated
+      const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
-        if (embeds) {
-          for (const embed of embeds) {
-            if (!this.checkIsCorrectWikiEmbed(embed.original))
-              continue;
+      if (embeds) {
+        for (const embed of embeds) {
+          if (!this.checkIsCorrectWikiEmbed(embed.original))
+            continue;
 
-            if (!allEmbeds[note.path])
-              allEmbeds[note.path] = [];
-            allEmbeds[note.path]!.push(embed);
-          }
+          if (!allEmbeds[note.path])
+            allEmbeds[note.path] = [];
+          allEmbeds[note.path]!.push(embed);
         }
       }
     }
@@ -581,36 +563,34 @@ export class LinksHandler {
     const notes: string[] = [];
     const allNotes = this.app.vault.getMarkdownFiles();
 
-    if (allNotes) {
-      for (const note of allNotes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of allNotes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        const notePath = note.path;
-        if (note.path == filePath)
-          continue;
+      const notePath = note.path;
+      if (note.path == filePath)
+        continue;
 
-        //!!! this can return undefined if note was just updated
-        const embeds = (await getCacheSafe(this.app, notePath)).embeds;
-        if (embeds) {
-          for (const embed of embeds) {
-            const linkPath = this.getFullPathForLink(embed.link, note.path);
-            if (linkPath == filePath) {
-              if (!notes.contains(notePath))
-                notes.push(notePath);
-            }
+      //!!! this can return undefined if note was just updated
+      const embeds = (await getCacheSafe(this.app, notePath)).embeds;
+      if (embeds) {
+        for (const embed of embeds) {
+          const linkPath = this.getFullPathForLink(embed.link, note.path);
+          if (linkPath == filePath) {
+            if (!notes.contains(notePath))
+              notes.push(notePath);
           }
         }
+      }
 
-        //!!! this can return undefined if note was just updated
-        const links = (await getCacheSafe(this.app, notePath)).links;
-        if (links) {
-          for (const link of links) {
-            const linkPath = this.getFullPathForLink(link.link, note.path);
-            if (linkPath == filePath) {
-              if (!notes.contains(notePath))
-                notes.push(notePath);
-            }
+      //!!! this can return undefined if note was just updated
+      const links = (await getCacheSafe(this.app, notePath)).links;
+      if (links) {
+        for (const link of links) {
+          const linkPath = this.getFullPathForLink(link.link, note.path);
+          if (linkPath == filePath) {
+            if (!notes.contains(notePath))
+              notes.push(notePath);
           }
         }
       }
@@ -623,23 +603,21 @@ export class LinksHandler {
     const notes: string[] = [];
     const allNotes = this.app.vault.getMarkdownFiles();
 
-    if (allNotes) {
-      for (const note of allNotes) {
-        if (this.isPathIgnored(note.path))
-          continue;
+    for (const note of allNotes) {
+      if (this.isPathIgnored(note.path))
+        continue;
 
-        const notePath = note.path;
-        if (notePath == filePath)
-          continue;
+      const notePath = note.path;
+      if (notePath == filePath)
+        continue;
 
-        const links = await this.getLinksFromNote(notePath);
-        for (const link of links) {
-          const li = this.splitLinkToPathAndSection(link.link);
-          const linkFullPath = this.getFullPathForLink(li.link, notePath);
-          if (linkFullPath == filePath) {
-            if (!notes.contains(notePath))
-              notes.push(notePath);
-          }
+      const links = await this.getLinksFromNote(notePath);
+      for (const link of links) {
+        const li = this.splitLinkToPathAndSection(link.link);
+        const linkFullPath = this.getFullPathForLink(li.link, notePath);
+        if (linkFullPath == filePath) {
+          if (!notes.contains(notePath))
+            notes.push(notePath);
         }
       }
     }
