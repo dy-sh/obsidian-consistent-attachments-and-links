@@ -1,7 +1,6 @@
 import {
   App,
   TFile,
-  type CachedMetadata
 } from "obsidian";
 
 export class Utils {
@@ -24,22 +23,6 @@ export class Utils {
   public static normalizeLinkSection(section: string): string {
     section = decodeURI(section);
     return section;
-  }
-
-  public static async getCacheSafe(app: App, fileOrPath: TFile | string): Promise<CachedMetadata> {
-    const file = Utils.getFileOrNull(app, fileOrPath);
-    if (!file) {
-      return {};
-    }
-
-    while (true) {
-      const cache = app.metadataCache.getFileCache(file);
-      if (cache) {
-        return cache;
-      }
-
-      await Utils.delay(100);
-    }
   }
 
   public static getFileOrNull(app: App, fileOrPath: TFile | string): TFile | null {

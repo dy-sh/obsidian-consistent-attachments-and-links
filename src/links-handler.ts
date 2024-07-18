@@ -6,6 +6,7 @@ import {
 } from "obsidian";
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
+import { getCacheSafe } from "./MetadataCache.ts";
 
 export interface PathChangeInfo {
   oldPath: string,
@@ -147,7 +148,7 @@ export class LinksHandler {
         if (note.path == filePath)
           continue;
 
-        const links = (await Utils.getCacheSafe(this.app, note.path)).links;
+        const links = (await getCacheSafe(this.app, note.path)).links;
 
         if (links) {
           for (const link of links) {
@@ -175,7 +176,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const embeds = (await Utils.getCacheSafe(this.app, note.path)).embeds;
+        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
         if (embeds) {
           for (const embed of embeds) {
@@ -203,7 +204,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const links = (await Utils.getCacheSafe(this.app, note.path)).links;
+        const links = (await getCacheSafe(this.app, note.path)).links;
 
         if (links) {
           for (const link of links) {
@@ -237,7 +238,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const embeds = (await Utils.getCacheSafe(this.app, note.path)).embeds;
+        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
         if (embeds) {
           for (const embed of embeds) {
@@ -268,7 +269,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const links = (await Utils.getCacheSafe(this.app, note.path)).links;
+        const links = (await getCacheSafe(this.app, note.path)).links;
 
         if (links) {
           for (const link of links) {
@@ -302,7 +303,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const links = (await Utils.getCacheSafe(this.app, note.path)).links;
+        const links = (await getCacheSafe(this.app, note.path)).links;
         if (links) {
           for (const link of links) {
             if (this.checkIsCorrectWikiLink(link.original))
@@ -352,7 +353,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const embeds = (await Utils.getCacheSafe(this.app, note.path)).embeds;
+        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
         if (embeds) {
           for (const embed of embeds) {
@@ -383,7 +384,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const links = (await Utils.getCacheSafe(this.app, note.path)).links;
+        const links = (await getCacheSafe(this.app, note.path)).links;
 
         if (links) {
           for (const link of links) {
@@ -412,7 +413,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const embeds = (await Utils.getCacheSafe(this.app, note.path)).embeds;
+        const embeds = (await getCacheSafe(this.app, note.path)).embeds;
 
         if (embeds) {
           for (const embed of embeds) {
@@ -590,7 +591,7 @@ export class LinksHandler {
           continue;
 
         //!!! this can return undefined if note was just updated
-        const embeds = (await Utils.getCacheSafe(this.app, notePath)).embeds;
+        const embeds = (await getCacheSafe(this.app, notePath)).embeds;
         if (embeds) {
           for (const embed of embeds) {
             const linkPath = this.getFullPathForLink(embed.link, note.path);
@@ -602,7 +603,7 @@ export class LinksHandler {
         }
 
         //!!! this can return undefined if note was just updated
-        const links = (await Utils.getCacheSafe(this.app, notePath)).links;
+        const links = (await getCacheSafe(this.app, notePath)).links;
         if (links) {
           for (const link of links) {
             const linkPath = this.getFullPathForLink(link.link, note.path);
@@ -725,7 +726,7 @@ export class LinksHandler {
     }
     const changedEmbeds: EmbedChangeInfo[] = [];
 
-    const embeds = (await Utils.getCacheSafe(this.app, notePath)).embeds;
+    const embeds = (await getCacheSafe(this.app, notePath)).embeds;
 
     if (embeds) {
       for (const embed of embeds) {
@@ -765,7 +766,7 @@ export class LinksHandler {
 
     const changedLinks: LinkChangeInfo[] = [];
 
-    const links = (await Utils.getCacheSafe(this.app, notePath)).links;
+    const links = (await getCacheSafe(this.app, notePath)).links;
 
     if (links) {
       for (const link of links) {
@@ -900,7 +901,7 @@ export class LinksHandler {
       return { embeds: [], links: [] };
     }
 
-    const cache = await Utils.getCacheSafe(this.app, notePath);
+    const cache = await getCacheSafe(this.app, notePath);
     const links = cache.links;
     const embeds = cache.embeds;
     let text = await this.app.vault.read(noteFile);
