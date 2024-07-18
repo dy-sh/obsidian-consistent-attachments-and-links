@@ -83,11 +83,7 @@ export class FilesHandler {
     //try to get embeds for old or new path (metadataCache can be updated or not)
     //!!! this can return undefined if note was just updated
 
-    const embeds = (await getCacheSafe(this.app, newNotePath)).embeds;
-
-    if (!embeds) {
-      return { movedAttachments: [], renamedFiles: [] };
-    }
+    const embeds = (await getCacheSafe(this.app, newNotePath)).embeds ?? [];
 
     const result: MovedAttachmentResult = {
       movedAttachments: [],
