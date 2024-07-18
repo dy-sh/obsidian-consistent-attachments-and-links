@@ -103,14 +103,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       callback: () => this.checkConsistency()
     });
 
-    // make regex from given strings
-    this._settings.ignoreFilesRegex = this._settings.ignoreFiles.map(val => RegExp(val));
-
     this.lh = new LinksHandler(
       this.app,
       "Consistent Attachments and Links: ",
       this._settings.ignoreFolders,
-      this._settings.ignoreFilesRegex
+      this._settings.getIgnoreFilesRegex()
     );
 
     this.fh = new FilesHandler(
@@ -118,7 +115,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       this.lh,
       "Consistent Attachments and Links: ",
       this._settings.ignoreFolders,
-      this._settings.ignoreFilesRegex
+      this._settings.getIgnoreFilesRegex()
     );
   }
 
@@ -132,7 +129,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       }
     }
 
-    for (const fileRegex of this._settings.ignoreFilesRegex) {
+    for (const fileRegex of this._settings.getIgnoreFilesRegex()) {
       if (fileRegex.test(path)) {
         return true;
       }
@@ -549,7 +546,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       this.app,
       "Consistent Attachments and Links: ",
       this._settings.ignoreFolders,
-      this._settings.ignoreFilesRegex
+      this._settings.getIgnoreFilesRegex()
     );
 
     this.fh = new FilesHandler(
@@ -557,7 +554,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       this.lh,
       "Consistent Attachments and Links: ",
       this._settings.ignoreFolders,
-      this._settings.ignoreFilesRegex,
+      this._settings.getIgnoreFilesRegex(),
     );
   }
 }
