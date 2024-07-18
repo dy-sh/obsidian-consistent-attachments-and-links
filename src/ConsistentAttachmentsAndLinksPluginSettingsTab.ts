@@ -104,7 +104,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         .onChange(async (value) => {
           const paths = value.trim().split("\n");
           settings.ignoreFiles = paths;
-          settings.ignoreFilesRegex = paths.map(file => RegExp(file));
           await this.plugin.saveSettings(settings);
         }));
 

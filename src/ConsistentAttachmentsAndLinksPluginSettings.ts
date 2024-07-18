@@ -7,10 +7,13 @@ export default class ConsistentAttachmentsAndLinksPluginSettings {
   public changeNoteBacklinksAlt: boolean = false;
   public ignoreFolders: string[] = [".git/", ".obsidian/"];
   public ignoreFiles: string[] = ["consistency\\-report\\.md"];
-  public ignoreFilesRegex: RegExp[] = [/consistency\-report\.md/];
   public attachmentsSubfolder: string = "";
   public consistencyReportFile: string = "consistency-report.md";
   public useBuiltInObsidianLinkCaching: boolean = false;
+
+  public getIgnoreFilesRegex(): RegExp[] {
+    return this.ignoreFiles.map(file => RegExp(file));
+  }
 
   public static load(data: unknown): ConsistentAttachmentsAndLinksPluginSettings {
     return ConsistentAttachmentsAndLinksPluginSettings.clone(data as ConsistentAttachmentsAndLinksPluginSettings);
