@@ -10,7 +10,7 @@ export async function getCacheSafe(app: App, fileOrPath: TFile | string): Promis
   const file = typeof fileOrPath === "string" ? app.vault.getFileByPath(fileOrPath) : fileOrPath;
 
   if (!file) {
-    throw new Error(`File ${fileOrPath} not found`);
+    throw new Error(`File ${fileOrPath as string} not found`);
   }
 
   let cache: CachedMetadata | null = null;
