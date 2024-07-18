@@ -10,6 +10,7 @@ import {
 } from "./links-handler.ts";
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
+import { getCacheSafe } from "./MetadataCache.ts";
 
 export interface MovedAttachmentResult {
   movedAttachments: PathChangeInfo[]
@@ -82,7 +83,7 @@ export class FilesHandler {
     //try to get embeds for old or new path (metadataCache can be updated or not)
     //!!! this can return undefined if note was just updated
 
-    const embeds = (await Utils.getCacheSafe(this.app, newNotePath)).embeds;
+    const embeds = (await getCacheSafe(this.app, newNotePath)).embeds;
 
     if (!embeds) {
       return { movedAttachments: [], renamedFiles: [] };
@@ -147,7 +148,7 @@ export class FilesHandler {
       renamedFiles: []
     };
 
-    const cache = await Utils.getCacheSafe(this.app, notePath);
+    const cache = await getCacheSafe(this.app, notePath);
 
     for (const reference of this.getReferences(cache)) {
       const link = this.lh.splitLinkToPathAndSection(reference.link).link;
