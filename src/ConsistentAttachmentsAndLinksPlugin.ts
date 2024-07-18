@@ -8,11 +8,6 @@ import {
   type CachedMetadata,
   type MarkdownFileInfo
 } from "obsidian";
-import {
-  type PluginSettings,
-  DEFAULT_SETTINGS,
-  SettingTab
-} from "./settings.ts";
 import { Utils } from "./utils.ts";
 import {
   LinksHandler,
@@ -24,9 +19,11 @@ import {
 } from "./files-handler.ts";
 import { path } from "./path.ts";
 import { convertToSync } from "./Async.ts";
+import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
+import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
 
 export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
-  public settings!: PluginSettings;
+  private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
   private lh!: LinksHandler;
   private fh!: FilesHandler;
 
@@ -37,10 +34,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
+  public get settings(): ConsistentAttachmentsAndLinksPluginSettings {
+    return ConsistentAttachmentsAndLinksPluginSettings.clone(this._settings);
+  }
+
   public override async onload(): Promise<void> {
     await this.loadSettings();
 
-    this.addSettingTab(new SettingTab(this.app, this));
+    this.addSettingTab(new ConsistentAttachmentsAndLinksPluginSettingsTab(this.app, this));
 
     this.registerEvent(
       this.app.metadataCache.on("deleted", (file, prevCache) => this.handleDeletedMetadata(file, prevCache!)),
@@ -103,21 +104,21 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     });
 
     // make regex from given strings
-    this.settings.ignoreFilesRegex = this.settings.ignoreFiles.map(val => RegExp(val));
+    this._settings.ignoreFilesRegex = this._settings.ignoreFiles.map(val => RegExp(val));
 
     this.lh = new LinksHandler(
       this.app,
       "Consistent Attachments and Links: ",
-      this.settings.ignoreFolders,
-      this.settings.ignoreFilesRegex
+      this._settings.ignoreFolders,
+      this._settings.ignoreFilesRegex
     );
 
     this.fh = new FilesHandler(
       this.app,
       this.lh,
       "Consistent Attachments and Links: ",
-      this.settings.ignoreFolders,
-      this.settings.ignoreFilesRegex
+      this._settings.ignoreFolders,
+      this._settings.ignoreFilesRegex
     );
   }
 
@@ -125,13 +126,13 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     if (path.startsWith("./"))
       path = path.substring(2);
 
-    for (const folder of this.settings.ignoreFolders) {
+    for (const folder of this._settings.ignoreFolders) {
       if (path.startsWith(folder)) {
         return true;
       }
     }
 
-    for (const fileRegex of this.settings.ignoreFilesRegex) {
+    for (const fileRegex of this._settings.ignoreFilesRegex) {
       if (fileRegex.test(path)) {
         return true;
       }
@@ -141,7 +142,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   public handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
-    if (!prevCache || !this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
+    if (!prevCache || !this._settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
       return;
     }
 
@@ -154,7 +155,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const fileExt = file.path.substring(file.path.lastIndexOf("."));
     if (fileExt == ".md") {
-      if (this.settings.deleteAttachmentsWithNote) {
+      if (this._settings.deleteAttachmentsWithNote) {
         const cache = this.deletedNoteCache.get(file.path);
 
         if (!cache) {
@@ -164,11 +165,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         }
 
         this.deletedNoteCache.delete(file.path);
-        await this.fh.deleteUnusedAttachmentsForCachedNote(file.path, cache, this.settings.deleteEmptyFolders);
+        await this.fh.deleteUnusedAttachmentsForCachedNote(file.path, cache, this._settings.deleteEmptyFolders);
       }
 
       //delete child folders (do not delete parent)
-      if (this.settings.deleteEmptyFolders) {
+      if (this._settings.deleteEmptyFolders) {
         if (await this.app.vault.adapter.exists(path.dirname(file.path))) {
           const list = await this.app.vault.adapter.list(path.dirname(file.path));
           for (const folder of list.folders) {
@@ -215,17 +216,17 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         if (fileExt == ".md") {
           // await Utils.delay(500);//waiting for update metadataCache
 
-          if ((path.dirname(file.oldPath) != path.dirname(file.newPath)) || (this.settings.attachmentsSubfolder.contains("${filename}"))) {
-            if (this.settings.moveAttachmentsWithNote) {
+          if ((path.dirname(file.oldPath) != path.dirname(file.newPath)) || (this._settings.attachmentsSubfolder.contains("${filename}"))) {
+            if (this._settings.moveAttachmentsWithNote) {
               result = await this.fh.moveCachedNoteAttachments(
                 file.oldPath,
                 file.newPath,
-                this.settings.deleteExistFilesWhenMoveNote,
-                this.settings.attachmentsSubfolder,
-                this.settings.deleteEmptyFolders
+                this._settings.deleteExistFilesWhenMoveNote,
+                this._settings.attachmentsSubfolder,
+                this._settings.deleteEmptyFolders
               );
 
-              if (this.settings.updateLinks && result) {
+              if (this._settings.updateLinks && result) {
                 const changedFiles = result.renamedFiles.concat(result.movedAttachments);
                 if (changedFiles.length > 0) {
                   await this.lh.updateChangedPathsInNote(file.newPath, changedFiles);
@@ -233,12 +234,12 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
               }
             }
 
-            if (this.settings.updateLinks) {
-              await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath, this.settings.moveAttachmentsWithNote);
+            if (this._settings.updateLinks) {
+              await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath, this._settings.moveAttachmentsWithNote);
             }
 
             //delete child folders (do not delete parent)
-            if (this.settings.deleteEmptyFolders) {
+            if (this._settings.deleteEmptyFolders) {
               if (await this.app.vault.adapter.exists(path.dirname(file.oldPath))) {
                 const list = await this.app.vault.adapter.list(path.dirname(file.oldPath));
                 for (const folder of list.folders) {
@@ -249,9 +250,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
           }
         }
 
-        const updateAlts = this.settings.changeNoteBacklinksAlt && fileExt == ".md";
-        if (this.settings.updateLinks) {
-          await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts, this.settings.useBuiltInObsidianLinkCaching);
+        const updateAlts = this._settings.changeNoteBacklinksAlt && fileExt == ".md";
+        if (this._settings.updateLinks) {
+          await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts, this._settings.useBuiltInObsidianLinkCaching);
         }
 
         if (result && result.movedAttachments && result.movedAttachments.length > 0) {
@@ -283,9 +284,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const result = await this.fh.collectAttachmentsForCachedNote(
       note.path,
-      this.settings.attachmentsSubfolder,
-      this.settings.deleteExistFilesWhenMoveNote,
-      this.settings.deleteEmptyFolders);
+      this._settings.attachmentsSubfolder,
+      this._settings.deleteExistFilesWhenMoveNote,
+      this._settings.deleteEmptyFolders);
 
     if (result && result.movedAttachments && result.movedAttachments.length > 0) {
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
@@ -311,9 +312,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
         const result = await this.fh.collectAttachmentsForCachedNote(
           note.path,
-          this.settings.attachmentsSubfolder,
-          this.settings.deleteExistFilesWhenMoveNote,
-          this.settings.deleteEmptyFolders);
+          this._settings.attachmentsSubfolder,
+          this._settings.deleteExistFilesWhenMoveNote,
+          this._settings.deleteEmptyFolders);
 
 
         if (result && result.movedAttachments && result.movedAttachments.length > 0) {
@@ -511,7 +512,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
 
 
-    const notePath = this.settings.consistencyReportFile;
+    const notePath = this._settings.consistencyReportFile;
     await this.app.vault.adapter.write(notePath, text);
 
     let fileOpened = false;
@@ -536,27 +537,27 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     new Notice("Reorganization of the vault completed");
   }
 
-
   public async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as unknown);
+    this._settings = ConsistentAttachmentsAndLinksPluginSettings.load(await this.loadData());
   }
 
-  public async saveSettings(): Promise<void> {
-    await this.saveData(this.settings);
+  public async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
+    this._settings = ConsistentAttachmentsAndLinksPluginSettings.clone(newSettings);
+    await this.saveData(this._settings);
 
     this.lh = new LinksHandler(
       this.app,
       "Consistent Attachments and Links: ",
-      this.settings.ignoreFolders,
-      this.settings.ignoreFilesRegex
+      this._settings.ignoreFolders,
+      this._settings.ignoreFilesRegex
     );
 
     this.fh = new FilesHandler(
       this.app,
       this.lh,
       "Consistent Attachments and Links: ",
-      this.settings.ignoreFolders,
-      this.settings.ignoreFilesRegex,
+      this._settings.ignoreFolders,
+      this._settings.ignoreFilesRegex,
     );
   }
 }
