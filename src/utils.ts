@@ -4,10 +4,6 @@ import {
 } from "obsidian";
 
 export class Utils {
-  public static async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
   public static normalizePathForFile(path: string): string {
     path = path.replace(/\\/gi, "/"); //replace \ to /
     path = path.replace(/%20/gi, " "); //replace %20 to space
