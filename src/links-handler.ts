@@ -278,7 +278,7 @@ export class LinksHandler {
     if (section.startsWith("^")) {
       return Object.keys(cache.blocks ?? {}).includes(section.slice(1));
     } else {
-      return (cache.headings ?? []).some(h => h.heading === section);
+      return (cache.headings ?? []).map(h => h.heading.replaceAll("#", " ")).includes(section);
     }
   }
 
