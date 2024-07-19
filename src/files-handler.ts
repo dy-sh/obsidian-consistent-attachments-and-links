@@ -11,6 +11,10 @@ import {
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
 import { getCacheSafe } from "./MetadataCache.ts";
+import {
+  dirname,
+  join
+} from "node:path/posix";
 
 export interface MovedAttachmentResult {
   movedAttachments: PathChangeInfo[]
@@ -63,7 +67,7 @@ export class FilesHandler {
   public generateFileCopyName(originalName: string): string {
     const ext = path.extname(originalName);
     const baseName = path.basename(originalName, ext);
-    const dir = path.dirname(originalName);
+    const dir = dirname(originalName);
     for (let i = 1; i < 100000; i++) {
       const newName = dir + "/" + baseName + " " + i + ext;
       const existFile = this.lh.getFileByPath(newName);
@@ -108,7 +112,7 @@ export class FilesHandler {
 
       //if attachment not in the note folder, skip it
       // = "." means that note was at root path, so do not skip it
-      if (path.dirname(oldNotePath) != "." && !path.dirname(oldLinkPath).startsWith(path.dirname(oldNotePath)))
+      if (dirname(oldNotePath) != "." && !dirname(oldLinkPath).startsWith(dirname(oldNotePath)))
         continue;
 
       const newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
@@ -127,8 +131,8 @@ export class FilesHandler {
 
   public getNewAttachmentPath(oldAttachmentPath: string, notePath: string, subfolderName: string): string {
     const resolvedSubFolderName = subfolderName.replace(/\${filename}/g, path.basename(notePath, ".md"));
-    let newPath = (resolvedSubFolderName == "") ? path.dirname(notePath) : path.join(path.dirname(notePath), resolvedSubFolderName);
-    newPath = Utils.normalizePathForFile(path.join(newPath, path.basename(oldAttachmentPath)));
+    let newPath = (resolvedSubFolderName == "") ? dirname(notePath) : join(dirname(notePath), resolvedSubFolderName);
+    newPath = Utils.normalizePathForFile(join(newPath, path.basename(oldAttachmentPath)));
     return newPath;
   }
 
