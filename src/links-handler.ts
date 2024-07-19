@@ -139,8 +139,8 @@ export class LinksHandler {
     return fullPath;
   }
 
-  public async getAllCachedLinksToFile(filePath: string): Promise<{ [notePath: string]: LinkCache[]; }> {
-    const allLinks: { [notePath: string]: LinkCache[]; } = {};
+  public async getAllCachedLinksToFile(filePath: string): Promise<Record<string, LinkCache[]>> {
+    const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -162,8 +162,8 @@ export class LinksHandler {
     return allLinks;
   }
 
-  public async getAllCachedEmbedsToFile(filePath: string): Promise<{ [notePath: string]: EmbedCache[]; }> {
-    const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+  public async getAllCachedEmbedsToFile(filePath: string): Promise<Record<string, EmbedCache[]>> {
+    const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -185,8 +185,8 @@ export class LinksHandler {
     return allEmbeds;
   }
 
-  public async getAllBadLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
-    const allLinks: { [notePath: string]: LinkCache[]; } = {};
+  public async getAllBadLinks(): Promise<Record<string, LinkCache[]>> {
+    const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -214,8 +214,8 @@ export class LinksHandler {
     return allLinks;
   }
 
-  public async getAllBadEmbeds(): Promise<{ [notePath: string]: EmbedCache[]; }> {
-    const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+  public async getAllBadEmbeds(): Promise<Record<string, EmbedCache[]>> {
+    const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -240,8 +240,8 @@ export class LinksHandler {
     return allEmbeds;
   }
 
-  public async getAllGoodLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
-    const allLinks: { [notePath: string]: LinkCache[]; } = {};
+  public async getAllGoodLinks(): Promise<Record<string, LinkCache[]>> {
+    const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -269,8 +269,8 @@ export class LinksHandler {
     return allLinks;
   }
 
-  public async getAllBadSectionLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
-    const allLinks: { [notePath: string]: LinkCache[]; } = {};
+  public async getAllBadSectionLinks(): Promise<Record<string, LinkCache[]>> {
+    const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -315,8 +315,8 @@ export class LinksHandler {
     return allLinks;
   }
 
-  public async getAllGoodEmbeds(): Promise<{ [notePath: string]: EmbedCache[]; }> {
-    const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+  public async getAllGoodEmbeds(): Promise<Record<string, EmbedCache[]>> {
+    const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -341,8 +341,8 @@ export class LinksHandler {
     return allEmbeds;
   }
 
-  public async getAllWikiLinks(): Promise<{ [notePath: string]: LinkCache[]; }> {
-    const allLinks: { [notePath: string]: LinkCache[]; } = {};
+  public async getAllWikiLinks(): Promise<Record<string, LinkCache[]>> {
+    const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
@@ -365,8 +365,8 @@ export class LinksHandler {
     return allLinks;
   }
 
-  public async getAllWikiEmbeds(): Promise<{ [notePath: string]: EmbedCache[]; }> {
-    const allEmbeds: { [notePath: string]: EmbedCache[]; } = {};
+  public async getAllWikiEmbeds(): Promise<Record<string, EmbedCache[]>> {
+    const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
     for (const note of notes) {
