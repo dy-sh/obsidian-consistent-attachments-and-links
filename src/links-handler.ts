@@ -150,7 +150,7 @@ export class LinksHandler {
     const notice = new Notice("", 0);
     for (const note of notes) {
       i++;
-      const message = `Getting all cached links # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Getting all cached links to file ${filePath} # ${i} / ${notes.length} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
 
@@ -186,7 +186,7 @@ export class LinksHandler {
     const notice = new Notice("", 0);
     for (const note of notes) {
       i++;
-      const message = `Getting all cached embeds # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Getting all cached embeds to file ${filePath} # ${i} / ${notes.length} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
 
@@ -583,7 +583,7 @@ export class LinksHandler {
     const notice = new Notice("", 0);
     for (const note of allNotes) {
       i++;
-      const message = `Getting all cached links to file # ${i} / ${allNotes.length} - ${note.path}`;
+      const message = `Getting cached notes that have link to file ${filePath} # ${i} / ${allNotes.length} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       if (this.isPathIgnored(note.path))
@@ -626,7 +626,7 @@ export class LinksHandler {
     const notice = new Notice("", 0);
     for (const note of allNotes) {
       i++;
-      const message = `Getting all cached links to file # ${i} / ${allNotes.length} - ${note.path}`;
+      const message = `Getting notes that have link to file ${filePath}: # ${i} / ${allNotes.length} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       if (this.isPathIgnored(note.path))
