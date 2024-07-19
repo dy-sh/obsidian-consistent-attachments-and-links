@@ -333,11 +333,9 @@ export class LinksHandler {
       const links = (await getCacheSafe(this.app, note.path)).links ?? [];
 
       for (const link of links) {
-        if (!this.checkIsCorrectWikiLink(link.original)){
-          continue;
+        if (link.original.includes("[[")) {
+          this.addToRecord(allLinks, note.path, link);
         }
-
-        this.addToRecord(allLinks, note.path, link);
       }
     }
 
@@ -355,11 +353,9 @@ export class LinksHandler {
       const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
 
       for (const embed of embeds) {
-        if (!this.checkIsCorrectWikiEmbed(embed.original)) {
-          continue;
+        if (embed.original.includes("[[")) {
+          this.addToRecord(allEmbeds, note.path, embed);
         }
-
-        this.addToRecord(allEmbeds, note.path, embed);
       }
     }
 
