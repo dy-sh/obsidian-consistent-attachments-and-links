@@ -9,10 +9,11 @@ import {
   type PathChangeInfo
 } from "./links-handler.ts";
 import { Utils } from "./utils.ts";
-import { path } from "./path.ts";
 import { getCacheSafe } from "./MetadataCache.ts";
 import {
+  basename,
   dirname,
+  extname,
   join
 } from "node:path/posix";
 
@@ -65,8 +66,8 @@ export class FilesHandler {
   }
 
   public generateFileCopyName(originalName: string): string {
-    const ext = path.extname(originalName);
-    const baseName = path.basename(originalName, ext);
+    const ext = extname(originalName);
+    const baseName = basename(originalName, ext);
     const dir = dirname(originalName);
     for (let i = 1; i < 100000; i++) {
       const newName = dir + "/" + baseName + " " + i + ext;
@@ -130,9 +131,9 @@ export class FilesHandler {
   }
 
   public getNewAttachmentPath(oldAttachmentPath: string, notePath: string, subfolderName: string): string {
-    const resolvedSubFolderName = subfolderName.replace(/\${filename}/g, path.basename(notePath, ".md"));
+    const resolvedSubFolderName = subfolderName.replace(/\${filename}/g, basename(notePath, ".md"));
     let newPath = (resolvedSubFolderName == "") ? dirname(notePath) : join(dirname(notePath), resolvedSubFolderName);
-    newPath = Utils.normalizePathForFile(join(newPath, path.basename(oldAttachmentPath)));
+    newPath = Utils.normalizePathForFile(join(newPath, basename(oldAttachmentPath)));
     return newPath;
   }
 
