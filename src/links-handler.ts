@@ -3,7 +3,8 @@ import {
   normalizePath,
   TFile,
   type EmbedCache,
-  type LinkCache
+  type LinkCache,
+  type ReferenceCache
 } from "obsidian";
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
@@ -207,8 +208,9 @@ export class LinksHandler {
           continue;
         }
 
-        if (!allLinks[note.path])
+        if (!allLinks[note.path]) {
           allLinks[note.path] = [];
+        }
         allLinks[note.path]!.push(link);
       }
     }
@@ -216,7 +218,7 @@ export class LinksHandler {
     return allLinks;
   }
 
-  private async isValidLink(link: LinkCache, notePath: string): Promise<boolean> {
+  private async isValidLink(link: ReferenceCache, notePath: string): Promise<boolean> {
     const [linkPath = "", section = "", otherHashParts] = link.link.split("#");
 
     if (otherHashParts) {
@@ -263,15 +265,14 @@ export class LinksHandler {
       const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
 
       for (const embed of embeds) {
-        if (this.checkIsCorrectWikiEmbed(embed.original))
+        if ((await this.isValidLink(embed, note.path))) {
           continue;
-
-        const file = this.getFileByLink(embed.link, note.path, false);
-        if (!file) {
-          if (!allEmbeds[note.path])
-            allEmbeds[note.path] = [];
-          allEmbeds[note.path]!.push(embed);
         }
+
+        if (!allEmbeds[note.path]) {
+          allEmbeds[note.path] = [];
+        }
+        allEmbeds[note.path]!.push(embed);
       }
     }
 
