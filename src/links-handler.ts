@@ -8,7 +8,9 @@ import {
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
 import {
+  basename,
   dirname,
+  extname,
   join,
 } from "node:path/posix";
 import { getCacheSafe } from "./MetadataCache.ts";
@@ -482,9 +484,9 @@ export class LinksHandler {
 
             if (changeLinksAlt && newRelLink.endsWith(".md")) {
               //rename only if old alt == old note name
-              if (alt === path.basename(changedLink.oldPath, path.extname(changedLink.oldPath))) {
-                const ext = path.extname(newRelLink);
-                const baseName = path.basename(newRelLink, ext);
+              if (alt === basename(changedLink.oldPath, extname(changedLink.oldPath))) {
+                const ext = extname(newRelLink);
+                const baseName = basename(newRelLink, ext);
                 alt = Utils.normalizePathForFile(baseName);
               }
             }
@@ -661,7 +663,7 @@ export class LinksHandler {
   }
 
   public getFilePathWithRenamedBaseName(filePath: string, newBaseName: string): string {
-    return Utils.normalizePathForFile(join(dirname(filePath), newBaseName + path.extname(filePath)));
+    return Utils.normalizePathForFile(join(dirname(filePath), newBaseName + extname(filePath)));
   }
 
   public async getLinksFromNote(notePath: string): Promise<LinkCache[]> {
