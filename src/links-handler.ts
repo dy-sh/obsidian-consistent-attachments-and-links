@@ -127,12 +127,7 @@ export class LinksHandler {
       return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath)!;
     }
     const fullPath = this.getFullPathForLink(link, owningNotePath);
-    return this.getFileByPath(fullPath);
-  }
-
-  public getFileByPath(path: string): TFile {
-    path = Utils.normalizePathForFile(path);
-    return this.app.vault.getAbstractFileByPath(path) as TFile;
+    return this.app.vault.getFileByPath(fullPath)!;
   }
 
   public getFullPathForLink(link: string, owningNotePath: string): string {
@@ -235,7 +230,7 @@ export class LinksHandler {
       fullLinkPath = join(dirname(notePath), linkPath);
     }
 
-    const file = this.getFileByPath(fullLinkPath);
+    const file = this.app.vault.getFileByPath(fullLinkPath);
 
     if (!file) {
       return false;
@@ -407,7 +402,7 @@ export class LinksHandler {
     if (this.isPathIgnored(notePath))
       return;
 
-    const file = this.getFileByPath(notePath);
+    const file = this.app.vault.getFileByPath(notePath);
     if (!file) {
       console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
       return;
@@ -468,7 +463,7 @@ export class LinksHandler {
     if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath))
       return;
 
-    const file = this.getFileByPath(newNotePath);
+    const file = this.app.vault.getFileByPath(newNotePath);
     if (!file) {
       console.error(this.consoleLogPrefix + "can't update internal links, file not found: " + newNotePath);
       return;
@@ -622,7 +617,7 @@ export class LinksHandler {
   }
 
   public async getLinksFromNote(notePath: string): Promise<LinkCache[]> {
-    const file = this.getFileByPath(notePath);
+    const file = this.app.vault.getFileByPath(notePath);
     if (!file) {
       console.error(this.consoleLogPrefix + "can't get embeds, file not found: " + notePath);
       return [];
@@ -752,7 +747,7 @@ export class LinksHandler {
     if (this.isPathIgnored(notePath))
       return;
 
-    const noteFile = this.getFileByPath(notePath);
+    const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
       console.error(this.consoleLogPrefix + "can't update embeds in note, file not found: " + notePath);
       return;
@@ -790,7 +785,7 @@ export class LinksHandler {
     if (this.isPathIgnored(notePath))
       return;
 
-    const noteFile = this.getFileByPath(notePath);
+    const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
       console.error(this.consoleLogPrefix + "can't update links in note, file not found: " + notePath);
       return;
@@ -833,7 +828,7 @@ export class LinksHandler {
       embeds: [],
     };
 
-    const noteFile = this.getFileByPath(notePath);
+    const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
       console.error(this.consoleLogPrefix + "can't update wikilinks in note, file not found: " + notePath);
       return { embeds: [], links: [] };

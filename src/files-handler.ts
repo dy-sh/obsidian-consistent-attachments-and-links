@@ -71,7 +71,7 @@ export class FilesHandler {
     const dir = dirname(originalName);
     for (let i = 1; i < 100000; i++) {
       const newName = dir + "/" + baseName + " " + i + ext;
-      const existFile = this.lh.getFileByPath(newName);
+      const existFile = this.app.vault.getFileByPath(newName);
       if (!existFile)
         return newName;
     }
@@ -229,7 +229,7 @@ export class FilesHandler {
     //if no other file has link to this file - try to move file
     //if file already exist at new location - delete or move with new name
     if (linkedNotes.length == 0) {
-      const existFile = this.lh.getFileByPath(newLinkPath);
+      const existFile = this.app.vault.getFileByPath(newLinkPath);
       if (!existFile) {
         //move
         console.log(this.consoleLogPrefix + "move file [from, to]: \n   " + path + "\n   " + newLinkPath);
@@ -254,7 +254,7 @@ export class FilesHandler {
     //if some other file has link to this file - try to copy file
     //if file already exist at new location - copy file with new name or do nothing
     else {
-      const existFile = this.lh.getFileByPath(newLinkPath);
+      const existFile = this.app.vault.getFileByPath(newLinkPath);
       if (!existFile) {
         //copy
         console.log(this.consoleLogPrefix + "copy file [from, to]: \n   " + path + "\n   " + newLinkPath);
