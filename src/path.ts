@@ -1,46 +1,4 @@
 export class path {
-  public static join(...parts: string[]): string {
-    if (parts.length === 0)
-      return ".";
-    let joined;
-    for (let i = 0; i < parts.length; ++i) {
-      const arg = parts[i]!;
-      if (arg.length > 0) {
-        if (joined === undefined)
-          joined = arg;
-        else
-          joined += "/" + arg;
-      }
-    }
-    if (joined === undefined)
-      return ".";
-    return this.posixNormalize(joined);
-  }
-
-  public static dirname(path: string): string {
-    if (path.length === 0) return ".";
-    let code = path.charCodeAt(0);
-    const hasRoot = code === 47 /*/*/;
-    let end = -1;
-    let matchedSlash = true;
-    for (let i = path.length - 1; i >= 1; --i) {
-      code = path.charCodeAt(i);
-      if (code === 47 /*/*/) {
-        if (!matchedSlash) {
-          end = i;
-          break;
-        }
-      } else {
-        // We saw the first non-path separator
-        matchedSlash = false;
-      }
-    }
-
-    if (end === -1) return hasRoot ? "/" : ".";
-    if (hasRoot && end === 1) return "//";
-    return path.slice(0, end);
-  }
-
   public static basename(path: string, ext?: string): string {
     if (ext !== undefined && typeof ext !== "string") throw new TypeError("\"ext\" argument must be a string");
 

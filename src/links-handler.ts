@@ -6,6 +6,10 @@ import {
 } from "obsidian";
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
+import {
+  dirname,
+  join,
+} from "node:path/posix";
 import { getCacheSafe } from "./MetadataCache.ts";
 
 export interface PathChangeInfo {
@@ -133,7 +137,7 @@ export class LinksHandler {
     owningNotePath = Utils.normalizePathForFile(owningNotePath);
 
     const parentFolder = owningNotePath.substring(0, owningNotePath.lastIndexOf("/"));
-    let fullPath = path.join(parentFolder, link);
+    let fullPath = join(parentFolder, link);
 
     fullPath = Utils.normalizePathForFile(fullPath);
     return fullPath;
@@ -625,7 +629,7 @@ export class LinksHandler {
   }
 
   public getFilePathWithRenamedBaseName(filePath: string, newBaseName: string): string {
-    return Utils.normalizePathForFile(path.join(path.dirname(filePath), newBaseName + path.extname(filePath)));
+    return Utils.normalizePathForFile(join(dirname(filePath), newBaseName + path.extname(filePath)));
   }
 
   public async getLinksFromNote(notePath: string): Promise<LinkCache[]> {

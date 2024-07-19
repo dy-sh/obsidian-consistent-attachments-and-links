@@ -17,10 +17,10 @@ import {
   FilesHandler,
   type MovedAttachmentResult
 } from "./files-handler.ts";
-import { path } from "./path.ts";
 import { convertToSync } from "./Async.ts";
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
+import { dirname } from "node:path/posix";
 
 export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
@@ -167,8 +167,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
       //delete child folders (do not delete parent)
       if (this._settings.deleteEmptyFolders) {
-        if (await this.app.vault.adapter.exists(path.dirname(file.path))) {
-          const list = await this.app.vault.adapter.list(path.dirname(file.path));
+        if (await this.app.vault.adapter.exists(dirname(file.path))) {
+          const list = await this.app.vault.adapter.list(dirname(file.path));
           for (const folder of list.folders) {
             await this.fh.deleteEmptyFolders(folder);
           }
@@ -213,7 +213,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         if (fileExt == ".md") {
           // await Utils.delay(500);//waiting for update metadataCache
 
-          if ((path.dirname(file.oldPath) != path.dirname(file.newPath)) || (this._settings.attachmentsSubfolder.contains("${filename}"))) {
+          if ((dirname(file.oldPath) != dirname(file.newPath)) || (this._settings.attachmentsSubfolder.contains("${filename}"))) {
             if (this._settings.moveAttachmentsWithNote) {
               result = await this.fh.moveCachedNoteAttachments(
                 file.oldPath,
@@ -237,8 +237,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
             //delete child folders (do not delete parent)
             if (this._settings.deleteEmptyFolders) {
-              if (await this.app.vault.adapter.exists(path.dirname(file.oldPath))) {
-                const list = await this.app.vault.adapter.list(path.dirname(file.oldPath));
+              if (await this.app.vault.adapter.exists(dirname(file.oldPath))) {
+                const list = await this.app.vault.adapter.list(dirname(file.oldPath));
                 for (const folder of list.folders) {
                   await this.fh.deleteEmptyFolders(folder);
                 }
