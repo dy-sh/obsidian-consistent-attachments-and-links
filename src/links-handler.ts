@@ -1,5 +1,6 @@
 import {
   App,
+  normalizePath,
   TFile,
   type EmbedCache,
   type LinkCache
@@ -200,22 +201,53 @@ export class LinksHandler {
       const links = (await getCacheSafe(this.app, note.path)).links ?? [];
 
       for (const link of links) {
-        if (link.link.startsWith("#")) //internal section link
+        if ((await this.isValidLink(link, note.path))) {
           continue;
-
-        if (this.checkIsCorrectWikiLink(link.original))
-          continue;
-
-        const file = this.getFileByLink(link.link, note.path, false);
-        if (!file) {
-          if (!allLinks[note.path])
-            allLinks[note.path] = [];
-          allLinks[note.path]!.push(link);
         }
+
+        if (!allLinks[note.path])
+          allLinks[note.path] = [];
+        allLinks[note.path]!.push(link);
       }
     }
 
     return allLinks;
+  }
+
+  private async isValidLink(link: LinkCache, notePath: string): Promise<boolean> {
+    const [linkPath = "", section = "", otherHashParts] = link.link.split("#");
+
+    if (otherHashParts) {
+      return false;
+    }
+
+    let fullLinkPath: string;
+
+    if (!linkPath) {
+      fullLinkPath = notePath;
+    } else if (linkPath.startsWith("/")) {
+      fullLinkPath = normalizePath(linkPath);
+    } else {
+      fullLinkPath = join(dirname(notePath), linkPath);
+    }
+
+    const file = this.getFileByPath(fullLinkPath);
+
+    if (!file) {
+      return false;
+    }
+
+    if (!section) {
+      return true;
+    }
+
+    const cache = await getCacheSafe(this.app, file);
+
+    if (section.startsWith("^")) {
+      return Object.keys(cache.blocks ?? {}).includes(section.slice(1));
+    } else {
+      return (cache.headings ?? []).some(h => h.heading === section);
+    }
   }
 
   public async getAllBadEmbeds(): Promise<Record<string, EmbedCache[]>> {
