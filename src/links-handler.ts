@@ -240,6 +240,16 @@ export class LinksHandler {
       return true;
     }
 
+    const ext = extname(file.path).toLowerCase();
+
+    if (ext === ".pdf") {
+      return section.startsWith("page=");
+    }
+
+    if (ext !== ".md") {
+      return false;
+    }
+
     const cache = await getCacheSafe(this.app, file);
 
     if (section.startsWith("^")) {
