@@ -301,8 +301,13 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let processedNotesCount = 0;
 
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Collecting attachments # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -320,6 +325,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       }
     }
 
+    notice.hide();
+
     if (movedAttachmentsCount == 0)
       new Notice("No files found that need to be moved");
     else
@@ -333,8 +340,13 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let processedNotesCount = 0;
 
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Converting embed paths to relative # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -345,6 +357,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         processedNotesCount++;
       }
     }
+
+    notice.hide();
 
     if (changedEmbedCount == 0)
       new Notice("No embeds found that need to be converted");
@@ -359,8 +373,13 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let processedNotesCount = 0;
 
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Converting link paths to relative # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -371,6 +390,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         processedNotesCount++;
       }
     }
+
+    notice.hide();
 
     if (changedLinksCount == 0)
       new Notice("No links found that need to be converted");
@@ -384,8 +405,13 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let processedNotesCount = 0;
 
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Replacing wikilinks with markdown links # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -397,6 +423,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         processedNotesCount++;
       }
     }
+
+    notice.hide();
 
     if (changedLinksCount == 0)
       new Notice("No wiki links found that need to be replaced");

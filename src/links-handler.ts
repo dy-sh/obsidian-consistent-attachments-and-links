@@ -1,6 +1,7 @@
 import {
   App,
   normalizePath,
+  Notice,
   TFile,
   type EmbedCache,
   type LinkCache,
@@ -145,8 +146,14 @@ export class LinksHandler {
   public async getAllCachedLinksToFile(filePath: string): Promise<Record<string, LinkCache[]>> {
     const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting all cached links # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
+
       if (note.path == filePath)
         continue;
 
@@ -159,6 +166,8 @@ export class LinksHandler {
         }
       }
     }
+
+    notice.hide();
 
     return allLinks;
   }
@@ -173,8 +182,14 @@ export class LinksHandler {
   public async getAllCachedEmbedsToFile(filePath: string): Promise<Record<string, EmbedCache[]>> {
     const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting all cached embeds # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
+
       if (note.path == filePath)
         continue;
 
@@ -188,14 +203,21 @@ export class LinksHandler {
       }
     }
 
+    notice.hide();
+
     return allEmbeds;
   }
 
   public async getAllBadLinks(): Promise<Record<string, LinkCache[]>> {
     const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting bad links # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -209,6 +231,7 @@ export class LinksHandler {
         this.addToRecord(allLinks, note.path, link);
       }
     }
+    notice.hide();
 
     return allLinks;
   }
@@ -263,7 +286,14 @@ export class LinksHandler {
     const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
 
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting bad embeds # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
+
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -277,6 +307,7 @@ export class LinksHandler {
         this.addToRecord(allEmbeds, note.path, embed);
       }
     }
+    notice.hide();
 
     return allEmbeds;
   }
@@ -284,8 +315,13 @@ export class LinksHandler {
   public async getAllGoodLinks(): Promise<Record<string, LinkCache[]>> {
     const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting good links # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -305,14 +341,21 @@ export class LinksHandler {
       }
     }
 
+    notice.hide();
+
     return allLinks;
   }
 
   public async getAllGoodEmbeds(): Promise<Record<string, EmbedCache[]>> {
     const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting good embeds # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -329,14 +372,20 @@ export class LinksHandler {
       }
     }
 
+    notice.hide();
     return allEmbeds;
   }
 
   public async getAllWikiLinks(): Promise<Record<string, LinkCache[]>> {
     const allLinks: Record<string, LinkCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting wikilinks # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -349,14 +398,21 @@ export class LinksHandler {
       }
     }
 
+    notice.hide();
+
     return allLinks;
   }
 
   public async getAllWikiEmbeds(): Promise<Record<string, EmbedCache[]>> {
     const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of notes) {
+      i++;
+      const message = `Getting all wiki embeds # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -368,6 +424,8 @@ export class LinksHandler {
         }
       }
     }
+
+    notice.hide();
 
     return allEmbeds;
   }
@@ -521,8 +579,13 @@ export class LinksHandler {
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
     const notes: string[] = [];
     const allNotes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of allNotes) {
+      i++;
+      const message = `Getting all cached links to file # ${i} / ${allNotes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -551,14 +614,21 @@ export class LinksHandler {
       }
     }
 
+    notice.hide();
+
     return notes;
   }
 
   public async getNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
     const notes: string[] = [];
     const allNotes = this.app.vault.getMarkdownFiles();
-
+    let i = 0;
+    const notice = new Notice("", 0);
     for (const note of allNotes) {
+      i++;
+      const message = `Getting all cached links to file # ${i} / ${allNotes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
       if (this.isPathIgnored(note.path))
         continue;
 
@@ -576,6 +646,8 @@ export class LinksHandler {
         }
       }
     }
+
+    notice.hide();
 
     return notes;
   }
