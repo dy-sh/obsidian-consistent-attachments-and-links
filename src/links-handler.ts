@@ -155,14 +155,19 @@ export class LinksHandler {
       for (const link of links) {
         const linkFullPath = this.getFullPathForLink(link.link, note.path);
         if (linkFullPath == filePath) {
-          if (!allLinks[note.path])
-            allLinks[note.path] = [];
-          allLinks[note.path]!.push(link);
+          this.addToRecord(allLinks, note.path, link);
         }
       }
     }
 
     return allLinks;
+  }
+
+  private addToRecord<T>(record: Record<string, T[]>, path: string, value: T): void {
+    if (!record[path]) {
+      record[path] = [];
+    }
+    record[path].push(value);
   }
 
   public async getAllCachedEmbedsToFile(filePath: string): Promise<Record<string, EmbedCache[]>> {
@@ -178,9 +183,7 @@ export class LinksHandler {
       for (const embed of embeds) {
         const linkFullPath = this.getFullPathForLink(embed.link, note.path);
         if (linkFullPath == filePath) {
-          if (!allEmbeds[note.path])
-            allEmbeds[note.path] = [];
-          allEmbeds[note.path]!.push(embed);
+          this.addToRecord(allEmbeds, note.path, embed);
         }
       }
     }
@@ -203,10 +206,7 @@ export class LinksHandler {
           continue;
         }
 
-        if (!allLinks[note.path]) {
-          allLinks[note.path] = [];
-        }
-        allLinks[note.path]!.push(link);
+        this.addToRecord(allLinks, note.path, link);
       }
     }
 
@@ -264,10 +264,7 @@ export class LinksHandler {
           continue;
         }
 
-        if (!allEmbeds[note.path]) {
-          allEmbeds[note.path] = [];
-        }
-        allEmbeds[note.path]!.push(embed);
+        this.addToRecord(allEmbeds, note.path, embed);
       }
     }
 
@@ -293,9 +290,7 @@ export class LinksHandler {
 
         const file = this.getFileByLink(link.link, note.path);
         if (file) {
-          if (!allLinks[note.path])
-            allLinks[note.path] = [];
-          allLinks[note.path]!.push(link);
+          this.addToRecord(allLinks, note.path, link);
         }
       }
     }
@@ -319,9 +314,7 @@ export class LinksHandler {
 
         const file = this.getFileByLink(embed.link, note.path);
         if (file) {
-          if (!allEmbeds[note.path])
-            allEmbeds[note.path] = [];
-          allEmbeds[note.path]!.push(embed);
+          this.addToRecord(allEmbeds, note.path, embed);
         }
       }
     }
@@ -340,13 +333,11 @@ export class LinksHandler {
       const links = (await getCacheSafe(this.app, note.path)).links ?? [];
 
       for (const link of links) {
-        if (!this.checkIsCorrectWikiLink(link.original))
+        if (!this.checkIsCorrectWikiLink(link.original)){
           continue;
+        }
 
-        if (!allLinks[note.path])
-          allLinks[note.path] = [];
-        allLinks[note.path]!.push(link);
-
+        this.addToRecord(allLinks, note.path, link);
       }
     }
 
@@ -364,12 +355,11 @@ export class LinksHandler {
       const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
 
       for (const embed of embeds) {
-        if (!this.checkIsCorrectWikiEmbed(embed.original))
+        if (!this.checkIsCorrectWikiEmbed(embed.original)) {
           continue;
+        }
 
-        if (!allEmbeds[note.path])
-          allEmbeds[note.path] = [];
-        allEmbeds[note.path]!.push(embed);
+        this.addToRecord(allEmbeds, note.path, embed);
       }
     }
 
