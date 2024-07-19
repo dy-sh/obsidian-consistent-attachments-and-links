@@ -307,52 +307,6 @@ export class LinksHandler {
     return allLinks;
   }
 
-  public async getAllBadSectionLinks(): Promise<Record<string, LinkCache[]>> {
-    const allLinks: Record<string, LinkCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
-
-    for (const note of notes) {
-      if (this.isPathIgnored(note.path))
-        continue;
-
-      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
-
-      for (const link of links) {
-        if (this.checkIsCorrectWikiLink(link.original))
-          continue;
-
-        const li = this.splitLinkToPathAndSection(link.link);
-        if (!li.hasSection)
-          continue;
-
-        const file = this.getFileByLink(link.link, note.path, false);
-        if (file) {
-          if (file.extension === "pdf" && li.section.startsWith("page=")) {
-            continue;
-          }
-
-          let text = await this.app.vault.read(file);
-          let section = Utils.normalizeLinkSection(li.section);
-
-          if (section.startsWith("^")) //skip ^ links
-            continue;
-
-          const regex = /[ !@$%^&*()-=_+\\/;'\[\]\"\|\?.\,\<\>\`\~\{\}]/gim;
-          text = text.replace(regex, "");
-          section = section.replace(regex, "");
-
-          if (!text.contains("#" + section)) {
-            if (!allLinks[note.path])
-              allLinks[note.path] = [];
-            allLinks[note.path]!.push(link);
-          }
-        }
-      }
-    }
-
-    return allLinks;
-  }
-
   public async getAllGoodEmbeds(): Promise<Record<string, EmbedCache[]>> {
     const allEmbeds: Record<string, EmbedCache[]> = {};
     const notes = this.app.vault.getMarkdownFiles();

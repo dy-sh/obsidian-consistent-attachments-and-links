@@ -411,7 +411,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
   public async checkConsistency(): Promise<void> {
     const badLinks = await this.lh.getAllBadLinks();
-    const badSectionLinks = await this.lh.getAllBadSectionLinks();
     const badEmbeds = await this.lh.getAllBadEmbeds();
     const wikiLinks = await this.lh.getAllWikiLinks();
     const wikiEmbeds = await this.lh.getAllWikiEmbeds();
@@ -420,16 +419,15 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const badLinksCount = Object.keys(badLinks).length;
     const badEmbedsCount = Object.keys(badEmbeds).length;
-    const badSectionLinksCount = Object.keys(badSectionLinks).length;
     const wikiLinksCount = Object.keys(wikiLinks).length;
     const wikiEmbedsCount = Object.keys(wikiEmbeds).length;
 
     if (badLinksCount > 0) {
-      text += "# Bad links (" + badLinksCount + " files)\n";
+      text += `# Bad links (${badLinksCount} files)\n`;
       for (const note in badLinks) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
+        text += `[${note}](${Utils.normalizePathForLink(note)}): \n`;
         for (const link of badLinks[note]!) {
-          text += "- (line " + (link.position.start.line + 1) + "): `" + link.link + "`\n";
+          text += `- (line ${link.position.start.line + 1}): \`${link.link}\`\n`;
         }
         text += "\n\n";
       }
@@ -437,24 +435,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       text += "# Bad links \n";
       text += "No problems found\n\n";
     }
-
-
-    if (badSectionLinksCount > 0) {
-      text += "\n\n# Bad note link sections (" + badSectionLinksCount + " files)\n";
-      for (const note in badSectionLinks) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
-        for (const link of badSectionLinks[note]!) {
-          const li = this.lh.splitLinkToPathAndSection(link.link);
-          const section = Utils.normalizeLinkSection(li.section);
-          text += "- (line " + (link.position.start.line + 1) + "): `" + li.link + "#" + section + "`\n";
-        }
-        text += "\n\n";
-      }
-    } else {
-      text += "\n\n# Bad note link sections\n";
-      text += "No problems found\n\n";
-    }
-
 
     if (badEmbedsCount > 0) {
       text += "\n\n# Bad embeds (" + badEmbedsCount + " files)\n";
