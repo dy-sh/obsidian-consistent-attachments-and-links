@@ -6,10 +6,10 @@ import {
   Editor,
   MarkdownView,
   type CachedMetadata,
-  type MarkdownFileInfo
+  type MarkdownFileInfo,
 } from "obsidian";
-import { Utils } from "./utils.ts";
 import {
+  ConsistencyCheckResult,
   LinksHandler,
   type PathChangeInfo
 } from "./links-handler.ts";
@@ -120,8 +120,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   public isPathIgnored(path: string): boolean {
-    if (path.startsWith("./"))
+    if (path.startsWith("./")) {
       path = path.substring(2);
+    }
 
     for (const folder of this._settings.ignoreFolders) {
       if (path.startsWith(folder)) {
@@ -438,86 +439,28 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   public async checkConsistency(): Promise<void> {
-    const [
-      badLinks,
-      badEmbeds,
-      wikiLinks,
-      wikiEmbeds
-    ] = await Promise.all([
-      this.lh.getAllBadLinks(),
-      this.lh.getAllBadEmbeds(),
-      this.lh.getAllWikiLinks(),
-      this.lh.getAllWikiEmbeds()
-    ]);
+    const badLinks = new ConsistencyCheckResult("Bad links");
+    const badEmbeds = new ConsistencyCheckResult("Bad embeds");
+    const wikiLinks = new ConsistencyCheckResult("Wiki links");
+    const wikiEmbeds = new ConsistencyCheckResult("Wiki embeds");
 
-    let text = "";
-
-    const badLinksCount = Object.keys(badLinks).length;
-    const badEmbedsCount = Object.keys(badEmbeds).length;
-    const wikiLinksCount = Object.keys(wikiLinks).length;
-    const wikiEmbedsCount = Object.keys(wikiEmbeds).length;
-
-    if (badLinksCount > 0) {
-      text += `# Bad links (${badLinksCount} files)\n`;
-      for (const note in badLinks) {
-        text += `[${note}](${Utils.normalizePathForLink(note)}): \n`;
-        for (const link of badLinks[note]!) {
-          text += `- (line ${link.position.start.line + 1}): \`${link.link}\`\n`;
-        }
-        text += "\n\n";
-      }
-    } else {
-      text += "# Bad links \n";
-      text += "No problems found\n\n";
+    const notes = this.app.vault.getMarkdownFiles().sort((a, b) => a.path.localeCompare(b.path));
+    let i = 0;
+    const notice = new Notice("", 0);
+    for (const note of notes) {
+      i++;
+      const message = `Checking note # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
+      await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
     }
 
-    if (badEmbedsCount > 0) {
-      text += "\n\n# Bad embeds (" + badEmbedsCount + " files)\n";
-      for (const note in badEmbeds) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
-        for (const link of badEmbeds[note]!) {
-          text += "- (line " + (link.position.start.line + 1) + "): `" + link.link + "`\n";
-        }
-        text += "\n\n";
-      }
-    } else {
-      text += "\n\n# Bad embeds \n";
-      text += "No problems found\n\n";
-    }
+    notice.hide();
 
-
-    if (wikiLinksCount > 0) {
-      text += "# Wiki links (" + wikiLinksCount + " files)\n";
-      for (const note in wikiLinks) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
-        for (const link of wikiLinks[note]!) {
-          text += "- (line " + (link.position.start.line + 1) + "): `" + link.original + "`\n";
-        }
-        text += "\n\n";
-      }
-    } else {
-      text += "# Wiki links \n";
-      text += "No problems found\n\n";
-    }
-
-    if (wikiEmbedsCount > 0) {
-      text += "\n\n# Wiki embeds (" + wikiEmbedsCount + " files)\n";
-      for (const note in wikiEmbeds) {
-        text += "[" + note + "](" + Utils.normalizePathForLink(note) + "): " + "\n";
-        for (const link of wikiEmbeds[note]!) {
-          text += "- (line " + (link.position.start.line + 1) + "): `" + link.original + "`\n";
-        }
-        text += "\n\n";
-      }
-    } else {
-      text += "\n\n# Wiki embeds \n";
-      text += "No problems found\n\n";
-    }
-
-
-
+    const text = badLinks.toString() + badEmbeds.toString() + wikiLinks.toString() + wikiEmbeds.toString();
     const notePath = this._settings.consistencyReportFile;
-    await this.app.vault.adapter.write(notePath, text);
+    const note = this.app.vault.getFileByPath(notePath) ?? await this.app.vault.create(notePath, "");
+    await this.app.vault.modify(note, text);
 
     let fileOpened = false;
     this.app.workspace.iterateAllLeaves(leaf => {

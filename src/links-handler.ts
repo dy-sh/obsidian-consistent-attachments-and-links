@@ -17,6 +17,35 @@ import {
 } from "node:path/posix";
 import { getCacheSafe } from "./MetadataCache.ts";
 
+export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
+  public constructor(private title: string) {
+    super();
+  }
+
+  public add(notePath: string, link: ReferenceCache): void {
+    if (!this.has(notePath)) {
+      this.set(notePath, []);
+    }
+    this.get(notePath)!.push(link);
+  }
+
+  public override toString(): string {
+    if (this.size > 0) {
+      let str = `# ${this.title} (${this.size} files)\n`;
+      for (const notePath of this.keys()) {
+        str += `[${notePath}](${Utils.normalizePathForLink(notePath)}):\n`;
+        for (const link of this.get(notePath)!) {
+          str += `- (line ${link.position.start.line + 1}): \`${link.link}\`\n`;
+        }
+        str += "\n\n";
+      }
+      return str;
+    } else {
+      return `# ${this.title}\nNo problems found\n\n`;
+    }
+  }
+}
+
 export interface PathChangeInfo {
   oldPath: string,
   newPath: string,
@@ -208,34 +237,6 @@ export class LinksHandler {
     return allEmbeds;
   }
 
-  public async getAllBadLinks(): Promise<Record<string, LinkCache[]>> {
-    const allLinks: Record<string, LinkCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
-    let i = 0;
-    const notice = new Notice("", 0);
-    for (const note of notes) {
-      i++;
-      const message = `Getting bad links # ${i} / ${notes.length} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path))
-        continue;
-
-      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
-
-      for (const link of links) {
-        if ((await this.isValidLink(link, note.path))) {
-          continue;
-        }
-
-        this.addToRecord(allLinks, note.path, link);
-      }
-    }
-    notice.hide();
-
-    return allLinks;
-  }
-
   private async isValidLink(link: ReferenceCache, notePath: string): Promise<boolean> {
     const [linkPath = "", section = "", otherHashParts] = link.link.split("#");
 
@@ -280,36 +281,6 @@ export class LinksHandler {
     } else {
       return (cache.headings ?? []).map(h => h.heading.replaceAll("#", " ")).includes(section);
     }
-  }
-
-  public async getAllBadEmbeds(): Promise<Record<string, EmbedCache[]>> {
-    const allEmbeds: Record<string, EmbedCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
-
-    let i = 0;
-    const notice = new Notice("", 0);
-    for (const note of notes) {
-      i++;
-      const message = `Getting bad embeds # ${i} / ${notes.length} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-
-      if (this.isPathIgnored(note.path))
-        continue;
-
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
-
-      for (const embed of embeds) {
-        if ((await this.isValidLink(embed, note.path))) {
-          continue;
-        }
-
-        this.addToRecord(allEmbeds, note.path, embed);
-      }
-    }
-    notice.hide();
-
-    return allEmbeds;
   }
 
   public async getAllGoodLinks(): Promise<Record<string, LinkCache[]>> {
@@ -373,60 +344,6 @@ export class LinksHandler {
     }
 
     notice.hide();
-    return allEmbeds;
-  }
-
-  public async getAllWikiLinks(): Promise<Record<string, LinkCache[]>> {
-    const allLinks: Record<string, LinkCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
-    let i = 0;
-    const notice = new Notice("", 0);
-    for (const note of notes) {
-      i++;
-      const message = `Getting wikilinks # ${i} / ${notes.length} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path))
-        continue;
-
-      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
-
-      for (const link of links) {
-        if (link.original.includes("[[")) {
-          this.addToRecord(allLinks, note.path, link);
-        }
-      }
-    }
-
-    notice.hide();
-
-    return allLinks;
-  }
-
-  public async getAllWikiEmbeds(): Promise<Record<string, EmbedCache[]>> {
-    const allEmbeds: Record<string, EmbedCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
-    let i = 0;
-    const notice = new Notice("", 0);
-    for (const note of notes) {
-      i++;
-      const message = `Getting all wiki embeds # ${i} / ${notes.length} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path))
-        continue;
-
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
-
-      for (const embed of embeds) {
-        if (embed.original.includes("[[")) {
-          this.addToRecord(allEmbeds, note.path, embed);
-        }
-      }
-    }
-
-    notice.hide();
-
     return allEmbeds;
   }
 
@@ -949,5 +866,35 @@ export class LinksHandler {
     }
 
     return res;
+  }
+
+  public async checkConsistency(note: TFile, badLinks: ConsistencyCheckResult, badEmbeds: ConsistencyCheckResult, wikiLinks: ConsistencyCheckResult, wikiEmbeds: ConsistencyCheckResult): Promise<void> {
+    if (this.isPathIgnored(note.path)) {
+      return;
+    }
+
+    const cache = await getCacheSafe(this.app, note.path);
+    const links = cache.links ?? [];
+    const embeds = cache.embeds ?? [];
+
+    for (const link of links) {
+      if (!(await this.isValidLink(link, note.path))) {
+        badLinks.add(note.path, link);
+      }
+
+      if (link.original.includes("[[")) {
+        wikiLinks.add(note.path, link);
+      }
+    }
+
+    for (const embed of embeds) {
+      if (!(await this.isValidLink(embed, note.path))) {
+        badEmbeds.add(note.path, embed);
+      }
+
+      if (embed.original.includes("[[")) {
+        wikiEmbeds.add(note.path, embed);
+      }
+    }
   }
 }
