@@ -1,7 +1,9 @@
 export class path {
   public static parse(path: string): { root: string, dir: string, base: string, ext: string, name: string } {
     const ret = { root: "", dir: "", base: "", ext: "", name: "" };
-    if (path.length === 0) return ret;
+    if (path.length === 0) {
+      return ret;
+    }
     let code = path.charCodeAt(0);
     const isAbsolute = code === 47 /*/*/;
     let start;
@@ -41,7 +43,11 @@ export class path {
       }
       if (code === 46 /*.*/) {
         // If this is our first dot, mark it as the start of our extension
-        if (startDot === -1) startDot = i; else if (preDotState !== 1) preDotState = 1;
+        if (startDot === -1) {
+          startDot = i;
+        } else if (preDotState !== 1) {
+          preDotState = 1;
+        }
       } else if (startDot !== -1) {
         // We saw a non-dot and non-path separator before our dot, so we should
         // have a good chance at having a non-empty extension
@@ -55,7 +61,11 @@ export class path {
       // The (right-most) trimmed path component is exactly '..'
       preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
       if (end !== -1) {
-        if (startPart === 0 && isAbsolute) ret.base = ret.name = path.slice(1, end); else ret.base = ret.name = path.slice(startPart, end);
+        if (startPart === 0 && isAbsolute) {
+          ret.base = ret.name = path.slice(1, end);
+        } else {
+          ret.base = ret.name = path.slice(startPart, end);
+        }
       }
     } else {
       if (startPart === 0 && isAbsolute) {
@@ -68,13 +78,19 @@ export class path {
       ret.ext = path.slice(startDot, end);
     }
 
-    if (startPart > 0) ret.dir = path.slice(0, startPart - 1); else if (isAbsolute) ret.dir = "/";
+    if (startPart > 0) {
+      ret.dir = path.slice(0, startPart - 1);
+    } else if (isAbsolute) {
+      ret.dir = "/";
+    }
 
     return ret;
   }
 
   public static posixNormalize(path: string): string {
-    if (path.length === 0) return ".";
+    if (path.length === 0) {
+      return ".";
+    }
 
     const isAbsolute = path.charCodeAt(0) === 47 /*/*/;
     const trailingSeparator = path.charCodeAt(path.length - 1) === 47 /*/*/;
@@ -82,10 +98,16 @@ export class path {
     // Normalize the path
     path = this.normalizeStringPosix(path, !isAbsolute);
 
-    if (path.length === 0 && !isAbsolute) path = ".";
-    if (path.length > 0 && trailingSeparator) path += "/";
+    if (path.length === 0 && !isAbsolute) {
+      path = ".";
+    }
+    if (path.length > 0 && trailingSeparator) {
+      path += "/";
+    }
 
-    if (isAbsolute) return "/" + path;
+    if (isAbsolute) {
+      return "/" + path;
+    }
     return path;
   }
 
@@ -96,12 +118,13 @@ export class path {
     let dots = 0;
     let code;
     for (let i = 0; i <= path.length; ++i) {
-      if (i < path.length)
+      if (i < path.length) {
         code = path.charCodeAt(i);
-      else if (code === 47 /*/*/)
+      } else if (code === 47 /*/*/) {
         break;
-      else
+      } else {
         code = 47 /*/*/;
+      }
       if (code === 47 /*/*/) {
         if (lastSlash === i - 1 || dots === 1) {
           // NOOP
@@ -130,17 +153,19 @@ export class path {
             }
           }
           if (allowAboveRoot) {
-            if (res.length > 0)
+            if (res.length > 0) {
               res += "/..";
-            else
+            } else {
               res = "..";
+            }
             lastSegmentLength = 2;
           }
         } else {
-          if (res.length > 0)
+          if (res.length > 0) {
             res += "/" + path.slice(lastSlash + 1, i);
-          else
+          } else {
             res = path.slice(lastSlash + 1, i);
+          }
           lastSegmentLength = i - lastSlash - 1;
         }
         lastSlash = i;
@@ -161,11 +186,12 @@ export class path {
 
     for (let i = args.length - 1; i >= -1 && !resolvedAbsolute; i--) {
       let path = "";
-      if (i >= 0)
+      if (i >= 0) {
         path = args[i]!;
-      else {
-        if (cwd === undefined)
+      } else {
+        if (cwd === undefined) {
           cwd = process.cwd();
+        }
         path = cwd;
       }
 
@@ -186,10 +212,11 @@ export class path {
     resolvedPath = this.normalizeStringPosix(resolvedPath, !resolvedAbsolute);
 
     if (resolvedAbsolute) {
-      if (resolvedPath.length > 0)
+      if (resolvedPath.length > 0) {
         return "/" + resolvedPath;
-      else
+      } else {
         return "/";
+      }
     } else if (resolvedPath.length > 0) {
       return resolvedPath;
     } else {
@@ -199,18 +226,23 @@ export class path {
 
   public static relative(from: string, to: string): string {
 
-    if (from === to) return "";
+    if (from === to) {
+      return "";
+    }
 
     from = this.posixResolve(from);
     to = this.posixResolve(to);
 
-    if (from === to) return "";
+    if (from === to) {
+      return "";
+    }
 
     // Trim any leading backslashes
     let fromStart = 1;
     for (; fromStart < from.length; ++fromStart) {
-      if (from.charCodeAt(fromStart) !== 47 /*/*/)
+      if (from.charCodeAt(fromStart) !== 47 /*/*/) {
         break;
+      }
     }
     const fromEnd = from.length;
     const fromLen = fromEnd - fromStart;
@@ -218,8 +250,9 @@ export class path {
     // Trim any leading backslashes
     let toStart = 1;
     for (; toStart < to.length; ++toStart) {
-      if (to.charCodeAt(toStart) !== 47 /*/*/)
+      if (to.charCodeAt(toStart) !== 47 /*/*/) {
         break;
+      }
     }
     const toEnd = to.length;
     const toLen = toEnd - toStart;
@@ -255,10 +288,11 @@ export class path {
       }
       const fromCode = from.charCodeAt(fromStart + i);
       const toCode = to.charCodeAt(toStart + i);
-      if (fromCode !== toCode)
+      if (fromCode !== toCode) {
         break;
-      else if (fromCode === 47 /*/*/)
+      } else if (fromCode === 47 /*/*/) {
         lastCommonSep = i;
+      }
     }
 
     let out = "";
@@ -266,21 +300,23 @@ export class path {
     // and `from`
     for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
       if (i === fromEnd || from.charCodeAt(i) === 47 /*/*/) {
-        if (out.length === 0)
+        if (out.length === 0) {
           out += "..";
-        else
+        } else {
           out += "/..";
+        }
       }
     }
 
     // Lastly, append the rest of the destination (`to`) path that comes after
     // the common path parts
-    if (out.length > 0)
+    if (out.length > 0) {
       return out + to.slice(toStart + lastCommonSep);
-    else {
+    } else {
       toStart += lastCommonSep;
-      if (to.charCodeAt(toStart) === 47 /*/*/)
+      if (to.charCodeAt(toStart) === 47 /*/*/) {
         ++toStart;
+      }
       return to.slice(toStart);
     }
   }
