@@ -16,6 +16,7 @@ import {
   join,
 } from "node:path/posix";
 import { getCacheSafe } from "./MetadataCache.ts";
+import { getMarkdownFilesSorted } from "./Vault.ts";
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
   public constructor(private title: string) {
@@ -175,7 +176,7 @@ export class LinksHandler {
 
   public async getAllCachedLinksToFile(filePath: string): Promise<Record<string, LinkCache[]>> {
     const allLinks: Record<string, LinkCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -212,7 +213,7 @@ export class LinksHandler {
 
   public async getAllCachedEmbedsToFile(filePath: string): Promise<Record<string, EmbedCache[]>> {
     const allEmbeds: Record<string, EmbedCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -288,7 +289,7 @@ export class LinksHandler {
 
   public async getAllGoodLinks(): Promise<Record<string, LinkCache[]>> {
     const allLinks: Record<string, LinkCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -326,7 +327,7 @@ export class LinksHandler {
 
   public async getAllGoodEmbeds(): Promise<Record<string, EmbedCache[]>> {
     const allEmbeds: Record<string, EmbedCache[]> = {};
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -519,7 +520,7 @@ export class LinksHandler {
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
     const notes: string[] = [];
-    const allNotes = this.app.vault.getMarkdownFiles();
+    const allNotes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of allNotes) {
@@ -566,7 +567,7 @@ export class LinksHandler {
 
   public async getNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
     const notes: string[] = [];
-    const allNotes = this.app.vault.getMarkdownFiles();
+    const allNotes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of allNotes) {
