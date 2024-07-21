@@ -18,6 +18,7 @@ import { convertToSync } from "./Async.ts";
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
 import { dirname } from "node:path/posix";
+import { getMarkdownFilesSorted } from "./Vault.ts";
 
 export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
@@ -319,7 +320,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let movedAttachmentsCount = 0;
     let processedNotesCount = 0;
 
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -360,7 +361,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let changedEmbedCount = 0;
     let processedNotesCount = 0;
 
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -395,7 +396,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -429,7 +430,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
-    const notes = this.app.vault.getMarkdownFiles();
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
@@ -470,7 +471,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     const wikiLinks = new ConsistencyCheckResult("Wiki links");
     const wikiEmbeds = new ConsistencyCheckResult("Wiki embeds");
 
-    const notes = this.app.vault.getMarkdownFiles().sort((a, b) => a.path.localeCompare(b.path));
+    const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
