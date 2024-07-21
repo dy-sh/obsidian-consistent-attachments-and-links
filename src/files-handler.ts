@@ -32,8 +32,9 @@ export class FilesHandler {
   ) { }
 
   public isPathIgnored(path: string): boolean {
-    if (path.startsWith("./"))
+    if (path.startsWith("./")) {
       path = path.substring(2);
+    }
 
     for (const folder of this.ignoreFolders) {
       if (path.startsWith(folder)) {
@@ -72,8 +73,9 @@ export class FilesHandler {
     for (let i = 1; i < 100000; i++) {
       const newName = dir + "/" + baseName + " " + i + ext;
       const existFile = this.app.vault.getFileByPath(newName);
-      if (!existFile)
+      if (!existFile) {
         return newName;
+      }
     }
     return "";
   }
@@ -99,8 +101,9 @@ export class FilesHandler {
       const link = embed.link;
       const oldLinkPath = this.lh.getFullPathForLink(link, oldNotePath);
 
-      if (result.movedAttachments.findIndex(x => x.oldPath == oldLinkPath) != -1)
-        continue;//already moved
+      if (result.movedAttachments.findIndex(x => x.oldPath == oldLinkPath) != -1) {
+        continue;
+      }//already moved
 
       let file = this.lh.getFileByLink(link, oldNotePath);
       if (!file) {
@@ -113,13 +116,16 @@ export class FilesHandler {
 
       //if attachment not in the note folder, skip it
       // = "." means that note was at root path, so do not skip it
-      if (dirname(oldNotePath) != "." && !dirname(oldLinkPath).startsWith(dirname(oldNotePath)))
+      if (dirname(oldNotePath) != "." && !dirname(oldLinkPath).startsWith(dirname(oldNotePath))) {
         continue;
+      }
 
       const newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
 
-      if (newLinkPath == file.path) //nothing to move
+      if (newLinkPath == file.path) {
+        //nothing to move
         continue;
+      }
 
       const res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles, deleteEmptyFolders);
       result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
@@ -203,8 +209,9 @@ export class FilesHandler {
       renamedFiles: []
     };
 
-    if (this.isPathIgnored(path))
+    if (this.isPathIgnored(path)) {
       return result;
+    }
 
 
     if (path == newLinkPath) {
@@ -250,10 +257,9 @@ export class FilesHandler {
           result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
         }
       }
-    }
-    //if some other file has link to this file - try to copy file
-    //if file already exist at new location - copy file with new name or do nothing
-    else {
+    } else {
+      //if some other file has link to this file - try to copy file
+      //if file already exist at new location - copy file with new name or do nothing
       const existFile = this.app.vault.getFileByPath(newLinkPath);
       if (!existFile) {
         //copy
@@ -293,8 +299,9 @@ export class FilesHandler {
     list = await this.app.vault.adapter.list(dirName);
     if (list.files.length == 0 && list.folders.length == 0) {
       console.log(this.consoleLogPrefix + "delete empty folder: \n   " + dirName);
-      if (await this.app.vault.adapter.exists(dirName))
+      if (await this.app.vault.adapter.exists(dirName)) {
         await this.app.vault.adapter.rmdir(dirName, false);
+      }
     }
   }
 
