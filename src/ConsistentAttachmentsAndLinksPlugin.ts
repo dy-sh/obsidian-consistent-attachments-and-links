@@ -3,10 +3,7 @@ import {
   TAbstractFile,
   TFile,
   Notice,
-  Editor,
-  MarkdownView,
   type CachedMetadata,
-  type MarkdownFileInfo,
 } from "obsidian";
 import {
   ConsistencyCheckResult,
@@ -64,7 +61,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     this.addCommand({
       id: "collect-attachments-current-note",
       name: "Collect Attachments in Current Note",
-      editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => this.collectAttachmentsCurrentNote(editor, view as MarkdownView)
+      checkCallback: this.collectAttachmentsCurrentNote.bind(this)
     });
 
     this.addCommand({
@@ -272,9 +269,20 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
   }
 
+  public collectAttachmentsCurrentNote(checking: boolean): boolean {
+    const note = this.app.workspace.getActiveFile();
+    if (!note || note.extension.toLowerCase() !== "md") {
+      return false;
+    }
 
-  public async collectAttachmentsCurrentNote(_: Editor, view: MarkdownView): Promise<void> {
-    const note = view.file as TFile;
+    if (!checking) {
+      convertToSync(this.collectAttachments(note));
+    }
+
+    return true;
+  }
+
+  private async collectAttachments(note: TFile): Promise<void> {
     if (this.isPathIgnored(note.path)) {
       new Notice("Note path is ignored");
       return;
@@ -290,12 +298,13 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
     }
 
-    if (result.movedAttachments.length == 0)
+    if (result.movedAttachments.length == 0) {
       new Notice("No files found that need to be moved");
-    else
+    }
+    else {
       new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
+    }
   }
-
 
   public async collectAllAttachments(): Promise<void> {
     let movedAttachmentsCount = 0;
