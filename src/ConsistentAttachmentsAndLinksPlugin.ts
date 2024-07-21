@@ -438,10 +438,17 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   public async checkConsistency(): Promise<void> {
-    const badLinks = await this.lh.getAllBadLinks();
-    const badEmbeds = await this.lh.getAllBadEmbeds();
-    const wikiLinks = await this.lh.getAllWikiLinks();
-    const wikiEmbeds = await this.lh.getAllWikiEmbeds();
+    const [
+      badLinks,
+      badEmbeds,
+      wikiLinks,
+      wikiEmbeds
+    ] = await Promise.all([
+      this.lh.getAllBadLinks(),
+      this.lh.getAllBadEmbeds(),
+      this.lh.getAllWikiLinks(),
+      this.lh.getAllWikiEmbeds()
+    ]);
 
     let text = "";
 
