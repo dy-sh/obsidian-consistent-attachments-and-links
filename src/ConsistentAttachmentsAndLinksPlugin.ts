@@ -256,7 +256,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
         const updateAlts = this._settings.changeNoteBacklinksAlt && fileExt == ".md";
         if (this._settings.updateLinks) {
-          await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts, this._settings.useBuiltInObsidianLinkCaching);
+          await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts);
         }
 
         if (result && result.movedAttachments && result.movedAttachments.length > 0) {
@@ -280,7 +280,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
   }
 
-  public collectAttachmentsCurrentNote(checking: boolean): boolean {//
+  public collectAttachmentsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
     if (!note || note.extension.toLowerCase() !== "md") {
       return false;

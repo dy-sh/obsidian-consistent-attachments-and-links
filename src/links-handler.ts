@@ -357,12 +357,12 @@ export class LinksHandler {
     return allEmbeds;
   }
 
-  public async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changeLinksAlt = false, useBuiltInObsidianLinkCaching = false): Promise<void> {
+  public async updateLinksToRenamedFile(oldNotePath: string, newNotePath: string, changeLinksAlt = false): Promise<void> {
     if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath)) {
       return;
     }
 
-    const notes = useBuiltInObsidianLinkCaching ? await this.getCachedNotesThatHaveLinkToFile(oldNotePath) : await this.getNotesThatHaveLinkToFile(oldNotePath);
+    const notes = this.getCachedNotesThatHaveLinkToFile(oldNotePath);
     const links: PathChangeInfo[] = [{ oldPath: oldNotePath, newPath: newNotePath }];
 
     if (notes) {
@@ -518,87 +518,13 @@ export class LinksHandler {
     }
   }
 
-  public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
-    const notes: string[] = [];
-    const allNotes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice("", 0);
-    for (const note of allNotes) {
-      i++;
-      const message = `Getting cached notes that have link to file ${filePath} # ${i} / ${allNotes.length} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path)) {
-        continue;
-      }
-
-      const notePath = note.path;
-      if (note.path == filePath) {
-        continue;
-      }
-
-      const embeds = (await getCacheSafe(this.app, notePath)).embeds ?? [];
-
-      for (const embed of embeds) {
-        const linkPath = this.getFullPathForLink(embed.link, note.path);
-        if (linkPath == filePath) {
-          if (!notes.contains(notePath)) {
-            notes.push(notePath);
-          }
-        }
-      }
-
-      const links = (await getCacheSafe(this.app, notePath)).links ?? [];
-
-      for (const link of links) {
-        const linkPath = this.getFullPathForLink(link.link, note.path);
-        if (linkPath == filePath) {
-          if (!notes.contains(notePath)) {
-            notes.push(notePath);
-          }
-        }
-      }
+  public getCachedNotesThatHaveLinkToFile(filePath: string): string[] {
+    const file = this.app.vault.getFileByPath(filePath);
+    if (!file) {
+      return [];
     }
-
-    notice.hide();
-
-    return notes;
-  }
-
-  public async getNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
-    const notes: string[] = [];
-    const allNotes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice("", 0);
-    for (const note of allNotes) {
-      i++;
-      const message = `Getting notes that have link to file ${filePath}: # ${i} / ${allNotes.length} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path)) {
-        continue;
-      }
-
-      const notePath = note.path;
-      if (notePath == filePath) {
-        continue;
-      }
-
-      const links = await this.getLinksFromNote(notePath);
-      for (const link of links) {
-        const li = this.splitLinkToPathAndSection(link.link);
-        const linkFullPath = this.getFullPathForLink(li.link, notePath);
-        if (linkFullPath == filePath) {
-          if (!notes.contains(notePath)) {
-            notes.push(notePath);
-          }
-        }
-      }
-    }
-
-    notice.hide();
-
-    return notes;
+    const backlinks = this.app.metadataCache.getBacklinksForFile(file);
+    return backlinks.keys();
   }
 
   public splitLinkToPathAndSection(link: string): LinkSectionInfo {

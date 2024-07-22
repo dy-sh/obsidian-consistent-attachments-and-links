@@ -129,16 +129,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
           settings.consistencyReportFile = value;
           await this.plugin.saveSettings(settings);
         }));
-
-
-    new Setting(containerEl)
-      .setName("EXPERIMENTAL: Use Built-in Obsidian Link Caching for Moved Notes")
-      .setDesc("Enable this option to use the experimental built-in Obsidian link caching for processing moved notes. Turn it off if the plugin misbehaves.")
-      .addToggle(cb => cb.onChange(async (value) => {
-        settings.useBuiltInObsidianLinkCaching = value;
-        await this.plugin.saveSettings(settings);
-      }
-      ).setValue(settings.useBuiltInObsidianLinkCaching));
   }
 
   public getNormalizedPath(path: string): string {
