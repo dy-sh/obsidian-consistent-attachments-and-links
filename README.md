@@ -40,7 +40,8 @@ Recommended additional settings (not required for the plugin to work):
 - **"Default location for new attachments":In subfolder under current folder**. This is not required, but this ensures that attachments are always next to your notes. The option "Same folder as current file" is also suitable.
 
 - **"Subfolder name": "\_attachments"**. Or any other.
-  <br>
+
+To improve performance, consider installing [Backlink Cache](https://obsidian.md/plugins?id=backlink-cache) plugin.
 
 ## How to check the consistency of the library
 
@@ -94,7 +95,6 @@ Check if there are vault consistency problems and print the report. The report w
 
 - Bad links
 - Bad embed paths
-- Bad note link sections (after # sybol)
 - Wiki-links
 - Wiki-embeds
 
