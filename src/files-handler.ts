@@ -16,6 +16,7 @@ import {
   extname,
   join
 } from "node:path/posix";
+import { showError } from "./Error.ts";
 
 export interface MovedAttachmentResult {
   movedAttachments: PathChangeInfo[]
@@ -174,7 +175,7 @@ export class FilesHandler {
       const file = this.lh.getFileByLink(link, notePath);
       if (!file) {
         const type = reference.original.startsWith("!") ? "embed" : "link";
-        console.error(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${link}`);
+        showError(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${link}`);
         continue;
       }
 
