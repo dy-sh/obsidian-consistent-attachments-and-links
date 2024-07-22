@@ -19,6 +19,7 @@ import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAtta
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
 import { dirname } from "node:path/posix";
 import { getMarkdownFilesSorted } from "./Vault.ts";
+import { showError } from "./Error.ts";
 
 export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
@@ -264,7 +265,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         }
       }
     } catch (e) {
-      console.error("Consistent Attachments and Links:", e);
+      showError(e);
     }
 
     new Notice("Fixing Consistency Complete");

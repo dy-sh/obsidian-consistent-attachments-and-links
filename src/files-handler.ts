@@ -110,7 +110,7 @@ export class FilesHandler {
       if (!file) {
         file = this.lh.getFileByLink(link, newNotePath);
         if (!file) {
-          console.error(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + link);
+          showError(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + link);
           continue;
         }
       }
