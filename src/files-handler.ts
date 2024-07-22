@@ -221,7 +221,7 @@ export class FilesHandler {
 
     await this.createFolderForAttachmentFromPath(newLinkPath);
 
-    const linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(path);
+    const linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(path);
     if (parentNotePaths) {
       for (const notePath of parentNotePaths) {
         linkedNotes.remove(notePath);
@@ -318,7 +318,7 @@ export class FilesHandler {
         continue;
       }
 
-      const linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(file.path);
+      const linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(file.path);
       if (linkedNotes.length == 0) {
         try {
           await this.deleteFile(file, deleteEmptyFolders);

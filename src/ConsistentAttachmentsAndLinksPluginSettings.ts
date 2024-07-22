@@ -9,7 +9,6 @@ export default class ConsistentAttachmentsAndLinksPluginSettings {
   public ignoreFiles: string[] = ["consistency\\-report\\.md"];
   public attachmentsSubfolder: string = "";
   public consistencyReportFile: string = "consistency-report.md";
-  public useBuiltInObsidianLinkCaching: boolean = false;
 
   public getIgnoreFilesRegex(): RegExp[] {
     return this.ignoreFiles.map(file => RegExp(file));
