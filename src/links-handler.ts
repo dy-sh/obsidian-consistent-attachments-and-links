@@ -17,6 +17,7 @@ import {
 } from "node:path/posix";
 import { getCacheSafe } from "./MetadataCache.ts";
 import { getMarkdownFilesSorted } from "./Vault.ts";
+import { showError } from "./Error.ts";
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
   public constructor(private title: string) {
@@ -388,7 +389,7 @@ export class LinksHandler {
 
     const file = this.app.vault.getFileByPath(notePath);
     if (!file) {
-      console.error(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
+      showError(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
       return;
     }
 
@@ -454,7 +455,7 @@ export class LinksHandler {
 
     const file = this.app.vault.getFileByPath(newNotePath);
     if (!file) {
-      console.error(this.consoleLogPrefix + "can't update internal links, file not found: " + newNotePath);
+      showError(this.consoleLogPrefix + "can't update internal links, file not found: " + newNotePath);
       return;
     }
 
@@ -488,7 +489,7 @@ export class LinksHandler {
         if (!file) {
           file = this.getFileByLink(link, newNotePath);
           if (!file) {
-            console.error(this.consoleLogPrefix + newNotePath + " has bad link (file does not exist): " + link);
+            showError(this.consoleLogPrefix + newNotePath + " has bad link (file does not exist): " + link);
             continue;
           }
         }
@@ -563,7 +564,7 @@ export class LinksHandler {
   public async getLinksFromNote(notePath: string): Promise<LinkCache[]> {
     const file = this.app.vault.getFileByPath(notePath);
     if (!file) {
-      console.error(this.consoleLogPrefix + "can't get embeds, file not found: " + notePath);
+      showError(this.consoleLogPrefix + "can't get embeds, file not found: " + notePath);
       return [];
     }
 
@@ -629,10 +630,10 @@ export class LinksHandler {
 
           changedEmbeds.push({ old: embed, newLink: newRelLink });
         } else {
-          console.error(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
+          showError(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
         }
       } else {
-        console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wiki link): " + embed.original);
+        showError(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wiki link): " + embed.original);
       }
     }
 
@@ -682,10 +683,10 @@ export class LinksHandler {
 
           changedLinks.push({ old: link, newLink: newRelLink });
         } else {
-          console.error(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
+          showError(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
         }
       } else {
-        console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wiki link): " + link.original);
+        showError(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wiki link): " + link.original);
       }
     }
 
@@ -700,7 +701,7 @@ export class LinksHandler {
 
     const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
-      console.error(this.consoleLogPrefix + "can't update embeds in note, file not found: " + notePath);
+      showError(this.consoleLogPrefix + "can't update embeds in note, file not found: " + notePath);
       return;
     }
 
@@ -718,7 +719,7 @@ export class LinksHandler {
         } else if (this.checkIsCorrectWikiEmbed(embed.old.original)) {
           text = text.replace(embed.old.original, "![[" + embed.newLink + "]]");
         } else {
-          console.error(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wikilink): " + embed.old.original);
+          showError(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wikilink): " + embed.old.original);
           continue;
         }
 
@@ -741,7 +742,7 @@ export class LinksHandler {
 
     const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
-      console.error(this.consoleLogPrefix + "can't update links in note, file not found: " + notePath);
+      showError(this.consoleLogPrefix + "can't update links in note, file not found: " + notePath);
       return;
     }
 
@@ -759,7 +760,7 @@ export class LinksHandler {
         } else if (this.checkIsCorrectWikiLink(link.old.original)) {
           text = text.replace(link.old.original, "[[" + link.newLink + "]]");
         } else {
-          console.error(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wikilink): " + link.old.original);
+          showError(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wikilink): " + link.old.original);
           continue;
         }
 
@@ -786,7 +787,7 @@ export class LinksHandler {
 
     const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
-      console.error(this.consoleLogPrefix + "can't update wikilinks in note, file not found: " + notePath);
+      showError(this.consoleLogPrefix + "can't update wikilinks in note, file not found: " + notePath);
       return { embeds: [], links: [] };
     }
 
