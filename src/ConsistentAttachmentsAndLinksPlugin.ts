@@ -4,6 +4,7 @@ import {
   TFile,
   Notice,
   type CachedMetadata,
+  MarkdownView,
 } from "obsidian";
 import {
   ConsistencyCheckResult,
@@ -300,6 +301,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       return;
     }
 
+    await this.saveAllOpenNotes();
+
     const result = await this.fh.collectAttachmentsForCachedNote(
       note.path,
       this._settings.attachmentsSubfolder,
@@ -320,6 +323,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   public async collectAllAttachments(): Promise<void> {
     let movedAttachmentsCount = 0;
     let processedNotesCount = 0;
+
+    await this.saveAllOpenNotes();
 
     const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
@@ -534,5 +539,12 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       this._settings.ignoreFolders,
       this._settings.getIgnoreFilesRegex(),
     );
+  }
+
+  private async saveAllOpenNotes(): Promise<void> {
+    for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+      const view = leaf.view as MarkdownView;
+      await view.save();
+    }
   }
 }
