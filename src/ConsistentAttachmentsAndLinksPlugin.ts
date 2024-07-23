@@ -152,6 +152,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       return;
     }
 
+    await this.saveAllOpenNotes();
+
     const fileExt = file.path.substring(file.path.lastIndexOf("."));
     if (fileExt == ".md") {
       if (this._settings.deleteAttachmentsWithNote) {
@@ -203,6 +205,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     this.currentlyRenamingFiles = this.recentlyRenamedFiles; //clear array for pushing new files async
     this.recentlyRenamedFiles = [];
+
+    await this.saveAllOpenNotes();
 
     new Notice("Fixing consistency for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
     console.log("Consistent Attachments and Links:\nFixing consistency for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
@@ -364,6 +368,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
 
   public async convertAllEmbedsPathsToRelative(): Promise<void> {
+    await this.saveAllOpenNotes();
+
     let changedEmbedCount = 0;
     let processedNotesCount = 0;
 
@@ -399,6 +405,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
 
   public async convertAllLinkPathsToRelative(): Promise<void> {
+    await this.saveAllOpenNotes();
+
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
@@ -433,6 +441,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   public async replaceAllWikilinksWithMarkdownLinks(): Promise<void> {
+    await this.saveAllOpenNotes();
+
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
@@ -472,6 +482,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   public async checkConsistency(): Promise<void> {
+    await this.saveAllOpenNotes();
+
     const badLinks = new ConsistencyCheckResult("Bad links");
     const badEmbeds = new ConsistencyCheckResult("Bad embeds");
     const wikiLinks = new ConsistencyCheckResult("Wiki links");
@@ -508,6 +520,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   public async reorganizeVault(): Promise<void> {
+    await this.saveAllOpenNotes();
+
     await this.replaceAllWikilinksWithMarkdownLinks();
     await this.convertAllEmbedsPathsToRelative();
     await this.convertAllLinkPathsToRelative();
