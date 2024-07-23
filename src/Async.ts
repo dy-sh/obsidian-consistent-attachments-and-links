@@ -1,5 +1,7 @@
 import { showError } from "./Error.ts";
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export async function retryWithTimeout(
   asyncFn: () => Promise<boolean>,
   {

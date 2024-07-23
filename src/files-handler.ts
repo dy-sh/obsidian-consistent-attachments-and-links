@@ -1,7 +1,6 @@
 import {
   App,
   type CachedMetadata,
-  type ReferenceCache,
   TFile
 } from "obsidian";
 import {
@@ -9,7 +8,10 @@ import {
   type PathChangeInfo
 } from "./links-handler.ts";
 import { Utils } from "./utils.ts";
-import { getCacheSafe } from "./MetadataCache.ts";
+import {
+  getAllLinks,
+  getCacheSafe
+} from "./MetadataCache.ts";
 import {
   basename,
   dirname,
@@ -88,29 +90,28 @@ export class FilesHandler {
       return { movedAttachments: [], renamedFiles: [] };
     }
 
-    //try to get embeds for old or new path (metadataCache can be updated or not)
-    //!!! this can return undefined if note was just updated
-
-    const embeds = (await getCacheSafe(this.app, newNotePath)).embeds ?? [];
+    const cache = await getCacheSafe(this.app, oldNotePath);
+    const links = getAllLinks(cache);
 
     const result: MovedAttachmentResult = {
       movedAttachments: [],
       renamedFiles: []
     };
 
-    for (const embed of embeds) {
-      const link = embed.link;
-      const oldLinkPath = this.lh.getFullPathForLink(link, oldNotePath);
+    for (const link of links) {
+      const [linkPath] = this.lh.splitSubpath(link.link);
+      const oldLinkPath = this.lh.getFullPathForLink(linkPath, oldNotePath);
 
       if (result.movedAttachments.findIndex(x => x.oldPath == oldLinkPath) != -1) {
+        //already moved
         continue;
-      }//already moved
+      }
 
-      let file = this.lh.getFileByLink(link, oldNotePath);
+      let file = this.lh.getFileByLink(linkPath, oldNotePath);
       if (!file) {
-        file = this.lh.getFileByLink(link, newNotePath);
+        file = this.lh.getFileByLink(linkPath, newNotePath);
         if (!file) {
-          showError(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + link);
+          showError(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + linkPath);
           continue;
         }
       }
@@ -118,6 +119,10 @@ export class FilesHandler {
       //if attachment not in the note folder, skip it
       // = "." means that note was at root path, so do not skip it
       if (dirname(oldNotePath) != "." && !dirname(oldLinkPath).startsWith(dirname(oldNotePath))) {
+        continue;
+      }
+
+      if (!this.isAttachment(file)) {
         continue;
       }
 
@@ -131,7 +136,6 @@ export class FilesHandler {
       const res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles, deleteEmptyFolders);
       result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
       result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
-
     }
 
     return result;
@@ -158,31 +162,27 @@ export class FilesHandler {
 
     const cache = await getCacheSafe(this.app, notePath);
 
-    for (const reference of this.getReferences(cache)) {
-      const link = this.lh.splitLinkToPathAndSection(reference.link).link;
+    for (const link of getAllLinks(cache)) {
+      const [linkPath] = this.lh.splitSubpath(link.link);
 
-      if (link.startsWith("#")) {
-        // internal section link
+      if (!linkPath) {
         continue;
       }
 
-      const fullPathLink = this.lh.getFullPathForLink(link, notePath);
+      const fullPathLink = this.lh.getFullPathForLink(linkPath, notePath);
       if (result.movedAttachments.findIndex(x => x.oldPath == fullPathLink) != -1) {
         // already moved
         continue;
       }
 
-      const file = this.lh.getFileByLink(link, notePath);
+      const file = this.lh.getFileByLink(linkPath, notePath);
       if (!file) {
-        const type = reference.original.startsWith("!") ? "embed" : "link";
-        showError(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${link}`);
+        const type = link.original.startsWith("!") ? "embed" : "link";
+        showError(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
         continue;
       }
 
-      const extension = file.extension.toLowerCase();
-
-      if (extension === "md" || file.extension === "canvas") {
-        // internal file link
+      if (!this.isAttachment(file)) {
         continue;
       }
 
@@ -214,6 +214,9 @@ export class FilesHandler {
       return result;
     }
 
+    if (!this.isAttachment(file)) {
+      return result;
+    }
 
     if (path == newLinkPath) {
       console.warn(this.consoleLogPrefix + "Can't move file. Source and destination path the same.");
@@ -311,11 +314,11 @@ export class FilesHandler {
       return;
     }
 
-    for (const reference of this.getReferences(cache)) {
-      const link = reference.link;
-      const file = this.lh.getFileByLink(link, notePath, false);
+    for (const link of getAllLinks(cache)) {
+      const [linkPath] = this.lh.splitSubpath(link.link);
+      const file = this.lh.getFileByLink(linkPath, notePath, false);
 
-      if (!file || file.extension.toLowerCase() === "md") {
+      if (!file || !this.isAttachment(file)) {
         continue;
       }
 
@@ -328,10 +331,6 @@ export class FilesHandler {
     }
   }
 
-  public getReferences(cache: CachedMetadata): ReferenceCache[] {
-    return [...(cache.embeds ?? []), ...(cache.links ?? [])];
-  }
-
   public async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
     await this.app.vault.trash(file, true);
     if (deleteEmptyFolders) {
@@ -341,5 +340,10 @@ export class FilesHandler {
         dir = dir.parent!;
       }
     }
+  }
+
+  private isAttachment(file: TFile): boolean {
+    const extension = file.extension.toLowerCase();
+    return extension !== "md" && extension !== "canvas";
   }
 }

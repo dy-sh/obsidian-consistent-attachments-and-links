@@ -10,13 +10,18 @@ import {
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
 import {
-  basename,
   dirname,
   extname,
   join,
 } from "node:path/posix";
-import { getCacheSafe } from "./MetadataCache.ts";
-import { getMarkdownFilesSorted } from "./Vault.ts";
+import {
+  getAllLinks,
+  getCacheSafe
+} from "./MetadataCache.ts";
+import {
+  applyFileChanges,
+  getMarkdownFilesSorted
+} from "./Vault.ts";
 import { showError } from "./Error.ts";
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
@@ -67,13 +72,6 @@ export interface LinksAndEmbedsChangedInfo {
   embeds: EmbedChangeInfo[]
   links: LinkChangeInfo[]
 }
-
-export interface LinkSectionInfo {
-  hasSection: boolean
-  link: string
-  section: string
-}
-
 
 //simple regex
 // const markdownLinkOrEmbedRegexSimple = /\[(.*?)\]\((.*?)\)/gim
@@ -155,7 +153,7 @@ export class LinksHandler {
   }
 
   public getFileByLink(link: string, owningNotePath: string, allowInvalidLink: boolean = true): TFile {
-    link = this.splitLinkToPathAndSection(link).link;
+    [link] = this.splitSubpath(link);
     if (allowInvalidLink) {
       return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath)!;
     }
@@ -164,7 +162,7 @@ export class LinksHandler {
   }
 
   public getFullPathForLink(link: string, owningNotePath: string): string {
-    link = this.splitLinkToPathAndSection(link).link;
+    [link] = this.splitSubpath(link);
     link = Utils.normalizePathForFile(link);
     owningNotePath = Utils.normalizePathForFile(owningNotePath);
 
@@ -243,11 +241,7 @@ export class LinksHandler {
   }
 
   private async isValidLink(link: ReferenceCache, notePath: string): Promise<boolean> {
-    const [linkPath = "", section = "", otherHashParts] = link.link.split("#");
-
-    if (otherHashParts) {
-      return false;
-    }
+    const [linkPath, subpath] = this.splitSubpath(link.link);
 
     let fullLinkPath: string;
 
@@ -265,26 +259,26 @@ export class LinksHandler {
       return false;
     }
 
-    if (!section) {
+    if (!subpath) {
       return true;
     }
 
-    const ext = extname(file.path).toLowerCase();
+    const ext = file.extension.toLocaleLowerCase();
 
-    if (ext === ".pdf") {
-      return section.startsWith("page=");
+    if (ext === "pdf") {
+      return subpath.startsWith("#page=");
     }
 
-    if (ext !== ".md") {
+    if (ext !== "md") {
       return false;
     }
 
     const cache = await getCacheSafe(this.app, file);
 
-    if (section.startsWith("^")) {
-      return Object.keys(cache.blocks ?? {}).includes(section.slice(1));
+    if (subpath.startsWith("#^")) {
+      return Object.keys(cache.blocks ?? {}).includes(subpath.slice(2));
     } else {
-      return (cache.headings ?? []).map(h => h.heading.replaceAll("#", " ")).includes(section);
+      return (cache.headings ?? []).map(h => h.heading.replaceAll("#", " ")).includes(subpath.slice(1));
     }
   }
 
@@ -387,136 +381,71 @@ export class LinksHandler {
       return;
     }
 
-    const file = this.app.vault.getFileByPath(notePath);
-    if (!file) {
+    const note = this.app.vault.getFileByPath(notePath);
+    if (!note) {
       showError(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
       return;
     }
 
-    let text = await this.app.vault.read(file);
-    let dirty = false;
-
-    const elements = text.match(markdownLinkOrEmbedRegexG);
-    if (elements != null && elements.length > 0) {
-      for (const el of elements) {
-        let alt = el.match(markdownLinkOrEmbedRegex)![1];
-        let link = el.match(markdownLinkOrEmbedRegex)![2]!;
-        const li = this.splitLinkToPathAndSection(link);
-
-        if (li.hasSection) {
-          // for links with sections like [](note.md#section)
-          link = li.link;
-        }
-
-        const fullLink = this.getFullPathForLink(link, notePath);
-
-        for (const changedLink of changedLinks) {
-          if (fullLink == changedLink.oldPath) {
-            let newRelLink: string = path.relative(notePath, changedLink.newPath);
-            newRelLink = Utils.normalizePathForLink(newRelLink);
-
-            if (newRelLink.startsWith("../")) {
-              newRelLink = newRelLink.substring(3);
-            }
-
-            if (changeLinksAlt && newRelLink.endsWith(".md")) {
-              //rename only if old alt == old note name
-              if (alt === basename(changedLink.oldPath, extname(changedLink.oldPath))) {
-                const ext = extname(newRelLink);
-                const baseName = basename(newRelLink, ext);
-                alt = Utils.normalizePathForFile(baseName);
-              }
-            }
-
-            if (li.hasSection) {
-              text = text.replace(el, "[" + alt + "]" + "(" + newRelLink + "#" + li.section + ")");
-            } else {
-              text = text.replace(el, "[" + alt + "]" + "(" + newRelLink + ")");
-            }
-
-            dirty = true;
-
-            console.log(this.consoleLogPrefix + "link updated in cached note [note, old link, new link]: \n   "
-              + file.path + "\n   " + link + "\n   " + newRelLink);
-          }
-        }
-      }
+    const pathChangeMap = new Map<string, string>();
+    for (const change of changedLinks) {
+      pathChangeMap.set(change.oldPath, change.newPath);
     }
 
-    if (dirty) {
-      await this.app.vault.modify(file, text);
-    }
+    await applyFileChanges(this.app, note, async () => {
+      const cache = await getCacheSafe(this.app, note);
+      const links = getAllLinks(cache);
+      return links.map(link => ({
+        startIndex: link.position.start.offset,
+        endIndex: link.position.end.offset,
+        newContent: this.convertLink(note, link, note.path, pathChangeMap, changeLinksAlt)
+      }));
+    });
   }
 
-  public async updateInternalLinksInMovedNote(oldNotePath: string, newNotePath: string, attachmentsAlreadyMoved: boolean): Promise<void> {
+  private convertLink(note: TFile, link: ReferenceCache, oldNotePath: string, pathChangeMap?: Map<string, string>, changeLinksAlt?: boolean): string {
+    const [linkPath = "", subpath] = this.splitSubpath(link.link);
+    const oldLinkPath = join(dirname(oldNotePath), linkPath);
+    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : join(dirname(note.path), linkPath);
+    if (!newLinkPath) {
+      return link.original;
+    }
+
+    const newLinkedNote = this.app.vault.getFileByPath(oldLinkPath) ?? this.app.vault.getFileByPath(newLinkPath);
+
+    if (!newLinkedNote) {
+      return link.original;
+    }
+
+    return this.app.fileManager.generateMarkdownLink(newLinkedNote, note.path, subpath, changeLinksAlt === false ? link.displayText : undefined);
+  }
+
+  public splitSubpath(link: string): [string, string | undefined] {
+    const SUBPATH_SEPARATOR = "#";
+    const [linkPath = "", subpath] = link.split(SUBPATH_SEPARATOR);
+    return [linkPath, subpath ? SUBPATH_SEPARATOR + subpath : undefined];
+  }
+
+  public async updateInternalLinksInMovedNote(oldNotePath: string, newNotePath: string): Promise<void> {
     if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath)) {
       return;
     }
 
-    const file = this.app.vault.getFileByPath(newNotePath);
-    if (!file) {
+    const newNote = this.app.vault.getFileByPath(newNotePath);
+    if (!newNote) {
       showError(this.consoleLogPrefix + "can't update internal links, file not found: " + newNotePath);
       return;
     }
 
-    let text = await this.app.vault.read(file);
-    let dirty = false;
-
-    const elements = text.match(markdownLinkOrEmbedRegexG);
-    if (elements != null && elements.length > 0) {
-      for (const el of elements) {
-        const alt = el.match(markdownLinkOrEmbedRegex)![1];
-        let link = el.match(markdownLinkOrEmbedRegex)![2]!;
-        const li = this.splitLinkToPathAndSection(link);
-
-        if (link.startsWith("#")) {
-          //internal section link
-          continue;
-        }
-
-        if (li.hasSection) {
-          // for links with sections like [](note.md#section)
-          link = li.link;
-        }
-
-
-        //startsWith("../") - for not skipping files that not in the note dir
-        if (attachmentsAlreadyMoved && !link.endsWith(".md") && !link.startsWith("../")) {
-          continue;
-        }
-
-        let file = this.getFileByLink(link, oldNotePath);
-        if (!file) {
-          file = this.getFileByLink(link, newNotePath);
-          if (!file) {
-            showError(this.consoleLogPrefix + newNotePath + " has bad link (file does not exist): " + link);
-            continue;
-          }
-        }
-
-        let newRelLink: string = path.relative(newNotePath, file.path);
-        newRelLink = Utils.normalizePathForLink(newRelLink);
-
-        if (newRelLink.startsWith("../")) {
-          newRelLink = newRelLink.substring(3);
-        }
-
-        if (li.hasSection) {
-          text = text.replace(el, "[" + alt + "]" + "(" + newRelLink + "#" + li.section + ")");
-        } else {
-          text = text.replace(el, "[" + alt + "]" + "(" + newRelLink + ")");
-        }
-
-        dirty = true;
-
-        console.log(this.consoleLogPrefix + "link updated in moved note [note, old link, new link]: \n   "
-          + file.path + "\n   " + link + "   \n" + newRelLink);
-      }
-    }
-
-    if (dirty) {
-      await this.app.vault.modify(file, text);
-    }
+    await applyFileChanges(this.app, newNote, async () => {
+      const cache = await getCacheSafe(this.app, newNote);
+      const links = getAllLinks(cache);
+      return links.map(link => ({
+        startIndex: link.position.start.offset,
+        endIndex: link.position.end.offset,
+        newContent: this.convertLink(newNote, link, oldNotePath)
+      }));
+    });
   }
 
   public getCachedNotesThatHaveLinkToFile(filePath: string): string[] {
@@ -526,35 +455,6 @@ export class LinksHandler {
     }
     const backlinks = this.app.metadataCache.getBacklinksForFile(file);
     return backlinks.keys();
-  }
-
-  public splitLinkToPathAndSection(link: string): LinkSectionInfo {
-    let res: LinkSectionInfo = {
-      hasSection: false,
-      link: link,
-      section: ""
-    };
-
-    if (!link.contains("#")) {
-      return res;
-    }
-
-
-    const linkBeforeHash = link.match(/(.*?)#(.*?)$/)![1]!;
-    const section = link.match(/(.*?)#(.*?)$/)![2]!;
-
-    const isMarkdownSection = section != "" && linkBeforeHash.endsWith(".md"); // for links with sections like [](note.md#section)
-    const isPdfPageSection = section.startsWith("page=") && linkBeforeHash.endsWith(".pdf"); // for links with sections like [](note.pdf#page=42)
-
-    if (isMarkdownSection || isPdfPageSection) {
-      res = {
-        hasSection: true,
-        link: linkBeforeHash,
-        section: section
-      };
-    }
-
-    return res;
   }
 
   public getFilePathWithRenamedBaseName(filePath: string, newBaseName: string): string {

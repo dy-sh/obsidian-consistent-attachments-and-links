@@ -240,7 +240,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
             }
 
             if (this._settings.updateLinks) {
-              await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath, this._settings.moveAttachmentsWithNote);
+              await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath);
             }
 
             //delete child folders (do not delete parent)
