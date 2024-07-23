@@ -1,6 +1,7 @@
 import {
   App,
   type CachedMetadata,
+  type ListedFiles,
   TFile
 } from "obsidian";
 import {
@@ -295,16 +296,22 @@ export class FilesHandler {
       dirName = dirName.substring(2);
     }
 
-    let list = await this.app.vault.adapter.list(dirName);
+    let list = await this.safeList(dirName);
     for (const folder of list.folders) {
       await this.deleteEmptyFolders(folder);
     }
 
-    list = await this.app.vault.adapter.list(dirName);
+    list = await this.safeList(dirName);
     if (list.files.length == 0 && list.folders.length == 0) {
       console.log(this.consoleLogPrefix + "delete empty folder: \n   " + dirName);
       if (await this.app.vault.adapter.exists(dirName)) {
-        await this.app.vault.adapter.rmdir(dirName, false);
+        try {
+          await this.app.vault.adapter.rmdir(dirName, false);
+        } catch(e) {
+          if (await this.app.vault.adapter.exists(dirName)) {
+            throw e;
+          }
+        }
       }
     }
   }
@@ -345,5 +352,21 @@ export class FilesHandler {
   private isAttachment(file: TFile): boolean {
     const extension = file.extension.toLowerCase();
     return extension !== "md" && extension !== "canvas";
+  }
+
+  public async safeList(path: string): Promise<ListedFiles> {
+    const EMPTY = { files: [], folders: [] };
+    if (!(await this.app.vault.adapter.exists(path))) {
+      return EMPTY;
+    }
+
+    try {
+      return await this.app.vault.adapter.list(path);
+    } catch(e) {
+      if (await this.app.vault.adapter.exists(path)) {
+        throw e;
+      }
+      return EMPTY;
+    }
   }
 }

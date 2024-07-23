@@ -23,7 +23,7 @@ type FileChange = {
 
 export async function processWithRetry(app: App, file: TFile, processFn: (content: string) => MaybePromise<string>): Promise<void> {
   await retryWithTimeout(async () => {
-    const oldContent = await app.vault.adapter.read(file.path);
+    const oldContent = await app.vault.read(file);
     const newContent = await processFn(oldContent);
     let success = true;
     await app.vault.process(file, (content) => {
