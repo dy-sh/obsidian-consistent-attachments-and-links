@@ -171,11 +171,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
       //delete child folders (do not delete parent)
       if (this._settings.deleteEmptyFolders) {
-        if (await this.app.vault.adapter.exists(dirname(file.path))) {
-          const list = await this.app.vault.adapter.list(dirname(file.path));
-          for (const folder of list.folders) {
-            await this.fh.deleteEmptyFolders(folder);
-          }
+        const list = await this.fh.safeList(dirname(file.path));
+        for (const folder of list.folders) {
+          await this.fh.deleteEmptyFolders(folder);
         }
       }
     }
@@ -250,11 +248,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
             //delete child folders (do not delete parent)
             if (this._settings.deleteEmptyFolders) {
-              if (await this.app.vault.adapter.exists(dirname(file.oldPath))) {
-                const list = await this.app.vault.adapter.list(dirname(file.oldPath));
-                for (const folder of list.folders) {
-                  await this.fh.deleteEmptyFolders(folder);
-                }
+              const list = await this.fh.safeList(dirname(file.oldPath));
+              for (const folder of list.folders) {
+                await this.fh.deleteEmptyFolders(folder);
               }
             }
           }
