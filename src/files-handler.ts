@@ -87,17 +87,17 @@ export class FilesHandler {
   public async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
     deleteExistFiles: boolean, attachmentsSubfolder: string, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 
+    const result: MovedAttachmentResult = { movedAttachments: [], renamedFiles: [] };
+
     if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath)) {
-      return { movedAttachments: [], renamedFiles: [] };
+      return result;
     }
 
-    const cache = await getCacheSafe(this.app, oldNotePath);
+    const cache = await getCacheSafe(this.app, newNotePath);
+    if (!cache) {
+      return result;
+    }
     const links = getAllLinks(cache);
-
-    const result: MovedAttachmentResult = {
-      movedAttachments: [],
-      renamedFiles: []
-    };
 
     for (const link of links) {
       const [linkPath] = this.lh.splitSubpath(link.link);
@@ -162,6 +162,10 @@ export class FilesHandler {
     };
 
     const cache = await getCacheSafe(this.app, notePath);
+
+    if (!cache) {
+      return result;
+    }
 
     for (const link of getAllLinks(cache)) {
       const [linkPath] = this.lh.splitSubpath(link.link);
@@ -307,7 +311,7 @@ export class FilesHandler {
       if (await this.app.vault.adapter.exists(dirName)) {
         try {
           await this.app.vault.adapter.rmdir(dirName, false);
-        } catch(e) {
+        } catch (e) {
           if (await this.app.vault.adapter.exists(dirName)) {
             throw e;
           }
@@ -362,7 +366,7 @@ export class FilesHandler {
 
     try {
       return await this.app.vault.adapter.list(path);
-    } catch(e) {
+    } catch (e) {
       if (await this.app.vault.adapter.exists(path)) {
         throw e;
       }

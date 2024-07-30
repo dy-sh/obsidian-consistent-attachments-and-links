@@ -188,7 +188,7 @@ export class LinksHandler {
         continue;
       }
 
-      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
+      const links = (await getCacheSafe(this.app, note.path) ?? {}).links ?? [];
 
       for (const link of links) {
         const linkFullPath = this.getFullPathForLink(link.link, note.path);
@@ -225,7 +225,7 @@ export class LinksHandler {
         continue;
       }
 
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
+      const embeds = (await getCacheSafe(this.app, note.path) ?? {}).embeds ?? [];
 
       for (const embed of embeds) {
         const linkFullPath = this.getFullPathForLink(embed.link, note.path);
@@ -275,6 +275,10 @@ export class LinksHandler {
 
     const cache = await getCacheSafe(this.app, file);
 
+    if (!cache) {
+      return false;
+    }
+
     if (subpath.startsWith("#^")) {
       return Object.keys(cache.blocks ?? {}).includes(subpath.slice(2));
     } else {
@@ -296,7 +300,7 @@ export class LinksHandler {
         continue;
       }
 
-      const links = (await getCacheSafe(this.app, note.path)).links ?? [];
+      const links = (await getCacheSafe(this.app, note.path) ?? {}).links ?? [];
 
       for (const link of links) {
         if (link.link.startsWith("#")) {
@@ -334,7 +338,7 @@ export class LinksHandler {
         continue;
       }
 
-      const embeds = (await getCacheSafe(this.app, note.path)).embeds ?? [];
+      const embeds = (await getCacheSafe(this.app, note.path) ?? {}).embeds ?? [];
 
       for (const embed of embeds) {
         if (this.checkIsCorrectWikiEmbed(embed.original)) {
@@ -392,15 +396,7 @@ export class LinksHandler {
       pathChangeMap.set(change.oldPath, change.newPath);
     }
 
-    await applyFileChanges(this.app, note, async () => {
-      const cache = await getCacheSafe(this.app, note);
-      const links = getAllLinks(cache);
-      return links.map(link => ({
-        startIndex: link.position.start.offset,
-        endIndex: link.position.end.offset,
-        newContent: this.convertLink(note, link, note.path, pathChangeMap, changeLinksAlt)
-      }));
-    });
+    await this.updateLinks(note, note.path, pathChangeMap, changeLinksAlt);
   }
 
   private convertLink(note: TFile, link: ReferenceCache, oldNotePath: string, pathChangeMap?: Map<string, string>, changeLinksAlt?: boolean): string {
@@ -437,12 +433,18 @@ export class LinksHandler {
       return;
     }
 
+    await this.updateLinks(newNote, oldNotePath);
+
     await applyFileChanges(this.app, newNote, async () => {
       const cache = await getCacheSafe(this.app, newNote);
+      if (!cache) {
+        return [];
+      }
       const links = getAllLinks(cache);
       return links.map(link => ({
         startIndex: link.position.start.offset,
         endIndex: link.position.end.offset,
+        oldContent: link.original,
         newContent: this.convertLink(newNote, link, oldNotePath)
       }));
     });
@@ -508,7 +510,7 @@ export class LinksHandler {
     }
     const changedEmbeds: EmbedChangeInfo[] = [];
 
-    const embeds = (await getCacheSafe(this.app, notePath)).embeds ?? [];
+    const embeds = (await getCacheSafe(this.app, notePath) ?? {}).embeds ?? [];
 
     for (const embed of embeds) {
       const isMarkdownEmbed = this.checkIsCorrectMarkdownEmbed(embed.original);
@@ -548,7 +550,7 @@ export class LinksHandler {
 
     const changedLinks: LinkChangeInfo[] = [];
 
-    const links = (await getCacheSafe(this.app, notePath)).links ?? [];
+    const links = (await getCacheSafe(this.app, notePath) ?? {}).links ?? [];
 
     for (const link of links) {
       const isMarkdownLink = this.checkIsCorrectMarkdownLink(link.original);
@@ -677,13 +679,14 @@ export class LinksHandler {
   }
 
   public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string): Promise<LinksAndEmbedsChangedInfo> {
-    if (this.isPathIgnored(notePath)) {
-      return { embeds: [], links: [] };
-    }
     const res: LinksAndEmbedsChangedInfo = {
       links: [],
       embeds: [],
     };
+
+    if (this.isPathIgnored(notePath)) {
+      return res;
+    }
 
     const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
@@ -692,6 +695,10 @@ export class LinksHandler {
     }
 
     const cache = await getCacheSafe(this.app, notePath);
+    if (!cache) {
+      return res;
+    }
+
     const links = cache.links ?? [];
     const embeds = cache.embeds ?? [];
     let text = await this.app.vault.read(noteFile);
@@ -747,6 +754,9 @@ export class LinksHandler {
     }
 
     const cache = await getCacheSafe(this.app, note.path);
+    if (!cache) {
+      return;
+    }
     const links = cache.links ?? [];
     const embeds = cache.embeds ?? [];
 
@@ -769,5 +779,21 @@ export class LinksHandler {
         wikiEmbeds.add(note.path, embed);
       }
     }
+  }
+
+  private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>, changeLinksAlt?: boolean): Promise<void> {
+    await applyFileChanges(this.app, note, async () => {
+      const cache = await getCacheSafe(this.app, note);
+      if (!cache) {
+        return [];
+      }
+      const links = getAllLinks(cache);
+      return links.map(link => ({
+        startIndex: link.position.start.offset,
+        endIndex: link.position.end.offset,
+        oldContent: link.original,
+        newContent: this.convertLink(note, link, oldNotePath, pathChangeMap, changeLinksAlt)
+      }));
+    });
   }
 }
