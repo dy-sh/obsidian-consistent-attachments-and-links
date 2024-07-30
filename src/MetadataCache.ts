@@ -6,16 +6,17 @@ import type {
 } from "obsidian";
 import { retryWithTimeout } from "./Async.ts";
 
-export async function getCacheSafe(app: App, fileOrPath: TFile | string): Promise<CachedMetadata> {
-  const file = typeof fileOrPath === "string" ? app.vault.getFileByPath(fileOrPath) : fileOrPath;
-
-  if (!file) {
-    throw new Error(`File ${fileOrPath as string} not found`);
-  }
-
+export async function getCacheSafe(app: App, fileOrPath: TFile | string): Promise<CachedMetadata | null> {
   let cache: CachedMetadata | null = null;
 
   await retryWithTimeout(async () => {
+    const file = typeof fileOrPath === "string" ? app.vault.getFileByPath(fileOrPath) : fileOrPath;
+
+    if (!file) {
+      cache = null;
+      return true;
+    }
+
     const fileInfo = app.metadataCache.getFileInfo(file.path);
     const stat = await app.vault.adapter.stat(file.path);
 
@@ -41,7 +42,7 @@ export async function getCacheSafe(app: App, fileOrPath: TFile | string): Promis
     timeoutInMilliseconds: 30000
   });
 
-  return cache!;
+  return cache;
 }
 
 export function getAllLinks(cache: CachedMetadata): ReferenceCache[] {
