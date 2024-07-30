@@ -20,6 +20,10 @@ export enum BuildMode {
   Production
 }
 
+type SourceMap = {
+  sources: string[];
+};
+
 export default async function buildPlugin({
   mode,
   obsidianConfigDir = process.env["OBSIDIAN_CONFIG_DIR"]
@@ -61,6 +65,9 @@ if you want to view the source, please visit the github repository of this plugi
 
   const distPath = `${distDir}/main.js`;
 
+  const npmPackage = JSON.parse(await readFile("./package.json", "utf8")) as NpmPackage;
+  const pluginName = npmPackage.name;
+
   const context = await esbuild.context({
     banner: {
       js: banner,
@@ -99,6 +106,15 @@ if you want to view the source, please visit the github repository of this plugi
             // HACK: The ${""} part is used to ensure Obsidian loads the plugin properly otherwise it stops loading it after the first line of the sourceMappingURL comment.
             contents = contents.replace(/\`\r?\n\/\/# sourceMappingURL/g, "`\n//#${\"\"} sourceMappingURL");
 
+            if (/\bprocess\./.test(contents)) {
+              contents = `globalThis.process ??= {
+  platform: "mobile",
+  cwd: () => "/",
+  env: {}
+};
+` + contents;
+            }
+
             return {
               contents,
               loader: "ts"
@@ -109,15 +125,34 @@ if you want to view the source, please visit the github repository of this plugi
       {
         name: "lint",
         setup(build): void {
-          build.onEnd(() => {
+          build.onEnd(async () => {
             if (isProductionBuild) {
               return;
             }
             console.log("[watch] lint started");
-            execFromRoot("npx eslint . --fix", true);
+            await execFromRoot("npx eslint . --fix", { ignoreExitCode: true });
             console.log("[watch] lint finished");
           });
         },
+      },
+      {
+        name: "fix-source-maps",
+        setup(build): void {
+          build.onEnd(async () => {
+            if (isProductionBuild) {
+              return;
+            }
+
+            const content = await readFile(distPath, "utf8");
+            const newContent = content.replaceAll(/\n\/\/# sourceMappingURL=data:application\/json;base64,(.+)/g, (_: string, sourceMapBase64: string): string => {
+              return `\n//# sourceMappingURL=data:application/json;base64,${fixSourceMap(sourceMapBase64, pluginName)}`;
+            });
+
+            if (content !== newContent) {
+              await writeFile(distPath, newContent);
+            }
+          });
+        }
       },
       {
         name: "copy-to-obsidian-plugins-folder",
@@ -127,8 +162,6 @@ if you want to view the source, please visit the github repository of this plugi
               return;
             }
 
-            const npmPackage = JSON.parse(await readFile("./package.json", "utf8")) as NpmPackage;
-            const pluginName = npmPackage.name;
             const pluginDir = `${obsidianConfigDir}/plugins/${pluginName}`;
             if (!existsSync(pluginDir)) {
               await mkdir(pluginDir);
@@ -146,4 +179,16 @@ if you want to view the source, please visit the github repository of this plugi
   } else {
     await context.watch();
   }
+}
+
+function fixSourceMap(sourceMapBase64: string, pluginName: string): string {
+  const sourceMapJson = Buffer.from(sourceMapBase64, "base64").toString("utf8");
+  const sourceMap = JSON.parse(sourceMapJson) as SourceMap;
+  sourceMap.sources = sourceMap.sources.map(path => convertPathToObsidianUrl(path, pluginName));
+  return Buffer.from(JSON.stringify(sourceMap)).toString("base64");
+}
+
+function convertPathToObsidianUrl(path: string, pluginName: string): string {
+  const convertedPath = path.replaceAll("\\", "/").replace(/^(\.\.\/)+/, "");
+  return `app://obsidian.md/plugin:${pluginName}/${convertedPath}`;
 }
