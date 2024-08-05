@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.0.0
+
+- Fully rewrite rename logic
+
 ## 2.1.0
 
 - Check for missing file cache
