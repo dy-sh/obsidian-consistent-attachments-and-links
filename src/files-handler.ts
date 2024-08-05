@@ -13,12 +13,13 @@ import {
   getAllLinks,
   getCacheSafe
 } from "./MetadataCache.ts";
-import {
+import { posix } from "@jinder/path";
+const {
   basename,
   dirname,
   extname,
   join
-} from "node:path/posix";
+} = posix;
 import { showError } from "./Error.ts";
 
 export interface MovedAttachmentResult {

@@ -18,7 +18,8 @@ import {
 import { convertToSync } from "./Async.ts";
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
-import { dirname } from "node:path/posix";
+import { posix } from "@jinder/path";
+const { dirname } = posix;
 import { getMarkdownFilesSorted } from "./Vault.ts";
 import { showError } from "./Error.ts";
 
