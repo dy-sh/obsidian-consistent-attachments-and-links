@@ -33,6 +33,7 @@
     "globals": "^15.8.0",
     "obsidian": "^1.6.6",
     "obsidian-typings": "mnaoumov/obsidian-typings#main",
+    "path": "^0.12.7",
     "rollup": "^4.18.1",
     "tslib": "^2.6.3",
     "tsx": "^4.16.2",
