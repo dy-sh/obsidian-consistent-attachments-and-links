@@ -7,7 +7,6 @@ export default class ConsistentAttachmentsAndLinksPluginSettings {
   public changeNoteBacklinksAlt: boolean = false;
   public ignoreFolders: string[] = [".git/", ".obsidian/"];
   public ignoreFiles: string[] = ["consistency\\-report\\.md"];
-  public attachmentsSubfolder: string = "";
   public consistencyReportFile: string = "consistency-report.md";
 
   public getIgnoreFilesRegex(): RegExp[] {
