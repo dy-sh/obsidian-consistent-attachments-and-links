@@ -39,9 +39,11 @@ Recommended additional settings (not required for the plugin to work):
 
 - **"Default location for new attachments":In subfolder under current folder**. This is not required, but this ensures that attachments are always next to your notes. The option "Same folder as current file" is also suitable.
 
-- **"Subfolder name"**: This setting is no longer managed by this plugin. Consider [Obsidian Custom Attachment location](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) which allows more detailed configuration.
+- To improve performance, consider installing [Backlink Cache](https://obsidian.md/plugins?id=backlink-cache) plugin.
 
-To improve performance, consider installing [Backlink Cache](https://obsidian.md/plugins?id=backlink-cache) plugin.
+## `Attachment Subfolder` setting
+
+Starting from [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) that setting is no longer managed by the plugin. Consider [Obsidian Custom Attachment location](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) which allows more detailed configuration.
 
 ## How to check the consistency of the library
 
@@ -151,3 +153,10 @@ The plugin finds all the notes and moves all attachments in the note folder. Thi
 ### Delete Empty Folders
 
 Removes all empty folders in your library.
+
+## Installation
+
+- `Consistent Attachments and Links` is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=consistent-attachments-and-links).
+- Beta releases can be installed through [BRAT](https://obsidian.md/plugins?id=obsidian42-brat).
+
+© [dy-sh](https://github.com/dy-sh/)
