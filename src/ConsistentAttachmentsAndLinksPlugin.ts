@@ -1,6 +1,5 @@
 import {
   Plugin,
-  TAbstractFile,
   TFile,
   Notice,
   type CachedMetadata,
@@ -8,30 +7,22 @@ import {
 } from "obsidian";
 import {
   ConsistencyCheckResult,
-  LinksHandler,
-  type PathChangeInfo
+  LinksHandler
 } from "./links-handler.ts";
-import {
-  FilesHandler,
-  type MovedAttachmentResult
-} from "./files-handler.ts";
+import { FilesHandler } from "./files-handler.ts";
 import { convertToSync } from "./Async.ts";
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
-import { posix } from "@jinder/path";
-const { dirname } = posix;
 import { getMarkdownFilesSorted } from "./Vault.ts";
-import { showError } from "./Error.ts";
+import {
+  handleDelete,
+  handleRename
+} from "./RenameDeleteHandler.ts";
 
 export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
   private lh!: LinksHandler;
   private fh!: FilesHandler;
-
-  private recentlyRenamedFiles: PathChangeInfo[] = [];
-  private currentlyRenamingFiles: PathChangeInfo[] = [];
-  private timerId!: NodeJS.Timeout;
-  private renamingIsActive = false;
 
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
@@ -49,11 +40,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     );
 
     this.registerEvent(
-      this.app.vault.on("delete", (file) => convertToSync(this.handleDeletedFile(file))),
+      this.app.vault.on("delete", (file) => convertToSync(handleDelete(this, file))),
     );
 
     this.registerEvent(
-      this.app.vault.on("rename", (file, oldPath) => this.handleRenamedFile(file, oldPath)),
+      this.app.vault.on("rename", (file, oldPath) => convertToSync(handleRename(this, file, oldPath))),
     );
 
     this.addCommand({
@@ -148,141 +139,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     this.deletedNoteCache.set(file.path, prevCache);
   }
 
-  public async handleDeletedFile(file: TAbstractFile): Promise<void> {
-    if (this.isPathIgnored(file.path)) {
-      return;
-    }
-
-    await this.saveAllOpenNotes();
-
-    const fileExt = file.path.substring(file.path.lastIndexOf("."));
-    if (fileExt == ".md") {
-      if (this._settings.deleteAttachmentsWithNote) {
-        const cache = this.deletedNoteCache.get(file.path);
-
-        if (!cache) {
-          await sleep(100);
-          await this.handleDeletedFile(file);
-          return;
-        }
-
-        this.deletedNoteCache.delete(file.path);
-        await this.fh.deleteUnusedAttachmentsForCachedNote(file.path, cache, this._settings.deleteEmptyFolders);
-      }
-
-      //delete child folders (do not delete parent)
-      if (this._settings.deleteEmptyFolders) {
-        const list = await this.fh.safeList(dirname(file.path));
-        for (const folder of list.folders) {
-          await this.fh.deleteEmptyFolders(folder);
-        }
-      }
-    }
-  }
-
-  public handleRenamedFile(file: TAbstractFile, oldPath: string): void {
-    this.recentlyRenamedFiles.push({ oldPath: oldPath, newPath: file.path });
-
-    clearTimeout(this.timerId);
-    this.timerId = setTimeout(() => {
-      convertToSync(this.HandleRecentlyRenamedFiles());
-    }, 3000);
-  }
-
-  public async HandleRecentlyRenamedFiles(): Promise<void> {
-    if (!this.recentlyRenamedFiles || this.recentlyRenamedFiles.length == 0) {
-      //nothing to rename
-      return;
-    }
-
-    if (this.renamingIsActive) {
-      //already started
-      return;
-    }
-
-    this.renamingIsActive = true;
-
-    this.currentlyRenamingFiles = this.recentlyRenamedFiles; //clear array for pushing new files async
-    this.recentlyRenamedFiles = [];
-
-    await this.saveAllOpenNotes();
-
-    new Notice("Fixing consistency for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
-    console.log("Consistent Attachments and Links:\nFixing consistency for " + this.currentlyRenamingFiles.length + " renamed files" + "...");
-
-    try {
-      for (const file of this.currentlyRenamingFiles) {
-        if (this.isPathIgnored(file.newPath) || this.isPathIgnored(file.oldPath)) {
-          return;
-        }
-
-        // await Utils.delay(10); //waiting for update vault
-
-        let result: MovedAttachmentResult | null = null;
-
-        const fileExt = file.oldPath.substring(file.oldPath.lastIndexOf("."));
-
-        if (fileExt == ".md") {
-          // await Utils.delay(500);//waiting for update metadataCache
-
-          if ((dirname(file.oldPath) != dirname(file.newPath)) || (this._settings.attachmentsSubfolder.contains("${filename}"))) {
-            if (this._settings.moveAttachmentsWithNote) {
-              result = await this.fh.moveCachedNoteAttachments(
-                file.oldPath,
-                file.newPath,
-                this._settings.deleteExistFilesWhenMoveNote,
-                this._settings.attachmentsSubfolder,
-                this._settings.deleteEmptyFolders
-              );
-
-              if (this._settings.updateLinks && result) {
-                const changedFiles = result.renamedFiles.concat(result.movedAttachments);
-                if (changedFiles.length > 0) {
-                  await this.lh.updateChangedPathsInNote(file.newPath, changedFiles);
-                }
-              }
-            }
-
-            if (this._settings.updateLinks) {
-              await this.lh.updateInternalLinksInMovedNote(file.oldPath, file.newPath);
-            }
-
-            //delete child folders (do not delete parent)
-            if (this._settings.deleteEmptyFolders) {
-              const list = await this.fh.safeList(dirname(file.oldPath));
-              for (const folder of list.folders) {
-                await this.fh.deleteEmptyFolders(folder);
-              }
-            }
-          }
-        }
-
-        const updateAlts = this._settings.changeNoteBacklinksAlt && fileExt == ".md";
-        if (this._settings.updateLinks) {
-          await this.lh.updateLinksToRenamedFile(file.oldPath, file.newPath, updateAlts);
-        }
-
-        if (result && result.movedAttachments && result.movedAttachments.length > 0) {
-          new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
-        }
-      }
-    } catch (e) {
-      showError(e);
-    }
-
-    new Notice("Fixing Consistency Complete");
-    console.log("Consistent Attachments and Links:\nFixing consistency complete");
-
-    this.renamingIsActive = false;
-
-    if (this.recentlyRenamedFiles && this.recentlyRenamedFiles.length > 0) {
-      clearTimeout(this.timerId);
-      this.timerId = setTimeout(() => {
-        convertToSync(this.HandleRecentlyRenamedFiles());
-      }, 500);
-    }
-  }
-
   public collectAttachmentsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
     if (!note || note.extension.toLowerCase() !== "md") {
@@ -306,7 +162,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const result = await this.fh.collectAttachmentsForCachedNote(
       note.path,
-      this._settings.attachmentsSubfolder,
       this._settings.deleteExistFilesWhenMoveNote,
       this._settings.deleteEmptyFolders);
 
@@ -341,7 +196,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
       const result = await this.fh.collectAttachmentsForCachedNote(
         note.path,
-        this._settings.attachmentsSubfolder,
         this._settings.deleteExistFilesWhenMoveNote,
         this._settings.deleteEmptyFolders);
 

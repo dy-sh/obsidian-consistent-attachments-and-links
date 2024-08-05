@@ -1,14 +1,12 @@
 import {
   App,
   type CachedMetadata,
-  type ListedFiles,
   TFile
 } from "obsidian";
 import {
   LinksHandler,
   type PathChangeInfo
 } from "./links-handler.ts";
-import { Utils } from "./utils.ts";
 import {
   getAllLinks,
   getCacheSafe
@@ -20,7 +18,13 @@ const {
   extname,
   join
 } = posix;
-import { showError } from "./Error.ts";
+import { splitSubpath } from "./Link.ts";
+import { getAttachmentFilePath } from "./AttachmentPath.ts";
+import {
+  createFolderSafe,
+  removeEmptyFolderHierarchy,
+  safeList
+} from "./Vault.ts";
 
 export interface MovedAttachmentResult {
   movedAttachments: PathChangeInfo[]
@@ -64,29 +68,18 @@ export class FilesHandler {
   }
 
   public async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
-    const newParentFolder = filePath.substring(0, filePath.lastIndexOf("/"));
-    try {
-      //todo check folder exist
-      await this.app.vault.createFolder(newParentFolder);
-    } catch { }
+    await createFolderSafe(this.app, dirname(filePath));
   }
 
-  public generateFileCopyName(originalName: string): string {
-    const ext = extname(originalName);
-    const baseName = basename(originalName, ext);
-    const dir = dirname(originalName);
-    for (let i = 1; i < 100000; i++) {
-      const newName = dir + "/" + baseName + " " + i + ext;
-      const existFile = this.app.vault.getFileByPath(newName);
-      if (!existFile) {
-        return newName;
-      }
-    }
-    return "";
+  public generateFileCopyName(path: string): string {
+    const ext = extname(path);
+    const dir = dirname(path);
+    const fileName = basename(path, ext);
+    return this.app.vault.getAvailablePath(join(dir, fileName), ext.slice(1));
   }
 
   public async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
-    deleteExistFiles: boolean, attachmentsSubfolder: string, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+    deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 
     const result: MovedAttachmentResult = { movedAttachments: [], renamedFiles: [] };
 
@@ -101,7 +94,7 @@ export class FilesHandler {
     const links = getAllLinks(cache);
 
     for (const link of links) {
-      const [linkPath] = this.lh.splitSubpath(link.link);
+      const { linkPath } = splitSubpath(link.link);
       const oldLinkPath = this.lh.getFullPathForLink(linkPath, oldNotePath);
 
       if (result.movedAttachments.findIndex(x => x.oldPath == oldLinkPath) != -1) {
@@ -113,7 +106,7 @@ export class FilesHandler {
       if (!file) {
         file = this.lh.getFileByLink(linkPath, newNotePath);
         if (!file) {
-          showError(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + linkPath);
+          console.error(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + linkPath);
           continue;
         }
       }
@@ -128,7 +121,7 @@ export class FilesHandler {
         continue;
       }
 
-      const newLinkPath = this.getNewAttachmentPath(file.path, newNotePath, attachmentsSubfolder);
+      const newLinkPath = await getAttachmentFilePath(this.app, file.path, newNotePath);
 
       if (newLinkPath == file.path) {
         //nothing to move
@@ -143,14 +136,7 @@ export class FilesHandler {
     return result;
   }
 
-  public getNewAttachmentPath(oldAttachmentPath: string, notePath: string, subfolderName: string): string {
-    const resolvedSubFolderName = subfolderName.replace(/\${filename}/g, basename(notePath, ".md"));
-    let newPath = (resolvedSubFolderName == "") ? dirname(notePath) : join(dirname(notePath), resolvedSubFolderName);
-    newPath = Utils.normalizePathForFile(join(newPath, basename(oldAttachmentPath)));
-    return newPath;
-  }
-
-  public async collectAttachmentsForCachedNote(notePath: string, subfolderName: string,
+  public async collectAttachmentsForCachedNote(notePath: string,
     deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
 
     if (this.isPathIgnored(notePath)) {
@@ -169,7 +155,7 @@ export class FilesHandler {
     }
 
     for (const link of getAllLinks(cache)) {
-      const [linkPath] = this.lh.splitSubpath(link.link);
+      const { linkPath } = splitSubpath(link.link);
 
       if (!linkPath) {
         continue;
@@ -184,7 +170,7 @@ export class FilesHandler {
       const file = this.lh.getFileByLink(linkPath, notePath);
       if (!file) {
         const type = link.original.startsWith("!") ? "embed" : "link";
-        showError(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
+        console.error(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
         continue;
       }
 
@@ -192,7 +178,7 @@ export class FilesHandler {
         continue;
       }
 
-      const newPath = this.getNewAttachmentPath(file.path, notePath, subfolderName);
+      const newPath = await getAttachmentFilePath(this.app, file.path, notePath);
 
       if (newPath == file.path) {
         // nothing to move
@@ -243,6 +229,7 @@ export class FilesHandler {
       return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles, deleteEmptyFolders);
     }
 
+    const oldFolder = file.parent;
     //if no other file has link to this file - try to move file
     //if file already exist at new location - delete or move with new name
     if (linkedNotes.length == 0) {
@@ -289,6 +276,8 @@ export class FilesHandler {
         }
       }
     }
+
+    await removeEmptyFolderHierarchy(this.app, oldFolder);
     return result;
   }
 
@@ -301,12 +290,12 @@ export class FilesHandler {
       dirName = dirName.substring(2);
     }
 
-    let list = await this.safeList(dirName);
+    let list = await safeList(this.app, dirName);
     for (const folder of list.folders) {
       await this.deleteEmptyFolders(folder);
     }
 
-    list = await this.safeList(dirName);
+    list = await safeList(this.app, dirName);
     if (list.files.length == 0 && list.folders.length == 0) {
       console.log(this.consoleLogPrefix + "delete empty folder: \n   " + dirName);
       if (await this.app.vault.adapter.exists(dirName)) {
@@ -327,7 +316,7 @@ export class FilesHandler {
     }
 
     for (const link of getAllLinks(cache)) {
-      const [linkPath] = this.lh.splitSubpath(link.link);
+      const { linkPath } = splitSubpath(link.link);
       const file = this.lh.getFileByLink(linkPath, notePath, false);
 
       if (!file || !this.isAttachment(file)) {
@@ -357,21 +346,5 @@ export class FilesHandler {
   private isAttachment(file: TFile): boolean {
     const extension = file.extension.toLowerCase();
     return extension !== "md" && extension !== "canvas";
-  }
-
-  public async safeList(path: string): Promise<ListedFiles> {
-    const EMPTY = { files: [], folders: [] };
-    if (!(await this.app.vault.adapter.exists(path))) {
-      return EMPTY;
-    }
-
-    try {
-      return await this.app.vault.adapter.list(path);
-    } catch (e) {
-      if (await this.app.vault.adapter.exists(path)) {
-        throw e;
-      }
-      return EMPTY;
-    }
   }
 }
