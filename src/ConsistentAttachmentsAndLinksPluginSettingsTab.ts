@@ -108,18 +108,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         }));
 
     new Setting(containerEl)
-      .setName("Attachment Subfolder")
-      .setDesc("Specify the subfolder within the note folder to collect attachments into when using the \"Collect All Attachments\" hotkey. Leave empty to collect attachments directly into the note folder. You can use ${filename} as a placeholder for the current note name.")
-      .addText(cb => cb
-        .setPlaceholder("Example: _attachments")
-        .setValue(settings.attachmentsSubfolder)
-        .onChange(async (value) => {
-          settings.attachmentsSubfolder = value;
-          await this.plugin.saveSettings(settings);
-        }));
-
-
-    new Setting(containerEl)
       .setName("Consistency Report Filename")
       .setDesc("Specify the name of the file for the consistency report.")
       .addText(cb => cb
