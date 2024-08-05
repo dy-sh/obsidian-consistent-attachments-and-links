@@ -9,11 +9,12 @@ import {
 } from "obsidian";
 import { Utils } from "./utils.ts";
 import { path } from "./path.ts";
-import {
+import { posix } from "@jinder/path";
+const {
   dirname,
   extname,
   join,
-} from "node:path/posix";
+} = posix;
 import {
   getAllLinks,
   getCacheSafe
