@@ -39,7 +39,7 @@ Recommended additional settings (not required for the plugin to work):
 
 - **"Default location for new attachments":In subfolder under current folder**. This is not required, but this ensures that attachments are always next to your notes. The option "Same folder as current file" is also suitable.
 
-- **"Subfolder name": "\_attachments"**. Or any other.
+- **"Subfolder name"**: This setting is no longer managed by this plugin. Consider [Obsidian Custom Attachment location](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) which allows more detailed configuration.
 
 To improve performance, consider installing [Backlink Cache](https://obsidian.md/plugins?id=backlink-cache) plugin.
 

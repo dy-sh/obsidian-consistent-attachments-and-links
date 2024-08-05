@@ -3,6 +3,7 @@
 ## 3.0.0
 
 - Fully rewrite rename logic
+- Removed **"Subfolder name"** setting. See [README.md](./README.md) for the alternative.
 
 ## 2.1.0
 
