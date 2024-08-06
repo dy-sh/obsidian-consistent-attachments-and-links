@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.4.1
+
+- Don't show noop messages
+
 ## 3.4.0
 
 - Add setting `Auto Collect Attachments`
