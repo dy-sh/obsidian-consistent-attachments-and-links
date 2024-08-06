@@ -41,9 +41,13 @@ Recommended additional settings (not required for the plugin to work):
 
 - To improve performance, consider installing [Backlink Cache](https://obsidian.md/plugins?id=backlink-cache) plugin.
 
-## `Attachment Subfolder` setting
+## `Attachment Subfolder` setting <span id="attachment-subfolder-setting"></span>
 
-Starting from [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) that setting is no longer managed by the plugin. Consider [Obsidian Custom Attachment location](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) which allows more detailed configuration.
+Starting from [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) `Attachment Subfolder` setting is no longer managed by the plugin.
+
+Currently the plugin relies on built-in Obsidian's `Default location for new attachment` setting.
+
+If you need better control over the attachment folder, consider [Obsidian Custom Attachment location](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) plugin.
 
 ## How to check the consistency of the library
 
@@ -53,7 +57,7 @@ Run "Check Vault Consistency" command and see the report.
 
 > It is very important to make a backup of the entire vault folder before these steps.
 
-Specify "Attachments subfolder" name in the plugin settings.
+Configure [`Attachment Subfolder` setting](#attachment-subfolder-setting).
 
 Run the commands in the following order to reorganize vault:
 
@@ -147,8 +151,7 @@ will turn into this:
 
 ### Collect All Attachments
 
-The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. In the "Attachments subfolder" plugin settings parameter, you can specify how the subfolder named in order to move attachments to it. If you leave this field blank, then attachments will be moved directly to the folder with the note, without subfolders. At any time, we can change this name and reorganize the folder structure in one click, the attachments will be moved to new folders.
-<br>
+The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. It relies on [`Attachment Subfolder` setting](#attachment-subfolder-setting).
 
 ### Delete Empty Folders
 
