@@ -41,3 +41,7 @@ async function timeout(timeoutInMilliseconds: number): Promise<never> {
 export function convertToSync(promise: Promise<unknown>): void {
   promise.catch(showError);
 }
+
+export function convertAsyncToSync<Args extends unknown[], R>(asyncFunc: (...args: Args) => Promise<R>): (...args: Args) => void {
+  return (...args: Args): void => convertToSync(asyncFunc(...args));
+}

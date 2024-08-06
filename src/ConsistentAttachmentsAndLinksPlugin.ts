@@ -10,7 +10,10 @@ import {
   LinksHandler
 } from "./links-handler.ts";
 import { FilesHandler } from "./files-handler.ts";
-import { convertToSync } from "./Async.ts";
+import {
+  convertAsyncToSync,
+  convertToSync
+} from "./Async.ts";
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
 import {
@@ -37,6 +40,29 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
   public override async onload(): Promise<void> {
     await this.loadSettings();
+
+    if (this._settings.showWarning) {
+      const notice = new Notice(createFragment((f) => {
+        f.appendText("Starting from ");
+        appendCodeBlock(f, "v3.0.0");
+        f.appendText(", the plugin ");
+        appendCodeBlock(f, "Consistent Attachments and Links");
+        f.appendText(" has setting ");
+        appendCodeBlock(f, "Attachment Subfolder");
+        f.appendText(" removed. This is a BREAKING CHANGE.");
+        f.appendChild(createEl("br"));
+        f.appendChild(createEl("a", { text: "Read more", href: "https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file#attachment-subfolder-setting" }));
+      }), 0);
+      notice.noticeEl.onClickEvent(convertAsyncToSync(async (ev) => {
+        if (ev.target instanceof HTMLAnchorElement) {
+          ev.preventDefault();
+          window.open(ev.target.href, "_blank");
+        } else {
+          this._settings.showWarning = false;
+          await this.saveSettings(this._settings);
+        }
+      }));
+    }
 
     this.addSettingTab(new ConsistentAttachmentsAndLinksPluginSettingsTab(this.app, this));
 
@@ -489,4 +515,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     await this.collectAttachments(file, false);
   }
+}
+
+function appendCodeBlock(fragment: DocumentFragment, text: string): void {
+  fragment.appendChild(createSpan({ cls: "markdown-rendered code" }, span => {
+    span.style.fontWeight = "bold";
+    span.appendChild(createEl("code", { text }));
+  }));
 }
