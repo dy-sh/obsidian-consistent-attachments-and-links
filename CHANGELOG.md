@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.4.0
+
+- Add setting `Auto Collect Attachments`
+
 ## 3.3.2
 
 - Proper check for identical attachments
