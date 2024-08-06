@@ -8,6 +8,7 @@ export default class ConsistentAttachmentsAndLinksPluginSettings {
   public ignoreFiles: string[] = ["consistency\\-report\\.md"];
   public ignoreFolders: string[] = [".git/", ".obsidian/"];
   public moveAttachmentsWithNote: boolean = true;
+  public showWarning: boolean = true;
   public updateLinks: boolean = true;
 
   public getIgnoreFilesRegex(): RegExp[] {
