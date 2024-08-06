@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.3.1
+
+- Create folder for report
+
 ## 3.3.0
 
 - Don't delete empty folders if setting is not set
