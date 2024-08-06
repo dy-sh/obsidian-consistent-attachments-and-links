@@ -14,6 +14,7 @@ const {
 } = posix;
 import {
   getAllLinks,
+  getBacklinksForFileSafe,
   getCacheSafe
 } from "./MetadataCache.ts";
 import { applyFileChanges } from "./Vault.ts";
@@ -213,12 +214,13 @@ export class LinksHandler {
     return this.app.fileManager.generateMarkdownLink(newLinkedNote, note.path, subpath, changeLinksAlt === false ? link.displayText : undefined);
   }
 
-  public getCachedNotesThatHaveLinkToFile(filePath: string): string[] {
+  public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
     const file = this.app.vault.getFileByPath(filePath);
     if (!file) {
       return [];
     }
-    const backlinks = this.app.metadataCache.getBacklinksForFile(file);
+
+    const backlinks = await getBacklinksForFileSafe(this.app, file);
     return backlinks.keys();
   }
 
