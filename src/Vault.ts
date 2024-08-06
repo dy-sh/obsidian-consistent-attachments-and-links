@@ -42,7 +42,7 @@ export async function processWithRetry(app: App, file: TFile, processFn: (conten
     });
 
     return success;
-  });
+  }, { timeoutInMilliseconds: 60000 });
 }
 
 export async function applyFileChanges(app: App, file: TFile, changesFn: () => MaybePromise<FileChange[]>): Promise<void> {
@@ -93,7 +93,7 @@ export async function applyFileChanges(app: App, file: TFile, changesFn: () => M
     });
 
     return doChangesMatchContent;
-  });
+  }, { timeoutInMilliseconds: 60000 });
 }
 
 export function isNote(file: TAbstractFile | null): file is TFile {
