@@ -119,7 +119,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         }));
   }
 
-  public getNormalizedPath(path: string): string {
+  private getNormalizedPath(path: string): string {
     return path.length == 0 ? path : normalizePath(path);
   }
 }

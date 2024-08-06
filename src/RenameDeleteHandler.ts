@@ -1,5 +1,6 @@
 import {
   App,
+  normalizePath,
   TFile,
   Vault,
   type ReferenceCache,
@@ -244,6 +245,8 @@ function getAlias(app: App, displayText: string | undefined, oldFile: TFile, new
     return undefined;
   }
 
+  const cleanDisplayText = normalizePath(displayText.split(" > ")[0]!);
+
   for (const path of [oldFile.path, newPath]) {
     if (!path) {
       continue;
@@ -251,14 +254,14 @@ function getAlias(app: App, displayText: string | undefined, oldFile: TFile, new
     const extension = extname(path);
     const fileNameWithExtension = basename(path);
     const fileNameWithoutExtension = basename(path, extension);
-    if (displayText === path || displayText === fileNameWithExtension || displayText === fileNameWithoutExtension) {
+    if (cleanDisplayText === path || cleanDisplayText === fileNameWithExtension || cleanDisplayText === fileNameWithoutExtension) {
       return undefined;
     }
   }
 
   for (const omitMdExtension of [true, false]) {
     const linkText = app.metadataCache.fileToLinktext(oldFile, sourcePath, omitMdExtension);
-    if (displayText === linkText) {
+    if (cleanDisplayText === linkText) {
       return undefined;
     }
   }

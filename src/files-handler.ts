@@ -1,6 +1,5 @@
 import {
   App,
-  type CachedMetadata,
   TFile
 } from "obsidian";
 import {
@@ -40,7 +39,7 @@ export class FilesHandler {
     private ignoreFilesRegex: RegExp[] = [],
   ) { }
 
-  public isPathIgnored(path: string): boolean {
+  private isPathIgnored(path: string): boolean {
     if (path.startsWith("./")) {
       path = path.substring(2);
     }
@@ -62,78 +61,15 @@ export class FilesHandler {
     return false;
   }
 
-  public async createFolderForAttachmentFromLink(link: string, owningNotePath: string): Promise<void> {
-    const newFullPath = this.lh.getFullPathForLink(link, owningNotePath);
-    return await this.createFolderForAttachmentFromPath(newFullPath);
-  }
-
-  public async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
+  private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
     await createFolderSafe(this.app, dirname(filePath));
   }
 
-  public generateFileCopyName(path: string): string {
+  private generateFileCopyName(path: string): string {
     const ext = extname(path);
     const dir = dirname(path);
     const fileName = basename(path, ext);
     return this.app.vault.getAvailablePath(join(dir, fileName), ext.slice(1));
-  }
-
-  public async moveCachedNoteAttachments(oldNotePath: string, newNotePath: string,
-    deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
-
-    const result: MovedAttachmentResult = { movedAttachments: [], renamedFiles: [] };
-
-    if (this.isPathIgnored(oldNotePath) || this.isPathIgnored(newNotePath)) {
-      return result;
-    }
-
-    const cache = await getCacheSafe(this.app, newNotePath);
-    if (!cache) {
-      return result;
-    }
-    const links = getAllLinks(cache);
-
-    for (const link of links) {
-      const { linkPath } = splitSubpath(link.link);
-      const oldLinkPath = this.lh.getFullPathForLink(linkPath, oldNotePath);
-
-      if (result.movedAttachments.findIndex(x => x.oldPath == oldLinkPath) != -1) {
-        //already moved
-        continue;
-      }
-
-      let file = this.lh.getFileByLink(linkPath, oldNotePath);
-      if (!file) {
-        file = this.lh.getFileByLink(linkPath, newNotePath);
-        if (!file) {
-          console.error(this.consoleLogPrefix + oldNotePath + " has bad embed (file does not exist): " + linkPath);
-          continue;
-        }
-      }
-
-      //if attachment not in the note folder, skip it
-      // = "." means that note was at root path, so do not skip it
-      if (dirname(oldNotePath) != "." && !dirname(oldLinkPath).startsWith(dirname(oldNotePath))) {
-        continue;
-      }
-
-      if (!this.isAttachment(file)) {
-        continue;
-      }
-
-      const newLinkPath = await getAttachmentFilePath(this.app, file.path, newNotePath);
-
-      if (newLinkPath == file.path) {
-        //nothing to move
-        continue;
-      }
-
-      const res = await this.moveAttachment(file, newLinkPath, [oldNotePath, newNotePath], deleteExistFiles, deleteEmptyFolders);
-      result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
-      result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
-    }
-
-    return result;
   }
 
   public async collectAttachmentsForCachedNote(notePath: string,
@@ -194,7 +130,7 @@ export class FilesHandler {
     return result;
   }
 
-  public async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+  private async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
     const path = file.path;
 
     const result: MovedAttachmentResult = {
@@ -310,29 +246,7 @@ export class FilesHandler {
     }
   }
 
-  public async deleteUnusedAttachmentsForCachedNote(notePath: string, cache: CachedMetadata, deleteEmptyFolders: boolean): Promise<void> {
-    if (this.isPathIgnored(notePath)) {
-      return;
-    }
-
-    for (const link of getAllLinks(cache)) {
-      const { linkPath } = splitSubpath(link.link);
-      const file = this.lh.getFileByLink(linkPath, notePath, false);
-
-      if (!file || !this.isAttachment(file)) {
-        continue;
-      }
-
-      const linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(file.path);
-      if (linkedNotes.length == 0) {
-        try {
-          await this.deleteFile(file, deleteEmptyFolders);
-        } catch { }
-      }
-    }
-  }
-
-  public async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
+  private async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
     await this.app.vault.trash(file, true);
     if (deleteEmptyFolders) {
       let dir = file.parent!;

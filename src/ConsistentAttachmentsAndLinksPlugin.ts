@@ -111,7 +111,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     );
   }
 
-  public isPathIgnored(path: string): boolean {
+  private isPathIgnored(path: string): boolean {
     if (path.startsWith("./")) {
       path = path.substring(2);
     }
@@ -131,7 +131,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     return false;
   }
 
-  public handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
+  private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
     if (!prevCache || !this._settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
       return;
     }
@@ -139,7 +139,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     this.deletedNoteCache.set(file.path, prevCache);
   }
 
-  public collectAttachmentsCurrentNote(checking: boolean): boolean {
+  private collectAttachmentsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
     if (!note || note.extension.toLowerCase() !== "md") {
       return false;
@@ -176,7 +176,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
   }
 
-  public async collectAllAttachments(): Promise<void> {
+  private async collectAllAttachments(): Promise<void> {
     let movedAttachmentsCount = 0;
     let processedNotesCount = 0;
 
@@ -218,7 +218,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
 
-  public async convertAllEmbedsPathsToRelative(): Promise<void> {
+  private async convertAllEmbedsPathsToRelative(): Promise<void> {
     await this.saveAllOpenNotes();
 
     let changedEmbedCount = 0;
@@ -255,7 +255,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
 
-  public async convertAllLinkPathsToRelative(): Promise<void> {
+  private async convertAllLinkPathsToRelative(): Promise<void> {
     await this.saveAllOpenNotes();
 
     let changedLinksCount = 0;
@@ -291,7 +291,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
   }
 
-  public async replaceAllWikilinksWithMarkdownLinks(): Promise<void> {
+  private async replaceAllWikilinksWithMarkdownLinks(): Promise<void> {
     await this.saveAllOpenNotes();
 
     let changedLinksCount = 0;
@@ -328,11 +328,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
   }
 
-  public async deleteEmptyFolders(): Promise<void> {
+  private async deleteEmptyFolders(): Promise<void> {
     await this.fh.deleteEmptyFolders("/");
   }
 
-  public async checkConsistency(): Promise<void> {
+  private async checkConsistency(): Promise<void> {
     await this.saveAllOpenNotes();
 
     const badLinks = new ConsistencyCheckResult("Bad links");
@@ -370,7 +370,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
   }
 
-  public async reorganizeVault(): Promise<void> {
+  private async reorganizeVault(): Promise<void> {
     await this.saveAllOpenNotes();
 
     await this.replaceAllWikilinksWithMarkdownLinks();
@@ -382,7 +382,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     new Notice("Reorganization of the vault completed");
   }
 
-  public async loadSettings(): Promise<void> {
+  private async loadSettings(): Promise<void> {
     this._settings = ConsistentAttachmentsAndLinksPluginSettings.load(await this.loadData());
   }
 
