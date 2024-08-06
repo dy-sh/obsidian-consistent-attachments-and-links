@@ -154,7 +154,7 @@ export class FilesHandler {
 
     await this.createFolderForAttachmentFromPath(newLinkPath);
 
-    const linkedNotes = this.lh.getCachedNotesThatHaveLinkToFile(path);
+    const linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(path);
     if (parentNotePaths) {
       for (const notePath of parentNotePaths) {
         linkedNotes.remove(notePath);
@@ -199,7 +199,8 @@ export class FilesHandler {
         //copy
         console.log(this.consoleLogPrefix + "copy file [from, to]: \n   " + path + "\n   " + newLinkPath);
         result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
-        await this.app.vault.copy(file, newLinkPath);
+        await this.app.vault.rename(file, newLinkPath);
+        await this.app.vault.copy(file, path);
       } else {
         if (deleteExistFiles) {
           //do nothing
@@ -208,7 +209,8 @@ export class FilesHandler {
           const newFileCopyName = this.generateFileCopyName(newLinkPath);
           console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + path + "\n   " + newFileCopyName);
           result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName });
-          await this.app.vault.copy(file, newFileCopyName);
+          await this.app.vault.rename(file, newFileCopyName);
+          await this.app.vault.copy(file, path);
           result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
         }
       }
