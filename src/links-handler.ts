@@ -6,7 +6,6 @@ import {
   type LinkCache,
   type ReferenceCache
 } from "obsidian";
-import { Utils } from "./utils.ts";
 import { posix } from "@jinder/path";
 const {
   dirname,
@@ -36,7 +35,7 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
     if (this.size > 0) {
       let str = `# ${this.title} (${this.size} files)\n`;
       for (const notePath of this.keys()) {
-        str += `[${notePath}](${Utils.normalizePathForLink(notePath)}):\n`;
+        str += `[${notePath}](${notePath}):\n`;
         for (const link of this.get(notePath)!) {
           str += `- (line ${link.position.start.line + 1}): \`${link.link}\`\n`;
         }
@@ -131,13 +130,9 @@ export class LinksHandler {
 
   public getFullPathForLink(link: string, owningNotePath: string): string {
     ({ linkPath: link } = splitSubpath(link));
-    link = Utils.normalizePathForFile(link);
-    owningNotePath = Utils.normalizePathForFile(owningNotePath);
 
     const parentFolder = owningNotePath.substring(0, owningNotePath.lastIndexOf("/"));
-    let fullPath = join(parentFolder, link);
-
-    fullPath = Utils.normalizePathForFile(fullPath);
+    const fullPath = join(parentFolder, link);
     return fullPath;
   }
 
@@ -252,8 +247,6 @@ export class LinksHandler {
         file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath)!;
         if (file) {
           let newRelLink: string = relative(notePath, file.path);
-          newRelLink = isMarkdownEmbed ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
-
           if (newRelLink.startsWith("../")) {
             newRelLink = newRelLink.substring(3);
           }
@@ -305,8 +298,6 @@ export class LinksHandler {
         file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath)!;
         if (file) {
           let newRelLink: string = relative(notePath, file.path);
-          newRelLink = isMarkdownLink ? Utils.normalizePathForLink(newRelLink) : Utils.normalizePathForFile(newRelLink);
-
           if (newRelLink.startsWith("../")) {
             newRelLink = newRelLink.substring(3);
           }
@@ -435,7 +426,7 @@ export class LinksHandler {
     for (const embed of embeds) {
       if (this.checkIsCorrectWikiEmbed(embed.original)) {
 
-        const newPath = Utils.normalizePathForLink(embed.link);
+        const newPath = embed.link;
         const newLink = "![" + "]" + "(" + newPath + ")";
         text = text.replace(embed.original, newLink);
 
@@ -450,7 +441,7 @@ export class LinksHandler {
 
     for (const link of links) {
       if (this.checkIsCorrectWikiLink(link.original)) {
-        let newPath = Utils.normalizePathForLink(link.link);
+        let newPath = link.link;
 
         const file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
         if (file && file.extension == "md" && !newPath.endsWith(".md")) {
