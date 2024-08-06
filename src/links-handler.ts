@@ -17,7 +17,10 @@ import {
   getCacheSafe
 } from "./MetadataCache.ts";
 import { applyFileChanges } from "./Vault.ts";
-import { splitSubpath } from "./Link.ts";
+import {
+  splitSubpath,
+  updateLinksInFile
+} from "./Link.ts";
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
   public constructor(private title: string) {
@@ -397,74 +400,26 @@ export class LinksHandler {
     }
   }
 
-  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string): Promise<LinksAndEmbedsChangedInfo> {
-    const res: LinksAndEmbedsChangedInfo = {
-      links: [],
-      embeds: [],
-    };
-
+  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string): Promise<number> {
     if (this.isPathIgnored(notePath)) {
-      return res;
+      return 0;
     }
 
     const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
       console.error(this.consoleLogPrefix + "can't update wikilinks in note, file not found: " + notePath);
-      return { embeds: [], links: [] };
+      return 0;
     }
 
-    const cache = await getCacheSafe(this.app, notePath);
+    const cache = await getCacheSafe(this.app, noteFile);
     if (!cache) {
-      return res;
+      return 0;
     }
 
-    const links = cache.links ?? [];
-    const embeds = cache.embeds ?? [];
-    let text = await this.app.vault.read(noteFile);
-    let dirty = false;
-
-    for (const embed of embeds) {
-      if (this.checkIsCorrectWikiEmbed(embed.original)) {
-
-        const newPath = embed.link;
-        const newLink = "![" + "]" + "(" + newPath + ")";
-        text = text.replace(embed.original, newLink);
-
-        console.log(this.consoleLogPrefix + "wiki link (embed) replaced in note [note, old link, new link]: \n   "
-          + noteFile.path + "\n   " + embed.original + "\n   " + newLink);
-
-        res.embeds.push({ old: embed, newLink: newLink });
-
-        dirty = true;
-      }
-    }
-
-    for (const link of links) {
-      if (this.checkIsCorrectWikiLink(link.original)) {
-        let newPath = link.link;
-
-        const file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath);
-        if (file && file.extension == "md" && !newPath.endsWith(".md")) {
-          newPath = newPath + ".md";
-        }
-
-        const newLink = "[" + link.displayText + "]" + "(" + newPath + ")";
-        text = text.replace(link.original, newLink);
-
-        console.log(this.consoleLogPrefix + "wiki link replaced in note [note, old link, new link]: \n   "
-          + noteFile.path + "\n   " + link.original + "\n   " + newLink);
-
-        res.links.push({ old: link, newLink: newLink });
-
-        dirty = true;
-      }
-    }
-
-    if (dirty) {
-      await this.app.vault.modify(noteFile, text);
-    }
-
-    return res;
+    const links = getAllLinks(cache);
+    const result = links.filter(link => link.original.includes("[[")).length;
+    await updateLinksInFile(this.app, noteFile, noteFile.path, new Map<string, string>(), true);
+    return result;
   }
 
   public async checkConsistency(note: TFile, badLinks: ConsistencyCheckResult, badEmbeds: ConsistencyCheckResult, wikiLinks: ConsistencyCheckResult, wikiEmbeds: ConsistencyCheckResult): Promise<void> {

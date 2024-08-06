@@ -1,16 +1,12 @@
 import {
   App,
-  normalizePath,
   TFile,
   Vault,
-  type ReferenceCache,
   type TAbstractFile
 } from "obsidian";
 import type ConsistentAttachmentsAndLinksPlugin from "./ConsistentAttachmentsAndLinksPlugin.ts";
 import { posix } from "@jinder/path";
 const {
-  basename,
-  extname,
   relative,
   join,
   dirname
@@ -23,15 +19,13 @@ import {
   createFolderSafe,
   removeEmptyFolderHierarchy
 } from "./Vault.ts";
-import {
-  getAllLinks,
-  getCacheSafe
-} from "./MetadataCache.ts";
-import { generateMarkdownLink } from "./GenerateMarkdownLink.ts";
 import type { CanvasData } from "obsidian/canvas.js";
 import { toJson } from "./Object.ts";
-import { splitSubpath } from "./Link.ts";
 import { getAttachmentFolderPath } from "./AttachmentPath.ts";
+import {
+  updateLink,
+  updateLinksInFile
+} from "./Link.ts";
 
 const renameMap = new Map<string, string>();
 
@@ -75,60 +69,6 @@ export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, 
   await removeFolderSafe(plugin.app, attachmentFolder, file.path);
 }
 
-async function updateLinksInFile(app: App, file: TFile, oldPath: string): Promise<void> {
-  await applyFileChanges(app, file, async () => {
-    const cache = await getCacheSafe(app, file);
-    if (!cache) {
-      return [];
-    }
-
-    return await Promise.all(getAllLinks(cache).map(async (link) => ({
-      startIndex: link.position.start.offset,
-      endIndex: link.position.end.offset,
-      oldContent: link.original,
-      newContent: await convertLink(app, link, file, oldPath)
-    })));
-  });
-}
-
-async function updateLink(app: App, link: ReferenceCache, file: TFile | null, source: TFile): Promise<string> {
-  if (!file) {
-    return link.original;
-  }
-  const isEmbed = link.original.startsWith("!");
-  const isWikilink = link.original.includes("[[");
-  const { subpath } = splitSubpath(link.link);
-
-  const oldPath = file.path;
-  const newPath = renameMap.get(file.path);
-  const isOldFileRenamed = newPath && newPath !== oldPath;
-
-  const alias = getAlias(app, link.displayText, file, newPath, source.path);
-
-  if (isOldFileRenamed) {
-    await createFolderSafe(app, dirname(newPath));
-    await app.vault.rename(file, newPath);
-  }
-
-  const newLink = generateMarkdownLink(app, file, source.path, subpath, alias, isEmbed, isWikilink);
-
-  if (isOldFileRenamed) {
-    await app.vault.rename(file, oldPath);
-  }
-
-  return newLink;
-}
-
-function convertLink(app: App, link: ReferenceCache, source: TFile, oldPath: string): Promise<string> {
-  oldPath ??= source.path;
-  return updateLink(app, link, extractLinkFile(app, link, oldPath), source);
-}
-
-function extractLinkFile(app: App, link: ReferenceCache, oldPath: string): TFile | null {
-  const { linkPath } = splitSubpath(link.link);
-  return app.metadataCache.getFirstLinkpathDest(linkPath, oldPath);
-}
-
 async function fillRenameMap(app: App, file: TFile, oldPath: string): Promise<void> {
   renameMap.set(oldPath, file.path);
 
@@ -145,7 +85,7 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string): Promise<vo
     return;
   }
 
-  if (oldAttachmentFolderPath === newAttachmentFolderPath){
+  if (oldAttachmentFolderPath === newAttachmentFolderPath) {
     return;
   }
 
@@ -204,7 +144,7 @@ async function processRename(app: App, oldPath: string, newPath: string): Promis
           startIndex: link.position.start.offset,
           endIndex: link.position.end.offset,
           oldContent: link.original,
-          newContent: await updateLink(app, link, file, parentNote)
+          newContent: await updateLink(app, link, file, parentNote, renameMap)
         });
       }
 
@@ -228,7 +168,7 @@ async function processRename(app: App, oldPath: string, newPath: string): Promis
       return toJson(canvasData);
     });
   } else if (file.extension.toLowerCase() === "md") {
-    await updateLinksInFile(app, file, oldPath);
+    await updateLinksInFile(app, file, oldPath, renameMap);
   }
 
   if (oldFile) {
@@ -238,33 +178,4 @@ async function processRename(app: App, oldPath: string, newPath: string): Promis
     renameMap.delete(oldPath);
     await removeEmptyFolderHierarchy(app, oldFolder);
   }
-}
-
-function getAlias(app: App, displayText: string | undefined, oldFile: TFile, newPath: string | undefined, sourcePath: string): string | undefined {
-  if (!displayText) {
-    return undefined;
-  }
-
-  const cleanDisplayText = normalizePath(displayText.split(" > ")[0]!);
-
-  for (const path of [oldFile.path, newPath]) {
-    if (!path) {
-      continue;
-    }
-    const extension = extname(path);
-    const fileNameWithExtension = basename(path);
-    const fileNameWithoutExtension = basename(path, extension);
-    if (cleanDisplayText === path || cleanDisplayText === fileNameWithExtension || cleanDisplayText === fileNameWithoutExtension) {
-      return undefined;
-    }
-  }
-
-  for (const omitMdExtension of [true, false]) {
-    const linkText = app.metadataCache.fileToLinktext(oldFile, sourcePath, omitMdExtension);
-    if (cleanDisplayText === linkText) {
-      return undefined;
-    }
-  }
-
-  return displayText;
 }

@@ -309,13 +309,10 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         continue;
       }
 
-      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
 
-      if (result && (result.links.length > 0 || result.embeds.length > 0)) {
-        changedLinksCount += result.links.length;
-        changedLinksCount += result.embeds.length;
-        processedNotesCount++;
-      }
+      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
+      changedLinksCount += result;
+      processedNotesCount++;
     }
 
     notice.hide();
