@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.4.2
+
+- Show warning on first load
+
 ## 3.4.1
 
 - Don't show noop messages
