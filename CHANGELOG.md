@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.5.1
+
+- Fix more race conditions
+
 ## 3.5.0
 
 - Fix race conditions
