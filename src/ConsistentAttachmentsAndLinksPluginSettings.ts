@@ -1,13 +1,13 @@
 export default class ConsistentAttachmentsAndLinksPluginSettings {
-  public moveAttachmentsWithNote: boolean = true;
+  public changeNoteBacklinksAlt: boolean = false;
+  public consistencyReportFile: string = "consistency-report.md";
   public deleteAttachmentsWithNote: boolean = true;
-  public updateLinks: boolean = true;
   public deleteEmptyFolders: boolean = true;
   public deleteExistFilesWhenMoveNote: boolean = true;
-  public changeNoteBacklinksAlt: boolean = false;
-  public ignoreFolders: string[] = [".git/", ".obsidian/"];
   public ignoreFiles: string[] = ["consistency\\-report\\.md"];
-  public consistencyReportFile: string = "consistency-report.md";
+  public ignoreFolders: string[] = [".git/", ".obsidian/"];
+  public moveAttachmentsWithNote: boolean = true;
+  public updateLinks: boolean = true;
 
   public getIgnoreFilesRegex(): RegExp[] {
     return this.ignoreFiles.map(file => RegExp(file));
