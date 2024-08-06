@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.2.0
+
+- Add commands to run in current file
+- Fix alias with leading dot
+
 ## 3.1.0
 
 - Rewrite wiki -> markdown link converter
