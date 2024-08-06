@@ -37,6 +37,7 @@ export class FilesHandler {
     private consoleLogPrefix: string = "",
     private ignoreFolders: string[] = [],
     private ignoreFilesRegex: RegExp[] = [],
+    private shouldDeleteEmptyFolders: boolean = false
   ) { }
 
   private isPathIgnored(path: string): boolean {
@@ -213,7 +214,9 @@ export class FilesHandler {
       }
     }
 
-    await removeEmptyFolderHierarchy(this.app, oldFolder);
+    if (this.shouldDeleteEmptyFolders) {
+      await removeEmptyFolderHierarchy(this.app, oldFolder);
+    }
     return result;
   }
 

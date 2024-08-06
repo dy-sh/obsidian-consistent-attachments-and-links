@@ -125,7 +125,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       this.lh,
       "Consistent Attachments and Links: ",
       this._settings.ignoreFolders,
-      this._settings.getIgnoreFilesRegex()
+      this._settings.getIgnoreFilesRegex(),
+      this._settings.deleteEmptyFolders
     );
   }
 
