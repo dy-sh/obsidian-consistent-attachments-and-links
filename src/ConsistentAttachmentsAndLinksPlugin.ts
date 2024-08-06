@@ -118,6 +118,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       callback: () => this.checkConsistency()
     });
 
+    this.registerEvent(this.app.metadataCache.on("changed", (file) => convertToSync(this.handleMetadataCacheChanged(file))));
+
     this.lh = new LinksHandler(
       this.app,
       "Consistent Attachments and Links: ",
@@ -333,7 +335,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         continue;
       }
 
-
       const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
       changedLinksCount += result;
       processedNotesCount++;
@@ -472,5 +473,18 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     return true;
+  }
+
+  private async handleMetadataCacheChanged(file: TFile): Promise<void> {
+    if (!this._settings.autoCollectAttachments) {
+      return;
+    }
+
+    const suggestionContainer = document.querySelector<HTMLDivElement>(".suggestion-container");
+    if (suggestionContainer && suggestionContainer.style.display !== "none") {
+      return;
+    }
+
+    await this.collectAttachments(file);
   }
 }

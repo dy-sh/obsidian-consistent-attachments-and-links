@@ -32,7 +32,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       }
       ).setValue(settings.moveAttachmentsWithNote));
 
-
     new Setting(containerEl)
       .setName("Delete Unused Attachments with Note")
       .setDesc("Automatically remove attachments that are no longer referenced in other notes when the note is deleted.")
@@ -41,7 +40,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         await this.plugin.saveSettings(settings);
       }
       ).setValue(settings.deleteAttachmentsWithNote));
-
 
     new Setting(containerEl)
       .setName("Update Links")
@@ -61,7 +59,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       }
       ).setValue(settings.deleteEmptyFolders));
 
-
     new Setting(containerEl)
       .setName("Delete Duplicate Attachments on Note Move")
       .setDesc("Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.")
@@ -71,7 +68,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       }
       ).setValue(settings.deleteExistFilesWhenMoveNote));
 
-
     new Setting(containerEl)
       .setName("Update Backlink Text on Note Rename")
       .setDesc("When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.")
@@ -80,8 +76,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         await this.plugin.saveSettings(settings);
       }
       ).setValue(settings.changeNoteBacklinksAlt));
-
-
 
     new Setting(containerEl)
       .setName("Ignore Folders")
@@ -115,6 +109,16 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         .setValue(settings.consistencyReportFile)
         .onChange(async (value) => {
           settings.consistencyReportFile = value;
+          await this.plugin.saveSettings(settings);
+        }));
+
+    new Setting(containerEl)
+      .setName("Auto Collect Attachments")
+      .setDesc("Automatically collect attachments when the note is edited.")
+      .addToggle((toggle) => toggle
+        .setValue(settings.autoCollectAttachments)
+        .onChange(async (value) => {
+          settings.autoCollectAttachments = value;
           await this.plugin.saveSettings(settings);
         }));
   }
