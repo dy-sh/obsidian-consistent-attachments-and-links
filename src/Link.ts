@@ -93,7 +93,7 @@ function getAlias(app: App, displayText: string | undefined, oldFile: TFile, new
     return undefined;
   }
 
-  const cleanDisplayText = normalizePath(displayText.split(" > ")[0]!);
+  const cleanDisplayText = normalizePath(displayText.split(" > ")[0]!).replace(/\.\//g, "");
 
   for (const path of [oldFile.path, newPath]) {
     if (!path) {
