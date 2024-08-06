@@ -14,6 +14,7 @@ import {
   retryWithTimeout,
   type MaybePromise
 } from "./Async.ts";
+import { getBacklinksForFileSafe } from "./MetadataCache.ts";
 
 type FileChange = {
   startIndex: number;
@@ -116,7 +117,7 @@ export async function removeFolderSafe(app: App, folderPath: string, removedNote
 
   for (const child of folder.children) {
     if (child instanceof TFile) {
-      const backlinks = app.metadataCache.getBacklinksForFile(child);
+      const backlinks = await getBacklinksForFileSafe(app, child);
       if (removedNotePath) {
         backlinks.removeKey(removedNotePath);
       }

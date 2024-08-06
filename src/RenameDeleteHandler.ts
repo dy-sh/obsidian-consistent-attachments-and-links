@@ -26,6 +26,7 @@ import {
   updateLink,
   updateLinksInFile
 } from "./Link.ts";
+import { getBacklinksForFileSafe } from "./MetadataCache.ts";
 
 const renameMap = new Map<string, string>();
 
@@ -120,7 +121,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
   if (!file) {
     return;
   }
-  const backlinks = app.metadataCache.getBacklinksForFile(file);
+  const backlinks = await getBacklinksForFileSafe(plugin.app, file);
 
   for (const parentNotePath of backlinks.keys()) {
     let parentNote = app.vault.getFileByPath(parentNotePath);
@@ -137,7 +138,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
     }
 
     await applyFileChanges(app, parentNote, async () => {
-      const links = app.metadataCache.getBacklinksForFile(file).get(parentNotePath) ?? [];
+      const links = (await getBacklinksForFileSafe(app, file)).get(parentNotePath) ?? [];
       const changes = [];
 
       for (const link of links) {
