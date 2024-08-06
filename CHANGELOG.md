@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.5.0
+
+- Fix race conditions
+- Update README about `Attachment Subfolder` setting
+
 ## 3.4.2
 
 - Show warning on first load
