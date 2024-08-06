@@ -117,7 +117,7 @@ export class FilesHandler {
 
       const newPath = await getAttachmentFilePath(this.app, file.path, notePath);
 
-      if (newPath == file.path) {
+      if (dirname(newPath) === dirname(file.path)) {
         // nothing to move
         continue;
       }
