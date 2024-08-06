@@ -178,7 +178,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     return true;
   }
 
-  private async collectAttachments(note: TFile): Promise<void> {
+  private async collectAttachments(note: TFile, isVerbose: boolean = true): Promise<void> {
     if (this.isPathIgnored(note.path)) {
       new Notice("Note path is ignored");
       return;
@@ -196,7 +196,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     if (result.movedAttachments.length == 0) {
-      new Notice("No files found that need to be moved");
+      if (isVerbose) {
+        new Notice("No files found that need to be moved");
+      }
     } else {
       new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
     }
@@ -485,6 +487,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       return;
     }
 
-    await this.collectAttachments(file);
+    await this.collectAttachments(file, false);
   }
 }
