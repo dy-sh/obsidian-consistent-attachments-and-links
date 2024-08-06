@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.1.0
+
+- Rewrite wiki -> markdown link converter
+
 ## 3.0.0
 
 - Fully rewrite rename logic
