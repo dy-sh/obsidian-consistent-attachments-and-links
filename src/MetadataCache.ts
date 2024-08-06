@@ -39,7 +39,7 @@ export async function getCacheSafe(app: App, fileOrPath: TFile | string): Promis
       }
     }
   }, {
-    timeoutInMilliseconds: 30000
+    timeoutInMilliseconds: 60000
   });
 
   return cache;
