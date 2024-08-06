@@ -72,15 +72,33 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: "convert-all-link-paths-to-relative-current-note",
+      name: "Convert All Link Paths to Relative in Current Note",
+      checkCallback: this.convertAllLinkPathsToRelativeCurrentNote.bind(this)
+    });
+
+    this.addCommand({
       id: "convert-all-embed-paths-to-relative",
       name: "Convert All Embed Paths to Relative",
       callback: () => this.convertAllEmbedsPathsToRelative()
     });
 
     this.addCommand({
+      id: "convert-all-embed-paths-to-relative-current-note",
+      name: "Convert All Embed Paths to Relative in Current Note",
+      checkCallback: this.convertAllEmbedsPathsToRelativeCurrentNote.bind(this)
+    });
+
+    this.addCommand({
       id: "replace-all-wikilinks-with-markdown-links",
       name: "Replace All Wiki Links with Markdown Links",
       callback: () => this.replaceAllWikilinksWithMarkdownLinks()
+    });
+
+    this.addCommand({
+      id: "replace-all-wikilinks-with-markdown-links-current-note",
+      name: "Replace All Wiki Links with Markdown Links in Current Note",
+      checkCallback: this.replaceAllWikilinksWithMarkdownLinksCurrentNote.bind(this)
     });
 
     this.addCommand({
@@ -408,5 +426,44 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       const view = leaf.view as MarkdownView;
       await view.save();
     }
+  }
+
+  private convertAllLinkPathsToRelativeCurrentNote(checking: boolean): boolean {
+    const note = this.app.workspace.getActiveFile();
+    if (!note || note.extension.toLowerCase() !== "md") {
+      return false;
+    }
+
+    if (!checking) {
+      convertToSync(this.lh.convertAllNoteLinksPathsToRelative(note.path));
+    }
+
+    return true;
+  }
+
+  private convertAllEmbedsPathsToRelativeCurrentNote(checking: boolean): boolean {
+    const note = this.app.workspace.getActiveFile();
+    if (!note || note.extension.toLowerCase() !== "md") {
+      return false;
+    }
+
+    if (!checking) {
+      convertToSync(this.lh.convertAllNoteEmbedsPathsToRelative(note.path));
+    }
+
+    return true;
+  }
+
+  private replaceAllWikilinksWithMarkdownLinksCurrentNote(checking: boolean): boolean {
+    const note = this.app.workspace.getActiveFile();
+    if (!note || note.extension.toLowerCase() !== "md") {
+      return false;
+    }
+
+    if (!checking) {
+      convertToSync(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path));
+    }
+
+    return true;
   }
 }

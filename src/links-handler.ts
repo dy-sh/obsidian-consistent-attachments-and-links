@@ -71,11 +71,6 @@ export interface LinksAndEmbedsChangedInfo {
   links: LinkChangeInfo[]
 }
 
-const markdownLinkRegexG = /(?<!\!)(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)(?:#(.*?))?\)/gim;
-const markdownEmbedRegexG = /(?<!\\)\!\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/gim;
-
-const markdownLinkRegex = /(?<!\!)(?<!\\)\[(.*?)(?<!\\)\]\((.*?)(?<!\\)\)/im;
-
 export class LinksHandler {
   public constructor(
     private app: App,
@@ -105,13 +100,11 @@ export class LinksHandler {
   }
 
   private checkIsCorrectMarkdownEmbed(text: string): boolean {
-    const elements = text.match(markdownEmbedRegexG);
-    return (elements != null && elements.length > 0);
+    return text.startsWith("![");
   }
 
   private checkIsCorrectMarkdownLink(text: string): boolean {
-    const elements = text.match(markdownLinkRegexG);
-    return (elements != null && elements.length > 0);
+    return text.startsWith("[");
   }
 
   private checkIsCorrectWikiEmbed(text: string): boolean {
@@ -133,8 +126,7 @@ export class LinksHandler {
 
   public getFullPathForLink(link: string, owningNotePath: string): string {
     ({ linkPath: link } = splitSubpath(link));
-
-    const parentFolder = owningNotePath.substring(0, owningNotePath.lastIndexOf("/"));
+    const parentFolder = dirname(owningNotePath);
     const fullPath = join(parentFolder, link);
     return fullPath;
   }
@@ -236,23 +228,21 @@ export class LinksHandler {
     }
     const changedEmbeds: EmbedChangeInfo[] = [];
 
-    const embeds = (await getCacheSafe(this.app, notePath) ?? {}).embeds ?? [];
+    const cache = await getCacheSafe(this.app, notePath) ?? {};
+    const embeds = cache.embeds ?? [];
 
     for (const embed of embeds) {
       const isMarkdownEmbed = this.checkIsCorrectMarkdownEmbed(embed.original);
       const isWikiEmbed = this.checkIsCorrectWikiEmbed(embed.original);
       if (isMarkdownEmbed || isWikiEmbed) {
-        let file = this.getFileByLink(embed.link, notePath);
+        let file = this.getFileByLinkRelative(embed.link, notePath);
         if (file) {
           continue;
         }
 
         file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath)!;
         if (file) {
-          let newRelLink: string = relative(notePath, file.path);
-          if (newRelLink.startsWith("../")) {
-            newRelLink = newRelLink.substring(3);
-          }
+          const newRelLink: string = relative(dirname(notePath), file.path);
 
           changedEmbeds.push({ old: embed, newLink: newRelLink });
         } else {
@@ -274,7 +264,8 @@ export class LinksHandler {
 
     const changedLinks: LinkChangeInfo[] = [];
 
-    const links = (await getCacheSafe(this.app, notePath) ?? {}).links ?? [];
+    const cache = await getCacheSafe(this.app, notePath) ?? {};
+    const links = cache.links ?? [];
 
     for (const link of links) {
       const isMarkdownLink = this.checkIsCorrectMarkdownLink(link.original);
@@ -285,25 +276,14 @@ export class LinksHandler {
           continue;
         }
 
-        let file = this.getFileByLink(link.link, notePath);
+        let file = this.getFileByLinkRelative(link.link, notePath);
         if (file) {
           continue;
         }
 
-        //!!! link.displayText is always "" - OBSIDIAN BUG?, so get display text manually
-        if (isMarkdownLink) {
-          const elements = link.original.match(markdownLinkRegex);
-          if (elements) {
-            link.displayText = elements[1]!;
-          }
-        }
-
         file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath)!;
         if (file) {
-          let newRelLink: string = relative(notePath, file.path);
-          if (newRelLink.startsWith("../")) {
-            newRelLink = newRelLink.substring(3);
-          }
+          const newRelLink: string = relative(dirname(notePath), file.path);
 
           changedLinks.push({ old: link, newLink: newRelLink });
         } else {
@@ -469,5 +449,11 @@ export class LinksHandler {
         newContent: this.convertLink(note, link, oldNotePath, pathChangeMap, changeLinksAlt)
       }));
     });
+  }
+
+  private getFileByLinkRelative(link: string, notePath: string): TFile | null {
+    const { linkPath } = splitSubpath(link);
+    const fullPath = join(dirname(notePath), linkPath);
+    return this.app.vault.getFileByPath(fullPath);
   }
 }
