@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.3.2
+
+- Proper check for identical attachments
+
 ## 3.3.1
 
 - Create folder for report
