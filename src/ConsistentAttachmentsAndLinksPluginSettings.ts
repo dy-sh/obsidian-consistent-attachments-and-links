@@ -1,4 +1,5 @@
 export default class ConsistentAttachmentsAndLinksPluginSettings {
+  public autoCollectAttachments: boolean = false;
   public changeNoteBacklinksAlt: boolean = false;
   public consistencyReportFile: string = "consistency-report.md";
   public deleteAttachmentsWithNote: boolean = true;
