@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.3.0
+
+- Don't delete empty folders if setting is not set
+
 ## 3.2.0
 
 - Add commands to run in current file
