@@ -13,11 +13,16 @@ import { FilesHandler } from "./files-handler.ts";
 import { convertToSync } from "./Async.ts";
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
-import { getMarkdownFilesSorted } from "./Vault.ts";
+import {
+  createFolderSafe,
+  getMarkdownFilesSorted
+} from "./Vault.ts";
 import {
   handleDelete,
   handleRename
 } from "./RenameDeleteHandler.ts";
+import { posix } from "@jinder/path";
+const { dirname } = posix;
 
 export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
@@ -371,6 +376,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const text = badLinks.toString() + badEmbeds.toString() + wikiLinks.toString() + wikiEmbeds.toString();
     const notePath = this._settings.consistencyReportFile;
+    await createFolderSafe(this.app, dirname(notePath));
     const note = this.app.vault.getFileByPath(notePath) ?? await this.app.vault.create(notePath, "");
     await this.app.vault.modify(note, text);
 
