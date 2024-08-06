@@ -31,6 +31,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
   private lh!: LinksHandler;
   private fh!: FilesHandler;
+  private isHandlingMetadataCacheChanged: boolean = false;
 
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
@@ -513,7 +514,16 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       return;
     }
 
-    await this.collectAttachments(file, false);
+    if (this.isHandlingMetadataCacheChanged) {
+      return;
+    }
+
+    this.isHandlingMetadataCacheChanged = true;
+    try {
+      await this.collectAttachments(file, false);
+    } finally {
+      this.isHandlingMetadataCacheChanged = false;
+    }
   }
 }
 
