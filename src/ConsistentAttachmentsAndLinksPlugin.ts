@@ -404,8 +404,12 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     notice.hide();
 
-    const text = badLinks.toString() + badEmbeds.toString() + wikiLinks.toString() + wikiEmbeds.toString();
     const notePath = this._settings.consistencyReportFile;
+    const text =
+      badLinks.toString(this.app, notePath)
+      + badEmbeds.toString(this.app, notePath)
+      + wikiLinks.toString(this.app, notePath)
+      + wikiEmbeds.toString(this.app, notePath);
     await createFolderSafe(this.app, dirname(notePath));
     const note = this.app.vault.getFileByPath(notePath) ?? await this.app.vault.create(notePath, "");
     await this.app.vault.modify(note, text);
