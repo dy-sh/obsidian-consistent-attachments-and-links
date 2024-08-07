@@ -55,7 +55,7 @@ function convertLink(app: App, link: ReferenceCache, source: TFile, oldPath: str
   return updateLink(app, link, extractLinkFile(app, link, oldPath), source, renameMap, forceMarkdownLinks);
 }
 
-function extractLinkFile(app: App, link: ReferenceCache, oldPath: string): TFile | null {
+export function extractLinkFile(app: App, link: ReferenceCache, oldPath: string): TFile | null {
   const { linkPath } = splitSubpath(link.link);
   return app.metadataCache.getFirstLinkpathDest(linkPath, oldPath);
 }
