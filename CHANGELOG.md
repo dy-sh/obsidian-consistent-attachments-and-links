@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.6.0
+
+- Fix links in report file
+
 ## 3.5.1
 
 - Fix more race conditions
