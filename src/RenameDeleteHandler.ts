@@ -23,10 +23,15 @@ import type { CanvasData } from "obsidian/canvas.js";
 import { toJson } from "./Object.ts";
 import { getAttachmentFolderPath } from "./AttachmentPath.ts";
 import {
+  extractLinkFile,
   updateLink,
   updateLinksInFile
 } from "./Link.ts";
-import { getBacklinksForFileSafe } from "./MetadataCache.ts";
+import {
+  getAllLinks,
+  getBacklinksForFileSafe,
+  getCacheSafe
+} from "./MetadataCache.ts";
 
 const renameMap = new Map<string, string>();
 
@@ -79,6 +84,7 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string): Promise<vo
 
   const oldAttachmentFolderPath = await getAttachmentFolderPath(app, oldPath);
   const newAttachmentFolderPath = await getAttachmentFolderPath(app, file.path);
+  const dummyOldAttachmentFolderPath = await getAttachmentFolderPath(app, join(dirname(oldPath), "DUMMY_FILE.md"));
 
   const oldAttachmentFolder = app.vault.getFolderByPath(oldAttachmentFolderPath);
 
@@ -92,11 +98,31 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string): Promise<vo
 
   const children: TFile[] = [];
 
-  Vault.recurseChildren(oldAttachmentFolder, (child) => {
-    if (child instanceof TFile) {
-      children.push(child);
+  if (oldAttachmentFolderPath === dummyOldAttachmentFolderPath) {
+    const cache = await getCacheSafe(app, file);
+    if (!cache) {
+      return;
     }
-  });
+    for (const link of getAllLinks(cache)) {
+      const attachmentFile = extractLinkFile(app, link, oldPath);
+      if (!attachmentFile) {
+        continue;
+      }
+
+      if (attachmentFile.path.startsWith(oldAttachmentFolderPath)) {
+        const backlinks = await getBacklinksForFileSafe(app, attachmentFile);
+        if (backlinks.keys().length === 1) {
+          children.push(attachmentFile);
+        }
+      }
+    }
+  } else {
+    Vault.recurseChildren(oldAttachmentFolder, (child) => {
+      if (child instanceof TFile) {
+        children.push(child);
+      }
+    });
+  }
 
   for (let child of children) {
     if (isNote(child)) {
