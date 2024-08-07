@@ -35,11 +35,12 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
     this.get(notePath)!.push(link);
   }
 
-  public override toString(): string {
+  public override toString(app: App, reportPath: string): string {
     if (this.size > 0) {
       let str = `# ${this.title} (${this.size} files)\n`;
       for (const notePath of this.keys()) {
-        str += `[${notePath}](${notePath}):\n`;
+        const linkStr = app.fileManager.generateMarkdownLink(app.vault.getFileByPath(notePath)!, reportPath);
+        str += `${linkStr}:\n`;
         for (const link of this.get(notePath)!) {
           str += `- (line ${link.position.start.line + 1}): \`${link.link}\`\n`;
         }
