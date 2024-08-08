@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.7.0
+
+- Don't create file/folder in getAttachmentFilePath
+- When attachment folder is shared, move only uniquely used attachments
+
 ## 3.6.0
 
 - Fix links in report file
