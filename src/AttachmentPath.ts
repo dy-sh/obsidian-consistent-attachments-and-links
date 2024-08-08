@@ -27,7 +27,11 @@ export async function getAttachmentFilePath(app: App, attachmentPath: string, no
     }
     return originalCreateFolder.call(app.vault, path);
   };
-  const newAttachmentPath = await app.vault.getAvailablePathForAttachments(fileName, ext.slice(1), note);
-  app.vault.createFolder = originalCreateFolder;
-  return newAttachmentPath;
+
+  try {
+    const newAttachmentPath = await app.vault.getAvailablePathForAttachments(fileName, ext.slice(1), note);
+    return newAttachmentPath;
+  } finally {
+    app.vault.createFolder = originalCreateFolder;
+  }
 }
