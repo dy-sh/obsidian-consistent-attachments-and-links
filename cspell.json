@@ -1,6 +1,9 @@
 {
   "version": "0.2",
-  "ignorePaths": [],
+  "ignorePaths": [
+    "dist",
+    "node_modules"
+  ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
   "words": [
