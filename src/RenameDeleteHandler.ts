@@ -70,8 +70,7 @@ export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, 
     return;
   }
 
-  const dummyAttachmentPath = await plugin.app.vault.getAvailablePathForAttachments("DUMMY_FILE", "pdf", file);
-  const attachmentFolder = dirname(dummyAttachmentPath);
+  const attachmentFolder = await getAttachmentFolderPath(plugin.app, file.path);
   await removeFolderSafe(plugin.app, attachmentFolder, file.path);
 }
 
