@@ -1,7 +1,4 @@
-import type {
-  App,
-  TFolder
-} from "obsidian";
+import type {  App} from "obsidian";
 import { posix } from "@jinder/path";
 const {
   basename,
@@ -20,18 +17,18 @@ export async function getAttachmentFilePath(app: App, attachmentPath: string, no
   const fileName = basename(attachmentPath, ext);
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
-  const originalCreateFolder = app.vault.createFolder;
-  app.vault.createFolder = async (path: string): Promise<TFolder> => {
+  const originalMkdir = app.vault.adapter.mkdir;
+  app.vault.adapter.mkdir = async (path: string): Promise<void> => {
     if (new Error().stack?.includes("getAvailablePathForAttachments")) {
-      return note.parent!;
+      return;
     }
-    return originalCreateFolder.call(app.vault, path);
+    return originalMkdir.call(app.vault.adapter, path);
   };
 
   try {
     const newAttachmentPath = await app.vault.getAvailablePathForAttachments(fileName, ext.slice(1), note);
     return newAttachmentPath;
   } finally {
-    app.vault.createFolder = originalCreateFolder;
+    app.vault.adapter.mkdir = originalMkdir;
   }
 }
