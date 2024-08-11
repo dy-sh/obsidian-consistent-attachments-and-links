@@ -8,22 +8,19 @@ import {
   getAllLinks,
   getCacheSafe
 } from "./MetadataCache.ts";
-import {
-  applyFileChanges,
-  createFolderSafe
-} from "./Vault.ts";
+import { applyFileChanges } from "./Vault.ts";
 import { posix } from "@jinder/path";
 import { generateMarkdownLink } from "./GenerateMarkdownLink.ts";
+import { createTFileInstance } from "obsidian-typings/implementations";
 const {
   basename,
-  extname,
-  dirname
+  extname
 } = posix;
 
 type SplitSubpathResult = {
   linkPath: string;
   subpath: string | undefined;
-}
+};
 
 export function splitSubpath(link: string): SplitSubpathResult {
   const SUBPATH_SEPARATOR = "#";
@@ -41,16 +38,16 @@ export async function updateLinksInFile(app: App, file: TFile, oldPath: string, 
       return [];
     }
 
-    return await Promise.all(getAllLinks(cache).map(async (link) => ({
+    return getAllLinks(cache).map((link) => ({
       startIndex: link.position.start.offset,
       endIndex: link.position.end.offset,
       oldContent: link.original,
-      newContent: await convertLink(app, link, file, oldPath, renameMap, forceMarkdownLinks)
-    })));
+      newContent: convertLink(app, link, file, oldPath, renameMap, forceMarkdownLinks),
+    }));
   });
 }
 
-function convertLink(app: App, link: ReferenceCache, source: TFile, oldPath: string, renameMap: Map<string, string>, forceMarkdownLinks?: boolean): Promise<string> {
+function convertLink(app: App, link: ReferenceCache, source: TFile, oldPath: string, renameMap: Map<string, string>, forceMarkdownLinks?: boolean): string {
   oldPath ??= source.path;
   return updateLink(app, link, extractLinkFile(app, link, oldPath), source, renameMap, forceMarkdownLinks);
 }
@@ -60,31 +57,23 @@ export function extractLinkFile(app: App, link: ReferenceCache, oldPath: string)
   return app.metadataCache.getFirstLinkpathDest(linkPath, oldPath);
 }
 
-export async function updateLink(app: App, link: ReferenceCache, file: TFile | null, source: TFile, renameMap: Map<string, string>, forceMarkdownLinks?: boolean): Promise<string> {
+export function updateLink(app: App, link: ReferenceCache, file: TFile | null, source: TFile, renameMap: Map<string, string>, forceMarkdownLinks?: boolean): string {
   if (!file) {
     return link.original;
   }
   const isEmbed = link.original.startsWith("!");
-  const isWikilink = link.original.includes("[[") && forceMarkdownLinks !== true;
+  const isWikilink =
+    link.original.includes("[[") && forceMarkdownLinks !== true;
   const { subpath } = splitSubpath(link.link);
 
-  const oldPath = file.path;
   const newPath = renameMap.get(file.path);
-  const isOldFileRenamed = newPath && newPath !== oldPath;
-
   const alias = getAlias(app, link.displayText, file, newPath, source.path);
 
-  if (isOldFileRenamed) {
-    await createFolderSafe(app, dirname(newPath));
-    await app.vault.rename(file, newPath);
+  if (newPath) {
+    file = createTFileInstance(app.vault, newPath);
   }
 
   const newLink = generateMarkdownLink(app, file, source.path, subpath, alias, isEmbed, isWikilink);
-
-  if (isOldFileRenamed) {
-    await app.vault.rename(file, oldPath);
-  }
-
   return newLink;
 }
 
