@@ -28,12 +28,15 @@ export function getMarkdownFilesSorted(app: App): TFile[] {
   return app.vault.getMarkdownFiles().sort((a, b) => a.path.localeCompare(b.path));
 }
 
-export async function processWithRetry(app: App, file: TFile, processFn: (content: string) => MaybePromise<string>, retryOptions: Partial<RetryOptions> = {}): Promise<void> {
+export async function processWithRetry(app: App, file: TFile, processFn: (content: string) => MaybePromise<string | null>, retryOptions: Partial<RetryOptions> = {}): Promise<void> {
   const DEFAULT_RETRY_OPTIONS: Partial<RetryOptions> = { timeoutInMilliseconds: 60000 };
   const overriddenOptions: Partial<RetryOptions> = { ...DEFAULT_RETRY_OPTIONS, ...retryOptions };
   await retryWithTimeout(async () => {
     const oldContent = await app.vault.adapter.read(file.path);
     const newContent = await processFn(oldContent);
+    if (newContent === null) {
+      return false;
+    }
     let success = true;
     await app.vault.process(file, (content) => {
       if (content !== oldContent) {
@@ -52,55 +55,47 @@ export async function processWithRetry(app: App, file: TFile, processFn: (conten
 export async function applyFileChanges(app: App, file: TFile, changesFn: () => MaybePromise<FileChange[]>, retryOptions: Partial<RetryOptions> = {}): Promise<void> {
   const DEFAULT_RETRY_OPTIONS: Partial<RetryOptions> = { timeoutInMilliseconds: 60000 };
   const overriddenOptions: Partial<RetryOptions> = { ...DEFAULT_RETRY_OPTIONS, ...retryOptions };
-  await retryWithTimeout(async () => {
-    let doChangesMatchContent = true;
+  await processWithRetry(app, file, async (content) => {
+    let changes = await changesFn();
 
-    await processWithRetry(app, file, async (content) => {
-      let changes = await changesFn();
-
-      for (const change of changes) {
-        const actualContent = content.slice(change.startIndex, change.endIndex);
-        if (actualContent !== change.oldContent) {
-          console.warn(`Content mismatch at ${change.startIndex}-${change.endIndex} in ${file.path}:\nExpected: ${change.oldContent}\nActual: ${actualContent}`);
-          doChangesMatchContent = false;
-          return content;
-        }
+    for (const change of changes) {
+      const actualContent = content.slice(change.startIndex, change.endIndex);
+      if (actualContent !== change.oldContent) {
+        console.warn(`Content mismatch at ${change.startIndex}-${change.endIndex} in ${file.path}:\nExpected: ${change.oldContent}\nActual: ${actualContent}`);
+        return null;
       }
+    }
 
-      changes.sort((a, b) => a.startIndex - b.startIndex);
+    changes.sort((a, b) => a.startIndex - b.startIndex);
 
-      // BUG: https://forum.obsidian.md/t/bug-duplicated-links-in-metadatacache-inside-footnotes/85551
-      changes = changes.filter((change, index) => {
-        if (index === 0) {
-          return true;
-        }
-        return !deepEqual(change, changes[index - 1]);
-      });
-
-      for (let i = 1; i < changes.length; i++) {
-        const change = changes[i]!;
-        const previousChange = changes[i - 1]!;
-        if (previousChange.endIndex >= change.startIndex) {
-          console.warn(`Overlapping changes:\n${toJson(previousChange)}\n${toJson(change)}`);
-          doChangesMatchContent = false;
-          return content;
-        }
+    // BUG: https://forum.obsidian.md/t/bug-duplicated-links-in-metadatacache-inside-footnotes/85551
+    changes = changes.filter((change, index) => {
+      if (index === 0) {
+        return true;
       }
+      return !deepEqual(change, changes[index - 1]);
+    });
 
-      let newContent = "";
-      let lastIndex = 0;
-
-      for (const change of changes) {
-        newContent += content.slice(lastIndex, change.startIndex);
-        newContent += change.newContent;
-        lastIndex = change.endIndex;
+    for (let i = 1; i < changes.length; i++) {
+      const change = changes[i]!;
+      const previousChange = changes[i - 1]!;
+      if (previousChange.endIndex >= change.startIndex) {
+        console.warn(`Overlapping changes:\n${toJson(previousChange)}\n${toJson(change)}`);
+        return null;
       }
+    }
 
-      newContent += content.slice(lastIndex);
-      return newContent;
-    }, overriddenOptions);
+    let newContent = "";
+    let lastIndex = 0;
 
-    return doChangesMatchContent;
+    for (const change of changes) {
+      newContent += content.slice(lastIndex, change.startIndex);
+      newContent += change.newContent;
+      lastIndex = change.endIndex;
+    }
+
+    newContent += content.slice(lastIndex);
+    return newContent;
   }, overriddenOptions);
 }
 
