@@ -2,6 +2,7 @@ import {
   App,
   TFile,
   Vault,
+  type ReferenceCache,
   type TAbstractFile
 } from "obsidian";
 import type ConsistentAttachmentsAndLinksPlugin from "./ConsistentAttachmentsAndLinksPlugin.ts";
@@ -153,7 +154,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       oldFile = createTFileInstance(app.vault, oldPath);
     }
 
-    const backlinks = await getBacklinksForFileSafe(plugin.app, oldFile);
+    const backlinks = await getBacklinks(plugin.app, oldFile, newFile);
 
     for (const parentNotePath of backlinks.keys()) {
       let parentNote = app.vault.getFileByPath(parentNotePath);
@@ -171,7 +172,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
 
       await applyFileChanges(app, parentNote, async () => {
         const links =
-          (await getBacklinksForFileSafe(app, oldFile)).get(parentNotePath) ?? [];
+          (await getBacklinks(plugin.app, oldFile, newFile)).get(parentNotePath) ?? [];
         const changes = [];
 
         for (const link of links) {
@@ -220,4 +221,26 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
   } finally {
     renameMap.delete(oldPath);
   }
+}
+
+async function getBacklinks(app: App, oldFile: TFile, newFile: TFile | null): Promise<Map<string, ReferenceCache[]>> {
+  const backlinks = new Map<string, ReferenceCache[]>();
+  const oldLinks = await getBacklinksForFileSafe(app, oldFile);
+  for (const path of oldLinks.keys()) {
+    backlinks.set(path, oldLinks.get(path)!);
+  }
+
+  if (!newFile) {
+    return backlinks;
+  }
+
+  const newLinks = await getBacklinksForFileSafe(app, newFile);
+
+  for (const path of newLinks.keys()) {
+    const links = backlinks.get(path) ?? [];
+    links.push(...newLinks.get(path)!);
+    backlinks.set(path, links);
+  }
+
+  return backlinks;
 }
