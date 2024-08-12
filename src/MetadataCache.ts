@@ -6,10 +6,15 @@ import type {
   ReferenceCache,
   TFile
 } from "obsidian";
-import { retryWithTimeout } from "./Async.ts";
+import {
+  retryWithTimeout,
+  type RetryOptions
+} from "./Async.ts";
 import type { CustomArrayDict } from "obsidian-typings";
 
-export async function getCacheSafe(app: App, fileOrPath: TFile | string): Promise<CachedMetadata | null> {
+export async function getCacheSafe(app: App, fileOrPath: TFile | string, retryOptions: Partial<RetryOptions> = {}): Promise<CachedMetadata | null> {
+  const DEFAULT_RETRY_OPTIONS: Partial<RetryOptions> = { timeoutInMilliseconds: 60000 };
+  const overriddenOptions: Partial<RetryOptions> = { ...DEFAULT_RETRY_OPTIONS, ...retryOptions };
   let cache: CachedMetadata | null = null;
 
   await retryWithTimeout(async () => {
@@ -43,9 +48,7 @@ export async function getCacheSafe(app: App, fileOrPath: TFile | string): Promis
         return true;
       }
     }
-  }, {
-    timeoutInMilliseconds: 60000
-  });
+  }, overriddenOptions);
 
   return cache;
 }
@@ -74,7 +77,9 @@ export function getAllLinks(cache: CachedMetadata): ReferenceCache[] {
   return links;
 }
 
-export async function getBacklinksForFileSafe(app: App, file: TFile): Promise<CustomArrayDict<LinkCache>> {
+export async function getBacklinksForFileSafe(app: App, file: TFile, retryOptions: Partial<RetryOptions> = {}): Promise<CustomArrayDict<LinkCache>> {
+  const DEFAULT_RETRY_OPTIONS: Partial<RetryOptions> = { timeoutInMilliseconds: 60000 };
+  const overriddenOptions: Partial<RetryOptions> = { ...DEFAULT_RETRY_OPTIONS, ...retryOptions };
   let backlinks: CustomArrayDict<LinkCache> | null = null;
   await retryWithTimeout(async () => {
     backlinks = app.metadataCache.getBacklinksForFile(file);
@@ -97,7 +102,7 @@ export async function getBacklinksForFileSafe(app: App, file: TFile): Promise<Cu
     }
 
     return true;
-  }, { timeoutInMilliseconds: 60000 });
+  }, overriddenOptions);
 
   return backlinks!;
 }

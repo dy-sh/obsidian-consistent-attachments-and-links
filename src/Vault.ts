@@ -12,7 +12,8 @@ import {
 } from "./Object.ts";
 import {
   retryWithTimeout,
-  type MaybePromise
+  type MaybePromise,
+  type RetryOptions
 } from "./Async.ts";
 import { getBacklinksForFileSafe } from "./MetadataCache.ts";
 
@@ -27,7 +28,9 @@ export function getMarkdownFilesSorted(app: App): TFile[] {
   return app.vault.getMarkdownFiles().sort((a, b) => a.path.localeCompare(b.path));
 }
 
-export async function processWithRetry(app: App, file: TFile, processFn: (content: string) => MaybePromise<string>): Promise<void> {
+export async function processWithRetry(app: App, file: TFile, processFn: (content: string) => MaybePromise<string>, retryOptions: Partial<RetryOptions> = {}): Promise<void> {
+  const DEFAULT_RETRY_OPTIONS: Partial<RetryOptions> = { timeoutInMilliseconds: 60000 };
+  const overriddenOptions: Partial<RetryOptions> = { ...DEFAULT_RETRY_OPTIONS, ...retryOptions };
   await retryWithTimeout(async () => {
     const oldContent = await app.vault.adapter.read(file.path);
     const newContent = await processFn(oldContent);
@@ -43,10 +46,12 @@ export async function processWithRetry(app: App, file: TFile, processFn: (conten
     });
 
     return success;
-  }, { timeoutInMilliseconds: 60000 });
+  }, overriddenOptions);
 }
 
-export async function applyFileChanges(app: App, file: TFile, changesFn: () => MaybePromise<FileChange[]>): Promise<void> {
+export async function applyFileChanges(app: App, file: TFile, changesFn: () => MaybePromise<FileChange[]>, retryOptions: Partial<RetryOptions> = {}): Promise<void> {
+  const DEFAULT_RETRY_OPTIONS: Partial<RetryOptions> = { timeoutInMilliseconds: 60000 };
+  const overriddenOptions: Partial<RetryOptions> = { ...DEFAULT_RETRY_OPTIONS, ...retryOptions };
   await retryWithTimeout(async () => {
     let doChangesMatchContent = true;
 
@@ -93,10 +98,10 @@ export async function applyFileChanges(app: App, file: TFile, changesFn: () => M
 
       newContent += content.slice(lastIndex);
       return newContent;
-    });
+    }, overriddenOptions);
 
     return doChangesMatchContent;
-  }, { timeoutInMilliseconds: 60000 });
+  }, overriddenOptions);
 }
 
 export function isNote(file: TAbstractFile | null): file is TFile {
