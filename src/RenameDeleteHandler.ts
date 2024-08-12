@@ -166,7 +166,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       }
 
       if (!parentNote) {
-        console.error(`Parent note not found: ${parentNotePath}`);
+        console.warn(`Parent note not found: ${parentNotePath}`);
         continue;
       }
 

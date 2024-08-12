@@ -107,7 +107,7 @@ export class FilesHandler {
       const file = this.lh.getFileByLink(linkPath, notePath);
       if (!file) {
         const type = link.original.startsWith("!") ? "embed" : "link";
-        console.error(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
+        console.warn(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
         continue;
       }
 
