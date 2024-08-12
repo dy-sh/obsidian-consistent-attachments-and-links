@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.10.0
+
+- Stop long running operations on unload
+
 ## 3.9.0
 
 - Fix root folder corner cases
