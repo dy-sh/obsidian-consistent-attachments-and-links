@@ -32,6 +32,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   private lh!: LinksHandler;
   private fh!: FilesHandler;
   private isHandlingMetadataCacheChanged: boolean = false;
+  private abortSignal!: AbortSignal;
 
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
@@ -162,6 +163,10 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       this._settings.getIgnoreFilesRegex(),
       this._settings.deleteEmptyFolders
     );
+
+    const abortController = new AbortController();
+    this.register(() => abortController.abort());
+    this.abortSignal = abortController.signal;
   }
 
   private isPathIgnored(path: string): boolean {
@@ -241,6 +246,10 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
+      if (this.abortSignal.aborted) {
+        notice.hide();
+        return;
+      }
       i++;
       const message = `Collecting attachments # ${i} / ${notes.length} - ${note.path}`;
       notice.setMessage(message);
@@ -283,6 +292,10 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
+      if (this.abortSignal.aborted) {
+        notice.hide();
+        return;
+      }
       i++;
       const message = `Converting embed paths to relative # ${i} / ${notes.length} - ${note.path}`;
       notice.setMessage(message);
@@ -320,6 +333,10 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
+      if (this.abortSignal.aborted) {
+        notice.hide();
+        return;
+      }
       i++;
       const message = `Converting link paths to relative # ${i} / ${notes.length} - ${note.path}`;
       notice.setMessage(message);
@@ -356,6 +373,10 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
+      if (this.abortSignal.aborted) {
+        notice.hide();
+        return;
+      }
       i++;
       const message = `Replacing wikilinks with markdown links # ${i} / ${notes.length} - ${note.path}`;
       notice.setMessage(message);
@@ -395,6 +416,10 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     let i = 0;
     const notice = new Notice("", 0);
     for (const note of notes) {
+      if (this.abortSignal.aborted) {
+        notice.hide();
+        return;
+      }
       i++;
       const message = `Checking note # ${i} / ${notes.length} - ${note.path}`;
       notice.setMessage(message);
