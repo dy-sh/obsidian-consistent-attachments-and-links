@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.8.0
+
+- Fix moving attachments
+- Avoid unnecessary temp file/folder creations
+
 ## 3.7.0
 
 - Don't create file/folder in getAttachmentFilePath
