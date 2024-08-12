@@ -24,6 +24,7 @@ export async function retryWithTimeout(
       }
 
       console.debug(`Retry attempt ${attempt} completed unsuccessfully. Trying again in ${retryDelayInMilliseconds} milliseconds`);
+      console.debug(asyncFn);
       await sleep(retryDelayInMilliseconds);
     }
   });
