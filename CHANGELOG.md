@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.9.0
+
+- Fix root folder corner cases
+
 ## 3.8.0
 
 - Fix moving attachments
