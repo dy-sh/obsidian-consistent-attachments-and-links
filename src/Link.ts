@@ -31,7 +31,19 @@ export function splitSubpath(link: string): SplitSubpathResult {
   };
 }
 
-export async function updateLinksInFile(app: App, file: TFile, oldPath: string, renameMap: Map<string, string>, forceMarkdownLinks?: boolean): Promise<void> {
+export async function updateLinksInFile({
+  app,
+  file,
+  oldPath,
+  renameMap,
+  forceMarkdownLinks
+}: {
+  app: App,
+  file: TFile,
+  oldPath: string,
+  renameMap: Map<string, string>,
+  forceMarkdownLinks?: boolean | undefined
+}): Promise<void> {
   await applyFileChanges(app, file, async () => {
     const cache = await getCacheSafe(app, file);
     if (!cache) {

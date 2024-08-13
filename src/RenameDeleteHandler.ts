@@ -219,7 +219,12 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
         return toJson(canvasData);
       });
     } else if (file.extension.toLowerCase() === "md") {
-      await updateLinksInFile(app, file, oldPath, renameMap);
+      await updateLinksInFile({
+        app,
+        file,
+        oldPath,
+        renameMap
+      });
     }
 
     if (!fakeOldFileCreated) {
