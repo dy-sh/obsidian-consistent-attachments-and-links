@@ -50,7 +50,7 @@ Configure [`Attachment Subfolder` setting](#attachment-subfolder-setting).
 Run the commands in the following order to reorganize vault:
 
 - `Replace All Wiki Links with Markdown Links`
-- `Replace All Wiki Embeds with Markdown Links`
+- `Replace All Wiki Embeds with Markdown Embeds`
 - `Convert All Embed Paths to Relative`
 - `Convert All Link Paths to Relative`
 - `Rename All Attachments` (using [`Unique attachments` plugin][Unique attachments], optional)
