@@ -285,7 +285,7 @@ export class LinksHandler {
     return this.convertAllNoteRefPathsToRelative(notePath, false);
   }
 
-  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string): Promise<number> {
+  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean): Promise<number> {
     if (this.isPathIgnored(notePath)) {
       return 0;
     }
@@ -301,14 +301,15 @@ export class LinksHandler {
       return 0;
     }
 
-    const links = getAllLinks(cache);
+    const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];;
     const result = links.filter(link => link.original.includes("[[")).length;
     await updateLinksInFile({
       app: this.app,
       file: noteFile,
       oldPath: noteFile.path,
       renameMap: new Map<string, string>(),
-      forceMarkdownLinks: true
+      forceMarkdownLinks: true,
+      embedOnlyLinks
     });
     return result;
   }

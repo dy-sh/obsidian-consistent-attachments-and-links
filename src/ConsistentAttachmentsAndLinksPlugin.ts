@@ -135,6 +135,18 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: "replace-all-wiki-embeds-with-markdown-embeds",
+      name: "Replace All Wiki Embeds with Markdown Embeds",
+      callback: () => this.replaceAllWikiEmbedsWithMarkdownEmbeds()
+    });
+
+    this.addCommand({
+      id: "replace-all-wiki-embeds-with-markdown-embeds-current-note",
+      name: "Replace All Wiki Embeds with Markdown Embeds in Current Note",
+      checkCallback: this.replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote.bind(this)
+    });
+
+    this.addCommand({
       id: "reorganize-vault",
       name: "Reorganize Vault",
       callback: () => this.reorganizeVault()
@@ -385,7 +397,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
         continue;
       }
 
-      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path);
+      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false);
       changedLinksCount += result;
       processedNotesCount++;
     }
@@ -396,6 +408,43 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       new Notice("No wiki links found that need to be replaced");
     } else {
       new Notice("Replaced " + changedLinksCount + " wikilink" + (changedLinksCount > 1 ? "s" : "")
+        + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+    }
+  }
+
+  private async replaceAllWikiEmbedsWithMarkdownEmbeds(): Promise<void> {
+    await this.saveAllOpenNotes();
+
+    let changedLinksCount = 0;
+    let processedNotesCount = 0;
+
+    const notes = getMarkdownFilesSorted(this.app);
+    let i = 0;
+    const notice = new Notice("", 0);
+    for (const note of notes) {
+      if (this.abortSignal.aborted) {
+        notice.hide();
+        return;
+      }
+      i++;
+      const message = `Replacing wiki embeds with markdown embeds # ${i} / ${notes.length} - ${note.path}`;
+      notice.setMessage(message);
+      console.debug(message);
+      if (this.isPathIgnored(note.path)) {
+        continue;
+      }
+
+      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true);
+      changedLinksCount += result;
+      processedNotesCount++;
+    }
+
+    notice.hide();
+
+    if (changedLinksCount == 0) {
+      new Notice("No wiki embeds found that need to be replaced");
+    } else {
+      new Notice("Replaced " + changedLinksCount + " wiki embed" + (changedLinksCount > 1 ? "s" : "")
         + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
     }
   }
@@ -455,6 +504,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     await this.saveAllOpenNotes();
 
     await this.replaceAllWikilinksWithMarkdownLinks();
+    await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
     await this.convertAllEmbedsPathsToRelative();
     await this.convertAllLinkPathsToRelative();
     //- Rename all attachments (using Unique attachments, optional)
@@ -527,7 +577,20 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     if (!checking) {
-      convertToSync(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path));
+      convertToSync(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false));
+    }
+
+    return true;
+  }
+
+  private replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(checking: boolean): boolean {
+    const note = this.app.workspace.getActiveFile();
+    if (!note || note.extension.toLowerCase() !== "md") {
+      return false;
+    }
+
+    if (!checking) {
+      convertToSync(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true));
     }
 
     return true;

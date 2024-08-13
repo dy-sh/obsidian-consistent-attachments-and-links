@@ -36,13 +36,15 @@ export async function updateLinksInFile({
   file,
   oldPath,
   renameMap,
-  forceMarkdownLinks
+  forceMarkdownLinks,
+  embedOnlyLinks
 }: {
   app: App,
   file: TFile,
   oldPath: string,
   renameMap: Map<string, string>,
   forceMarkdownLinks?: boolean | undefined
+  embedOnlyLinks?: boolean | undefined
 }): Promise<void> {
   await applyFileChanges(app, file, async () => {
     const cache = await getCacheSafe(app, file);
@@ -50,7 +52,21 @@ export async function updateLinksInFile({
       return [];
     }
 
-    return getAllLinks(cache).map((link) => ({
+    let links: ReferenceCache[] = [];
+
+    switch (embedOnlyLinks) {
+      case true:
+        links = cache.embeds ?? [];
+        break;
+      case false:
+        links = cache.links ?? [];
+        break;
+      case undefined:
+        links = getAllLinks(cache);
+        break;
+    }
+
+    return links.map((link) => ({
       startIndex: link.position.start.offset,
       endIndex: link.position.end.offset,
       oldContent: link.original,
