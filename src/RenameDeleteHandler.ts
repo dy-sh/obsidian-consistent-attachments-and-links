@@ -187,7 +187,13 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
             startIndex: link.position.start.offset,
             endIndex: link.position.end.offset,
             oldContent: link.original,
-            newContent: updateLink(app, link, file, parentNote, renameMap),
+            newContent: updateLink({
+              app,
+              link,
+              file,
+              source: parentNote,
+              renameMap
+            }),
           });
         }
 
