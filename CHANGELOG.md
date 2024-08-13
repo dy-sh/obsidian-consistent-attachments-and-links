@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.12.0
+
+- Add commands to convert only wiki embeds
+
 ## 3.11.0
 
 - Fix alias checks
