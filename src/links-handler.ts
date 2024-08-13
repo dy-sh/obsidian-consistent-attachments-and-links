@@ -199,8 +199,9 @@ export class LinksHandler {
     isRelative?: boolean | undefined
   }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
-    const oldLinkPath = join(dirname(oldNotePath), linkPath);
-    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : join(dirname(note.path), linkPath);
+    this.app.metadataCache.getFirstLinkpathDest(linkPath, oldNotePath);
+    const oldLinkPath = this.app.metadataCache.getFirstLinkpathDest(linkPath, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
+    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : this.app.metadataCache.getFirstLinkpathDest(linkPath, note.path)?.path ?? join(dirname(note.path), linkPath);
     if (!newLinkPath) {
       return link.original;
     }
