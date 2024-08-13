@@ -188,16 +188,16 @@ export class LinksHandler {
     isWikilink,
     isRelative
   }:
-    {
-      note: TFile,
-      link: ReferenceCache,
-      oldNotePath: string,
-      pathChangeMap?: Map<string, string> | undefined,
-      changeLinksAlt?: boolean | undefined,
-      isEmbed?: boolean | undefined,
-      isWikilink?: boolean | undefined,
-      isRelative?: boolean | undefined
-    }): string {
+  {
+    note: TFile,
+    link: ReferenceCache,
+    oldNotePath: string,
+    pathChangeMap?: Map<string, string> | undefined,
+    changeLinksAlt?: boolean | undefined,
+    isEmbed?: boolean | undefined,
+    isWikilink?: boolean | undefined,
+    isRelative?: boolean | undefined
+  }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
     const oldLinkPath = join(dirname(oldNotePath), linkPath);
     const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : join(dirname(note.path), linkPath);
