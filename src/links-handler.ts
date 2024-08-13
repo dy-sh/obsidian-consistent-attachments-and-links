@@ -2,26 +2,27 @@ import {
   App,
   normalizePath,
   TFile,
-  type EmbedCache,
-  type LinkCache,
   type ReferenceCache
 } from "obsidian";
 import { posix } from "@jinder/path";
 const {
   dirname,
-  join,
-  relative
+  join
 } = posix;
 import {
   getAllLinks,
   getBacklinksForFileSafe,
   getCacheSafe
 } from "./MetadataCache.ts";
-import { applyFileChanges } from "./Vault.ts";
+import {
+  applyFileChanges,
+  type FileChange
+} from "./Vault.ts";
 import {
   splitSubpath,
   updateLinksInFile
 } from "./Link.ts";
+import { generateMarkdownLink } from "./GenerateMarkdownLink.ts";
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
   public constructor(private title: string) {
@@ -58,19 +59,14 @@ export interface PathChangeInfo {
   newPath: string,
 }
 
-export interface EmbedChangeInfo {
-  old: EmbedCache,
-  newLink: string,
-}
-
-export interface LinkChangeInfo {
-  old: LinkCache,
+export interface ReferenceChangeInfo {
+  old: ReferenceCache,
   newLink: string,
 }
 
 export interface LinksAndEmbedsChangedInfo {
-  embeds: EmbedChangeInfo[]
-  links: LinkChangeInfo[]
+  embeds: ReferenceChangeInfo[]
+  links: ReferenceChangeInfo[]
 }
 
 export class LinksHandler {
@@ -99,22 +95,6 @@ export class LinksHandler {
     }
 
     return false;
-  }
-
-  private checkIsCorrectMarkdownEmbed(text: string): boolean {
-    return text.startsWith("![");
-  }
-
-  private checkIsCorrectMarkdownLink(text: string): boolean {
-    return text.startsWith("[");
-  }
-
-  private checkIsCorrectWikiEmbed(text: string): boolean {
-    return text.startsWith("![[");
-  }
-
-  private checkIsCorrectWikiLink(text: string): boolean {
-    return text.startsWith("[[");
   }
 
   public getFileByLink(link: string, owningNotePath: string, allowInvalidLink: boolean = true): TFile {
@@ -198,7 +178,26 @@ export class LinksHandler {
     await this.updateLinks(note, note.path, pathChangeMap, changeLinksAlt);
   }
 
-  private convertLink(note: TFile, link: ReferenceCache, oldNotePath: string, pathChangeMap?: Map<string, string>, changeLinksAlt?: boolean): string {
+  private convertLink({
+    note,
+    link,
+    oldNotePath,
+    pathChangeMap,
+    changeLinksAlt,
+    isEmbed,
+    isWikilink,
+    isRelative
+  }:
+    {
+      note: TFile,
+      link: ReferenceCache,
+      oldNotePath: string,
+      pathChangeMap?: Map<string, string> | undefined,
+      changeLinksAlt?: boolean | undefined,
+      isEmbed?: boolean | undefined,
+      isWikilink?: boolean | undefined,
+      isRelative?: boolean | undefined
+    }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
     const oldLinkPath = join(dirname(oldNotePath), linkPath);
     const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : join(dirname(note.path), linkPath);
@@ -212,7 +211,16 @@ export class LinksHandler {
       return link.original;
     }
 
-    return this.app.fileManager.generateMarkdownLink(newLinkedNote, note.path, subpath, changeLinksAlt === false ? link.displayText : undefined);
+    return generateMarkdownLink({
+      app: this.app,
+      file: newLinkedNote,
+      sourcePath: note.path,
+      subpath,
+      alias: changeLinksAlt === false ? link.displayText : undefined,
+      isEmbed,
+      isWikilink,
+      isRelative
+    });
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
@@ -225,162 +233,55 @@ export class LinksHandler {
     return backlinks.keys();
   }
 
-  public async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<EmbedChangeInfo[]> {
-    if (this.isPathIgnored(notePath)) {
-      return [];
-    }
-    const changedEmbeds: EmbedChangeInfo[] = [];
-
-    const cache = await getCacheSafe(this.app, notePath) ?? {};
-    const embeds = cache.embeds ?? [];
-
-    for (const embed of embeds) {
-      const isMarkdownEmbed = this.checkIsCorrectMarkdownEmbed(embed.original);
-      const isWikiEmbed = this.checkIsCorrectWikiEmbed(embed.original);
-      if (isMarkdownEmbed || isWikiEmbed) {
-        let file = this.getFileByLinkRelative(embed.link, notePath);
-        if (file) {
-          continue;
-        }
-
-        file = this.app.metadataCache.getFirstLinkpathDest(embed.link, notePath)!;
-        if (file) {
-          const newRelLink: string = relative(dirname(notePath), file.path);
-
-          changedEmbeds.push({ old: embed, newLink: newRelLink });
-        } else {
-          console.warn(this.consoleLogPrefix + notePath + " has bad embed (file does not exist): " + embed.link);
-        }
-      } else {
-        console.warn(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wiki link): " + embed.original);
-      }
-    }
-
-    await this.updateChangedEmbedInNote(notePath, changedEmbeds);
-    return changedEmbeds;
+  public async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
+    return this.convertAllNoteRefPathsToRelative(notePath, true);
   }
 
-  public async convertAllNoteLinksPathsToRelative(notePath: string): Promise<LinkChangeInfo[]> {
+  private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean): Promise<ReferenceChangeInfo[]> {
     if (this.isPathIgnored(notePath)) {
       return [];
     }
 
-    const changedLinks: LinkChangeInfo[] = [];
-
-    const cache = await getCacheSafe(this.app, notePath) ?? {};
-    const links = cache.links ?? [];
-
-    for (const link of links) {
-      const isMarkdownLink = this.checkIsCorrectMarkdownLink(link.original);
-      const isWikiLink = this.checkIsCorrectWikiLink(link.original);
-      if (isMarkdownLink || isWikiLink) {
-        if (link.link.startsWith("#")) {
-          //internal section link
-          continue;
-        }
-
-        let file = this.getFileByLinkRelative(link.link, notePath);
-        if (file) {
-          continue;
-        }
-
-        file = this.app.metadataCache.getFirstLinkpathDest(link.link, notePath)!;
-        if (file) {
-          const newRelLink: string = relative(dirname(notePath), file.path);
-
-          changedLinks.push({ old: link, newLink: newRelLink });
-        } else {
-          console.warn(this.consoleLogPrefix + notePath + " has bad link (file does not exist): " + link.link);
-        }
-      } else {
-        console.warn(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wiki link): " + link.original);
-      }
+    const note = this.app.vault.getFileByPath(notePath);
+    if (!note) {
+      return [];
     }
 
-    await this.updateChangedLinkInNote(notePath, changedLinks);
-    return changedLinks;
+    const changedRefs: ReferenceChangeInfo[] = [];
+
+    await applyFileChanges(this.app, note, async () => {
+      const cache = await getCacheSafe(this.app, note);
+      if (!cache) {
+        return [];
+      }
+      const refs = (isEmbed ? cache.embeds : cache.links) ?? [];
+      const changes: FileChange[] = [];
+
+      for (const ref of refs) {
+        const change = {
+          startIndex: ref.position.start.offset,
+          endIndex: ref.position.end.offset,
+          oldContent: ref.original,
+          newContent: this.convertLink({
+            note,
+            link: ref,
+            oldNotePath: notePath,
+            isWikilink: ref.original.includes("[["),
+            isRelative: true
+          })
+        };
+        changes.push(change);
+        changedRefs.push({ old: ref, newLink: change.newContent });
+      }
+
+      return changes;
+    });
+
+    return changedRefs;
   }
 
-  private async updateChangedEmbedInNote(notePath: string, changedEmbeds: EmbedChangeInfo[]): Promise<void> {
-    if (this.isPathIgnored(notePath)) {
-      return;
-    }
-
-    const noteFile = this.app.vault.getFileByPath(notePath);
-    if (!noteFile) {
-      console.warn(this.consoleLogPrefix + "can't update embeds in note, file not found: " + notePath);
-      return;
-    }
-
-    let text = await this.app.vault.read(noteFile);
-    let dirty = false;
-
-    if (changedEmbeds && changedEmbeds.length > 0) {
-      for (const embed of changedEmbeds) {
-        if (embed.old.link == embed.newLink) {
-          continue;
-        }
-
-        if (this.checkIsCorrectMarkdownEmbed(embed.old.original)) {
-          text = text.replace(embed.old.original, "![" + embed.old.displayText + "]" + "(" + embed.newLink + ")");
-        } else if (this.checkIsCorrectWikiEmbed(embed.old.original)) {
-          text = text.replace(embed.old.original, "![[" + embed.newLink + "]]");
-        } else {
-          console.warn(this.consoleLogPrefix + notePath + " has bad embed (format of link is not markdown or wikilink): " + embed.old.original);
-          continue;
-        }
-
-        console.log(this.consoleLogPrefix + "embed updated in note [note, old link, new link]: \n   "
-          + noteFile.path + "\n   " + embed.old.link + "\n   " + embed.newLink);
-
-        dirty = true;
-      }
-    }
-
-    if (dirty) {
-      await this.app.vault.modify(noteFile, text);
-    }
-  }
-
-  private async updateChangedLinkInNote(notePath: string, changedLinks: LinkChangeInfo[]): Promise<void> {
-    if (this.isPathIgnored(notePath)) {
-      return;
-    }
-
-    const noteFile = this.app.vault.getFileByPath(notePath);
-    if (!noteFile) {
-      console.warn(this.consoleLogPrefix + "can't update links in note, file not found: " + notePath);
-      return;
-    }
-
-    let text = await this.app.vault.read(noteFile);
-    let dirty = false;
-
-    if (changedLinks && changedLinks.length > 0) {
-      for (const link of changedLinks) {
-        if (link.old.link == link.newLink) {
-          continue;
-        }
-
-        if (this.checkIsCorrectMarkdownLink(link.old.original)) {
-          text = text.replace(link.old.original, "[" + link.old.displayText + "]" + "(" + link.newLink + ")");
-        } else if (this.checkIsCorrectWikiLink(link.old.original)) {
-          text = text.replace(link.old.original, "[[" + link.newLink + "]]");
-        } else {
-          console.warn(this.consoleLogPrefix + notePath + " has bad link (format of link is not markdown or wikilink): " + link.old.original);
-          continue;
-        }
-
-        console.log(this.consoleLogPrefix + "cached link updated in note [note, old link, new link]: \n   "
-          + noteFile.path + "\n   " + link.old.link + "\n   " + link.newLink);
-
-        dirty = true;
-      }
-    }
-
-    if (dirty) {
-      await this.app.vault.modify(noteFile, text);
-    }
+  public async convertAllNoteLinksPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
+    return this.convertAllNoteRefPathsToRelative(notePath, false);
   }
 
   public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string): Promise<number> {
@@ -449,14 +350,14 @@ export class LinksHandler {
         startIndex: link.position.start.offset,
         endIndex: link.position.end.offset,
         oldContent: link.original,
-        newContent: this.convertLink(note, link, oldNotePath, pathChangeMap, changeLinksAlt)
+        newContent: this.convertLink({
+          note,
+          link,
+          oldNotePath,
+          pathChangeMap,
+          changeLinksAlt
+        })
       }));
     });
-  }
-
-  private getFileByLinkRelative(link: string, notePath: string): TFile | null {
-    const { linkPath } = splitSubpath(link);
-    const fullPath = join(dirname(notePath), linkPath);
-    return this.app.vault.getFileByPath(fullPath);
   }
 }

@@ -73,7 +73,15 @@ export function updateLink(app: App, link: ReferenceCache, file: TFile | null, s
     file = createTFileInstance(app.vault, newPath);
   }
 
-  const newLink = generateMarkdownLink(app, file, source.path, subpath, alias, isEmbed, isWikilink);
+  const newLink = generateMarkdownLink({
+    app,
+    file,
+    sourcePath: source.path,
+    subpath,
+    alias,
+    isEmbed,
+    isWikilink
+  });
   return newLink;
 }
 

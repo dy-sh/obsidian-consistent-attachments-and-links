@@ -17,7 +17,7 @@ import {
 } from "./Async.ts";
 import { getBacklinksForFileSafe } from "./MetadataCache.ts";
 
-type FileChange = {
+export type FileChange = {
   startIndex: number;
   endIndex: number;
   oldContent: string;
