@@ -13,16 +13,16 @@ export function generateMarkdownLink({
   isWikilink,
   isRelative
 }:
-  {
-    app: App,
-    file: TFile,
-    sourcePath: string,
-    subpath?: string | undefined,
-    alias?: string | undefined,
-    isEmbed?: boolean | undefined,
-    isWikilink?: boolean | undefined,
-    isRelative?: boolean | undefined
-  }): string {
+{
+  app: App,
+  file: TFile,
+  sourcePath: string,
+  subpath?: string | undefined,
+  alias?: string | undefined,
+  isEmbed?: boolean | undefined,
+  isWikilink?: boolean | undefined,
+  isRelative?: boolean | undefined
+}): string {
   const useMarkdownLinks = app.vault.getConfig("useMarkdownLinks");
   const newLinkFormat = app.vault.getConfig("newLinkFormat");
   if (isWikilink !== undefined) {
