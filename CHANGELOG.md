@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 3.11.0
+
+- Fix alias checks
+- Resolve links better
+- Generate links instead of constructing them manually
+- Proper check overlapping change
+
 ## 3.10.0
 
 - Stop long running operations on unload
