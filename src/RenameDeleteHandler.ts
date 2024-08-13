@@ -34,10 +34,10 @@ import {
   getCacheSafe
 } from "./MetadataCache.ts";
 
-const renameMap = new Map<string, string>();
+const renamingPaths = new Set<string>();
 
 export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, file: TAbstractFile, oldPath: string): Promise<void> {
-  if (renameMap.has(oldPath)) {
+  if (renamingPaths.has(oldPath)) {
     return;
   }
 
@@ -54,13 +54,14 @@ export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, 
   try {
     plugin.app.fileManager.updateAllLinks = async (): Promise<void> => { };
 
-    await fillRenameMap(app, file, oldPath);
+    const renameMap = new Map<string, string>();
+    await fillRenameMap(app, file, oldPath, renameMap);
 
     for (const [oldPath2, newPath2] of renameMap.entries()) {
-      await processRename(plugin, oldPath2, newPath2);
+      await processRename(plugin, oldPath2, newPath2, renameMap);
     }
   } finally {
-    renameMap.delete(oldPath);
+    renamingPaths.delete(oldPath);
     plugin.app.fileManager.updateAllLinks = updateAllLinks;
   }
 }
@@ -71,7 +72,7 @@ export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, 
     return;
   }
 
-  if (renameMap.has(file.path)) {
+  if (renamingPaths.has(file.path)) {
     return;
   }
 
@@ -79,7 +80,7 @@ export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, 
   await removeFolderSafe(plugin.app, attachmentFolder, file.path);
 }
 
-async function fillRenameMap(app: App, file: TFile, oldPath: string): Promise<void> {
+async function fillRenameMap(app: App, file: TFile, oldPath: string, renameMap: Map<string, string>): Promise<void> {
   renameMap.set(oldPath, file.path);
 
   if (!isNote(file)) {
@@ -143,7 +144,7 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string): Promise<vo
   }
 }
 
-async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPath: string, newPath: string): Promise<void> {
+async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPath: string, newPath: string, renameMap: Map<string, string>): Promise<void> {
   const app = plugin.app;
   let oldFile: TFile | null = null;
   let fakeOldFileCreated = false;
