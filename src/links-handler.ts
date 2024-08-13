@@ -186,7 +186,7 @@ export class LinksHandler {
 
     const note = this.app.vault.getFileByPath(notePath);
     if (!note) {
-      console.warn(this.consoleLogPrefix + "cant update links in note, file not found: " + notePath);
+      console.warn(this.consoleLogPrefix + "can't update links in note, file not found: " + notePath);
       return;
     }
 
