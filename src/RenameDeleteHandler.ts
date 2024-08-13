@@ -33,7 +33,6 @@ import {
   getBacklinksForFileSafe,
   getCacheSafe
 } from "./MetadataCache.ts";
-import { createTFileInstance } from "obsidian-typings/implementations";
 
 const renameMap = new Map<string, string>();
 
@@ -69,6 +68,10 @@ export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, 
 export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, file: TAbstractFile): Promise<void> {
   console.debug("Handle Delete");
   if (!isNote(file)) {
+    return;
+  }
+
+  if (renameMap.has(file.path)) {
     return;
   }
 
@@ -141,9 +144,12 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string): Promise<vo
 }
 
 async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPath: string, newPath: string): Promise<void> {
+  const app = plugin.app;
+  let oldFile: TFile | null = null;
+  let fakeOldFileCreated = false;
+
   try {
-    const app = plugin.app;
-    let oldFile = app.vault.getFileByPath(oldPath);
+    oldFile = app.vault.getFileByPath(oldPath);
     const newFile = app.vault.getFileByPath(newPath);
     const file = oldFile ?? newFile;
     if (!file) {
@@ -151,7 +157,8 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
     }
 
     if (!oldFile) {
-      oldFile = createTFileInstance(app.vault, oldPath);
+      fakeOldFileCreated = true;
+      oldFile = await app.vault.create(oldPath, "");
     }
 
     const backlinks = await getBacklinks(plugin.app, oldFile, newFile);
@@ -172,7 +179,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
 
       await applyFileChanges(app, parentNote, async () => {
         const links =
-          (await getBacklinks(plugin.app, oldFile, newFile)).get(parentNotePath) ?? [];
+          (await getBacklinks(plugin.app, oldFile!, newFile)).get(parentNotePath) ?? [];
         const changes = [];
 
         for (const link of links) {
@@ -207,7 +214,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       await updateLinksInFile(app, file, oldPath, renameMap);
     }
 
-    if (!oldFile.deleted) {
+    if (!fakeOldFileCreated) {
       await createFolderSafe(app, dirname(newPath));
       const oldFolder = oldFile.parent;
       if (newFile) {
@@ -219,6 +226,9 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       }
     }
   } finally {
+    if (fakeOldFileCreated && oldFile) {
+      await app.vault.delete(oldFile);
+    }
     renameMap.delete(oldPath);
   }
 }
