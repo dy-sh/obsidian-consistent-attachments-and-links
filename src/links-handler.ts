@@ -303,7 +303,13 @@ export class LinksHandler {
 
     const links = getAllLinks(cache);
     const result = links.filter(link => link.original.includes("[[")).length;
-    await updateLinksInFile(this.app, noteFile, noteFile.path, new Map<string, string>(), true);
+    await updateLinksInFile({
+      app: this.app,
+      file: noteFile,
+      oldPath: noteFile.path,
+      renameMap: new Map<string, string>(),
+      forceMarkdownLinks: true
+    });
     return result;
   }
 
