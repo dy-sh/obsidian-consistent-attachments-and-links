@@ -301,7 +301,7 @@ export class LinksHandler {
       return 0;
     }
 
-    const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];;
+    const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
     const result = links.filter(link => link.original.includes("[[")).length;
     await updateLinksInFile({
       app: this.app,
