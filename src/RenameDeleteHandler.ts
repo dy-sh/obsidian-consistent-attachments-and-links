@@ -191,6 +191,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
               app,
               link,
               file,
+              oldPath,
               source: parentNote,
               renameMap
             }),
