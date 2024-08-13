@@ -79,7 +79,7 @@ export async function applyFileChanges(app: App, file: TFile, changesFn: () => M
     for (let i = 1; i < changes.length; i++) {
       const change = changes[i]!;
       const previousChange = changes[i - 1]!;
-      if (previousChange.endIndex >= change.startIndex) {
+      if (previousChange.endIndex > change.startIndex) {
         console.warn(`Overlapping changes:\n${toJson(previousChange)}\n${toJson(change)}`);
         return null;
       }
