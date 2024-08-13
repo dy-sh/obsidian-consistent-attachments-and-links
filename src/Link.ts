@@ -53,6 +53,7 @@ function convertLink(app: App, link: ReferenceCache, source: TFile, oldPath: str
     app,
     link,
     file: extractLinkFile(app, link, oldPath),
+    oldPath,
     source,
     renameMap,
     forceMarkdownLinks
@@ -68,6 +69,7 @@ export function updateLink({
   app,
   link,
   file,
+  oldPath,
   source,
   renameMap,
   forceMarkdownLinks
@@ -75,6 +77,7 @@ export function updateLink({
   app: App,
   link: ReferenceCache,
   file: TFile | null,
+  oldPath: string,
   source: TFile,
   renameMap: Map<string, string>,
   forceMarkdownLinks?: boolean | undefined
@@ -91,8 +94,8 @@ export function updateLink({
   const alias = getAlias({
     app,
     displayText: link.displayText,
-    oldFile: file,
-    newPath,
+    file: file,
+    otherPaths: [oldPath, newPath],
     sourcePath: source.path
   });
 
@@ -115,14 +118,14 @@ export function updateLink({
 function getAlias({
   app,
   displayText,
-  oldFile,
-  newPath,
+  file,
+  otherPaths,
   sourcePath
 }: {
   app: App,
   displayText: string | undefined,
-  oldFile: TFile,
-  newPath: string | undefined,
+  file: TFile,
+  otherPaths: (string | undefined)[]
   sourcePath: string
 }): string | undefined {
   if (!displayText) {
@@ -131,7 +134,7 @@ function getAlias({
 
   const cleanDisplayText = normalizePath(displayText.split(" > ")[0]!).replace(/\.\//g, "");
 
-  for (const path of [oldFile.path, newPath]) {
+  for (const path of [file.path, ...otherPaths]) {
     if (!path) {
       continue;
     }
@@ -144,7 +147,7 @@ function getAlias({
   }
 
   for (const omitMdExtension of [true, false]) {
-    const linkText = app.metadataCache.fileToLinktext(oldFile, sourcePath, omitMdExtension);
+    const linkText = app.metadataCache.fileToLinktext(file, sourcePath, omitMdExtension);
     if (cleanDisplayText === linkText) {
       return undefined;
     }
