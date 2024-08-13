@@ -50,6 +50,7 @@ Configure [`Attachment Subfolder` setting](#attachment-subfolder-setting).
 Run the commands in the following order to reorganize vault:
 
 - `Replace All Wiki Links with Markdown Links`
+- `Replace All Wiki Embeds with Markdown Links`
 - `Convert All Embed Paths to Relative`
 - `Convert All Link Paths to Relative`
 - `Rename All Attachments` (using [`Unique attachments` plugin][Unique attachments], optional)
@@ -93,6 +94,7 @@ Check if there are vault consistency problems and print the report. The report w
 Runs the following commands one by one:
 
 - `Replace All Wiki Links with Markdown Links`
+- `Replace All Wiki Embeds with Markdown Embeds`
 - `Convert All Embed Paths to Relative`
 - `Convert All Link Paths to Relative`
 - `Collect All Attachments`
@@ -105,6 +107,12 @@ This is the fastest way to clean up your vault.
 Searches for all wiki links in notes and converts them into regular markdown links.
 
 Example: `[[readme]]` will turn into `[readme](readme.md)`
+
+### Replace All Wiki Embeds with Markdown Embeds
+
+Searches for all wiki embeds in notes and converts them into regular markdown embeds.
+
+Example: `![[readme]]` will turn into `![readme](readme.md)`
 
 ### Convert All Embed Paths to Relative
 
