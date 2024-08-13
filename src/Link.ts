@@ -49,7 +49,14 @@ export async function updateLinksInFile(app: App, file: TFile, oldPath: string, 
 
 function convertLink(app: App, link: ReferenceCache, source: TFile, oldPath: string, renameMap: Map<string, string>, forceMarkdownLinks?: boolean): string {
   oldPath ??= source.path;
-  return updateLink(app, link, extractLinkFile(app, link, oldPath), source, renameMap, forceMarkdownLinks);
+  return updateLink({
+    app,
+    link,
+    file: extractLinkFile(app, link, oldPath),
+    source,
+    renameMap,
+    forceMarkdownLinks
+  });
 }
 
 export function extractLinkFile(app: App, link: ReferenceCache, oldPath: string): TFile | null {
@@ -57,7 +64,21 @@ export function extractLinkFile(app: App, link: ReferenceCache, oldPath: string)
   return app.metadataCache.getFirstLinkpathDest(linkPath, oldPath);
 }
 
-export function updateLink(app: App, link: ReferenceCache, file: TFile | null, source: TFile, renameMap: Map<string, string>, forceMarkdownLinks?: boolean): string {
+export function updateLink({
+  app,
+  link,
+  file,
+  source,
+  renameMap,
+  forceMarkdownLinks
+}: {
+  app: App,
+  link: ReferenceCache,
+  file: TFile | null,
+  source: TFile,
+  renameMap: Map<string, string>,
+  forceMarkdownLinks?: boolean | undefined
+}): string {
   if (!file) {
     return link.original;
   }
@@ -67,7 +88,13 @@ export function updateLink(app: App, link: ReferenceCache, file: TFile | null, s
   const { subpath } = splitSubpath(link.link);
 
   const newPath = renameMap.get(file.path);
-  const alias = getAlias(app, link.displayText, file, newPath, source.path);
+  const alias = getAlias({
+    app,
+    displayText: link.displayText,
+    oldFile: file,
+    newPath,
+    sourcePath: source.path
+  });
 
   if (newPath) {
     file = createTFileInstance(app.vault, newPath);
@@ -85,7 +112,19 @@ export function updateLink(app: App, link: ReferenceCache, file: TFile | null, s
   return newLink;
 }
 
-function getAlias(app: App, displayText: string | undefined, oldFile: TFile, newPath: string | undefined, sourcePath: string): string | undefined {
+function getAlias({
+  app,
+  displayText,
+  oldFile,
+  newPath,
+  sourcePath
+}: {
+  app: App,
+  displayText: string | undefined,
+  oldFile: TFile,
+  newPath: string | undefined,
+  sourcePath: string
+}): string | undefined {
   if (!displayText) {
     return undefined;
   }
