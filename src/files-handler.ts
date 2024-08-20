@@ -9,21 +9,20 @@ import {
 import {
   getAllLinks,
   getCacheSafe
-} from "./MetadataCache.ts";
-import { posix } from "@jinder/path";
-const {
+} from "obsidian-dev-utils/obsidian/MetadataCache";
+import {
   basename,
   dirname,
   extname,
   join
-} = posix;
+} from "obsidian-dev-utils/Path";
 import { splitSubpath } from "./Link.ts";
 import { getAttachmentFilePath } from "./AttachmentPath.ts";
 import {
   createFolderSafe,
   removeEmptyFolderHierarchy,
   safeList
-} from "./Vault.ts";
+} from "obsidian-dev-utils/obsidian/Vault";
 
 export interface MovedAttachmentResult {
   movedAttachments: PathChangeInfo[]

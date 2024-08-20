@@ -6,22 +6,21 @@ import {
   type TAbstractFile
 } from "obsidian";
 import type ConsistentAttachmentsAndLinksPlugin from "./ConsistentAttachmentsAndLinksPlugin.ts";
-import { posix } from "@jinder/path";
-const {
+import {
   relative,
   join,
   dirname
-} = posix;
+} from "obsidian-dev-utils/Path";
 import {
-  isNote,
   removeFolderSafe,
   applyFileChanges,
   processWithRetry,
   createFolderSafe,
   removeEmptyFolderHierarchy
-} from "./Vault.ts";
+} from "obsidian-dev-utils/obsidian/Vault";
+import { isNote } from "obsidian-dev-utils/obsidian/TAbstractFile";
 import type { CanvasData } from "obsidian/canvas.js";
-import { toJson } from "./Object.ts";
+import { toJson } from "obsidian-dev-utils/JSON";
 import { getAttachmentFolderPath } from "./AttachmentPath.ts";
 import {
   extractLinkFile,
@@ -32,7 +31,7 @@ import {
   getAllLinks,
   getBacklinksForFileSafe,
   getCacheSafe
-} from "./MetadataCache.ts";
+} from "obsidian-dev-utils/obsidian/MetadataCache";
 
 const renamingPaths = new Set<string>();
 
@@ -234,7 +233,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
         await app.vault.delete(newFile);
       }
       await app.vault.rename(oldFile, newPath);
-      if (plugin.settings.deleteEmptyFolders) {
+      if (plugin.settingsCopy.deleteEmptyFolders) {
         await removeEmptyFolderHierarchy(app, oldFolder);
       }
     }
