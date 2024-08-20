@@ -1,9 +1,9 @@
 import {
-  Plugin,
   TFile,
   Notice,
   type CachedMetadata,
   MarkdownView,
+  PluginSettingTab,
 } from "obsidian";
 import {
   ConsistencyCheckResult,
@@ -12,38 +12,34 @@ import {
 import { FilesHandler } from "./files-handler.ts";
 import {
   convertAsyncToSync,
-  convertToSync
-} from "./Async.ts";
+  invokeAsyncSafely
+} from "obsidian-dev-utils/Async";
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
 import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
 import {
   createFolderSafe,
   getMarkdownFilesSorted
-} from "./Vault.ts";
+} from "obsidian-dev-utils/obsidian/Vault";
 import {
   handleDelete,
   handleRename
 } from "./RenameDeleteHandler.ts";
-import { posix } from "@jinder/path";
-const { dirname } = posix;
+import { dirname } from "obsidian-dev-utils/Path";
+import { PluginBase } from "obsidian-dev-utils/obsidian/Plugin/PluginBase";
 
-export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
-  private _settings!: ConsistentAttachmentsAndLinksPluginSettings;
+export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
   private lh!: LinksHandler;
   private fh!: FilesHandler;
   private isHandlingMetadataCacheChanged: boolean = false;
-  private abortSignal!: AbortSignal;
 
-  private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
-
-  public get settings(): ConsistentAttachmentsAndLinksPluginSettings {
-    return ConsistentAttachmentsAndLinksPluginSettings.clone(this._settings);
+  protected override createDefaultPluginSettings(this: void): ConsistentAttachmentsAndLinksPluginSettings {
+    return new ConsistentAttachmentsAndLinksPluginSettings();
   }
-
-  public override async onload(): Promise<void> {
-    await this.loadSettings();
-
-    if (this._settings.showWarning) {
+  protected override createPluginSettingsTab(): PluginSettingTab | null {
+    return new ConsistentAttachmentsAndLinksPluginSettingsTab(this);
+  }
+  protected override onloadComplete(): void {
+    if (this.settings.showWarning) {
       const notice = new Notice(createFragment((f) => {
         f.appendText("Starting from ");
         appendCodeBlock(f, "v3.0.0");
@@ -60,24 +56,22 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
           ev.preventDefault();
           window.open(ev.target.href, "_blank");
         } else {
-          this._settings.showWarning = false;
-          await this.saveSettings(this._settings);
+          this.settings.showWarning = false;
+          await this.saveSettings(this.settings);
         }
       }));
     }
-
-    this.addSettingTab(new ConsistentAttachmentsAndLinksPluginSettingsTab(this.app, this));
 
     this.registerEvent(
       this.app.metadataCache.on("deleted", (file, prevCache) => this.handleDeletedMetadata(file, prevCache!)),
     );
 
     this.registerEvent(
-      this.app.vault.on("delete", (file) => convertToSync(handleDelete(this, file))),
+      this.app.vault.on("delete", (file) => invokeAsyncSafely(handleDelete(this, file))),
     );
 
     this.registerEvent(
-      this.app.vault.on("rename", (file, oldPath) => convertToSync(handleRename(this, file, oldPath))),
+      this.app.vault.on("rename", (file, oldPath) => invokeAsyncSafely(handleRename(this, file, oldPath))),
     );
 
     this.addCommand({
@@ -158,41 +152,40 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
       callback: () => this.checkConsistency()
     });
 
-    this.registerEvent(this.app.metadataCache.on("changed", (file) => convertToSync(this.handleMetadataCacheChanged(file))));
+    this.registerEvent(this.app.metadataCache.on("changed", (file) => invokeAsyncSafely(this.handleMetadataCacheChanged(file))));
 
     this.lh = new LinksHandler(
       this.app,
       "Consistent Attachments and Links: ",
-      this._settings.ignoreFolders,
-      this._settings.getIgnoreFilesRegex()
+      this.settings.ignoreFolders,
+      this.settings.getIgnoreFilesRegex()
     );
 
     this.fh = new FilesHandler(
       this.app,
       this.lh,
       "Consistent Attachments and Links: ",
-      this._settings.ignoreFolders,
-      this._settings.getIgnoreFilesRegex(),
-      this._settings.deleteEmptyFolders
+      this.settings.ignoreFolders,
+      this.settings.getIgnoreFilesRegex(),
+      this.settings.deleteEmptyFolders
     );
-
-    const abortController = new AbortController();
-    this.register(() => abortController.abort());
-    this.abortSignal = abortController.signal;
   }
+
+  private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
+
 
   private isPathIgnored(path: string): boolean {
     if (path.startsWith("./")) {
       path = path.substring(2);
     }
 
-    for (const folder of this._settings.ignoreFolders) {
+    for (const folder of this.settings.ignoreFolders) {
       if (path.startsWith(folder)) {
         return true;
       }
     }
 
-    for (const fileRegex of this._settings.getIgnoreFilesRegex()) {
+    for (const fileRegex of this.settings.getIgnoreFilesRegex()) {
       if (fileRegex.test(path)) {
         return true;
       }
@@ -202,7 +195,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
-    if (!prevCache || !this._settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
+    if (!prevCache || !this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
       return;
     }
 
@@ -216,7 +209,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     if (!checking) {
-      convertToSync(this.collectAttachments(note));
+      invokeAsyncSafely(this.collectAttachments(note));
     }
 
     return true;
@@ -232,8 +225,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     const result = await this.fh.collectAttachmentsForCachedNote(
       note.path,
-      this._settings.deleteExistFilesWhenMoveNote,
-      this._settings.deleteEmptyFolders);
+      this.settings.deleteExistFilesWhenMoveNote,
+      this.settings.deleteEmptyFolders);
 
     if (result && result.movedAttachments && result.movedAttachments.length > 0) {
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
@@ -272,8 +265,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
       const result = await this.fh.collectAttachmentsForCachedNote(
         note.path,
-        this._settings.deleteExistFilesWhenMoveNote,
-        this._settings.deleteEmptyFolders);
+        this.settings.deleteExistFilesWhenMoveNote,
+        this.settings.deleteEmptyFolders);
 
 
       if (result && result.movedAttachments && result.movedAttachments.length > 0) {
@@ -478,7 +471,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
 
     notice.hide();
 
-    const notePath = this._settings.consistencyReportFile;
+    const notePath = this.settings.consistencyReportFile;
     const text =
       badLinks.toString(this.app, notePath)
       + badEmbeds.toString(this.app, notePath)
@@ -513,27 +506,23 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     new Notice("Reorganization of the vault completed");
   }
 
-  private async loadSettings(): Promise<void> {
-    this._settings = ConsistentAttachmentsAndLinksPluginSettings.load(await this.loadData());
-  }
 
-  public async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
-    this._settings = ConsistentAttachmentsAndLinksPluginSettings.clone(newSettings);
-    await this.saveData(this._settings);
+  public override async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
+    await super.saveSettings(newSettings);
 
     this.lh = new LinksHandler(
       this.app,
       "Consistent Attachments and Links: ",
-      this._settings.ignoreFolders,
-      this._settings.getIgnoreFilesRegex()
+      this.settings.ignoreFolders,
+      this.settings.getIgnoreFilesRegex()
     );
 
     this.fh = new FilesHandler(
       this.app,
       this.lh,
       "Consistent Attachments and Links: ",
-      this._settings.ignoreFolders,
-      this._settings.getIgnoreFilesRegex(),
+      this.settings.ignoreFolders,
+      this.settings.getIgnoreFilesRegex(),
     );
   }
 
@@ -551,7 +540,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     if (!checking) {
-      convertToSync(this.lh.convertAllNoteLinksPathsToRelative(note.path));
+      invokeAsyncSafely(this.lh.convertAllNoteLinksPathsToRelative(note.path));
     }
 
     return true;
@@ -564,7 +553,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     if (!checking) {
-      convertToSync(this.lh.convertAllNoteEmbedsPathsToRelative(note.path));
+      invokeAsyncSafely(this.lh.convertAllNoteEmbedsPathsToRelative(note.path));
     }
 
     return true;
@@ -577,7 +566,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     if (!checking) {
-      convertToSync(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false));
+      invokeAsyncSafely(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false));
     }
 
     return true;
@@ -590,14 +579,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends Plugin {
     }
 
     if (!checking) {
-      convertToSync(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true));
+      invokeAsyncSafely(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true));
     }
 
     return true;
   }
 
   private async handleMetadataCacheChanged(file: TFile): Promise<void> {
-    if (!this._settings.autoCollectAttachments) {
+    if (!this.settings.autoCollectAttachments) {
       return;
     }
 

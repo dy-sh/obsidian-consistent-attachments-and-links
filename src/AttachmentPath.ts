@@ -1,10 +1,9 @@
-import type {  App} from "obsidian";
-import { posix } from "@jinder/path";
-const {
+import type { App } from "obsidian";
+import {
   basename,
   dirname,
   extname
-} = posix;
+} from "obsidian-dev-utils/Path";
 import { createTFileInstance } from "obsidian-typings/implementations";
 
 export async function getAttachmentFolderPath(app: App, notePath: string): Promise<string> {

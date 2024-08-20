@@ -4,25 +4,24 @@ import {
   TFile,
   type ReferenceCache
 } from "obsidian";
-import { posix } from "@jinder/path";
-const {
+import {
   dirname,
   join
-} = posix;
+} from "obsidian-dev-utils/Path";
 import {
   getAllLinks,
   getBacklinksForFileSafe,
   getCacheSafe
-} from "./MetadataCache.ts";
+} from "obsidian-dev-utils/obsidian/MetadataCache";
 import {
   applyFileChanges,
   type FileChange
-} from "./Vault.ts";
+} from "obsidian-dev-utils/obsidian/Vault";
 import {
   splitSubpath,
   updateLinksInFile
 } from "./Link.ts";
-import { generateMarkdownLink } from "./GenerateMarkdownLink.ts";
+import { generateMarkdownLink } from "obsidian-dev-utils/obsidian/Link";
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
   public constructor(private title: string) {

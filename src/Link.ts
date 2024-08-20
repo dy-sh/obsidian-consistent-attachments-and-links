@@ -7,15 +7,14 @@ import {
 import {
   getAllLinks,
   getCacheSafe
-} from "./MetadataCache.ts";
-import { applyFileChanges } from "./Vault.ts";
-import { posix } from "@jinder/path";
-import { generateMarkdownLink } from "./GenerateMarkdownLink.ts";
+} from "obsidian-dev-utils/obsidian/MetadataCache";
+import { applyFileChanges } from "obsidian-dev-utils/obsidian/Vault";
+import { generateMarkdownLink } from "obsidian-dev-utils/obsidian/Link";
 import { createTFileInstance } from "obsidian-typings/implementations";
-const {
+import {
   basename,
   extname
-} = posix;
+} from "obsidian-dev-utils/Path";
 
 type SplitSubpathResult = {
   linkPath: string;
