@@ -482,7 +482,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     await this.app.vault.modify(note, text);
 
     let fileOpened = false;
-    this.app.workspace.iterateAllLeaves(leaf => {
+    this.app.workspace.iterateAllLeaves((leaf) => {
       if (leaf.getDisplayText() != "" && notePath.startsWith(leaf.getDisplayText())) {
         fileOpened = true;
       }
@@ -609,7 +609,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 }
 
 function appendCodeBlock(fragment: DocumentFragment, text: string): void {
-  fragment.appendChild(createSpan({ cls: "markdown-rendered code" }, span => {
+  fragment.appendChild(createSpan({ cls: "markdown-rendered code" }, (span) => {
     span.style.fontWeight = "bold";
     span.appendChild(createEl("code", { text }));
   }));

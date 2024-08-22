@@ -7,6 +7,7 @@
     "build": "obsidian-dev-utils build",
     "dev": "obsidian-dev-utils dev",
     "lint": "obsidian-dev-utils lint",
+    "lint:fix": "obsidian-dev-utils lint:fix",
     "spellcheck": "obsidian-dev-utils spellcheck",
     "version": "obsidian-dev-utils version"
   },

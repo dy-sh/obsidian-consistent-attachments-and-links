@@ -154,7 +154,7 @@ export class LinksHandler {
     if (subpath.startsWith("#^")) {
       return Object.keys(cache.blocks ?? {}).includes(subpath.slice(2));
     } else {
-      return (cache.headings ?? []).map(h => h.heading.replaceAll("#", " ")).includes(subpath.slice(1));
+      return (cache.headings ?? []).map((h) => h.heading.replaceAll("#", " ")).includes(subpath.slice(1));
     }
   }
 
@@ -301,7 +301,7 @@ export class LinksHandler {
     }
 
     const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
-    const result = links.filter(link => link.original.includes("[[")).length;
+    const result = links.filter((link) => link.original.includes("[[")).length;
     await updateLinksInFile({
       app: this.app,
       file: noteFile,
@@ -353,7 +353,7 @@ export class LinksHandler {
         return [];
       }
       const links = getAllLinks(cache);
-      return links.map(link => ({
+      return links.map((link) => ({
         startIndex: link.position.start.offset,
         endIndex: link.position.end.offset,
         oldContent: link.original,
