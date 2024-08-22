@@ -45,7 +45,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       .setDesc("Specify a list of folders to ignore. Enter each folder on a new line.")
       .addTextArea((textArea) => this.bindValueComponent(textArea, "ignoreFolders", {
         settingToUIValueConverter: (value) => value.join("\n"),
-        uiToSettingValueConverter: (value) => value.trim().split("\n").map(value => this.getNormalizedPath(value) + "/")
+        uiToSettingValueConverter: (value) => value.trim().split("\n").map((value) => this.getNormalizedPath(value) + "/")
       })
         .setPlaceholder("Example: .git, .obsidian")
       );

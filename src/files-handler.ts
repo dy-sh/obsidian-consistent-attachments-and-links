@@ -98,7 +98,7 @@ export class FilesHandler {
       }
 
       const fullPathLink = this.lh.getFullPathForLink(linkPath, notePath);
-      if (result.movedAttachments.findIndex(x => x.oldPath == fullPathLink) != -1) {
+      if (result.movedAttachments.findIndex((x) => x.oldPath == fullPathLink) != -1) {
         // already moved
         continue;
       }

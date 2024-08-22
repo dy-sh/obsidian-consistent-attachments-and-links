@@ -12,6 +12,6 @@ export default class ConsistentAttachmentsAndLinksPluginSettings {
   public updateLinks: boolean = true;
 
   public getIgnoreFilesRegex(): RegExp[] {
-    return this.ignoreFiles.map(file => RegExp(file));
+    return this.ignoreFiles.map((file) => RegExp(file));
   }
 }
