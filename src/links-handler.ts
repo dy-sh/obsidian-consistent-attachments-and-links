@@ -20,7 +20,7 @@ import {
 import {
   splitSubpath,
   updateLinksInFile
-} from "./Link.ts";
+} from "obsidian-dev-utils/obsidian/Link";
 import { generateMarkdownLink } from "obsidian-dev-utils/obsidian/Link";
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
@@ -213,13 +213,13 @@ export class LinksHandler {
 
     return generateMarkdownLink({
       app: this.app,
-      file: newLinkedNote,
-      sourcePath: note.path,
+      pathOrFile: newLinkedNote,
+      sourcePathOrFile: note.path,
       subpath,
       alias: changeLinksAlt === false ? link.displayText : undefined,
       isEmbed,
       isWikilink,
-      isRelative
+      forceRelativePath: isRelative
     });
   }
 
@@ -304,8 +304,8 @@ export class LinksHandler {
     const result = links.filter((link) => link.original.includes("[[")).length;
     await updateLinksInFile({
       app: this.app,
-      file: noteFile,
-      oldPath: noteFile.path,
+      pathOrFile: noteFile,
+      oldPathOrFile: noteFile.path,
       renameMap: new Map<string, string>(),
       forceMarkdownLinks: true,
       embedOnlyLinks

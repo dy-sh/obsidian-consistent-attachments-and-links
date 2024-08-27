@@ -16,8 +16,8 @@ import {
   extname,
   join
 } from "obsidian-dev-utils/Path";
-import { splitSubpath } from "./Link.ts";
-import { getAttachmentFilePath } from "./AttachmentPath.ts";
+import { splitSubpath } from "obsidian-dev-utils/obsidian/Link";
+import { getAttachmentFilePath } from "obsidian-dev-utils/obsidian/AttachmentPath";
 import {
   createFolderSafe,
   removeEmptyFolderHierarchy,
