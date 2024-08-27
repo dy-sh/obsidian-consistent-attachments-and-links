@@ -32,6 +32,7 @@ import {
   getBacklinksForFileSafe,
   getCacheSafe
 } from "obsidian-dev-utils/obsidian/MetadataCache";
+import { createTFileInstance } from "obsidian-typings/implementations";
 
 const renamingPaths = new Set<string>();
 
@@ -55,6 +56,9 @@ export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, 
 
     const renameMap = new Map<string, string>();
     await fillRenameMap(app, file, oldPath, renameMap);
+    for (const oldPath of renameMap.keys()) {
+      renamingPaths.add(oldPath);
+    }
 
     for (const [oldPath2, newPath2] of renameMap.entries()) {
       await processRename(plugin, oldPath2, newPath2, renameMap);
@@ -146,7 +150,6 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string, renameMap: 
 async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPath: string, newPath: string, renameMap: Map<string, string>): Promise<void> {
   const app = plugin.app;
   let oldFile: TFile | null = null;
-  let fakeOldFileCreated = false;
 
   try {
     oldFile = app.vault.getFileByPath(oldPath);
@@ -156,11 +159,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       return;
     }
 
-    if (!oldFile) {
-      fakeOldFileCreated = true;
-      oldFile = await app.vault.create(oldPath, "");
-    }
-
+    oldFile ??= createTFileInstance(app.vault, oldPath);
     const backlinks = await getBacklinks(plugin.app, oldFile, newFile);
 
     for (const parentNotePath of backlinks.keys()) {
@@ -226,7 +225,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       });
     }
 
-    if (!fakeOldFileCreated) {
+    if (!oldFile.deleted) {
       await createFolderSafe(app, dirname(newPath));
       const oldFolder = oldFile.parent;
       if (newFile) {
@@ -238,10 +237,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       }
     }
   } finally {
-    if (fakeOldFileCreated && oldFile) {
-      await app.vault.delete(oldFile);
-    }
-    renameMap.delete(oldPath);
+    renamingPaths.delete(oldPath);
   }
 }
 
