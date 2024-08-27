@@ -21,12 +21,12 @@ import {
 import { isNote } from "obsidian-dev-utils/obsidian/TAbstractFile";
 import type { CanvasData } from "obsidian/canvas.js";
 import { toJson } from "obsidian-dev-utils/JSON";
-import { getAttachmentFolderPath } from "./AttachmentPath.ts";
+import { getAttachmentFolderPath } from "obsidian-dev-utils/obsidian/AttachmentPath";
 import {
   extractLinkFile,
   updateLink,
   updateLinksInFile
-} from "./Link.ts";
+} from "obsidian-dev-utils/obsidian/Link";
 import {
   getAllLinks,
   getBacklinksForFileSafe,
@@ -190,9 +190,9 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
             newContent: updateLink({
               app,
               link,
-              file,
-              oldPath,
-              source: parentNote,
+              pathOrFile: file,
+              oldPathOrFile: oldPath,
+              sourcePathOrFile: parentNote,
               renameMap
             }),
           });
@@ -220,8 +220,8 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
     } else if (file.extension.toLowerCase() === "md") {
       await updateLinksInFile({
         app,
-        file,
-        oldPath,
+        pathOrFile: file,
+        oldPathOrFile: oldPath,
         renameMap
       });
     }
