@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.13.0
+
+- Check for race conditions
+- Don't create fake files
+
 ## 3.12.0
 
 - Add commands to convert only wiki embeds
