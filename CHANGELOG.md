@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.13.1
+
+- Fix unnecessary creation of attachment folder
+
 ## 3.13.0
 
 - Check for race conditions
