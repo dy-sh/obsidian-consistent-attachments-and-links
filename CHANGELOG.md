@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.13.2
+
+- Keep link/embed format
+
 ## 3.13.1
 
 - Fix unnecessary creation of attachment folder
