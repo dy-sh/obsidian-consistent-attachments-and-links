@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.13.3
+
+- Handle removed parent folder case
+- Rename attachments before changing links
+
 ## 3.13.2
 
 - Keep link/embed format
