@@ -267,7 +267,8 @@ export class LinksHandler {
             link: ref,
             oldNotePath: notePath,
             isWikilink: ref.original.includes("[["),
-            isRelative: true
+            isRelative: true,
+            isEmbed
           })
         };
         changes.push(change);
