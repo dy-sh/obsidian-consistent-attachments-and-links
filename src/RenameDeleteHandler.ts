@@ -18,7 +18,11 @@ import {
   createFolderSafe,
   removeEmptyFolderHierarchy
 } from "obsidian-dev-utils/obsidian/Vault";
-import { isCanvasFile, isMarkdownFile, isNote } from "obsidian-dev-utils/obsidian/TAbstractFile";
+import {
+  isCanvasFile,
+  isMarkdownFile,
+  isNote
+} from "obsidian-dev-utils/obsidian/TAbstractFile";
 import type { CanvasData } from "obsidian/canvas.js";
 import { toJson } from "obsidian-dev-utils/JSON";
 import { getAttachmentFolderPath } from "obsidian-dev-utils/obsidian/AttachmentPath";
