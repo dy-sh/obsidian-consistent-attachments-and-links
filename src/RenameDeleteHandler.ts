@@ -18,7 +18,7 @@ import {
   createFolderSafe,
   removeEmptyFolderHierarchy
 } from "obsidian-dev-utils/obsidian/Vault";
-import { isNote } from "obsidian-dev-utils/obsidian/TAbstractFile";
+import { isCanvasFile, isMarkdownFile, isNote } from "obsidian-dev-utils/obsidian/TAbstractFile";
 import type { CanvasData } from "obsidian/canvas.js";
 import { toJson } from "obsidian-dev-utils/JSON";
 import { getAttachmentFolderPath } from "obsidian-dev-utils/obsidian/AttachmentPath";
@@ -153,13 +153,39 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
 
   try {
     oldFile = app.vault.getFileByPath(oldPath);
-    const newFile = app.vault.getFileByPath(newPath);
-    const file = oldFile ?? newFile;
-    if (!file) {
-      return;
+    let newFile = app.vault.getFileByPath(newPath);
+
+    if (oldFile) {
+      await createFolderSafe(app, dirname(newPath));
+      const oldFolder = oldFile.parent;
+      try {
+        if (newFile) {
+          try {
+            await app.vault.delete(newFile);
+          } catch (e) {
+            if (app.vault.getAbstractFileByPath(newPath)) {
+              throw e;
+            }
+          }
+        }
+        await app.vault.rename(oldFile, newPath);
+      } catch (e) {
+        if (!app.vault.getAbstractFileByPath(newPath) || app.vault.getAbstractFileByPath(oldPath)) {
+          throw e;
+        }
+      }
+      if (plugin.settingsCopy.deleteEmptyFolders) {
+        await removeEmptyFolderHierarchy(app, oldFolder);
+      }
     }
 
-    oldFile ??= createTFileInstance(app.vault, oldPath);
+    oldFile = createTFileInstance(app.vault, oldPath);
+    newFile = app.vault.getFileByPath(newPath);
+
+    if (!oldFile.deleted || !newFile) {
+      throw new Error(`Could not rename ${oldPath} to ${newPath}`);
+    }
+
     const backlinks = await getBacklinks(plugin.app, oldFile, newFile);
 
     for (const parentNotePath of backlinks.keys()) {
@@ -189,7 +215,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
             newContent: updateLink({
               app,
               link,
-              pathOrFile: file,
+              pathOrFile: newFile,
               oldPathOrFile: oldPath,
               sourcePathOrFile: parentNote,
               renameMap
@@ -201,8 +227,8 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       });
     }
 
-    if (file.extension.toLowerCase() === "canvas") {
-      await processWithRetry(app, file, (content) => {
+    if (isCanvasFile(newFile)) {
+      await processWithRetry(app, newFile, (content) => {
         const canvasData = JSON.parse(content) as CanvasData;
         for (const node of canvasData.nodes) {
           if (node.type !== "file") {
@@ -216,37 +242,13 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
         }
         return toJson(canvasData);
       });
-    } else if (file.extension.toLowerCase() === "md") {
+    } else if (isMarkdownFile(newFile)) {
       await updateLinksInFile({
         app,
-        pathOrFile: file,
+        pathOrFile: newFile,
         oldPathOrFile: oldPath,
         renameMap
       });
-    }
-
-    if (!oldFile.deleted) {
-      await createFolderSafe(app, dirname(newPath));
-      const oldFolder = oldFile.parent;
-      try {
-        if (newFile) {
-          try {
-            await app.vault.delete(newFile);
-          } catch (e) {
-            if (app.vault.getAbstractFileByPath(newPath)) {
-              throw e;
-            }
-          }
-        }
-        await app.vault.rename(oldFile, newPath);
-      } catch (e) {
-        if (!app.vault.getAbstractFileByPath(newPath) || app.vault.getAbstractFileByPath(oldPath)) {
-          throw e;
-        }
-      }
-      if (plugin.settingsCopy.deleteEmptyFolders) {
-        await removeEmptyFolderHierarchy(app, oldFolder);
-      }
     }
   } finally {
     renamingPaths.delete(oldPath);
