@@ -1,1 +1,1 @@
-export { default } from "./ConsistentAttachmentsAndLinksPlugin.ts";
+export { default } from './ConsistentAttachmentsAndLinksPlugin.ts';

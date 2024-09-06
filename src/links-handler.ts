@@ -1,27 +1,25 @@
+import type { ReferenceCache } from 'obsidian';
 import {
   App,
   normalizePath,
-  TFile,
-  type ReferenceCache
-} from "obsidian";
+  TFile
+} from 'obsidian';
 import {
-  dirname,
-  join
-} from "obsidian-dev-utils/Path";
+  generateMarkdownLink,
+  splitSubpath,
+  updateLinksInFile
+} from 'obsidian-dev-utils/obsidian/Link';
 import {
   getAllLinks,
   getBacklinksForFileSafe,
   getCacheSafe
-} from "obsidian-dev-utils/obsidian/MetadataCache";
+} from 'obsidian-dev-utils/obsidian/MetadataCache';
+import type { FileChange } from 'obsidian-dev-utils/obsidian/Vault';
+import { applyFileChanges } from 'obsidian-dev-utils/obsidian/Vault';
 import {
-  applyFileChanges,
-  type FileChange
-} from "obsidian-dev-utils/obsidian/Vault";
-import {
-  splitSubpath,
-  updateLinksInFile
-} from "obsidian-dev-utils/obsidian/Link";
-import { generateMarkdownLink } from "obsidian-dev-utils/obsidian/Link";
+  dirname,
+  join
+} from 'obsidian-dev-utils/Path';
 
 export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
   public constructor(private title: string) {
@@ -32,19 +30,26 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
     if (!this.has(notePath)) {
       this.set(notePath, []);
     }
-    this.get(notePath)!.push(link);
+    const arr = this.get(notePath);
+    if (arr) {
+      arr.push(link);
+    }
   }
 
   public override toString(app: App, reportPath: string): string {
     if (this.size > 0) {
-      let str = `# ${this.title} (${this.size} files)\n`;
+      let str = `# ${this.title} (${this.size.toString()} files)\n`;
       for (const notePath of this.keys()) {
-        const linkStr = app.fileManager.generateMarkdownLink(app.vault.getFileByPath(notePath)!, reportPath);
-        str += `${linkStr}:\n`;
-        for (const link of this.get(notePath)!) {
-          str += `- (line ${link.position.start.line + 1}): \`${link.link}\`\n`;
+        const note = app.vault.getFileByPath(notePath);
+        if (!note) {
+          continue;
         }
-        str += "\n\n";
+        const linkStr = app.fileManager.generateMarkdownLink(note, reportPath);
+        str += `${linkStr}:\n`;
+        for (const link of this.get(notePath) ?? []) {
+          str += `- (line ${(link.position.start.line + 1).toString()}): \`${link.link}\`\n`;
+        }
+        str += '\n\n';
       }
       return str;
     } else {
@@ -54,30 +59,30 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
 }
 
 export interface PathChangeInfo {
-  oldPath: string,
-  newPath: string,
+  oldPath: string;
+  newPath: string;
 }
 
 export interface ReferenceChangeInfo {
-  old: ReferenceCache,
-  newLink: string,
+  old: ReferenceCache;
+  newLink: string;
 }
 
 export interface LinksAndEmbedsChangedInfo {
-  embeds: ReferenceChangeInfo[]
-  links: ReferenceChangeInfo[]
+  embeds: ReferenceChangeInfo[];
+  links: ReferenceChangeInfo[];
 }
 
 export class LinksHandler {
   public constructor(
     private app: App,
-    private consoleLogPrefix: string = "",
+    private consoleLogPrefix = '',
     private ignoreFolders: string[] = [],
-    private ignoreFilesRegex: RegExp[] = [],
+    private ignoreFilesRegex: RegExp[] = []
   ) { }
 
   private isPathIgnored(path: string): boolean {
-    if (path.startsWith("./")) {
+    if (path.startsWith('./')) {
       path = path.substring(2);
     }
 
@@ -96,13 +101,13 @@ export class LinksHandler {
     return false;
   }
 
-  public getFileByLink(link: string, owningNotePath: string, allowInvalidLink: boolean = true): TFile {
+  public getFileByLink(link: string, owningNotePath: string, allowInvalidLink = true): TFile | null {
     ({ linkPath: link } = splitSubpath(link));
     if (allowInvalidLink) {
-      return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath)!;
+      return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath);
     }
     const fullPath = this.getFullPathForLink(link, owningNotePath);
-    return this.app.vault.getFileByPath(fullPath)!;
+    return this.app.vault.getFileByPath(fullPath);
   }
 
   public getFullPathForLink(link: string, owningNotePath: string): string {
@@ -119,7 +124,7 @@ export class LinksHandler {
 
     if (!linkPath) {
       fullLinkPath = notePath;
-    } else if (linkPath.startsWith("/")) {
+    } else if (linkPath.startsWith('/')) {
       fullLinkPath = normalizePath(linkPath);
     } else {
       fullLinkPath = join(dirname(notePath), linkPath);
@@ -137,11 +142,11 @@ export class LinksHandler {
 
     const ext = file.extension.toLocaleLowerCase();
 
-    if (ext === "pdf") {
-      return subpath.startsWith("#page=");
+    if (ext === 'pdf') {
+      return subpath.startsWith('#page=');
     }
 
-    if (ext !== "md") {
+    if (ext !== 'md') {
       return false;
     }
 
@@ -151,10 +156,10 @@ export class LinksHandler {
       return false;
     }
 
-    if (subpath.startsWith("#^")) {
+    if (subpath.startsWith('#^')) {
       return Object.keys(cache.blocks ?? {}).includes(subpath.slice(2));
     } else {
-      return (cache.headings ?? []).map((h) => h.heading.replaceAll("#", " ")).includes(subpath.slice(1));
+      return (cache.headings ?? []).map((h) => h.heading.replaceAll('#', ' ')).includes(subpath.slice(1));
     }
   }
 
@@ -165,7 +170,7 @@ export class LinksHandler {
 
     const note = this.app.vault.getFileByPath(notePath);
     if (!note) {
-      console.warn(this.consoleLogPrefix + "can't update links in note, file not found: " + notePath);
+      console.warn(this.consoleLogPrefix + 'can\'t update links in note, file not found: ' + notePath);
       return;
     }
 
@@ -187,16 +192,16 @@ export class LinksHandler {
     isWikilink,
     isRelative
   }:
-  {
-    note: TFile,
-    link: ReferenceCache,
-    oldNotePath: string,
-    pathChangeMap?: Map<string, string> | undefined,
-    changeLinksAlt?: boolean | undefined,
-    isEmbed?: boolean | undefined,
-    isWikilink?: boolean | undefined,
-    isRelative?: boolean | undefined
-  }): string {
+    {
+      note: TFile;
+      link: ReferenceCache;
+      oldNotePath: string;
+      pathChangeMap?: Map<string, string> | undefined;
+      changeLinksAlt?: boolean | undefined;
+      isEmbed?: boolean | undefined;
+      isWikilink?: boolean | undefined;
+      isRelative?: boolean | undefined;
+    }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
     this.app.metadataCache.getFirstLinkpathDest(linkPath, oldNotePath);
     const oldLinkPath = this.app.metadataCache.getFirstLinkpathDest(linkPath, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
@@ -266,7 +271,7 @@ export class LinksHandler {
             note,
             link: ref,
             oldNotePath: notePath,
-            isWikilink: ref.original.includes("[["),
+            isWikilink: ref.original.includes('[['),
             isRelative: true,
             isEmbed
           })
@@ -292,7 +297,7 @@ export class LinksHandler {
 
     const noteFile = this.app.vault.getFileByPath(notePath);
     if (!noteFile) {
-      console.warn(this.consoleLogPrefix + "can't update wikilinks in note, file not found: " + notePath);
+      console.warn(this.consoleLogPrefix + 'can\'t update wikilinks in note, file not found: ' + notePath);
       return 0;
     }
 
@@ -302,7 +307,7 @@ export class LinksHandler {
     }
 
     const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
-    const result = links.filter((link) => link.original.includes("[[")).length;
+    const result = links.filter((link) => link.original.includes('[[')).length;
     await updateLinksInFile({
       app: this.app,
       pathOrFile: noteFile,
@@ -331,7 +336,7 @@ export class LinksHandler {
         badLinks.add(note.path, link);
       }
 
-      if (link.original.includes("[[")) {
+      if (link.original.includes('[[')) {
         wikiLinks.add(note.path, link);
       }
     }
@@ -341,7 +346,7 @@ export class LinksHandler {
         badEmbeds.add(note.path, embed);
       }
 
-      if (embed.original.includes("[[")) {
+      if (embed.original.includes('[[')) {
         wikiEmbeds.add(note.path, embed);
       }
     }

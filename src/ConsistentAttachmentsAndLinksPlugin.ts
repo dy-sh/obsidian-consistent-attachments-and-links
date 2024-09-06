@@ -1,60 +1,63 @@
+import type { CachedMetadata } from 'obsidian';
 import {
-  TFile,
-  Notice,
-  type CachedMetadata,
   MarkdownView,
+  Notice,
   PluginSettingTab,
-} from "obsidian";
-import {
-  ConsistencyCheckResult,
-  LinksHandler
-} from "./links-handler.ts";
-import { FilesHandler } from "./files-handler.ts";
+  TFile
+} from 'obsidian';
 import {
   convertAsyncToSync,
   invokeAsyncSafely
-} from "obsidian-dev-utils/Async";
-import { ConsistentAttachmentsAndLinksPluginSettingsTab } from "./ConsistentAttachmentsAndLinksPluginSettingsTab.ts";
-import ConsistentAttachmentsAndLinksPluginSettings from "./ConsistentAttachmentsAndLinksPluginSettings.ts";
+} from 'obsidian-dev-utils/Async';
+import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import {
   createFolderSafe,
   getMarkdownFilesSorted
-} from "obsidian-dev-utils/obsidian/Vault";
+} from 'obsidian-dev-utils/obsidian/Vault';
+import { dirname } from 'obsidian-dev-utils/Path';
+
+import ConsistentAttachmentsAndLinksPluginSettings from './ConsistentAttachmentsAndLinksPluginSettings.ts';
+import { ConsistentAttachmentsAndLinksPluginSettingsTab } from './ConsistentAttachmentsAndLinksPluginSettingsTab.ts';
+import { FilesHandler } from './files-handler.ts';
+import {
+  ConsistencyCheckResult,
+  LinksHandler
+} from './links-handler.ts';
 import {
   handleDelete,
   handleRename
-} from "./RenameDeleteHandler.ts";
-import { dirname } from "obsidian-dev-utils/Path";
-import { PluginBase } from "obsidian-dev-utils/obsidian/Plugin/PluginBase";
+} from './RenameDeleteHandler.ts';
 
 export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
   private lh!: LinksHandler;
   private fh!: FilesHandler;
-  private isHandlingMetadataCacheChanged: boolean = false;
+  private isHandlingMetadataCacheChanged = false;
 
-  protected override createDefaultPluginSettings(this: void): ConsistentAttachmentsAndLinksPluginSettings {
+  protected override createDefaultPluginSettings(): ConsistentAttachmentsAndLinksPluginSettings {
     return new ConsistentAttachmentsAndLinksPluginSettings();
   }
+
   protected override createPluginSettingsTab(): PluginSettingTab | null {
     return new ConsistentAttachmentsAndLinksPluginSettingsTab(this);
   }
+
   protected override onloadComplete(): void {
     if (this.settings.showWarning) {
       const notice = new Notice(createFragment((f) => {
-        f.appendText("Starting from ");
-        appendCodeBlock(f, "v3.0.0");
-        f.appendText(", the plugin ");
-        appendCodeBlock(f, "Consistent Attachments and Links");
-        f.appendText(" has setting ");
-        appendCodeBlock(f, "Attachment Subfolder");
-        f.appendText(" removed. This is a BREAKING CHANGE.");
-        f.appendChild(createEl("br"));
-        f.appendChild(createEl("a", { text: "Read more", href: "https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file#attachment-subfolder-setting" }));
+        f.appendText('Starting from ');
+        appendCodeBlock(f, 'v3.0.0');
+        f.appendText(', the plugin ');
+        appendCodeBlock(f, 'Consistent Attachments and Links');
+        f.appendText(' has setting ');
+        appendCodeBlock(f, 'Attachment Subfolder');
+        f.appendText(' removed. This is a BREAKING CHANGE.');
+        f.appendChild(createEl('br'));
+        f.appendChild(createEl('a', { text: 'Read more', href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file#attachment-subfolder-setting' }));
       }), 0);
       notice.noticeEl.onClickEvent(convertAsyncToSync(async (ev) => {
         if (ev.target instanceof HTMLAnchorElement) {
           ev.preventDefault();
-          window.open(ev.target.href, "_blank");
+          window.open(ev.target.href, '_blank');
         } else {
           this.settings.showWarning = false;
           await this.saveSettings(this.settings);
@@ -63,100 +66,106 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     this.registerEvent(
-      this.app.metadataCache.on("deleted", (file, prevCache) => this.handleDeletedMetadata(file, prevCache!)),
+      this.app.metadataCache.on('deleted', (file, prevCache) => {
+        if (prevCache) {
+          this.handleDeletedMetadata(file, prevCache);
+        }
+      })
     );
 
     this.registerEvent(
-      this.app.vault.on("delete", (file) => invokeAsyncSafely(handleDelete(this, file))),
+      this.app.vault.on('delete', (file) => { invokeAsyncSafely(handleDelete(this, file)); })
     );
 
     this.registerEvent(
-      this.app.vault.on("rename", (file, oldPath) => invokeAsyncSafely(handleRename(this, file, oldPath))),
+      this.app.vault.on('rename', (file, oldPath) => { invokeAsyncSafely(handleRename(this, file, oldPath)); })
     );
 
     this.addCommand({
-      id: "collect-all-attachments",
-      name: "Collect All Attachments",
+      id: 'collect-all-attachments',
+      name: 'Collect All Attachments',
       callback: () => this.collectAllAttachments()
     });
 
     this.addCommand({
-      id: "collect-attachments-current-note",
-      name: "Collect Attachments in Current Note",
+      id: 'collect-attachments-current-note',
+      name: 'Collect Attachments in Current Note',
       checkCallback: this.collectAttachmentsCurrentNote.bind(this)
     });
 
     this.addCommand({
-      id: "delete-empty-folders",
-      name: "Delete Empty Folders",
+      id: 'delete-empty-folders',
+      name: 'Delete Empty Folders',
       callback: () => this.deleteEmptyFolders()
     });
 
     this.addCommand({
-      id: "convert-all-link-paths-to-relative",
-      name: "Convert All Link Paths to Relative",
+      id: 'convert-all-link-paths-to-relative',
+      name: 'Convert All Link Paths to Relative',
       callback: () => this.convertAllLinkPathsToRelative()
     });
 
     this.addCommand({
-      id: "convert-all-link-paths-to-relative-current-note",
-      name: "Convert All Link Paths to Relative in Current Note",
+      id: 'convert-all-link-paths-to-relative-current-note',
+      name: 'Convert All Link Paths to Relative in Current Note',
       checkCallback: this.convertAllLinkPathsToRelativeCurrentNote.bind(this)
     });
 
     this.addCommand({
-      id: "convert-all-embed-paths-to-relative",
-      name: "Convert All Embed Paths to Relative",
+      id: 'convert-all-embed-paths-to-relative',
+      name: 'Convert All Embed Paths to Relative',
       callback: () => this.convertAllEmbedsPathsToRelative()
     });
 
     this.addCommand({
-      id: "convert-all-embed-paths-to-relative-current-note",
-      name: "Convert All Embed Paths to Relative in Current Note",
+      id: 'convert-all-embed-paths-to-relative-current-note',
+      name: 'Convert All Embed Paths to Relative in Current Note',
       checkCallback: this.convertAllEmbedsPathsToRelativeCurrentNote.bind(this)
     });
 
     this.addCommand({
-      id: "replace-all-wikilinks-with-markdown-links",
-      name: "Replace All Wiki Links with Markdown Links",
+      id: 'replace-all-wikilinks-with-markdown-links',
+      name: 'Replace All Wiki Links with Markdown Links',
       callback: () => this.replaceAllWikilinksWithMarkdownLinks()
     });
 
     this.addCommand({
-      id: "replace-all-wikilinks-with-markdown-links-current-note",
-      name: "Replace All Wiki Links with Markdown Links in Current Note",
+      id: 'replace-all-wikilinks-with-markdown-links-current-note',
+      name: 'Replace All Wiki Links with Markdown Links in Current Note',
       checkCallback: this.replaceAllWikilinksWithMarkdownLinksCurrentNote.bind(this)
     });
 
     this.addCommand({
-      id: "replace-all-wiki-embeds-with-markdown-embeds",
-      name: "Replace All Wiki Embeds with Markdown Embeds",
+      id: 'replace-all-wiki-embeds-with-markdown-embeds',
+      name: 'Replace All Wiki Embeds with Markdown Embeds',
       callback: () => this.replaceAllWikiEmbedsWithMarkdownEmbeds()
     });
 
     this.addCommand({
-      id: "replace-all-wiki-embeds-with-markdown-embeds-current-note",
-      name: "Replace All Wiki Embeds with Markdown Embeds in Current Note",
+      id: 'replace-all-wiki-embeds-with-markdown-embeds-current-note',
+      name: 'Replace All Wiki Embeds with Markdown Embeds in Current Note',
       checkCallback: this.replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote.bind(this)
     });
 
     this.addCommand({
-      id: "reorganize-vault",
-      name: "Reorganize Vault",
+      id: 'reorganize-vault',
+      name: 'Reorganize Vault',
       callback: () => this.reorganizeVault()
     });
 
     this.addCommand({
-      id: "check-consistency",
-      name: "Check Vault consistency",
+      id: 'check-consistency',
+      name: 'Check Vault consistency',
       callback: () => this.checkConsistency()
     });
 
-    this.registerEvent(this.app.metadataCache.on("changed", (file) => invokeAsyncSafely(this.handleMetadataCacheChanged(file))));
+    this.registerEvent(this.app.metadataCache.on('changed', (file) => {
+      invokeAsyncSafely(this.handleMetadataCacheChanged(file));
+    }));
 
     this.lh = new LinksHandler(
       this.app,
-      "Consistent Attachments and Links: ",
+      'Consistent Attachments and Links: ',
       this.settings.ignoreFolders,
       this.settings.getIgnoreFilesRegex()
     );
@@ -164,7 +173,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     this.fh = new FilesHandler(
       this.app,
       this.lh,
-      "Consistent Attachments and Links: ",
+      'Consistent Attachments and Links: ',
       this.settings.ignoreFolders,
       this.settings.getIgnoreFilesRegex(),
       this.settings.deleteEmptyFolders
@@ -173,9 +182,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
-
   private isPathIgnored(path: string): boolean {
-    if (path.startsWith("./")) {
+    if (path.startsWith('./')) {
       path = path.substring(2);
     }
 
@@ -195,7 +203,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
-    if (!prevCache || !this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== "md") {
+    if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== 'md') {
       return;
     }
 
@@ -204,7 +212,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private collectAttachmentsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== "md") {
+    if (!note || note.extension.toLowerCase() !== 'md') {
       return false;
     }
 
@@ -215,9 +223,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     return true;
   }
 
-  private async collectAttachments(note: TFile, isVerbose: boolean = true): Promise<void> {
+  private async collectAttachments(note: TFile, isVerbose = true): Promise<void> {
     if (this.isPathIgnored(note.path)) {
-      new Notice("Note path is ignored");
+      new Notice('Note path is ignored');
       return;
     }
 
@@ -228,16 +236,16 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
       this.settings.deleteExistFilesWhenMoveNote,
       this.settings.deleteEmptyFolders);
 
-    if (result && result.movedAttachments && result.movedAttachments.length > 0) {
+    if (result.movedAttachments.length > 0) {
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
     }
 
     if (result.movedAttachments.length == 0) {
       if (isVerbose) {
-        new Notice("No files found that need to be moved");
+        new Notice('No files found that need to be moved');
       }
     } else {
-      new Notice("Moved " + result.movedAttachments.length + " attachment" + (result.movedAttachments.length > 1 ? "s" : ""));
+      new Notice(`Moved ${result.movedAttachments.length.toString()} attachment${result.movedAttachments.length > 1 ? 's' : ''}`);
     }
   }
 
@@ -249,14 +257,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
     const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
-    const notice = new Notice("", 0);
+    const notice = new Notice('', 0);
     for (const note of notes) {
       if (this.abortSignal.aborted) {
         notice.hide();
         return;
       }
       i++;
-      const message = `Collecting attachments # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Collecting attachments # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       if (this.isPathIgnored(note.path)) {
@@ -268,8 +276,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
         this.settings.deleteExistFilesWhenMoveNote,
         this.settings.deleteEmptyFolders);
 
-
-      if (result && result.movedAttachments && result.movedAttachments.length > 0) {
+      if (result.movedAttachments.length > 0) {
         await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
         movedAttachmentsCount += result.movedAttachments.length;
         processedNotesCount++;
@@ -279,13 +286,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     notice.hide();
 
     if (movedAttachmentsCount == 0) {
-      new Notice("No files found that need to be moved");
+      new Notice('No files found that need to be moved');
     } else {
-      new Notice("Moved " + movedAttachmentsCount + " attachment" + (movedAttachmentsCount > 1 ? "s" : "")
-        + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+      new Notice(`Moved ${movedAttachmentsCount.toString()} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
     }
   }
-
 
   private async convertAllEmbedsPathsToRelative(): Promise<void> {
     await this.saveAllOpenNotes();
@@ -295,14 +300,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
     const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
-    const notice = new Notice("", 0);
+    const notice = new Notice('', 0);
     for (const note of notes) {
       if (this.abortSignal.aborted) {
         notice.hide();
         return;
       }
       i++;
-      const message = `Converting embed paths to relative # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Converting embed paths to relative # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       if (this.isPathIgnored(note.path)) {
@@ -311,7 +316,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
       const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
 
-      if (result && result.length > 0) {
+      if (result.length > 0) {
         changedEmbedCount += result.length;
         processedNotesCount++;
       }
@@ -320,13 +325,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     notice.hide();
 
     if (changedEmbedCount == 0) {
-      new Notice("No embeds found that need to be converted");
+      new Notice('No embeds found that need to be converted');
     } else {
-      new Notice("Converted " + changedEmbedCount + " embed" + (changedEmbedCount > 1 ? "s" : "")
-        + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+      new Notice(`Converted ${changedEmbedCount.toString()} embed${changedEmbedCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
     }
   }
-
 
   private async convertAllLinkPathsToRelative(): Promise<void> {
     await this.saveAllOpenNotes();
@@ -336,14 +339,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
     const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
-    const notice = new Notice("", 0);
+    const notice = new Notice('', 0);
     for (const note of notes) {
       if (this.abortSignal.aborted) {
         notice.hide();
         return;
       }
       i++;
-      const message = `Converting link paths to relative # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Converting link paths to relative # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       if (this.isPathIgnored(note.path)) {
@@ -352,7 +355,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
       const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
 
-      if (result && result.length > 0) {
+      if (result.length > 0) {
         changedLinksCount += result.length;
         processedNotesCount++;
       }
@@ -361,10 +364,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     notice.hide();
 
     if (changedLinksCount == 0) {
-      new Notice("No links found that need to be converted");
+      new Notice('No links found that need to be converted');
     } else {
-      new Notice("Converted " + changedLinksCount + " link" + (changedLinksCount > 1 ? "s" : "")
-        + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+      new Notice(`Converted ${changedLinksCount.toString()} link${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
     }
   }
 
@@ -376,14 +378,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
     const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
-    const notice = new Notice("", 0);
+    const notice = new Notice('', 0);
     for (const note of notes) {
       if (this.abortSignal.aborted) {
         notice.hide();
         return;
       }
       i++;
-      const message = `Replacing wikilinks with markdown links # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Replacing wikilinks with markdown links # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       if (this.isPathIgnored(note.path)) {
@@ -398,10 +400,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     notice.hide();
 
     if (changedLinksCount == 0) {
-      new Notice("No wiki links found that need to be replaced");
+      new Notice('No wiki links found that need to be replaced');
     } else {
-      new Notice("Replaced " + changedLinksCount + " wikilink" + (changedLinksCount > 1 ? "s" : "")
-        + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+      new Notice(`Replaced ${changedLinksCount.toString()} wikilink${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
     }
   }
 
@@ -413,14 +414,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
     const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
-    const notice = new Notice("", 0);
+    const notice = new Notice('', 0);
     for (const note of notes) {
       if (this.abortSignal.aborted) {
         notice.hide();
         return;
       }
       i++;
-      const message = `Replacing wiki embeds with markdown embeds # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Replacing wiki embeds with markdown embeds # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       if (this.isPathIgnored(note.path)) {
@@ -435,35 +436,34 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     notice.hide();
 
     if (changedLinksCount == 0) {
-      new Notice("No wiki embeds found that need to be replaced");
+      new Notice('No wiki embeds found that need to be replaced');
     } else {
-      new Notice("Replaced " + changedLinksCount + " wiki embed" + (changedLinksCount > 1 ? "s" : "")
-        + " from " + processedNotesCount + " note" + (processedNotesCount > 1 ? "s" : ""));
+      new Notice(`Replaced ${changedLinksCount.toString()} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
     }
   }
 
   private async deleteEmptyFolders(): Promise<void> {
-    await this.fh.deleteEmptyFolders("/");
+    await this.fh.deleteEmptyFolders('/');
   }
 
   private async checkConsistency(): Promise<void> {
     await this.saveAllOpenNotes();
 
-    const badLinks = new ConsistencyCheckResult("Bad links");
-    const badEmbeds = new ConsistencyCheckResult("Bad embeds");
-    const wikiLinks = new ConsistencyCheckResult("Wiki links");
-    const wikiEmbeds = new ConsistencyCheckResult("Wiki embeds");
+    const badLinks = new ConsistencyCheckResult('Bad links');
+    const badEmbeds = new ConsistencyCheckResult('Bad embeds');
+    const wikiLinks = new ConsistencyCheckResult('Wiki links');
+    const wikiEmbeds = new ConsistencyCheckResult('Wiki embeds');
 
     const notes = getMarkdownFilesSorted(this.app);
     let i = 0;
-    const notice = new Notice("", 0);
+    const notice = new Notice('', 0);
     for (const note of notes) {
       if (this.abortSignal.aborted) {
         notice.hide();
         return;
       }
       i++;
-      const message = `Checking note # ${i} / ${notes.length} - ${note.path}`;
+      const message = `Checking note # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
       notice.setMessage(message);
       console.debug(message);
       await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
@@ -472,24 +472,25 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     notice.hide();
 
     const notePath = this.settings.consistencyReportFile;
-    const text =
-      badLinks.toString(this.app, notePath)
+    const text
+      = badLinks.toString(this.app, notePath)
       + badEmbeds.toString(this.app, notePath)
       + wikiLinks.toString(this.app, notePath)
       + wikiEmbeds.toString(this.app, notePath);
     await createFolderSafe(this.app, dirname(notePath));
-    const note = this.app.vault.getFileByPath(notePath) ?? await this.app.vault.create(notePath, "");
+    const note = this.app.vault.getFileByPath(notePath) ?? await this.app.vault.create(notePath, '');
     await this.app.vault.modify(note, text);
 
     let fileOpened = false;
     this.app.workspace.iterateAllLeaves((leaf) => {
-      if (leaf.getDisplayText() != "" && notePath.startsWith(leaf.getDisplayText())) {
+      if (leaf.getDisplayText() != '' && notePath.startsWith(leaf.getDisplayText())) {
         fileOpened = true;
       }
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!fileOpened) {
-      await this.app.workspace.openLinkText(notePath, "/", false);
+      await this.app.workspace.openLinkText(notePath, '/', false);
     }
   }
 
@@ -500,19 +501,18 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
     await this.convertAllEmbedsPathsToRelative();
     await this.convertAllLinkPathsToRelative();
-    //- Rename all attachments (using Unique attachments, optional)
+    // - Rename all attachments (using Unique attachments, optional)
     await this.collectAllAttachments();
     await this.deleteEmptyFolders();
-    new Notice("Reorganization of the vault completed");
+    new Notice('Reorganization of the vault completed');
   }
-
 
   public override async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
     await super.saveSettings(newSettings);
 
     this.lh = new LinksHandler(
       this.app,
-      "Consistent Attachments and Links: ",
+      'Consistent Attachments and Links: ',
       this.settings.ignoreFolders,
       this.settings.getIgnoreFilesRegex()
     );
@@ -520,14 +520,14 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     this.fh = new FilesHandler(
       this.app,
       this.lh,
-      "Consistent Attachments and Links: ",
+      'Consistent Attachments and Links: ',
       this.settings.ignoreFolders,
-      this.settings.getIgnoreFilesRegex(),
+      this.settings.getIgnoreFilesRegex()
     );
   }
 
   private async saveAllOpenNotes(): Promise<void> {
-    for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+    for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
       const view = leaf.view as MarkdownView;
       await view.save();
     }
@@ -535,7 +535,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private convertAllLinkPathsToRelativeCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== "md") {
+    if (!note || note.extension.toLowerCase() !== 'md') {
       return false;
     }
 
@@ -548,7 +548,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private convertAllEmbedsPathsToRelativeCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== "md") {
+    if (!note || note.extension.toLowerCase() !== 'md') {
       return false;
     }
 
@@ -561,7 +561,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private replaceAllWikilinksWithMarkdownLinksCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== "md") {
+    if (!note || note.extension.toLowerCase() !== 'md') {
       return false;
     }
 
@@ -574,7 +574,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== "md") {
+    if (!note || note.extension.toLowerCase() !== 'md') {
       return false;
     }
 
@@ -590,8 +590,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
       return;
     }
 
-    const suggestionContainer = document.querySelector<HTMLDivElement>(".suggestion-container");
-    if (suggestionContainer && suggestionContainer.style.display !== "none") {
+    const suggestionContainer = document.querySelector<HTMLDivElement>('.suggestion-container');
+    if (suggestionContainer && suggestionContainer.style.display !== 'none') {
       return;
     }
 
@@ -609,8 +609,8 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 }
 
 function appendCodeBlock(fragment: DocumentFragment, text: string): void {
-  fragment.appendChild(createSpan({ cls: "markdown-rendered code" }, (span) => {
-    span.style.fontWeight = "bold";
-    span.appendChild(createEl("code", { text }));
+  fragment.appendChild(createSpan({ cls: 'markdown-rendered code' }, (span) => {
+    span.style.fontWeight = 'bold';
+    span.appendChild(createEl('code', { text }));
   }));
 }

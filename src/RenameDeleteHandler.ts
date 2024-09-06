@@ -1,42 +1,45 @@
+import type {
+  ReferenceCache,
+  TAbstractFile
+} from 'obsidian';
 import {
   App,
   TFile,
-  Vault,
-  type ReferenceCache,
-  type TAbstractFile
-} from "obsidian";
-import type ConsistentAttachmentsAndLinksPlugin from "./ConsistentAttachmentsAndLinksPlugin.ts";
-import {
-  relative,
-  join,
-  dirname
-} from "obsidian-dev-utils/Path";
-import {
-  removeFolderSafe,
-  applyFileChanges,
-  processWithRetry,
-  createFolderSafe,
-  removeEmptyFolderHierarchy
-} from "obsidian-dev-utils/obsidian/Vault";
-import {
-  isCanvasFile,
-  isMarkdownFile,
-  isNote
-} from "obsidian-dev-utils/obsidian/TAbstractFile";
-import type { CanvasData } from "obsidian/canvas.js";
-import { toJson } from "obsidian-dev-utils/JSON";
-import { getAttachmentFolderPath } from "obsidian-dev-utils/obsidian/AttachmentPath";
+  Vault
+} from 'obsidian';
+import type { CanvasData } from 'obsidian/canvas.js';
+import { toJson } from 'obsidian-dev-utils/Object';
+import { getAttachmentFolderPath } from 'obsidian-dev-utils/obsidian/AttachmentPath';
 import {
   extractLinkFile,
   updateLink,
   updateLinksInFile
-} from "obsidian-dev-utils/obsidian/Link";
+} from 'obsidian-dev-utils/obsidian/Link';
 import {
   getAllLinks,
   getBacklinksForFileSafe,
   getCacheSafe
-} from "obsidian-dev-utils/obsidian/MetadataCache";
-import { createTFileInstance } from "obsidian-typings/implementations";
+} from 'obsidian-dev-utils/obsidian/MetadataCache';
+import {
+  isCanvasFile,
+  isMarkdownFile,
+  isNote
+} from 'obsidian-dev-utils/obsidian/TAbstractFile';
+import {
+  applyFileChanges,
+  createFolderSafe,
+  processWithRetry,
+  removeEmptyFolderHierarchy,
+  removeFolderSafe
+} from 'obsidian-dev-utils/obsidian/Vault';
+import {
+  dirname,
+  join,
+  relative
+} from 'obsidian-dev-utils/Path';
+import { createTFileInstance } from 'obsidian-typings/implementations';
+
+import type ConsistentAttachmentsAndLinksPlugin from './ConsistentAttachmentsAndLinksPlugin.ts';
 
 const renamingPaths = new Set<string>();
 
@@ -45,7 +48,7 @@ export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, 
     return;
   }
 
-  console.debug("Handle Rename");
+  console.debug('Handle Rename');
 
   if (!(file instanceof TFile)) {
     return;
@@ -56,7 +59,9 @@ export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, 
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const updateAllLinks = app.fileManager.updateAllLinks;
   try {
-    plugin.app.fileManager.updateAllLinks = async (): Promise<void> => { };
+    plugin.app.fileManager.updateAllLinks = async (): Promise<void> => {
+      // Do nothing
+    };
 
     const renameMap = new Map<string, string>();
     await fillRenameMap(app, file, oldPath, renameMap);
@@ -74,7 +79,7 @@ export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, 
 }
 
 export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, file: TAbstractFile): Promise<void> {
-  console.debug("Handle Delete");
+  console.debug('Handle Delete');
   if (!isNote(file)) {
     return;
   }
@@ -96,7 +101,7 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string, renameMap: 
 
   const oldAttachmentFolderPath = await getAttachmentFolderPath(app, oldPath);
   const newAttachmentFolderPath = await getAttachmentFolderPath(app, file.path);
-  const dummyOldAttachmentFolderPath = await getAttachmentFolderPath(app, join(dirname(oldPath), "DUMMY_FILE.md"));
+  const dummyOldAttachmentFolderPath = await getAttachmentFolderPath(app, join(dirname(oldPath), 'DUMMY_FILE.md'));
 
   const oldAttachmentFolder = app.vault.getFolderByPath(oldAttachmentFolderPath);
 
@@ -136,11 +141,10 @@ async function fillRenameMap(app: App, file: TFile, oldPath: string, renameMap: 
     });
   }
 
-  for (let child of children) {
+  for (const child of children) {
     if (isNote(child)) {
       continue;
     }
-    child = child as TFile;
     const relativePath = relative(oldAttachmentFolderPath, child.path);
     const newDir = join(newAttachmentFolderPath, dirname(relativePath));
     let newChildPath = join(newDir, child.name);
@@ -207,8 +211,11 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       }
 
       await applyFileChanges(app, parentNote, async () => {
-        const links =
-          (await getBacklinks(plugin.app, oldFile!, newFile)).get(parentNotePath) ?? [];
+        if (!oldFile) {
+          return [];
+        }
+        const links
+          = (await getBacklinks(plugin.app, oldFile, newFile)).get(parentNotePath) ?? [];
         const changes = [];
 
         for (const link of links) {
@@ -223,7 +230,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
               oldPathOrFile: oldPath,
               sourcePathOrFile: parentNote,
               renameMap
-            }),
+            })
           });
         }
 
@@ -235,7 +242,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       await processWithRetry(app, newFile, (content) => {
         const canvasData = JSON.parse(content) as CanvasData;
         for (const node of canvasData.nodes) {
-          if (node.type !== "file") {
+          if (node.type !== 'file') {
             continue;
           }
           const newPath = renameMap.get(node.file);
@@ -263,7 +270,7 @@ async function getBacklinks(app: App, oldFile: TFile, newFile: TFile | null): Pr
   const backlinks = new Map<string, ReferenceCache[]>();
   const oldLinks = await getBacklinksForFileSafe(app, oldFile);
   for (const path of oldLinks.keys()) {
-    backlinks.set(path, oldLinks.get(path)!);
+    backlinks.set(path, oldLinks.get(path) ?? []);
   }
 
   if (!newFile) {
@@ -274,7 +281,7 @@ async function getBacklinks(app: App, oldFile: TFile, newFile: TFile | null): Pr
 
   for (const path of newLinks.keys()) {
     const links = backlinks.get(path) ?? [];
-    links.push(...newLinks.get(path)!);
+    links.push(...newLinks.get(path) ?? []);
     backlinks.set(path, links);
   }
 
