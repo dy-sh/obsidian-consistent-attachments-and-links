@@ -1,46 +1,45 @@
 import {
   App,
   TFile
-} from "obsidian";
-import {
-  LinksHandler,
-  type PathChangeInfo
-} from "./links-handler.ts";
+} from 'obsidian';
+import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/AttachmentPath';
+import { splitSubpath } from 'obsidian-dev-utils/obsidian/Link';
 import {
   getAllLinks,
   getCacheSafe
-} from "obsidian-dev-utils/obsidian/MetadataCache";
+} from 'obsidian-dev-utils/obsidian/MetadataCache';
+import {
+  createFolderSafe,
+  removeEmptyFolderHierarchy,
+  safeList
+} from 'obsidian-dev-utils/obsidian/Vault';
 import {
   basename,
   dirname,
   extname,
   join
-} from "obsidian-dev-utils/Path";
-import { splitSubpath } from "obsidian-dev-utils/obsidian/Link";
-import { getAttachmentFilePath } from "obsidian-dev-utils/obsidian/AttachmentPath";
-import {
-  createFolderSafe,
-  removeEmptyFolderHierarchy,
-  safeList
-} from "obsidian-dev-utils/obsidian/Vault";
+} from 'obsidian-dev-utils/Path';
+
+import type { PathChangeInfo } from './links-handler.ts';
+import { LinksHandler } from './links-handler.ts';
 
 export interface MovedAttachmentResult {
-  movedAttachments: PathChangeInfo[]
-  renamedFiles: PathChangeInfo[],
+  movedAttachments: PathChangeInfo[];
+  renamedFiles: PathChangeInfo[];
 }
 
 export class FilesHandler {
   public constructor(
     private app: App,
     private lh: LinksHandler,
-    private consoleLogPrefix: string = "",
+    private consoleLogPrefix = '',
     private ignoreFolders: string[] = [],
     private ignoreFilesRegex: RegExp[] = [],
-    private shouldDeleteEmptyFolders: boolean = false
+    private shouldDeleteEmptyFolders = false
   ) { }
 
   private isPathIgnored(path: string): boolean {
-    if (path.startsWith("./")) {
+    if (path.startsWith('./')) {
       path = path.substring(2);
     }
 
@@ -74,7 +73,6 @@ export class FilesHandler {
 
   public async collectAttachmentsForCachedNote(notePath: string,
     deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
-
     if (this.isPathIgnored(notePath)) {
       return { movedAttachments: [], renamedFiles: [] };
     }
@@ -105,7 +103,7 @@ export class FilesHandler {
 
       const file = this.lh.getFileByLink(linkPath, notePath);
       if (!file) {
-        const type = link.original.startsWith("!") ? "embed" : "link";
+        const type = link.original.startsWith('!') ? 'embed' : 'link';
         console.warn(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
         continue;
       }
@@ -147,66 +145,64 @@ export class FilesHandler {
     }
 
     if (path == newLinkPath) {
-      console.warn(this.consoleLogPrefix + "Can't move file. Source and destination path the same.");
+      console.warn(this.consoleLogPrefix + 'Can\'t move file. Source and destination path the same.');
       return result;
     }
 
     await this.createFolderForAttachmentFromPath(newLinkPath);
 
     const linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(path);
-    if (parentNotePaths) {
-      for (const notePath of parentNotePaths) {
-        linkedNotes.remove(notePath);
-      }
+    for (const notePath of parentNotePaths) {
+      linkedNotes.remove(notePath);
     }
 
     if (path !== file.path) {
-      console.warn(this.consoleLogPrefix + "File was moved already");
+      console.warn(this.consoleLogPrefix + 'File was moved already');
       return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles, deleteEmptyFolders);
     }
 
     const oldFolder = file.parent;
-    //if no other file has link to this file - try to move file
-    //if file already exist at new location - delete or move with new name
+    // if no other file has link to this file - try to move file
+    // if file already exist at new location - delete or move with new name
     if (linkedNotes.length == 0) {
       const existFile = this.app.vault.getFileByPath(newLinkPath);
       if (!existFile) {
-        //move
-        console.log(this.consoleLogPrefix + "move file [from, to]: \n   " + path + "\n   " + newLinkPath);
+        // move
+        console.log(this.consoleLogPrefix + 'move file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
         await this.app.vault.rename(file, newLinkPath);
       } else {
         if (deleteExistFiles) {
-          //delete
-          console.log(this.consoleLogPrefix + "delete file: \n   " + path);
+          // delete
+          console.log(this.consoleLogPrefix + 'delete file: \n   ' + path);
           result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
           await this.deleteFile(file, deleteEmptyFolders);
         } else {
-          //move with new name
+          // move with new name
           const newFileCopyName = this.generateFileCopyName(newLinkPath);
-          console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + path + "\n   " + newFileCopyName);
+          console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
           result.movedAttachments.push({ oldPath: path, newPath: newFileCopyName });
           await this.app.vault.rename(file, newFileCopyName);
           result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
         }
       }
     } else {
-      //if some other file has link to this file - try to copy file
-      //if file already exist at new location - copy file with new name or do nothing
+      // if some other file has link to this file - try to copy file
+      // if file already exist at new location - copy file with new name or do nothing
       const existFile = this.app.vault.getFileByPath(newLinkPath);
       if (!existFile) {
-        //copy
-        console.log(this.consoleLogPrefix + "copy file [from, to]: \n   " + path + "\n   " + newLinkPath);
+        // copy
+        console.log(this.consoleLogPrefix + 'copy file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
         await this.app.vault.rename(file, newLinkPath);
         await this.app.vault.copy(file, path);
       } else {
         if (deleteExistFiles) {
-          //do nothing
+          // do nothing
         } else {
-          //copy with new name
+          // copy with new name
           const newFileCopyName = this.generateFileCopyName(newLinkPath);
-          console.log(this.consoleLogPrefix + "copy file with new name [from, to]: \n   " + path + "\n   " + newFileCopyName);
+          console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
           result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName });
           await this.app.vault.rename(file, newFileCopyName);
           await this.app.vault.copy(file, path);
@@ -226,7 +222,7 @@ export class FilesHandler {
       return;
     }
 
-    if (dirName.startsWith("./")) {
+    if (dirName.startsWith('./')) {
       dirName = dirName.substring(2);
     }
 
@@ -237,7 +233,7 @@ export class FilesHandler {
 
     list = await safeList(this.app, dirName);
     if (list.files.length == 0 && list.folders.length == 0) {
-      console.log(this.consoleLogPrefix + "delete empty folder: \n   " + dirName);
+      console.log(this.consoleLogPrefix + 'delete empty folder: \n   ' + dirName);
       if (await this.app.vault.adapter.exists(dirName)) {
         try {
           await this.app.vault.adapter.rmdir(dirName, false);
@@ -253,16 +249,16 @@ export class FilesHandler {
   private async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
     await this.app.vault.trash(file, true);
     if (deleteEmptyFolders) {
-      let dir = file.parent!;
-      while (dir.children.length === 0) {
+      let dir = file.parent;
+      while (dir && dir.children.length === 0) {
         await this.app.vault.trash(dir, true);
-        dir = dir.parent!;
+        dir = dir.parent;
       }
     }
   }
 
   private isAttachment(file: TFile): boolean {
     const extension = file.extension.toLowerCase();
-    return extension !== "md" && extension !== "canvas";
+    return extension !== 'md' && extension !== 'canvas';
   }
 }
