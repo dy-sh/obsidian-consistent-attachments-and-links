@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.14.0
+
+- Don't change alias for markdown links
+- Fix mobile build
+
 ## 3.13.3
 
 - Handle removed parent folder case
