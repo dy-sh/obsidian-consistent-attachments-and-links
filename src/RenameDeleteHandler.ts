@@ -42,25 +42,48 @@ import { createTFileInstance } from 'obsidian-typings/implementations';
 import type ConsistentAttachmentsAndLinksPlugin from './ConsistentAttachmentsAndLinksPlugin.ts';
 
 const renamingPaths = new Set<string>();
+const specialRenames: SpecialRename[] = [];
+
+interface SpecialRename {
+  oldPath: string;
+  newPath: string;
+  tempPath: string;
+}
 
 export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, file: TAbstractFile, oldPath: string): Promise<void> {
+  console.debug(`Handle Rename ${oldPath} -> ${file.path}`);
+  const app = plugin.app;
+
   if (renamingPaths.has(oldPath)) {
     return;
   }
-
-  console.debug('Handle Rename');
 
   if (!(file instanceof TFile)) {
     return;
   }
 
-  const app = plugin.app;
+  const specialRename = specialRenames.find((x) => x.oldPath === file.path);
+  if (specialRename) {
+    await app.vault.rename(file, specialRename.tempPath);
+    return;
+  }
+
+  if (app.vault.adapter.insensitive && oldPath.toLowerCase() === file.path.toLowerCase() && dirname(oldPath) === dirname(file.path)) {
+    specialRenames.push({
+      oldPath,
+      newPath: file.path,
+      tempPath: join(file.parent?.path ?? '', '__temp__' + file.name)
+    });
+
+    await app.vault.rename(file, oldPath);
+    return;
+  }
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const updateAllLinks = app.fileManager.updateAllLinks;
   try {
-    plugin.app.fileManager.updateAllLinks = async (): Promise<void> => {
-      // Do nothing
+    app.fileManager.updateAllLinks = async (): Promise<void> => {
+      // do nothing
     };
 
     const renameMap = new Map<string, string>();
@@ -72,14 +95,23 @@ export async function handleRename(plugin: ConsistentAttachmentsAndLinksPlugin, 
     for (const [oldPath2, newPath2] of renameMap.entries()) {
       await processRename(plugin, oldPath2, newPath2, renameMap);
     }
+
+    await processRename(plugin, oldPath, file.path, renameMap);
   } finally {
     renamingPaths.delete(oldPath);
-    plugin.app.fileManager.updateAllLinks = updateAllLinks;
+    app.fileManager.updateAllLinks = updateAllLinks;
+
+    const specialRename = specialRenames.find((x) => x.tempPath === file.path);
+    if (specialRename) {
+      await app.vault.rename(file, specialRename.newPath);
+      specialRenames.remove(specialRename);
+    }
   }
 }
 
 export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, file: TAbstractFile): Promise<void> {
-  console.debug('Handle Delete');
+  console.debug(`Handle Delete ${file.path}`);
+  const app = plugin.app;
   if (!isNote(file)) {
     return;
   }
@@ -88,8 +120,8 @@ export async function handleDelete(plugin: ConsistentAttachmentsAndLinksPlugin, 
     return;
   }
 
-  const attachmentFolder = await getAttachmentFolderPath(plugin.app, file.path);
-  await removeFolderSafe(plugin.app, attachmentFolder, file.path);
+  const attachmentFolder = await getAttachmentFolderPath(app, file.path);
+  await removeFolderSafe(app, attachmentFolder, file.path);
 }
 
 async function fillRenameMap(app: App, file: TFile, oldPath: string, renameMap: Map<string, string>): Promise<void> {
@@ -194,7 +226,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
       throw new Error(`Could not rename ${oldPath} to ${newPath}`);
     }
 
-    const backlinks = await getBacklinks(plugin.app, oldFile, newFile);
+    const backlinks = await getBacklinks(app, oldFile, newFile);
 
     for (const parentNotePath of backlinks.keys()) {
       let parentNote = app.vault.getFileByPath(parentNotePath);
@@ -215,7 +247,7 @@ async function processRename(plugin: ConsistentAttachmentsAndLinksPlugin, oldPat
           return [];
         }
         const links
-          = (await getBacklinks(plugin.app, oldFile, newFile)).get(parentNotePath) ?? [];
+          = (await getBacklinks(app, oldFile, newFile)).get(parentNotePath) ?? [];
         const changes = [];
 
         for (const link of links) {
