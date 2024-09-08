@@ -10,6 +10,7 @@ import {
   invokeAsyncSafely
 } from 'obsidian-dev-utils/Async';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
+import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import {
   createFolderSafe,
   getMarkdownFilesSorted
@@ -23,10 +24,6 @@ import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
-import {
-  handleDelete,
-  handleRename
-} from './RenameDeleteHandler.ts';
 
 export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
   private lh!: LinksHandler;
@@ -73,13 +70,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
       })
     );
 
-    this.registerEvent(
-      this.app.vault.on('delete', (file) => { invokeAsyncSafely(handleDelete(this, file)); })
-    );
-
-    this.registerEvent(
-      this.app.vault.on('rename', (file, oldPath) => { invokeAsyncSafely(handleRename(this, file, oldPath)); })
-    );
+    registerRenameDeleteHandlers(this, () => ({
+      shouldDeleteEmptyFolders: this.settings.deleteEmptyFolders
+    }));
 
     this.addCommand({
       id: 'collect-all-attachments',
