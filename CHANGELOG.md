@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 3.15.0
+
+- Reuse RenameDeleteHandler
+- Integrate with Better Markdown Links
+- Handle same case scenarios
+
 ## 3.14.0
 
 - Don't change alias for markdown links
