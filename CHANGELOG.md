@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.16.0
+
+- Preserve angle brackets and leading dot
+
 ## 3.15.0
 
 - Reuse RenameDeleteHandler
