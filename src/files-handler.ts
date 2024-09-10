@@ -10,7 +10,7 @@ import {
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
 import {
   createFolderSafe,
-  removeEmptyFolderHierarchy,
+  deleteEmptyFolderHierarchy,
   safeList
 } from 'obsidian-dev-utils/obsidian/Vault';
 import {
@@ -212,7 +212,7 @@ export class FilesHandler {
     }
 
     if (this.shouldDeleteEmptyFolders) {
-      await removeEmptyFolderHierarchy(this.app, oldFolder);
+      await deleteEmptyFolderHierarchy(this.app, oldFolder);
     }
     return result;
   }
