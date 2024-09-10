@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.17.0
+
+- Remove to trash
+
 ## 3.16.0
 
 - Preserve angle brackets and leading dot
