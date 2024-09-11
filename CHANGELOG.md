@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.18.0
+
+- Don't remove folders with hidden files
+- Pass `shouldDeleteOrphanAttachments`
+
 ## 3.17.0
 
 - Remove to trash
