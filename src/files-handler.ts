@@ -11,7 +11,7 @@ import {
 import {
   createFolderSafe,
   deleteEmptyFolderHierarchy,
-  safeList
+  listSafe
 } from 'obsidian-dev-utils/obsidian/Vault';
 import {
   basename,
@@ -226,12 +226,12 @@ export class FilesHandler {
       dirName = dirName.substring(2);
     }
 
-    let list = await safeList(this.app, dirName);
+    let list = await listSafe(this.app, dirName);
     for (const folder of list.folders) {
       await this.deleteEmptyFolders(folder);
     }
 
-    list = await safeList(this.app, dirName);
+    list = await listSafe(this.app, dirName);
     if (list.files.length == 0 && list.folders.length == 0) {
       console.log(this.consoleLogPrefix + 'delete empty folder: \n   ' + dirName);
       if (await this.app.vault.adapter.exists(dirName)) {
