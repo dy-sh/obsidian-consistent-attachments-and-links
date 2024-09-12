@@ -149,6 +149,6 @@ Removes all empty folders in your library.
 
 © [dy-sh](https://github.com/dy-sh/)
 
-Maintainer: [mnaoumov](https://github.com/mnaoumov/)
+Maintainer: [Michael Naumov](https://github.com/mnaoumov/)
 
 [Unique attachments]: https://obsidian.md/plugins?id=unique-attachments
