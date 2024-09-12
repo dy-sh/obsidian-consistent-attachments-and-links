@@ -187,18 +187,14 @@ export class LinksHandler {
     link,
     oldNotePath,
     pathChangeMap,
-    isEmbed,
-    isWikilink,
-    isRelative
+    forceRelativePath
   }:
     {
       note: TFile;
       link: ReferenceCache;
       oldNotePath: string;
       pathChangeMap?: Map<string, string> | undefined;
-      isEmbed?: boolean | undefined;
-      isWikilink?: boolean | undefined;
-      isRelative?: boolean | undefined;
+      forceRelativePath?: boolean | undefined;
     }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
     this.app.metadataCache.getFirstLinkpathDest(linkPath, oldNotePath);
@@ -220,9 +216,8 @@ export class LinksHandler {
       sourcePathOrFile: note.path,
       subpath,
       alias: link.displayText,
-      isEmbed,
-      isWikilink,
-      forceRelativePath: isRelative
+      forceRelativePath,
+      originalLink: link.original
     });
   }
 
@@ -269,9 +264,7 @@ export class LinksHandler {
             note,
             link: ref,
             oldNotePath: notePath,
-            isWikilink: ref.original.includes('[['),
-            isRelative: true,
-            isEmbed
+            forceRelativePath: true
           })
         };
         changes.push(change);
