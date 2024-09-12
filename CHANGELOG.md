@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.19.0
+
+- Extract settings from originalLink
+- Always preserve displayText
+
 ## 3.18.0
 
 - Don't remove folders with hidden files
