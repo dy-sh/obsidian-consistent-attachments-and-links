@@ -163,7 +163,7 @@ export class LinksHandler {
     }
   }
 
-  public async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[], changeLinksAlt = false): Promise<void> {
+  public async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[]): Promise<void> {
     if (this.isPathIgnored(notePath)) {
       return;
     }
@@ -179,7 +179,7 @@ export class LinksHandler {
       pathChangeMap.set(change.oldPath, change.newPath);
     }
 
-    await this.updateLinks(note, note.path, pathChangeMap, changeLinksAlt);
+    await this.updateLinks(note, note.path, pathChangeMap);
   }
 
   private convertLink({
@@ -187,7 +187,6 @@ export class LinksHandler {
     link,
     oldNotePath,
     pathChangeMap,
-    changeLinksAlt,
     isEmbed,
     isWikilink,
     isRelative
@@ -197,7 +196,6 @@ export class LinksHandler {
       link: ReferenceCache;
       oldNotePath: string;
       pathChangeMap?: Map<string, string> | undefined;
-      changeLinksAlt?: boolean | undefined;
       isEmbed?: boolean | undefined;
       isWikilink?: boolean | undefined;
       isRelative?: boolean | undefined;
@@ -221,7 +219,7 @@ export class LinksHandler {
       pathOrFile: newLinkedNote,
       sourcePathOrFile: note.path,
       subpath,
-      alias: changeLinksAlt === false ? link.displayText : undefined,
+      alias: link.displayText,
       isEmbed,
       isWikilink,
       forceRelativePath: isRelative
@@ -352,7 +350,7 @@ export class LinksHandler {
     }
   }
 
-  private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>, changeLinksAlt?: boolean): Promise<void> {
+  private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
     await applyFileChanges(this.app, note, async () => {
       const cache = await getCacheSafe(this.app, note);
       if (!cache) {
@@ -367,8 +365,7 @@ export class LinksHandler {
           note,
           link,
           oldNotePath,
-          pathChangeMap,
-          changeLinksAlt
+          pathChangeMap
         })
       }));
     });
