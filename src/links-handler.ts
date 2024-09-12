@@ -44,7 +44,11 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
         if (!note) {
           continue;
         }
-        const linkStr = app.fileManager.generateMarkdownLink(note, reportPath);
+        const linkStr = generateMarkdownLink({
+          app,
+          pathOrFile: note,
+          sourcePathOrFile: reportPath
+        });
         str += `${linkStr}:\n`;
         for (const link of this.get(notePath) ?? []) {
           str += `- (line ${(link.position.start.line + 1).toString()}): \`${link.link}\`\n`;
