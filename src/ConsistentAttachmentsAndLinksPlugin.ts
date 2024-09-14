@@ -51,12 +51,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
       }), 0);
       notice.noticeEl.onClickEvent((ev) => chainAsyncFn(this.app, async () => {
         if (ev.target instanceof HTMLAnchorElement) {
-          ev.preventDefault();
           window.open(ev.target.href, '_blank');
-        } else {
-          this.settings.showWarning = false;
-          await this.saveSettings(this.settings);
         }
+
+        this.settings.showWarning = false;
+        await this.saveSettings(this.settings);
       }));
     }
 
