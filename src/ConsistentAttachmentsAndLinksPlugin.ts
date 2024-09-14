@@ -30,7 +30,6 @@ import {
 export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
   private lh!: LinksHandler;
   private fh!: FilesHandler;
-  private isHandlingMetadataCacheChanged = false;
 
   protected override createDefaultPluginSettings(): ConsistentAttachmentsAndLinksPluginSettings {
     return new ConsistentAttachmentsAndLinksPluginSettings();
@@ -598,16 +597,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
       return;
     }
 
-    if (this.isHandlingMetadataCacheChanged) {
-      return;
-    }
-
-    this.isHandlingMetadataCacheChanged = true;
-    try {
-      await this.collectAttachments(file, false);
-    } finally {
-      this.isHandlingMetadataCacheChanged = false;
-    }
+    await this.collectAttachments(file, false);
   }
 }
 
