@@ -6,9 +6,10 @@ import {
   TFile
 } from 'obsidian';
 import {
-  convertAsyncToSync,
-  invokeAsyncSafely
+  convertAsyncToSync
 } from 'obsidian-dev-utils/Async';
+import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
+import { chainAsyncFn } from 'obsidian-dev-utils/obsidian/ChainedPromise';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
@@ -162,7 +163,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     });
 
     this.registerEvent(this.app.metadataCache.on('changed', (file) => {
-      invokeAsyncSafely(this.handleMetadataCacheChanged(file));
+      chainAsyncFn(this.app, () => this.handleMetadataCacheChanged(file));
     }));
 
     this.lh = new LinksHandler(
@@ -219,7 +220,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      invokeAsyncSafely(this.collectAttachments(note));
+      chainAsyncFn(this.app, () => this.collectAttachments(note));
     }
 
     return true;
@@ -542,7 +543,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      invokeAsyncSafely(this.lh.convertAllNoteLinksPathsToRelative(note.path));
+      chainAsyncFn(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteLinksPathsToRelative(note.path)));
     }
 
     return true;
@@ -555,7 +556,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      invokeAsyncSafely(this.lh.convertAllNoteEmbedsPathsToRelative(note.path));
+      chainAsyncFn(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteEmbedsPathsToRelative(note.path)));
     }
 
     return true;
@@ -568,7 +569,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      invokeAsyncSafely(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false));
+      chainAsyncFn(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false)));
     }
 
     return true;
@@ -581,7 +582,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      invokeAsyncSafely(this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true));
+      chainAsyncFn(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true)));
     }
 
     return true;
