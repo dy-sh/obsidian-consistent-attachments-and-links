@@ -10,6 +10,7 @@ import {
   invokeAsyncSafely
 } from 'obsidian-dev-utils/Async';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
+import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import {
   createFolderSafe,
@@ -70,13 +71,17 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
       })
     );
 
-    registerRenameDeleteHandlers(this, () => ({
-      shouldDeleteConflictingAttachments: this.settings.deleteExistFilesWhenMoveNote,
-      shouldDeleteEmptyFolders: this.settings.deleteEmptyFolders,
-      shouldDeleteOrphanAttachments: this.settings.deleteAttachmentsWithNote,
-      shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
-      shouldUpdateLinks: this.settings.updateLinks
-    }));
+    registerRenameDeleteHandlers(this, () => {
+      const settings: Partial<RenameDeleteHandlerSettings> = {
+        shouldDeleteConflictingAttachments: this.settings.deleteExistFilesWhenMoveNote,
+        shouldDeleteEmptyFolders: this.settings.deleteEmptyFolders,
+        shouldDeleteOrphanAttachments: this.settings.deleteAttachmentsWithNote,
+        shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
+        shouldUpdateFilenameAliases: this.settings.changeNoteBacklinksAlt,
+        shouldUpdateLinks: this.settings.updateLinks
+      };
+      return settings;
+    });
 
     this.addCommand({
       id: 'collect-all-attachments',
