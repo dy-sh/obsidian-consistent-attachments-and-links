@@ -5,9 +5,6 @@ import {
   PluginSettingTab,
   TFile
 } from 'obsidian';
-import {
-  convertAsyncToSync
-} from 'obsidian-dev-utils/Async';
 import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
 import { chainAsyncFn } from 'obsidian-dev-utils/obsidian/ChainedPromise';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
@@ -52,7 +49,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
         f.appendChild(createEl('br'));
         f.appendChild(createEl('a', { text: 'Read more', href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file#attachment-subfolder-setting' }));
       }), 0);
-      notice.noticeEl.onClickEvent(convertAsyncToSync(async (ev) => {
+      notice.noticeEl.onClickEvent((ev) => chainAsyncFn(this.app, async () => {
         if (ev.target instanceof HTMLAnchorElement) {
           ev.preventDefault();
           window.open(ev.target.href, '_blank');
