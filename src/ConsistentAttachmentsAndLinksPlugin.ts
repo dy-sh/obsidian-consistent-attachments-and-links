@@ -71,8 +71,11 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     );
 
     registerRenameDeleteHandlers(this, () => ({
+      shouldDeleteConflictingAttachments: this.settings.deleteExistFilesWhenMoveNote,
       shouldDeleteEmptyFolders: this.settings.deleteEmptyFolders,
-      shouldDeleteOrphanAttachments: this.settings.deleteAttachmentsWithNote
+      shouldDeleteOrphanAttachments: this.settings.deleteAttachmentsWithNote,
+      shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
+      shouldUpdateLinks: this.settings.updateLinks
     }));
 
     this.addCommand({
