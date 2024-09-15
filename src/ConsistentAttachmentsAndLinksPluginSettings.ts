@@ -1,6 +1,6 @@
 export default class ConsistentAttachmentsAndLinksPluginSettings {
   public autoCollectAttachments = false;
-  public changeNoteBacklinksAlt = false;
+  public changeNoteBacklinksAlt = true;
   public consistencyReportFile = 'consistency-report.md';
   public deleteAttachmentsWithNote = true;
   public deleteEmptyFolders = true;
