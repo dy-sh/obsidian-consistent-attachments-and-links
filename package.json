@@ -17,10 +17,10 @@
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^20.14.11",
+    "@types/node": "^22.5.5",
     "obsidian": "^1.6.6",
-    "obsidian-dev-utils": "^3.23.0",
-    "obsidian-typings": "^2.2.1-beta.5"
+    "obsidian-dev-utils": "^3.25.0",
+    "obsidian-typings": "^2.2.1-beta.15"
   },
   "type": "module"
 }
