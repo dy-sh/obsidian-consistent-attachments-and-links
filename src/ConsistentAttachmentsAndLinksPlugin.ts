@@ -49,14 +49,16 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
         f.appendChild(createEl('br'));
         f.appendChild(createEl('a', { text: 'Read more', href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file#attachment-subfolder-setting' }));
       }), 0);
-      notice.noticeEl.onClickEvent((ev) => chainAsyncFn(this.app, async () => {
-        if (ev.target instanceof HTMLAnchorElement) {
-          window.open(ev.target.href, '_blank');
-        }
+      notice.noticeEl.onClickEvent((ev) => {
+        chainAsyncFn(this.app, async () => {
+          if (ev.target instanceof HTMLAnchorElement) {
+            window.open(ev.target.href, '_blank');
+          }
 
-        this.settings.showWarning = false;
-        await this.saveSettings(this.settings);
-      }));
+          this.settings.showWarning = false;
+          await this.saveSettings(this.settings);
+        });
+      });
     }
 
     this.registerEvent(
