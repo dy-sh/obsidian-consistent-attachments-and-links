@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 3.20.0
+
+- Delete attachments after deleting note
+- Fix attachment folder discovery
+- Switch default value for `changeNoteBacklinksAlt`
+- Fix race condition
+- Pass `shouldUpdateFilenameAliases`
+- Assign all `registerRenameDeleteHandlers` props
+- Ensure `RenameDeleteHandler` is executed only once
+
 ## 3.19.0
 
 - Extract settings from originalLink
