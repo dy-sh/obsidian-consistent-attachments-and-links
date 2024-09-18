@@ -5,6 +5,10 @@ import {
   TFile
 } from 'obsidian';
 import {
+  getFileOrNull,
+  MARKDOWN_FILE_EXTENSION
+} from 'obsidian-dev-utils/obsidian/FileSystem';
+import {
   generateMarkdownLink,
   splitSubpath,
   updateLinksInFile
@@ -40,7 +44,7 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
     if (this.size > 0) {
       let str = `# ${this.title} (${this.size.toString()} files)\n`;
       for (const notePath of this.keys()) {
-        const note = app.vault.getFileByPath(notePath);
+        const note = getFileOrNull(app, notePath);
         if (!note) {
           continue;
         }
@@ -111,7 +115,7 @@ export class LinksHandler {
       return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath);
     }
     const fullPath = this.getFullPathForLink(link, owningNotePath);
-    return this.app.vault.getFileByPath(fullPath);
+    return getFileOrNull(this.app, fullPath);
   }
 
   public getFullPathForLink(link: string, owningNotePath: string): string {
@@ -134,7 +138,7 @@ export class LinksHandler {
       fullLinkPath = join(dirname(notePath), linkPath);
     }
 
-    const file = this.app.vault.getFileByPath(fullLinkPath);
+    const file = getFileOrNull(this.app, fullLinkPath);
 
     if (!file) {
       return false;
@@ -150,7 +154,7 @@ export class LinksHandler {
       return subpath.startsWith('#page=');
     }
 
-    if (ext !== 'md') {
+    if (ext !== MARKDOWN_FILE_EXTENSION) {
       return false;
     }
 
@@ -172,7 +176,7 @@ export class LinksHandler {
       return;
     }
 
-    const note = this.app.vault.getFileByPath(notePath);
+    const note = getFileOrNull(this.app, notePath);
     if (!note) {
       console.warn(this.consoleLogPrefix + 'can\'t update links in note, file not found: ' + notePath);
       return;
@@ -208,7 +212,7 @@ export class LinksHandler {
       return link.original;
     }
 
-    const newLinkedNote = this.app.vault.getFileByPath(oldLinkPath) ?? this.app.vault.getFileByPath(newLinkPath);
+    const newLinkedNote = getFileOrNull(this.app, oldLinkPath) ?? getFileOrNull(this.app, newLinkPath);
 
     if (!newLinkedNote) {
       return link.original;
@@ -226,7 +230,7 @@ export class LinksHandler {
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
-    const file = this.app.vault.getFileByPath(filePath);
+    const file = getFileOrNull(this.app, filePath);
     if (!file) {
       return [];
     }
@@ -244,7 +248,7 @@ export class LinksHandler {
       return [];
     }
 
-    const note = this.app.vault.getFileByPath(notePath);
+    const note = getFileOrNull(this.app, notePath);
     if (!note) {
       return [];
     }
@@ -290,7 +294,7 @@ export class LinksHandler {
       return 0;
     }
 
-    const noteFile = this.app.vault.getFileByPath(notePath);
+    const noteFile = getFileOrNull(this.app, notePath);
     if (!noteFile) {
       console.warn(this.consoleLogPrefix + 'can\'t update wikilinks in note, file not found: ' + notePath);
       return 0;

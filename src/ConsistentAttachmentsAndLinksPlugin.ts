@@ -7,6 +7,10 @@ import {
 } from 'obsidian';
 import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
 import { chainAsyncFn } from 'obsidian-dev-utils/obsidian/ChainedPromise';
+import {
+  getOrCreateFile,
+  isMarkdownFile
+} from 'obsidian-dev-utils/obsidian/FileSystem';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
@@ -203,7 +207,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
-    if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || file.extension.toLowerCase() !== 'md') {
+    if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || !isMarkdownFile(file)) {
       return;
     }
 
@@ -212,7 +216,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private collectAttachmentsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== 'md') {
+    if (!note || !isMarkdownFile(note)) {
       return false;
     }
 
@@ -478,7 +482,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
       + wikiLinks.toString(this.app, notePath)
       + wikiEmbeds.toString(this.app, notePath);
     await createFolderSafe(this.app, dirname(notePath));
-    const note = this.app.vault.getFileByPath(notePath) ?? await this.app.vault.create(notePath, '');
+    const note = await getOrCreateFile(this.app, notePath);
     await this.app.vault.modify(note, text);
 
     let fileOpened = false;
@@ -535,7 +539,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private convertAllLinkPathsToRelativeCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== 'md') {
+    if (!note || !isMarkdownFile(note)) {
       return false;
     }
 
@@ -548,7 +552,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private convertAllEmbedsPathsToRelativeCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== 'md') {
+    if (!note || !isMarkdownFile(note)) {
       return false;
     }
 
@@ -561,7 +565,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private replaceAllWikilinksWithMarkdownLinksCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== 'md') {
+    if (!note || !isMarkdownFile(note)) {
       return false;
     }
 
@@ -574,7 +578,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || note.extension.toLowerCase() !== 'md') {
+    if (!note || !isMarkdownFile(note)) {
       return false;
     }
 
