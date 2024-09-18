@@ -11,6 +11,7 @@ import {
 import {
   generateMarkdownLink,
   splitSubpath,
+  testWikilink,
   updateLinksInFile
 } from 'obsidian-dev-utils/obsidian/Link';
 import {
@@ -306,7 +307,7 @@ export class LinksHandler {
     }
 
     const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
-    const result = links.filter((link) => link.original.includes('[[')).length;
+    const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
       app: this.app,
       pathOrFile: noteFile,
@@ -335,7 +336,7 @@ export class LinksHandler {
         badLinks.add(note.path, link);
       }
 
-      if (link.original.includes('[[')) {
+      if (testWikilink(link.original)) {
         wikiLinks.add(note.path, link);
       }
     }
@@ -345,7 +346,7 @@ export class LinksHandler {
         badEmbeds.add(note.path, embed);
       }
 
-      if (embed.original.includes('[[')) {
+      if (testWikilink(embed.original)) {
         wikiEmbeds.add(note.path, embed);
       }
     }
