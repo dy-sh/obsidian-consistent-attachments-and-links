@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.20.1
+
+- Refactor
+
 ## 3.20.0
 
 - Delete attachments after deleting note
