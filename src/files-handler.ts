@@ -3,22 +3,24 @@ import {
   TFile
 } from 'obsidian';
 import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/AttachmentPath';
+import {
+  getFileOrNull,
+  isNote
+} from 'obsidian-dev-utils/obsidian/FileSystem';
 import { splitSubpath } from 'obsidian-dev-utils/obsidian/Link';
 import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
 import {
+  copySafe,
   createFolderSafe,
   deleteEmptyFolderHierarchy,
-  listSafe
+  getAvailablePath,
+  listSafe,
+  renameSafe
 } from 'obsidian-dev-utils/obsidian/Vault';
-import {
-  basename,
-  dirname,
-  extname,
-  join
-} from 'obsidian-dev-utils/Path';
+import { dirname } from 'obsidian-dev-utils/Path';
 
 import type { PathChangeInfo } from './links-handler.ts';
 import { LinksHandler } from './links-handler.ts';
@@ -62,13 +64,6 @@ export class FilesHandler {
 
   private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
     await createFolderSafe(this.app, dirname(filePath));
-  }
-
-  private generateFileCopyName(path: string): string {
-    const ext = extname(path);
-    const dir = dirname(path);
-    const fileName = basename(path, ext);
-    return this.app.vault.getAvailablePath(join(dir, fileName), ext.slice(1));
   }
 
   public async collectAttachmentsForCachedNote(notePath: string,
@@ -165,12 +160,12 @@ export class FilesHandler {
     // if no other file has link to this file - try to move file
     // if file already exist at new location - delete or move with new name
     if (linkedNotes.length == 0) {
-      const existFile = this.app.vault.getFileByPath(newLinkPath);
+      const existFile = getFileOrNull(this.app, newLinkPath);
       if (!existFile) {
         // move
         console.log(this.consoleLogPrefix + 'move file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
-        await this.app.vault.rename(file, newLinkPath);
+        await renameSafe(this.app, file, newLinkPath);
       } else {
         if (deleteExistFiles) {
           // delete
@@ -179,33 +174,33 @@ export class FilesHandler {
           await this.deleteFile(file, deleteEmptyFolders);
         } else {
           // move with new name
-          const newFileCopyName = this.generateFileCopyName(newLinkPath);
+          const newFileCopyName = getAvailablePath(this.app, newLinkPath);
           console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
           result.movedAttachments.push({ oldPath: path, newPath: newFileCopyName });
-          await this.app.vault.rename(file, newFileCopyName);
+          await renameSafe(this.app, file, newFileCopyName);
           result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
         }
       }
     } else {
       // if some other file has link to this file - try to copy file
       // if file already exist at new location - copy file with new name or do nothing
-      const existFile = this.app.vault.getFileByPath(newLinkPath);
+      const existFile = getFileOrNull(this.app, newLinkPath);
       if (!existFile) {
         // copy
         console.log(this.consoleLogPrefix + 'copy file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
-        await this.app.vault.rename(file, newLinkPath);
-        await this.app.vault.copy(file, path);
+        await renameSafe(this.app, file, newLinkPath);
+        await copySafe(this.app, file, path);
       } else {
         if (deleteExistFiles) {
           // do nothing
         } else {
           // copy with new name
-          const newFileCopyName = this.generateFileCopyName(newLinkPath);
+          const newFileCopyName = getAvailablePath(this.app, newLinkPath);
           console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
           result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName });
-          await this.app.vault.rename(file, newFileCopyName);
-          await this.app.vault.copy(file, path);
+          await renameSafe(this.app, file, newFileCopyName);
+          await copySafe(this.app, file, path);
           result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
         }
       }
@@ -234,7 +229,7 @@ export class FilesHandler {
     list = await listSafe(this.app, dirName);
     if (list.files.length == 0 && list.folders.length == 0) {
       console.log(this.consoleLogPrefix + 'delete empty folder: \n   ' + dirName);
-      if (await this.app.vault.adapter.exists(dirName)) {
+      if (await this.app.vault.exists(dirName)) {
         try {
           await this.app.vault.adapter.rmdir(dirName, false);
         } catch (e) {
@@ -247,18 +242,17 @@ export class FilesHandler {
   }
 
   private async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
-    await this.app.vault.trash(file, true);
+    await this.app.fileManager.trashFile(file);
     if (deleteEmptyFolders) {
       let dir = file.parent;
       while (dir && dir.children.length === 0) {
-        await this.app.vault.trash(dir, true);
+        await this.app.fileManager.trashFile(dir);
         dir = dir.parent;
       }
     }
   }
 
   private isAttachment(file: TFile): boolean {
-    const extension = file.extension.toLowerCase();
-    return extension !== 'md' && extension !== 'canvas';
+    return !isNote(file);
   }
 }
