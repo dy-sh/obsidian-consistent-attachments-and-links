@@ -53,7 +53,6 @@ export class FilesHandler {
 
     for (const fileRegex of this.ignoreFilesRegex) {
       const testResult = fileRegex.test(path);
-      // console.log(path,fileRegex,testResult)
       if (testResult) {
         return true;
       }
@@ -92,7 +91,6 @@ export class FilesHandler {
 
       const fullPathLink = this.lh.getFullPathForLink(linkPath, notePath);
       if (result.movedAttachments.findIndex((x) => x.oldPath == fullPathLink) != -1) {
-        // already moved
         continue;
       }
 
@@ -110,7 +108,6 @@ export class FilesHandler {
       const newPath = await getAttachmentFilePath(this.app, file.path, notePath);
 
       if (dirname(newPath) === dirname(file.path)) {
-        // nothing to move
         continue;
       }
 
@@ -157,23 +154,18 @@ export class FilesHandler {
     }
 
     const oldFolder = file.parent;
-    // if no other file has link to this file - try to move file
-    // if file already exist at new location - delete or move with new name
     if (linkedNotes.length == 0) {
       const existFile = getFileOrNull(this.app, newLinkPath);
       if (!existFile) {
-        // move
         console.log(this.consoleLogPrefix + 'move file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
         await renameSafe(this.app, file, newLinkPath);
       } else {
         if (deleteExistFiles) {
-          // delete
           console.log(this.consoleLogPrefix + 'delete file: \n   ' + path);
           result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
           await this.deleteFile(file, deleteEmptyFolders);
         } else {
-          // move with new name
           const newFileCopyName = getAvailablePath(this.app, newLinkPath);
           console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
           result.movedAttachments.push({ oldPath: path, newPath: newFileCopyName });
@@ -182,27 +174,19 @@ export class FilesHandler {
         }
       }
     } else {
-      // if some other file has link to this file - try to copy file
-      // if file already exist at new location - copy file with new name or do nothing
       const existFile = getFileOrNull(this.app, newLinkPath);
       if (!existFile) {
-        // copy
         console.log(this.consoleLogPrefix + 'copy file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
         await renameSafe(this.app, file, newLinkPath);
         await copySafe(this.app, file, path);
-      } else {
-        if (deleteExistFiles) {
-          // do nothing
-        } else {
-          // copy with new name
-          const newFileCopyName = getAvailablePath(this.app, newLinkPath);
-          console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
-          result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName });
-          await renameSafe(this.app, file, newFileCopyName);
-          await copySafe(this.app, file, path);
-          result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
-        }
+      } else if (!deleteExistFiles) {
+        const newFileCopyName = getAvailablePath(this.app, newLinkPath);
+        console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
+        result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName });
+        await renameSafe(this.app, file, newFileCopyName);
+        await copySafe(this.app, file, path);
+        result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
       }
     }
 

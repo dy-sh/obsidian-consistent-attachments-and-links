@@ -505,7 +505,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
     await this.convertAllEmbedsPathsToRelative();
     await this.convertAllLinkPathsToRelative();
-    // - Rename all attachments (using Unique attachments, optional)
     await this.collectAllAttachments();
     await this.deleteEmptyFolders();
     new Notice('Reorganization of the vault completed');
