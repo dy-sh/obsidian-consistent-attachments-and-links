@@ -9,6 +9,7 @@ import {
   MARKDOWN_FILE_EXTENSION
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import {
+  extractLinkFile,
   generateMarkdownLink,
   splitSubpath,
   testWikilink,
@@ -110,15 +111,6 @@ export class LinksHandler {
     return false;
   }
 
-  public getFileByLink(link: string, owningNotePath: string, allowInvalidLink = true): TFile | null {
-    ({ linkPath: link } = splitSubpath(link));
-    if (allowInvalidLink) {
-      return this.app.metadataCache.getFirstLinkpathDest(link, owningNotePath);
-    }
-    const fullPath = this.getFullPathForLink(link, owningNotePath);
-    return getFileOrNull(this.app, fullPath);
-  }
-
   public getFullPathForLink(link: string, owningNotePath: string): string {
     ({ linkPath: link } = splitSubpath(link));
     const parentFolder = dirname(owningNotePath);
@@ -206,9 +198,8 @@ export class LinksHandler {
       forceRelativePath?: boolean | undefined;
     }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
-    this.app.metadataCache.getFirstLinkpathDest(linkPath, oldNotePath);
-    const oldLinkPath = this.app.metadataCache.getFirstLinkpathDest(linkPath, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
-    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : this.app.metadataCache.getFirstLinkpathDest(linkPath, note.path)?.path ?? join(dirname(note.path), linkPath);
+    const oldLinkPath = extractLinkFile(this.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
+    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : extractLinkFile(this.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
     if (!newLinkPath) {
       return link.original;
     }
