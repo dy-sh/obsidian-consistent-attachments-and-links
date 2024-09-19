@@ -8,6 +8,7 @@ import {
   isNote
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import {
+  extractLinkFile,
   splitSubpath,
   testEmbed
 } from 'obsidian-dev-utils/obsidian/Link';
@@ -97,7 +98,7 @@ export class FilesHandler {
         continue;
       }
 
-      const file = this.lh.getFileByLink(linkPath, notePath);
+      const file = extractLinkFile(this.app, link, notePath);
       if (!file) {
         const type = testEmbed(link.original) ? 'embed' : 'link';
         console.warn(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
