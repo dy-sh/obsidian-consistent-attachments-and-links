@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.21.0
+
+- Update lib
+
 ## 3.20.1
 
 - Refactor
