@@ -2,7 +2,7 @@
 
 ## 3.21.1
 
-- update lib
+- Update lib
 
 ## 3.21.0
 
