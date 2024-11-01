@@ -2,7 +2,8 @@
   "version": "0.2",
   "ignorePaths": [
     "dist",
-    "node_modules"
+    "node_modules",
+    "tsconfig.tsbuildinfo"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
@@ -28,6 +29,7 @@
     "preversion",
     "Savosh",
     "subfolders",
+    "tsbuildinfo",
     "Varma",
     "wikilink",
     "Wikilinks",

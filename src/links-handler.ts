@@ -1,9 +1,14 @@
-import type { ReferenceCache } from 'obsidian';
+import type {
+  Reference,
+  ReferenceCache
+} from 'obsidian';
 import {
   App,
   normalizePath,
   TFile
 } from 'obsidian';
+import type { FileChange } from 'obsidian-dev-utils/obsidian/FileChange';
+import { applyFileChanges } from 'obsidian-dev-utils/obsidian/FileChange';
 import {
   getFileOrNull,
   MARKDOWN_FILE_EXTENSION
@@ -20,8 +25,7 @@ import {
   getBacklinksForFileSafe,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
-import type { FileChange } from 'obsidian-dev-utils/obsidian/Vault';
-import { applyFileChanges } from 'obsidian-dev-utils/obsidian/Vault';
+import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/Reference';
 import {
   dirname,
   join
@@ -192,7 +196,7 @@ export class LinksHandler {
   }:
     {
       note: TFile;
-      link: ReferenceCache;
+      link: Reference;
       oldNotePath: string;
       pathChangeMap?: Map<string, string> | undefined;
       forceRelativePath?: boolean | undefined;
@@ -350,17 +354,12 @@ export class LinksHandler {
         return [];
       }
       const links = getAllLinks(cache);
-      return links.map((link) => ({
-        startIndex: link.position.start.offset,
-        endIndex: link.position.end.offset,
-        oldContent: link.original,
-        newContent: this.convertLink({
-          note,
-          link,
-          oldNotePath,
-          pathChangeMap
-        })
-      }));
+      return links.map((link) => referenceToFileChange(link, this.convertLink({
+        note,
+        link,
+        oldNotePath,
+        pathChangeMap
+      })));
     });
   }
 }
