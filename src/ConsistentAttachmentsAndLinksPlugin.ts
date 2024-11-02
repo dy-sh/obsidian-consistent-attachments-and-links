@@ -531,8 +531,9 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private async saveAllOpenNotes(): Promise<void> {
     for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
-      const view = leaf.view as MarkdownView;
-      await view.save();
+      if (leaf.view instanceof MarkdownView) {
+        await leaf.view.save();
+      }
     }
   }
 
