@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.21.6
+
+- Update lib
+
 ## 3.21.5
 
 - Save only non-deferred views
