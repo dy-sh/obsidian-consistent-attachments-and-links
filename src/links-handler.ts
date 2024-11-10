@@ -97,7 +97,7 @@ export class LinksHandler {
 
   private isPathIgnored(path: string): boolean {
     if (path.startsWith('./')) {
-      path = path.substring(2);
+      path = path.slice(2);
     }
 
     for (const folder of this.ignoreFolders) {
