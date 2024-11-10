@@ -27,6 +27,7 @@ import {
 import { dirname } from 'obsidian-dev-utils/Path';
 
 import type { PathChangeInfo } from './links-handler.ts';
+
 import { LinksHandler } from './links-handler.ts';
 
 export interface MovedAttachmentResult {
@@ -43,6 +44,25 @@ export class FilesHandler {
     private ignoreFilesRegex: RegExp[] = [],
     private shouldDeleteEmptyFolders = false
   ) { }
+
+  private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
+    await createFolderSafe(this.app, dirname(filePath));
+  }
+
+  private async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
+    await this.app.fileManager.trashFile(file);
+    if (deleteEmptyFolders) {
+      let dir = file.parent;
+      while (dir && dir.children.length === 0) {
+        await this.app.fileManager.trashFile(dir);
+        dir = dir.parent;
+      }
+    }
+  }
+
+  private isAttachment(file: TFile): boolean {
+    return !isNote(file);
+  }
 
   private isPathIgnored(path: string): boolean {
     if (path.startsWith('./')) {
@@ -65,8 +85,80 @@ export class FilesHandler {
     return false;
   }
 
-  private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
-    await createFolderSafe(this.app, dirname(filePath));
+  private async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+    const path = file.path;
+
+    const result: MovedAttachmentResult = {
+      movedAttachments: [],
+      renamedFiles: []
+    };
+
+    if (this.isPathIgnored(path)) {
+      return result;
+    }
+
+    if (!this.isAttachment(file)) {
+      return result;
+    }
+
+    if (path == newLinkPath) {
+      console.warn(this.consoleLogPrefix + 'Can\'t move file. Source and destination path the same.');
+      return result;
+    }
+
+    await this.createFolderForAttachmentFromPath(newLinkPath);
+
+    const linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(path);
+    for (const notePath of parentNotePaths) {
+      linkedNotes.remove(notePath);
+    }
+
+    if (path !== file.path) {
+      console.warn(this.consoleLogPrefix + 'File was moved already');
+      return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles, deleteEmptyFolders);
+    }
+
+    const oldFolder = file.parent;
+    if (linkedNotes.length == 0) {
+      const existFile = getFileOrNull(this.app, newLinkPath);
+      if (!existFile) {
+        console.log(this.consoleLogPrefix + 'move file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
+        result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
+        await renameSafe(this.app, file, newLinkPath);
+      } else {
+        if (deleteExistFiles) {
+          console.log(this.consoleLogPrefix + 'delete file: \n   ' + path);
+          result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
+          await this.deleteFile(file, deleteEmptyFolders);
+        } else {
+          const newFileCopyName = getAvailablePath(this.app, newLinkPath);
+          console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
+          result.movedAttachments.push({ newPath: newFileCopyName, oldPath: path });
+          await renameSafe(this.app, file, newFileCopyName);
+          result.renamedFiles.push({ newPath: newFileCopyName, oldPath: newLinkPath });
+        }
+      }
+    } else {
+      const existFile = getFileOrNull(this.app, newLinkPath);
+      if (!existFile) {
+        console.log(this.consoleLogPrefix + 'copy file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
+        result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
+        await renameSafe(this.app, file, newLinkPath);
+        await copySafe(this.app, file, path);
+      } else if (!deleteExistFiles) {
+        const newFileCopyName = getAvailablePath(this.app, newLinkPath);
+        console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
+        result.movedAttachments.push({ newPath: newFileCopyName, oldPath: file.path });
+        await renameSafe(this.app, file, newFileCopyName);
+        await copySafe(this.app, file, path);
+        result.renamedFiles.push({ newPath: newFileCopyName, oldPath: newLinkPath });
+      }
+    }
+
+    if (this.shouldDeleteEmptyFolders) {
+      await deleteEmptyFolderHierarchy(this.app, oldFolder);
+    }
+    return result;
   }
 
   public async collectAttachmentsForCachedNote(notePath: string,
@@ -124,82 +216,6 @@ export class FilesHandler {
     return result;
   }
 
-  private async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
-    const path = file.path;
-
-    const result: MovedAttachmentResult = {
-      movedAttachments: [],
-      renamedFiles: []
-    };
-
-    if (this.isPathIgnored(path)) {
-      return result;
-    }
-
-    if (!this.isAttachment(file)) {
-      return result;
-    }
-
-    if (path == newLinkPath) {
-      console.warn(this.consoleLogPrefix + 'Can\'t move file. Source and destination path the same.');
-      return result;
-    }
-
-    await this.createFolderForAttachmentFromPath(newLinkPath);
-
-    const linkedNotes = await this.lh.getCachedNotesThatHaveLinkToFile(path);
-    for (const notePath of parentNotePaths) {
-      linkedNotes.remove(notePath);
-    }
-
-    if (path !== file.path) {
-      console.warn(this.consoleLogPrefix + 'File was moved already');
-      return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles, deleteEmptyFolders);
-    }
-
-    const oldFolder = file.parent;
-    if (linkedNotes.length == 0) {
-      const existFile = getFileOrNull(this.app, newLinkPath);
-      if (!existFile) {
-        console.log(this.consoleLogPrefix + 'move file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
-        result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
-        await renameSafe(this.app, file, newLinkPath);
-      } else {
-        if (deleteExistFiles) {
-          console.log(this.consoleLogPrefix + 'delete file: \n   ' + path);
-          result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
-          await this.deleteFile(file, deleteEmptyFolders);
-        } else {
-          const newFileCopyName = getAvailablePath(this.app, newLinkPath);
-          console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
-          result.movedAttachments.push({ oldPath: path, newPath: newFileCopyName });
-          await renameSafe(this.app, file, newFileCopyName);
-          result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
-        }
-      }
-    } else {
-      const existFile = getFileOrNull(this.app, newLinkPath);
-      if (!existFile) {
-        console.log(this.consoleLogPrefix + 'copy file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
-        result.movedAttachments.push({ oldPath: path, newPath: newLinkPath });
-        await renameSafe(this.app, file, newLinkPath);
-        await copySafe(this.app, file, path);
-      } else if (!deleteExistFiles) {
-        const newFileCopyName = getAvailablePath(this.app, newLinkPath);
-        console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
-        result.movedAttachments.push({ oldPath: file.path, newPath: newFileCopyName });
-        await renameSafe(this.app, file, newFileCopyName);
-        await copySafe(this.app, file, path);
-        result.renamedFiles.push({ oldPath: newLinkPath, newPath: newFileCopyName });
-      }
-    }
-
-    if (this.shouldDeleteEmptyFolders) {
-      await deleteEmptyFolderHierarchy(this.app, oldFolder);
-    }
-    return result;
-  }
-
   public async deleteEmptyFolders(dirName: string): Promise<void> {
     if (this.isPathIgnored(dirName)) {
       return;
@@ -227,20 +243,5 @@ export class FilesHandler {
         }
       }
     }
-  }
-
-  private async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
-    await this.app.fileManager.trashFile(file);
-    if (deleteEmptyFolders) {
-      let dir = file.parent;
-      while (dir && dir.children.length === 0) {
-        await this.app.fileManager.trashFile(dir);
-        dir = dir.parent;
-      }
-    }
-  }
-
-  private isAttachment(file: TFile): boolean {
-    return !isNote(file);
   }
 }
