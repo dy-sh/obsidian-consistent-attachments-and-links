@@ -46,7 +46,7 @@ export class FilesHandler {
 
   private isPathIgnored(path: string): boolean {
     if (path.startsWith('./')) {
-      path = path.substring(2);
+      path = path.slice(2);
     }
 
     for (const folder of this.ignoreFolders) {
@@ -206,7 +206,7 @@ export class FilesHandler {
     }
 
     if (dirName.startsWith('./')) {
-      dirName = dirName.substring(2);
+      dirName = dirName.slice(2);
     }
 
     let list = await listSafe(this.app, dirName);

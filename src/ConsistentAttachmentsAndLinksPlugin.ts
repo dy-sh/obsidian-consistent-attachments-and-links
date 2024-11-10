@@ -188,7 +188,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
 
   private isPathIgnored(path: string): boolean {
     if (path.startsWith('./')) {
-      path = path.substring(2);
+      path = path.slice(2);
     }
 
     for (const folder of this.settings.ignoreFolders) {
