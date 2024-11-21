@@ -45,6 +45,90 @@ export class FilesHandler {
     private shouldDeleteEmptyFolders = false
   ) { }
 
+  public async collectAttachmentsForCachedNote(notePath: string,
+    deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+    if (this.isPathIgnored(notePath)) {
+      return { movedAttachments: [], renamedFiles: [] };
+    }
+
+    const result: MovedAttachmentResult = {
+      movedAttachments: [],
+      renamedFiles: []
+    };
+
+    const cache = await getCacheSafe(this.app, notePath);
+
+    if (!cache) {
+      return result;
+    }
+
+    for (const link of getAllLinks(cache)) {
+      const { linkPath } = splitSubpath(link.link);
+
+      if (!linkPath) {
+        continue;
+      }
+
+      const fullPathLink = this.lh.getFullPathForLink(linkPath, notePath);
+      if (result.movedAttachments.findIndex((x) => x.oldPath == fullPathLink) != -1) {
+        continue;
+      }
+
+      const file = extractLinkFile(this.app, link, notePath);
+      if (!file) {
+        const type = testEmbed(link.original) ? 'embed' : 'link';
+        console.warn(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
+        continue;
+      }
+
+      if (!this.isAttachment(file)) {
+        continue;
+      }
+
+      const newPath = await getAttachmentFilePath(this.app, file.path, notePath);
+
+      if (dirname(newPath) === dirname(file.path)) {
+        continue;
+      }
+
+      const res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles, deleteEmptyFolders);
+
+      result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
+      result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
+    }
+
+    return result;
+  }
+
+  public async deleteEmptyFolders(dirName: string): Promise<void> {
+    if (this.isPathIgnored(dirName)) {
+      return;
+    }
+
+    if (dirName.startsWith('./')) {
+      dirName = dirName.slice(2);
+    }
+
+    let list = await listSafe(this.app, dirName);
+    for (const folder of list.folders) {
+      await this.deleteEmptyFolders(folder);
+    }
+
+    list = await listSafe(this.app, dirName);
+    if (list.files.length == 0 && list.folders.length == 0) {
+      console.log(this.consoleLogPrefix + 'delete empty folder: \n   ' + dirName);
+      if (await this.app.vault.exists(dirName)) {
+        try {
+          await this.app.vault.adapter.rmdir(dirName, false);
+        } catch (e) {
+          if (await this.app.vault.adapter.exists(dirName)) {
+            throw e;
+          }
+        }
+      }
+    }
+  }
+
   private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
     await createFolderSafe(this.app, dirname(filePath));
   }
@@ -159,89 +243,5 @@ export class FilesHandler {
       await deleteEmptyFolderHierarchy(this.app, oldFolder);
     }
     return result;
-  }
-
-  public async collectAttachmentsForCachedNote(notePath: string,
-    deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
-    if (this.isPathIgnored(notePath)) {
-      return { movedAttachments: [], renamedFiles: [] };
-    }
-
-    const result: MovedAttachmentResult = {
-      movedAttachments: [],
-      renamedFiles: []
-    };
-
-    const cache = await getCacheSafe(this.app, notePath);
-
-    if (!cache) {
-      return result;
-    }
-
-    for (const link of getAllLinks(cache)) {
-      const { linkPath } = splitSubpath(link.link);
-
-      if (!linkPath) {
-        continue;
-      }
-
-      const fullPathLink = this.lh.getFullPathForLink(linkPath, notePath);
-      if (result.movedAttachments.findIndex((x) => x.oldPath == fullPathLink) != -1) {
-        continue;
-      }
-
-      const file = extractLinkFile(this.app, link, notePath);
-      if (!file) {
-        const type = testEmbed(link.original) ? 'embed' : 'link';
-        console.warn(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
-        continue;
-      }
-
-      if (!this.isAttachment(file)) {
-        continue;
-      }
-
-      const newPath = await getAttachmentFilePath(this.app, file.path, notePath);
-
-      if (dirname(newPath) === dirname(file.path)) {
-        continue;
-      }
-
-      const res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles, deleteEmptyFolders);
-
-      result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
-      result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
-    }
-
-    return result;
-  }
-
-  public async deleteEmptyFolders(dirName: string): Promise<void> {
-    if (this.isPathIgnored(dirName)) {
-      return;
-    }
-
-    if (dirName.startsWith('./')) {
-      dirName = dirName.slice(2);
-    }
-
-    let list = await listSafe(this.app, dirName);
-    for (const folder of list.folders) {
-      await this.deleteEmptyFolders(folder);
-    }
-
-    list = await listSafe(this.app, dirName);
-    if (list.files.length == 0 && list.folders.length == 0) {
-      console.log(this.consoleLogPrefix + 'delete empty folder: \n   ' + dirName);
-      if (await this.app.vault.exists(dirName)) {
-        try {
-          await this.app.vault.adapter.rmdir(dirName, false);
-        } catch (e) {
-          if (await this.app.vault.adapter.exists(dirName)) {
-            throw e;
-          }
-        }
-      }
-    }
   }
 }

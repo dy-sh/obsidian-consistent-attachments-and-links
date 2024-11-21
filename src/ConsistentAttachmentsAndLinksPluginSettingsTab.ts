@@ -8,10 +8,6 @@ import { extend } from 'obsidian-dev-utils/obsidian/Plugin/ValueComponent';
 import type ConsistentAttachmentsAndLinksPlugin from './ConsistentAttachmentsAndLinksPlugin.ts';
 
 export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettingsTabBase<ConsistentAttachmentsAndLinksPlugin> {
-  private getNormalizedPath(path: string): string {
-    return path.length == 0 ? path : normalizePath(path);
-  }
-
   public override display(): void {
     this.containerEl.empty();
 
@@ -76,5 +72,9 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       .setName('Auto Collect Attachments')
       .setDesc('Automatically collect attachments when the note is edited.')
       .addToggle((toggle) => extend(toggle).bind(this.plugin, 'autoCollectAttachments'));
+  }
+
+  private getNormalizedPath(path: string): string {
+    return path.length == 0 ? path : normalizePath(path);
   }
 }

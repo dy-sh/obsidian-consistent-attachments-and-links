@@ -8,12 +8,12 @@ import {
   TFile
 } from 'obsidian';
 import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
-import { chain } from 'obsidian-dev-utils/obsidian/ChainedPromise';
 import {
   getOrCreateFile,
   isMarkdownFile
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
+import { addToQueue } from 'obsidian-dev-utils/obsidian/Queue';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import {
   createFolderSafe,
@@ -34,6 +34,25 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
   private fh!: FilesHandler;
 
   private lh!: LinksHandler;
+
+  public override async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
+    await super.saveSettings(newSettings);
+
+    this.lh = new LinksHandler(
+      this.app,
+      'Consistent Attachments and Links: ',
+      this.settings.ignoreFolders,
+      this.settings.getIgnoreFilesRegex()
+    );
+
+    this.fh = new FilesHandler(
+      this.app,
+      this.lh,
+      'Consistent Attachments and Links: ',
+      this.settings.ignoreFolders,
+      this.settings.getIgnoreFilesRegex()
+    );
+  }
 
   protected override createDefaultPluginSettings(): ConsistentAttachmentsAndLinksPluginSettings {
     return new ConsistentAttachmentsAndLinksPluginSettings();
@@ -57,7 +76,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
         f.appendChild(createEl('a', { href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file#attachment-subfolder-setting', text: 'Read more' }));
       }), 0);
       notice.noticeEl.onClickEvent((ev) => {
-        chain(this.app, async () => {
+        addToQueue(this.app, async () => {
           if (ev.target instanceof HTMLAnchorElement) {
             window.open(ev.target.href, '_blank');
           }
@@ -167,7 +186,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     });
 
     this.registerEvent(this.app.metadataCache.on('changed', (file) => {
-      chain(this.app, () => this.handleMetadataCacheChanged(file));
+      addToQueue(this.app, () => this.handleMetadataCacheChanged(file));
     }));
 
     this.lh = new LinksHandler(
@@ -311,7 +330,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      chain(this.app, () => this.collectAttachments(note));
+      addToQueue(this.app, () => this.collectAttachments(note));
     }
 
     return true;
@@ -363,7 +382,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      chain(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteEmbedsPathsToRelative(note.path)));
+      addToQueue(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteEmbedsPathsToRelative(note.path)));
     }
 
     return true;
@@ -415,7 +434,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      chain(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteLinksPathsToRelative(note.path)));
+      addToQueue(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteLinksPathsToRelative(note.path)));
     }
 
     return true;
@@ -521,7 +540,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      chain(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true)));
+      addToQueue(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true)));
     }
 
     return true;
@@ -570,7 +589,7 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
     }
 
     if (!checking) {
-      chain(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false)));
+      addToQueue(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false)));
     }
 
     return true;
@@ -582,25 +601,6 @@ export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<Cons
         await leaf.view.save();
       }
     }
-  }
-
-  public override async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
-    await super.saveSettings(newSettings);
-
-    this.lh = new LinksHandler(
-      this.app,
-      'Consistent Attachments and Links: ',
-      this.settings.ignoreFolders,
-      this.settings.getIgnoreFilesRegex()
-    );
-
-    this.fh = new FilesHandler(
-      this.app,
-      this.lh,
-      'Consistent Attachments and Links: ',
-      this.settings.ignoreFolders,
-      this.settings.getIgnoreFilesRegex()
-    );
   }
 }
 
