@@ -1,4 +1,4 @@
-export default class ConsistentAttachmentsAndLinksPluginSettings {
+export class ConsistentAttachmentsAndLinksPluginSettings {
   public autoCollectAttachments = false;
   public changeNoteBacklinksAlt = true;
   public consistencyReportFile = 'consistency-report.md';
