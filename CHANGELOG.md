@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.21.10
+
+- Update libs
+- Avoid default exports
+
 ## 3.21.9
 
 - Update libs
