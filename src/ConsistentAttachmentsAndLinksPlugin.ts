@@ -21,7 +21,7 @@ import {
 } from 'obsidian-dev-utils/obsidian/Vault';
 import { dirname } from 'obsidian-dev-utils/Path';
 
-import ConsistentAttachmentsAndLinksPluginSettings from './ConsistentAttachmentsAndLinksPluginSettings.ts';
+import { ConsistentAttachmentsAndLinksPluginSettings } from './ConsistentAttachmentsAndLinksPluginSettings.ts';
 import { ConsistentAttachmentsAndLinksPluginSettingsTab } from './ConsistentAttachmentsAndLinksPluginSettingsTab.ts';
 import { FilesHandler } from './files-handler.ts';
 import {
@@ -29,7 +29,7 @@ import {
   LinksHandler
 } from './links-handler.ts';
 
-export default class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
+export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
   private fh!: FilesHandler;
 
