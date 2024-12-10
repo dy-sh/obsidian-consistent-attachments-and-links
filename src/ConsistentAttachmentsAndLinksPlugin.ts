@@ -12,6 +12,7 @@ import {
   getOrCreateFile,
   isMarkdownFile
 } from 'obsidian-dev-utils/obsidian/FileSystem';
+import { loop } from 'obsidian-dev-utils/obsidian/Loop';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/Queue';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
@@ -214,22 +215,15 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     const wikiLinks = new ConsistencyCheckResult('Wiki links');
     const wikiEmbeds = new ConsistencyCheckResult('Wiki embeds');
 
-    const notes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice('', 0);
-    for (const note of notes) {
-      if (this.abortSignal.aborted) {
-        notice.hide();
-        return;
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
+      continueOnError: true,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
       }
-      i++;
-      const message = `Checking note # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
-    }
-
-    notice.hide();
+    });
 
     const notePath = this.settings.consistencyReportFile;
     const text
@@ -260,35 +254,28 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
 
     await this.saveAllOpenNotes();
 
-    const notes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice('', 0);
-    for (const note of notes) {
-      if (this.abortSignal.aborted) {
-        notice.hide();
-        return;
-      }
-      i++;
-      const message = `Collecting attachments # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path)) {
-        continue;
-      }
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Collecting attachments ${iterationStr} - ${note.path}`,
+      continueOnError: true,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.isPathIgnored(note.path)) {
+          return;
+        }
 
-      const result = await this.fh.collectAttachmentsForCachedNote(
-        note.path,
-        this.settings.deleteExistFilesWhenMoveNote,
-        this.settings.deleteEmptyFolders);
+        const result = await this.fh.collectAttachmentsForCachedNote(
+          note.path,
+          this.settings.deleteExistFilesWhenMoveNote,
+          this.settings.deleteEmptyFolders);
 
-      if (result.movedAttachments.length > 0) {
-        await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
-        movedAttachmentsCount += result.movedAttachments.length;
-        processedNotesCount++;
+        if (result.movedAttachments.length > 0) {
+          await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
+          movedAttachmentsCount += result.movedAttachments.length;
+          processedNotesCount++;
+        }
       }
-    }
-
-    notice.hide();
+    });
 
     if (movedAttachmentsCount == 0) {
       new Notice('No files found that need to be moved');
@@ -342,31 +329,24 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     let changedEmbedCount = 0;
     let processedNotesCount = 0;
 
-    const notes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice('', 0);
-    for (const note of notes) {
-      if (this.abortSignal.aborted) {
-        notice.hide();
-        return;
-      }
-      i++;
-      const message = `Converting embed paths to relative # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path)) {
-        continue;
-      }
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
+      continueOnError: true,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.isPathIgnored(note.path)) {
+          return;
+        }
 
-      const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
+        const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
 
-      if (result.length > 0) {
-        changedEmbedCount += result.length;
-        processedNotesCount++;
+        if (result.length > 0) {
+          changedEmbedCount += result.length;
+          processedNotesCount++;
+        }
       }
-    }
-
-    notice.hide();
+    });
 
     if (changedEmbedCount == 0) {
       new Notice('No embeds found that need to be converted');
@@ -394,31 +374,24 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
-    const notes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice('', 0);
-    for (const note of notes) {
-      if (this.abortSignal.aborted) {
-        notice.hide();
-        return;
-      }
-      i++;
-      const message = `Converting link paths to relative # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path)) {
-        continue;
-      }
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
+      continueOnError: true,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.isPathIgnored(note.path)) {
+          return;
+        }
 
-      const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
+        const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
 
-      if (result.length > 0) {
-        changedLinksCount += result.length;
-        processedNotesCount++;
+        if (result.length > 0) {
+          changedLinksCount += result.length;
+          processedNotesCount++;
+        }
       }
-    }
-
-    notice.hide();
+    });
 
     if (changedLinksCount == 0) {
       new Notice('No links found that need to be converted');
@@ -503,28 +476,21 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
-    const notes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice('', 0);
-    for (const note of notes) {
-      if (this.abortSignal.aborted) {
-        notice.hide();
-        return;
-      }
-      i++;
-      const message = `Replacing wiki embeds with markdown embeds # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path)) {
-        continue;
-      }
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
+      continueOnError: true,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.isPathIgnored(note.path)) {
+          return;
+        }
 
-      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true);
-      changedLinksCount += result;
-      processedNotesCount++;
-    }
-
-    notice.hide();
+        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true);
+        changedLinksCount += result;
+        processedNotesCount++;
+      }
+    });
 
     if (changedLinksCount == 0) {
       new Notice('No wiki embeds found that need to be replaced');
@@ -552,28 +518,21 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
-    const notes = getMarkdownFilesSorted(this.app);
-    let i = 0;
-    const notice = new Notice('', 0);
-    for (const note of notes) {
-      if (this.abortSignal.aborted) {
-        notice.hide();
-        return;
-      }
-      i++;
-      const message = `Replacing wikilinks with markdown links # ${i.toString()} / ${notes.length.toString()} - ${note.path}`;
-      notice.setMessage(message);
-      console.debug(message);
-      if (this.isPathIgnored(note.path)) {
-        continue;
-      }
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
+      continueOnError: true,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.isPathIgnored(note.path)) {
+          return;
+        }
 
-      const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false);
-      changedLinksCount += result;
-      processedNotesCount++;
-    }
-
-    notice.hide();
+        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false);
+        changedLinksCount += result;
+        processedNotesCount++;
+      }
+    });
 
     if (changedLinksCount == 0) {
       new Notice('No wiki links found that need to be replaced');

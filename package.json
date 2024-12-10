@@ -19,7 +19,7 @@
     "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^22.10.1",
     "obsidian": "^1.7.2",
-    "obsidian-dev-utils": "^4.19.0",
+    "obsidian-dev-utils": "^5.2.0",
     "obsidian-typings": "^2.5.0"
   },
   "type": "module"
