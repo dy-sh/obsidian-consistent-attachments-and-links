@@ -218,11 +218,11 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
-      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
-      }
+      },
+      shouldContinueOnError: true
     });
 
     const notePath = this.settings.consistencyReportFile;
@@ -257,7 +257,6 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Collecting attachments ${iterationStr} - ${note.path}`,
-      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -274,7 +273,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
           movedAttachmentsCount += result.movedAttachments.length;
           processedNotesCount++;
         }
-      }
+      },
+      shouldContinueOnError: true
     });
 
     if (movedAttachmentsCount == 0) {
@@ -332,7 +332,6 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
-      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -345,7 +344,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
           changedEmbedCount += result.length;
           processedNotesCount++;
         }
-      }
+      },
+      shouldContinueOnError: true
     });
 
     if (changedEmbedCount == 0) {
@@ -377,7 +377,6 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
-      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -390,7 +389,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
           changedLinksCount += result.length;
           processedNotesCount++;
         }
-      }
+      },
+      shouldContinueOnError: true
     });
 
     if (changedLinksCount == 0) {
@@ -479,7 +479,6 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
-      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -489,7 +488,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true);
         changedLinksCount += result;
         processedNotesCount++;
-      }
+      },
+      shouldContinueOnError: true
     });
 
     if (changedLinksCount == 0) {
@@ -521,7 +521,6 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
-      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -531,7 +530,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false);
         changedLinksCount += result;
         processedNotesCount++;
-      }
+      },
+      shouldContinueOnError: true
     });
 
     if (changedLinksCount == 0) {
