@@ -218,7 +218,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
-      continueOnError: true,
+      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
@@ -257,7 +257,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Collecting attachments ${iterationStr} - ${note.path}`,
-      continueOnError: true,
+      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -332,7 +332,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
-      continueOnError: true,
+      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -377,7 +377,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
-      continueOnError: true,
+      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -479,7 +479,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
-      continueOnError: true,
+      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
@@ -521,7 +521,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
-      continueOnError: true,
+      shouldContinueOnError: true,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
         if (this.isPathIgnored(note.path)) {
