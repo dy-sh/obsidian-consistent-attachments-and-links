@@ -72,8 +72,8 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
         }
         const linkStr = generateMarkdownLink({
           app,
-          targetPathOrFile: note,
-          sourcePathOrFile: reportPath
+          sourcePathOrFile: reportPath,
+          targetPathOrFile: note
         });
         str += `${linkStr}:\n`;
         for (const link of this.get(notePath) ?? []) {
@@ -174,9 +174,9 @@ export class LinksHandler {
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
       app: this.app,
-      shouldUpdateEmbedOnlyLinks: embedOnlyLinks,
+      newSourcePathOrFile: noteFile,
       shouldForceMarkdownLinks: true,
-      newSourcePathOrFile: noteFile
+      shouldUpdateEmbedOnlyLinks: embedOnlyLinks
     });
     return result;
   }
@@ -272,11 +272,11 @@ export class LinksHandler {
     return generateMarkdownLink({
       alias: link.displayText,
       app: this.app,
-      shouldForceRelativePath: forceRelativePath,
       originalLink: link.original,
-      targetPathOrFile,
+      shouldForceRelativePath: forceRelativePath,
       sourcePathOrFile: note.path,
-      subpath
+      subpath,
+      targetPathOrFile
     });
   }
 
