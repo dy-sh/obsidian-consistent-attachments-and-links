@@ -72,7 +72,7 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
         }
         const linkStr = generateMarkdownLink({
           app,
-          pathOrFile: note,
+          targetPathOrFile: note,
           sourcePathOrFile: reportPath
         });
         str += `${linkStr}:\n`;
@@ -174,11 +174,9 @@ export class LinksHandler {
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
       app: this.app,
-      embedOnlyLinks,
-      forceMarkdownLinks: true,
-      oldPathOrFile: noteFile.path,
-      pathOrFile: noteFile,
-      renameMap: new Map<string, string>()
+      shouldUpdateEmbedOnlyLinks: embedOnlyLinks,
+      shouldForceMarkdownLinks: true,
+      newSourcePathOrFile: noteFile
     });
     return result;
   }
@@ -265,18 +263,18 @@ export class LinksHandler {
       return link.original;
     }
 
-    const newLinkedNote = getFileOrNull(this.app, oldLinkPath) ?? getFileOrNull(this.app, newLinkPath);
+    const targetPathOrFile = getFileOrNull(this.app, oldLinkPath) ?? getFileOrNull(this.app, newLinkPath);
 
-    if (!newLinkedNote) {
+    if (!targetPathOrFile) {
       return link.original;
     }
 
     return generateMarkdownLink({
       alias: link.displayText,
       app: this.app,
-      forceRelativePath,
+      shouldForceRelativePath: forceRelativePath,
       originalLink: link.original,
-      pathOrFile: newLinkedNote,
+      targetPathOrFile,
       sourcePathOrFile: note.path,
       subpath
     });
