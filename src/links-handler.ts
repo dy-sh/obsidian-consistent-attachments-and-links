@@ -3,12 +3,14 @@ import type {
   ReferenceCache
 } from 'obsidian';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/FileChange';
+import type { GenerateMarkdownLinkOptions } from 'obsidian-dev-utils/obsidian/Link';
 
 import {
   App,
   normalizePath,
   TFile
 } from 'obsidian';
+import { normalizeOptionalProperties } from 'obsidian-dev-utils/Object';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/FileChange';
 import {
   getFileOrNull,
@@ -269,7 +271,7 @@ export class LinksHandler {
       return link.original;
     }
 
-    return generateMarkdownLink({
+    return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkOptions>({
       alias: link.displayText,
       app: this.app,
       originalLink: link.original,
@@ -277,7 +279,7 @@ export class LinksHandler {
       sourcePathOrFile: note.path,
       subpath,
       targetPathOrFile
-    });
+    }));
   }
 
   private isPathIgnored(path: string): boolean {

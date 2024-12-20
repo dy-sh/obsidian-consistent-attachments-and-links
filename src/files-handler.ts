@@ -19,11 +19,11 @@ import {
 import {
   copySafe,
   createFolderSafe,
-  deleteEmptyFolderHierarchy,
   getAvailablePath,
   listSafe,
   renameSafe
 } from 'obsidian-dev-utils/obsidian/Vault';
+import { deleteEmptyFolderHierarchy } from 'obsidian-dev-utils/obsidian/VaultEx';
 import { dirname } from 'obsidian-dev-utils/Path';
 
 import type { PathChangeInfo } from './links-handler.ts';
@@ -145,7 +145,7 @@ export class FilesHandler {
   }
 
   private isAttachment(file: TFile): boolean {
-    return !isNote(file);
+    return !isNote(this.app, file);
   }
 
   private isPathIgnored(path: string): boolean {

@@ -32,8 +32,8 @@ import {
 
 export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
-  private fh!: FilesHandler;
 
+  private fh!: FilesHandler;
   private lh!: LinksHandler;
 
   public override async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
@@ -55,8 +55,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     );
   }
 
-  protected override createDefaultPluginSettings(): ConsistentAttachmentsAndLinksPluginSettings {
-    return new ConsistentAttachmentsAndLinksPluginSettings();
+  protected override createPluginSettings(data: unknown): ConsistentAttachmentsAndLinksPluginSettings {
+    return new ConsistentAttachmentsAndLinksPluginSettings(data);
   }
 
   protected override createPluginSettingsTab(): null | PluginSettingTab {
@@ -312,7 +312,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
 
   private collectAttachmentsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(note)) {
+    if (!note || !isMarkdownFile(this.app, note)) {
       return false;
     }
 
@@ -357,7 +357,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
 
   private convertAllEmbedsPathsToRelativeCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(note)) {
+    if (!note || !isMarkdownFile(this.app, note)) {
       return false;
     }
 
@@ -402,7 +402,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
 
   private convertAllLinkPathsToRelativeCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(note)) {
+    if (!note || !isMarkdownFile(this.app, note)) {
       return false;
     }
 
@@ -418,7 +418,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
-    if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || !isMarkdownFile(file)) {
+    if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || !isMarkdownFile(this.app, file)) {
       return;
     }
 
@@ -501,7 +501,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
 
   private replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(note)) {
+    if (!note || !isMarkdownFile(this.app, note)) {
       return false;
     }
 
@@ -543,7 +543,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
 
   private replaceAllWikilinksWithMarkdownLinksCurrentNote(checking: boolean): boolean {
     const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(note)) {
+    if (!note || !isMarkdownFile(this.app, note)) {
       return false;
     }
 
