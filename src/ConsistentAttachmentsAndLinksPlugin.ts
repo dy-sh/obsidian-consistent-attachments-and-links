@@ -40,18 +40,14 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     await super.saveSettings(newSettings);
 
     this.lh = new LinksHandler(
-      this.app,
-      'Consistent Attachments and Links: ',
-      this.settings.ignoreFolders,
-      this.settings.getIgnoreFilesRegex()
+      this,
+      'Consistent Attachments and Links: '
     );
 
     this.fh = new FilesHandler(
-      this.app,
+      this,
       this.lh,
-      'Consistent Attachments and Links: ',
-      this.settings.ignoreFolders,
-      this.settings.getIgnoreFilesRegex()
+      'Consistent Attachments and Links: '
     );
   }
 
@@ -103,7 +99,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         shouldDeleteOrphanAttachments: this.settings.deleteAttachmentsWithNote,
         shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
         shouldUpdateFilenameAliases: this.settings.changeNoteBacklinksAlt,
-        shouldUpdateLinks: this.settings.updateLinks
+        shouldUpdateLinks: this.settings.updateLinks,
+        isPathIgnored: this.settings.isPathIgnored
       };
       return settings;
     });
@@ -191,19 +188,14 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     }));
 
     this.lh = new LinksHandler(
-      this.app,
-      'Consistent Attachments and Links: ',
-      this.settings.ignoreFolders,
-      this.settings.getIgnoreFilesRegex()
+      this,
+      'Consistent Attachments and Links: '
     );
 
     this.fh = new FilesHandler(
-      this.app,
+      this,
       this.lh,
-      'Consistent Attachments and Links: ',
-      this.settings.ignoreFolders,
-      this.settings.getIgnoreFilesRegex(),
-      this.settings.deleteEmptyFolders
+      'Consistent Attachments and Links: '
     );
   }
 
@@ -259,7 +251,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       buildNoticeMessage: (note, iterationStr) => `Collecting attachments ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
-        if (this.isPathIgnored(note.path)) {
+        if (this.settings.isPathIgnored(note.path)) {
           return;
         }
 
@@ -285,7 +277,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
   }
 
   private async collectAttachments(note: TFile, isVerbose = true): Promise<void> {
-    if (this.isPathIgnored(note.path)) {
+    if (this.settings.isPathIgnored(note.path)) {
       new Notice('Note path is ignored');
       return;
     }
@@ -334,7 +326,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
-        if (this.isPathIgnored(note.path)) {
+        if (this.settings.isPathIgnored(note.path)) {
           return;
         }
 
@@ -379,7 +371,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
-        if (this.isPathIgnored(note.path)) {
+        if (this.settings.isPathIgnored(note.path)) {
           return;
         }
 
@@ -418,7 +410,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
-    if (!this.settings.deleteAttachmentsWithNote || this.isPathIgnored(file.path) || !isMarkdownFile(this.app, file)) {
+    if (!this.settings.deleteAttachmentsWithNote || this.settings.isPathIgnored(file.path) || !isMarkdownFile(this.app, file)) {
       return;
     }
 
@@ -436,26 +428,6 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     }
 
     await this.collectAttachments(file, false);
-  }
-
-  private isPathIgnored(path: string): boolean {
-    if (path.startsWith('./')) {
-      path = path.slice(2);
-    }
-
-    for (const folder of this.settings.ignoreFolders) {
-      if (path.startsWith(folder)) {
-        return true;
-      }
-    }
-
-    for (const fileRegex of this.settings.getIgnoreFilesRegex()) {
-      if (fileRegex.test(path)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private async reorganizeVault(): Promise<void> {
@@ -481,7 +453,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
-        if (this.isPathIgnored(note.path)) {
+        if (this.settings.isPathIgnored(note.path)) {
           return;
         }
 
@@ -523,7 +495,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
-        if (this.isPathIgnored(note.path)) {
+        if (this.settings.isPathIgnored(note.path)) {
           return;
         }
 
