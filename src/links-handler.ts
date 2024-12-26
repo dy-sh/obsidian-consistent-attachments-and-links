@@ -34,6 +34,8 @@ import {
   join
 } from 'obsidian-dev-utils/Path';
 
+import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
+
 export interface LinksAndEmbedsChangedInfo {
   embeds: ReferenceChangeInfo[];
   links: ReferenceChangeInfo[];
@@ -92,18 +94,16 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
 
 export class LinksHandler {
   public constructor(
-    private app: App,
-    private consoleLogPrefix = '',
-    private ignoreFolders: string[] = [],
-    private ignoreFilesRegex: RegExp[] = []
+    private plugin: ConsistentAttachmentsAndLinksPlugin,
+    private consoleLogPrefix = ''
   ) { }
 
   public async checkConsistency(note: TFile, badLinks: ConsistencyCheckResult, badEmbeds: ConsistencyCheckResult, wikiLinks: ConsistencyCheckResult, wikiEmbeds: ConsistencyCheckResult): Promise<void> {
-    if (this.isPathIgnored(note.path)) {
+    if (this.plugin.settingsCopy.isPathIgnored(note.path)) {
       return;
     }
 
-    const cache = await getCacheSafe(this.app, note.path);
+    const cache = await getCacheSafe(this.plugin.app, note.path);
     if (!cache) {
       return;
     }
@@ -140,12 +140,12 @@ export class LinksHandler {
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
-    const file = getFileOrNull(this.app, filePath);
+    const file = getFileOrNull(this.plugin.app, filePath);
     if (!file) {
       return [];
     }
 
-    const backlinks = await getBacklinksForFileSafe(this.app, file);
+    const backlinks = await getBacklinksForFileSafe(this.plugin.app, file);
     return backlinks.keys();
   }
 
@@ -157,17 +157,17 @@ export class LinksHandler {
   }
 
   public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean): Promise<number> {
-    if (this.isPathIgnored(notePath)) {
+    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
       return 0;
     }
 
-    const noteFile = getFileOrNull(this.app, notePath);
+    const noteFile = getFileOrNull(this.plugin.app, notePath);
     if (!noteFile) {
       console.warn(this.consoleLogPrefix + 'can\'t update wikilinks in note, file not found: ' + notePath);
       return 0;
     }
 
-    const cache = await getCacheSafe(this.app, noteFile);
+    const cache = await getCacheSafe(this.plugin.app, noteFile);
     if (!cache) {
       return 0;
     }
@@ -175,7 +175,7 @@ export class LinksHandler {
     const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
-      app: this.app,
+      app: this.plugin.app,
       newSourcePathOrFile: noteFile,
       shouldForceMarkdownLinks: true,
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
@@ -184,11 +184,11 @@ export class LinksHandler {
   }
 
   public async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[]): Promise<void> {
-    if (this.isPathIgnored(notePath)) {
+    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
       return;
     }
 
-    const note = getFileOrNull(this.app, notePath);
+    const note = getFileOrNull(this.plugin.app, notePath);
     if (!note) {
       console.warn(this.consoleLogPrefix + 'can\'t update links in note, file not found: ' + notePath);
       return;
@@ -203,19 +203,19 @@ export class LinksHandler {
   }
 
   private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean): Promise<ReferenceChangeInfo[]> {
-    if (this.isPathIgnored(notePath)) {
+    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
       return [];
     }
 
-    const note = getFileOrNull(this.app, notePath);
+    const note = getFileOrNull(this.plugin.app, notePath);
     if (!note) {
       return [];
     }
 
     const changedRefs: ReferenceChangeInfo[] = [];
 
-    await applyFileChanges(this.app, note, async () => {
-      const cache = await getCacheSafe(this.app, note);
+    await applyFileChanges(this.plugin.app, note, async () => {
+      const cache = await getCacheSafe(this.plugin.app, note);
       if (!cache) {
         return [];
       }
@@ -259,13 +259,13 @@ export class LinksHandler {
       pathChangeMap?: Map<string, string> | undefined;
     }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
-    const oldLinkPath = extractLinkFile(this.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
-    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : extractLinkFile(this.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
+    const oldLinkPath = extractLinkFile(this.plugin.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
+    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : extractLinkFile(this.plugin.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
     if (!newLinkPath) {
       return link.original;
     }
 
-    const targetPathOrFile = getFileOrNull(this.app, oldLinkPath) ?? getFileOrNull(this.app, newLinkPath);
+    const targetPathOrFile = getFileOrNull(this.plugin.app, oldLinkPath) ?? getFileOrNull(this.plugin.app, newLinkPath);
 
     if (!targetPathOrFile) {
       return link.original;
@@ -273,33 +273,13 @@ export class LinksHandler {
 
     return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkOptions>({
       alias: link.displayText,
-      app: this.app,
+      app: this.plugin.app,
       originalLink: link.original,
       shouldForceRelativePath: forceRelativePath,
       sourcePathOrFile: note.path,
       subpath,
       targetPathOrFile
     }));
-  }
-
-  private isPathIgnored(path: string): boolean {
-    if (path.startsWith('./')) {
-      path = path.slice(2);
-    }
-
-    for (const folder of this.ignoreFolders) {
-      if (path.startsWith(folder)) {
-        return true;
-      }
-    }
-
-    for (const fileRegex of this.ignoreFilesRegex) {
-      if (fileRegex.test(path)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private async isValidLink(link: ReferenceCache, notePath: string): Promise<boolean> {
@@ -315,7 +295,7 @@ export class LinksHandler {
       fullLinkPath = join(dirname(notePath), linkPath);
     }
 
-    const file = getFileOrNull(this.app, fullLinkPath);
+    const file = getFileOrNull(this.plugin.app, fullLinkPath);
 
     if (!file) {
       return false;
@@ -335,7 +315,7 @@ export class LinksHandler {
       return false;
     }
 
-    const cache = await getCacheSafe(this.app, file);
+    const cache = await getCacheSafe(this.plugin.app, file);
 
     if (!cache) {
       return false;
@@ -349,8 +329,8 @@ export class LinksHandler {
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
-    await applyFileChanges(this.app, note, async () => {
-      const cache = await getCacheSafe(this.app, note);
+    await applyFileChanges(this.plugin.app, note, async () => {
+      const cache = await getCacheSafe(this.plugin.app, note);
       if (!cache) {
         return [];
       }

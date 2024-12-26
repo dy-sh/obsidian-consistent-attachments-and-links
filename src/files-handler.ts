@@ -1,7 +1,4 @@
-import {
-  App,
-  TFile
-} from 'obsidian';
+import { TFile } from 'obsidian';
 import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/AttachmentPath';
 import {
   getFileOrNull,
@@ -26,6 +23,7 @@ import {
 import { deleteEmptyFolderHierarchy } from 'obsidian-dev-utils/obsidian/VaultEx';
 import { dirname } from 'obsidian-dev-utils/Path';
 
+import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
 import type { PathChangeInfo } from './links-handler.ts';
 
 import { LinksHandler } from './links-handler.ts';
@@ -37,17 +35,14 @@ export interface MovedAttachmentResult {
 
 export class FilesHandler {
   public constructor(
-    private app: App,
+    private plugin: ConsistentAttachmentsAndLinksPlugin,
     private lh: LinksHandler,
-    private consoleLogPrefix = '',
-    private ignoreFolders: string[] = [],
-    private ignoreFilesRegex: RegExp[] = [],
-    private shouldDeleteEmptyFolders = false
+    private consoleLogPrefix = ''
   ) { }
 
   public async collectAttachmentsForCachedNote(notePath: string,
     deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
-    if (this.isPathIgnored(notePath)) {
+    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
       return { movedAttachments: [], renamedFiles: [] };
     }
 
@@ -56,7 +51,7 @@ export class FilesHandler {
       renamedFiles: []
     };
 
-    const cache = await getCacheSafe(this.app, notePath);
+    const cache = await getCacheSafe(this.plugin.app, notePath);
 
     if (!cache) {
       return result;
@@ -74,7 +69,7 @@ export class FilesHandler {
         continue;
       }
 
-      const file = extractLinkFile(this.app, link, notePath);
+      const file = extractLinkFile(this.plugin.app, link, notePath);
       if (!file) {
         const type = testEmbed(link.original) ? 'embed' : 'link';
         console.warn(`${this.consoleLogPrefix}${notePath} has bad ${type} (file does not exist): ${linkPath}`);
@@ -85,7 +80,7 @@ export class FilesHandler {
         continue;
       }
 
-      const newPath = await getAttachmentFilePath(this.app, file.path, notePath);
+      const newPath = await getAttachmentFilePath(this.plugin.app, file.path, notePath);
 
       if (dirname(newPath) === dirname(file.path)) {
         continue;
@@ -101,7 +96,7 @@ export class FilesHandler {
   }
 
   public async deleteEmptyFolders(dirName: string): Promise<void> {
-    if (this.isPathIgnored(dirName)) {
+    if (this.plugin.settingsCopy.isPathIgnored(dirName)) {
       return;
     }
 
@@ -109,19 +104,19 @@ export class FilesHandler {
       dirName = dirName.slice(2);
     }
 
-    let list = await listSafe(this.app, dirName);
+    let list = await listSafe(this.plugin.app, dirName);
     for (const folder of list.folders) {
       await this.deleteEmptyFolders(folder);
     }
 
-    list = await listSafe(this.app, dirName);
+    list = await listSafe(this.plugin.app, dirName);
     if (list.files.length == 0 && list.folders.length == 0) {
       console.log(this.consoleLogPrefix + 'delete empty folder: \n   ' + dirName);
-      if (await this.app.vault.exists(dirName)) {
+      if (await this.plugin.app.vault.exists(dirName)) {
         try {
-          await this.app.vault.adapter.rmdir(dirName, false);
+          await this.plugin.app.vault.adapter.rmdir(dirName, false);
         } catch (e) {
-          if (await this.app.vault.adapter.exists(dirName)) {
+          if (await this.plugin.app.vault.adapter.exists(dirName)) {
             throw e;
           }
         }
@@ -130,43 +125,22 @@ export class FilesHandler {
   }
 
   private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
-    await createFolderSafe(this.app, dirname(filePath));
+    await createFolderSafe(this.plugin.app, dirname(filePath));
   }
 
   private async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
-    await this.app.fileManager.trashFile(file);
+    await this.plugin.app.fileManager.trashFile(file);
     if (deleteEmptyFolders) {
       let dir = file.parent;
       while (dir && dir.children.length === 0) {
-        await this.app.fileManager.trashFile(dir);
+        await this.plugin.app.fileManager.trashFile(dir);
         dir = dir.parent;
       }
     }
   }
 
   private isAttachment(file: TFile): boolean {
-    return !isNote(this.app, file);
-  }
-
-  private isPathIgnored(path: string): boolean {
-    if (path.startsWith('./')) {
-      path = path.slice(2);
-    }
-
-    for (const folder of this.ignoreFolders) {
-      if (path.startsWith(folder)) {
-        return true;
-      }
-    }
-
-    for (const fileRegex of this.ignoreFilesRegex) {
-      const testResult = fileRegex.test(path);
-      if (testResult) {
-        return true;
-      }
-    }
-
-    return false;
+    return !isNote(this.plugin.app, file);
   }
 
   private async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
@@ -177,7 +151,7 @@ export class FilesHandler {
       renamedFiles: []
     };
 
-    if (this.isPathIgnored(path)) {
+    if (this.plugin.settingsCopy.isPathIgnored(path)) {
       return result;
     }
 
@@ -204,43 +178,43 @@ export class FilesHandler {
 
     const oldFolder = file.parent;
     if (linkedNotes.length == 0) {
-      const existFile = getFileOrNull(this.app, newLinkPath);
+      const existFile = getFileOrNull(this.plugin.app, newLinkPath);
       if (!existFile) {
         console.log(this.consoleLogPrefix + 'move file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
-        await renameSafe(this.app, file, newLinkPath);
+        await renameSafe(this.plugin.app, file, newLinkPath);
       } else {
         if (deleteExistFiles) {
           console.log(this.consoleLogPrefix + 'delete file: \n   ' + path);
           result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
           await this.deleteFile(file, deleteEmptyFolders);
         } else {
-          const newFileCopyName = getAvailablePath(this.app, newLinkPath);
+          const newFileCopyName = getAvailablePath(this.plugin.app, newLinkPath);
           console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
           result.movedAttachments.push({ newPath: newFileCopyName, oldPath: path });
-          await renameSafe(this.app, file, newFileCopyName);
+          await renameSafe(this.plugin.app, file, newFileCopyName);
           result.renamedFiles.push({ newPath: newFileCopyName, oldPath: newLinkPath });
         }
       }
     } else {
-      const existFile = getFileOrNull(this.app, newLinkPath);
+      const existFile = getFileOrNull(this.plugin.app, newLinkPath);
       if (!existFile) {
         console.log(this.consoleLogPrefix + 'copy file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
         result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
-        await renameSafe(this.app, file, newLinkPath);
-        await copySafe(this.app, file, path);
+        await renameSafe(this.plugin.app, file, newLinkPath);
+        await copySafe(this.plugin.app, file, path);
       } else if (!deleteExistFiles) {
-        const newFileCopyName = getAvailablePath(this.app, newLinkPath);
+        const newFileCopyName = getAvailablePath(this.plugin.app, newLinkPath);
         console.log(this.consoleLogPrefix + 'copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
         result.movedAttachments.push({ newPath: newFileCopyName, oldPath: file.path });
-        await renameSafe(this.app, file, newFileCopyName);
-        await copySafe(this.app, file, path);
+        await renameSafe(this.plugin.app, file, newFileCopyName);
+        await copySafe(this.plugin.app, file, path);
         result.renamedFiles.push({ newPath: newFileCopyName, oldPath: newLinkPath });
       }
     }
 
-    if (this.shouldDeleteEmptyFolders) {
-      await deleteEmptyFolderHierarchy(this.app, oldFolder);
+    if (this.plugin.settingsCopy.deleteEmptyFolders) {
+      await deleteEmptyFolderHierarchy(this.plugin.app, oldFolder);
     }
     return result;
   }

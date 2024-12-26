@@ -1,9 +1,8 @@
-import {
-  normalizePath,
-  Setting
-} from 'obsidian';
+import { Setting } from 'obsidian';
+import { appendCodeBlock } from 'obsidian-dev-utils/DocumentFragment';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { extend } from 'obsidian-dev-utils/obsidian/Plugin/ValueComponent';
+import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 
 import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
 
@@ -42,26 +41,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       .addToggle((toggle) => extend(toggle).bind(this.plugin, 'changeNoteBacklinksAlt'));
 
     new Setting(this.containerEl)
-      .setName('Ignore Folders')
-      .setDesc('Specify a list of folders to ignore. Enter each folder on a new line.')
-      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'ignoreFolders', {
-        componentToPluginSettingsValueConverter: (value) => value.trim().split('\n').map((value) => this.getNormalizedPath(value) + '/'),
-        pluginSettingsToComponentValueConverter: (value) => value.join('\n')
-      })
-        .setPlaceholder('Example: .git, .obsidian')
-      );
-
-    new Setting(this.containerEl)
-      .setName('Ignore Files')
-      .setDesc('Specify a list of files to ignore. Enter each file on a new line.')
-      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'ignoreFiles', {
-        componentToPluginSettingsValueConverter: (value) => value.trim().split('\n'),
-        pluginSettingsToComponentValueConverter: (value) => value.join('\n')
-      })
-        .setPlaceholder('Example: consistent-report.md')
-      );
-
-    new Setting(this.containerEl)
       .setName('Consistency Report Filename')
       .setDesc('Specify the name of the file for the consistency report.')
       .addText((text) => extend(text).bind(this.plugin, 'consistencyReportFile')
@@ -72,9 +51,53 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       .setName('Auto Collect Attachments')
       .setDesc('Automatically collect attachments when the note is edited.')
       .addToggle((toggle) => extend(toggle).bind(this.plugin, 'autoCollectAttachments'));
-  }
+    new Setting(this.containerEl)
+      .setName('Include paths')
+      .setDesc(createFragment((f) => {
+        f.appendText('Include notes from the following paths');
+        f.createEl('br');
+        f.appendText('Insert each path on a new line');
+        f.createEl('br');
+        f.appendText('You can use path string or ');
+        appendCodeBlock(f, '/regular expression/');
+        f.createEl('br');
+        f.appendText('If the setting is empty, all notes are included');
+      }))
+      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'includePaths', {
+        componentToPluginSettingsValueConverter: (value: string): string[] => value.split('\n'),
+        pluginSettingsToComponentValueConverter: (value: string[]): string => value.join('\n'),
+        valueValidator: pathsValidator
+      }));
 
-  private getNormalizedPath(path: string): string {
-    return path.length == 0 ? path : normalizePath(path);
+    new Setting(this.containerEl)
+      .setName('Exclude paths')
+      .setDesc(createFragment((f) => {
+        f.appendText('Exclude notes from the following paths');
+        f.createEl('br');
+        f.appendText('Insert each path on a new line');
+        f.createEl('br');
+        f.appendText('You can use path string or ');
+        appendCodeBlock(f, '/regular expression/');
+        f.createEl('br');
+        f.appendText('If the setting is empty, no notes are excluded');
+      }))
+      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'excludePaths', {
+        componentToPluginSettingsValueConverter: (value: string): string[] => value.split('\n'),
+        pluginSettingsToComponentValueConverter: (value: string[]): string => value.join('\n'),
+        valueValidator: pathsValidator
+      }));
   }
+}
+
+function pathsValidator(value: string): null | string {
+  const paths = value.split('\n');
+  for (const path of paths) {
+    if (path.startsWith('/') && path.endsWith('/')) {
+      const regExp = path.slice(1, -1);
+      if (!isValidRegExp(regExp)) {
+        return `Invalid regular expression ${path}`;
+      }
+    }
+  }
+  return null;
 }
