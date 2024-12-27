@@ -97,10 +97,10 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         isPathIgnored: (path) => this.settings.isPathIgnored(path),
         shouldDeleteConflictingAttachments: this.settings.deleteExistFilesWhenMoveNote,
         shouldDeleteEmptyFolders: this.settings.deleteEmptyFolders,
-        shouldDeleteOrphanAttachments: this.settings.deleteAttachmentsWithNote,
+        shouldHandleDeletions: this.settings.deleteAttachmentsWithNote,
+        shouldHandleRenames: this.settings.updateLinks,
         shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
-        shouldUpdateFilenameAliases: this.settings.changeNoteBacklinksAlt,
-        shouldUpdateLinks: this.settings.updateLinks
+        shouldUpdateFilenameAliases: this.settings.changeNoteBacklinksAlt
       };
       return settings;
     });
