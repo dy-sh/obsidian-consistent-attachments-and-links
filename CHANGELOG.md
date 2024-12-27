@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 3.22.0
+
+- Add collect attachments in folder
+- Exclude empty paths
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.1.0
+
 ## 3.21.18
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.0.0
