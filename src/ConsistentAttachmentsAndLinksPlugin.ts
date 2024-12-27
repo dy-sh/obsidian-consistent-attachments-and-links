@@ -100,7 +100,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
         shouldUpdateFilenameAliases: this.settings.changeNoteBacklinksAlt,
         shouldUpdateLinks: this.settings.updateLinks,
-        isPathIgnored: this.settings.isPathIgnored
+        isPathIgnored: (path) => this.settings.isPathIgnored(path)
       };
       return settings;
     });
