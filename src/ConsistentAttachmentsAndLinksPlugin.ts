@@ -94,13 +94,13 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
 
     registerRenameDeleteHandlers(this, () => {
       const settings: Partial<RenameDeleteHandlerSettings> = {
+        isPathIgnored: (path) => this.settings.isPathIgnored(path),
         shouldDeleteConflictingAttachments: this.settings.deleteExistFilesWhenMoveNote,
         shouldDeleteEmptyFolders: this.settings.deleteEmptyFolders,
         shouldDeleteOrphanAttachments: this.settings.deleteAttachmentsWithNote,
         shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
         shouldUpdateFilenameAliases: this.settings.changeNoteBacklinksAlt,
-        shouldUpdateLinks: this.settings.updateLinks,
-        isPathIgnored: (path) => this.settings.isPathIgnored(path)
+        shouldUpdateLinks: this.settings.updateLinks
       };
       return settings;
     });
