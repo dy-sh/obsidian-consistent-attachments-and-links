@@ -1,83 +1,107 @@
 # CHANGELOG
 
+## 3.21.18
+
+- Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.0.0
+
 ## 3.21.17
 
 - Lint
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/9.0.2
 - Add include/exclude paths
 
 ## 3.21.16
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/9.0.0
 
 ## 3.21.15
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/6.0.0
 
 ## 3.21.14
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/5.3.1
 
 ## 3.21.13
 
 - Refactor to loop
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/5.2.0
 
 ## 3.21.12
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.19.0
 
 ## 3.21.11
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.14.0
 
 ## 3.21.10
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.13.0
 - Avoid default exports
 
 ## 3.21.9
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.11.0
 
 ## 3.21.8
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.8.2
 
 ## 3.21.7
 
-- Update lib
+- Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.44.0
 
 ## 3.21.6
 
-- Update lib
+- Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.43.2
 
 ## 3.21.5
 
 - Save only non-deferred views
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.43.1
 
 ## 3.21.4
 
 - Update libs
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.42.1
 
 ## 3.21.3
 
 - Update lib
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.42.0
 
 ## 3.21.2
 
 - Update lib
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.35.0
 
 ## 3.21.1
 
 - Update lib
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.34.0
 
 ## 3.21.0
 
 - Update lib
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.33.0
 
 ## 3.20.1
 
 - Refactor
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.29.0
 
 ## 3.20.0
 
@@ -88,44 +112,53 @@
 - Pass `shouldUpdateFilenameAliases`
 - Assign all `registerRenameDeleteHandlers` props
 - Ensure `RenameDeleteHandler` is executed only once
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.26.1
 
 ## 3.19.0
 
 - Extract settings from originalLink
 - Always preserve displayText
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.17.1
 
 ## 3.18.0
 
 - Don't remove folders with hidden files
 - Pass `shouldDeleteOrphanAttachments`
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.16.0
 
 ## 3.17.0
 
 - Remove to trash
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.13.0
 
 ## 3.16.0
 
 - Preserve angle brackets and leading dot
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.12.0
 
 ## 3.15.0
 
 - Reuse RenameDeleteHandler
 - Integrate with Better Markdown Links
 - Handle same case scenarios
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.10.0
 
 ## 3.14.0
 
 - Don't change alias for markdown links
 - Fix mobile build
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.5.0
 
 ## 3.13.3
 
 - Handle removed parent folder case
 - Rename attachments before changing links
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/2.26.2
 
 ## 3.13.2
 
 - Keep link/embed format
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/2.26.1
 
 ## 3.13.1
 
@@ -135,6 +168,7 @@
 
 - Check for race conditions
 - Don't create fake files
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/2.25.1
 
 ## 3.12.0
 
