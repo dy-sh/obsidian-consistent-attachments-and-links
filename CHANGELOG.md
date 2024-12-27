@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 3.21.17
+
+- Lint
+- Update libs
+- Add include/exclude paths
+
 ## 3.21.16
 
 - Update libs
