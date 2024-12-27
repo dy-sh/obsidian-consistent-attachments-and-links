@@ -47,6 +47,23 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         .setPlaceholder('Example: consistency-report.md')
       );
 
+    const pathBindSettings = {
+      componentToPluginSettingsValueConverter: (value: string): string[] => value.split('\n').filter(Boolean),
+      pluginSettingsToComponentValueConverter: (value: string[]): string => value.join('\n'),
+      valueValidator: (value: string): null | string => {
+        const paths = value.split('\n');
+        for (const path of paths) {
+          if (path.startsWith('/') && path.endsWith('/')) {
+            const regExp = path.slice(1, -1);
+            if (!isValidRegExp(regExp)) {
+              return `Invalid regular expression ${path}`;
+            }
+          }
+        }
+        return null;
+      }
+    };
+
     new Setting(this.containerEl)
       .setName('Auto Collect Attachments')
       .setDesc('Automatically collect attachments when the note is edited.')
@@ -63,11 +80,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.createEl('br');
         f.appendText('If the setting is empty, all notes are included');
       }))
-      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'includePaths', {
-        componentToPluginSettingsValueConverter: (value: string): string[] => value.split('\n'),
-        pluginSettingsToComponentValueConverter: (value: string[]): string => value.join('\n'),
-        valueValidator: pathsValidator
-      }));
+      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'includePaths', pathBindSettings));
 
     new Setting(this.containerEl)
       .setName('Exclude paths')
@@ -81,23 +94,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.createEl('br');
         f.appendText('If the setting is empty, no notes are excluded');
       }))
-      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'excludePaths', {
-        componentToPluginSettingsValueConverter: (value: string): string[] => value.split('\n'),
-        pluginSettingsToComponentValueConverter: (value: string[]): string => value.join('\n'),
-        valueValidator: pathsValidator
-      }));
+      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'excludePaths', pathBindSettings));
   }
-}
-
-function pathsValidator(value: string): null | string {
-  const paths = value.split('\n');
-  for (const path of paths) {
-    if (path.startsWith('/') && path.endsWith('/')) {
-      const regExp = path.slice(1, -1);
-      if (!isValidRegExp(regExp)) {
-        return `Invalid regular expression ${path}`;
-      }
-    }
-  }
-  return null;
 }
