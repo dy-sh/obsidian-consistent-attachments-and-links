@@ -2,29 +2,23 @@
 
 ## 3.21.18
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.0.0
 
 ## 3.21.17
 
-- Lint
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/9.0.2
 - Add include/exclude paths
 
 ## 3.21.16
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/9.0.0
 
 ## 3.21.15
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/6.0.0
 
 ## 3.21.14
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/5.3.1
 
 ## 3.21.13
@@ -34,38 +28,31 @@
 
 ## 3.21.12
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.19.0
 
 ## 3.21.11
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.14.0
 
 ## 3.21.10
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.13.0
 - Avoid default exports
 
 ## 3.21.9
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.11.0
 
 ## 3.21.8
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.8.2
 
 ## 3.21.7
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.44.0
 
 ## 3.21.6
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.43.2
 
 ## 3.21.5
@@ -75,27 +62,22 @@
 
 ## 3.21.4
 
-- Update libs
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.42.1
 
 ## 3.21.3
 
-- Update lib
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.42.0
 
 ## 3.21.2
 
-- Update lib
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.35.0
 
 ## 3.21.1
 
-- Update lib
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.34.0
 
 ## 3.21.0
 
-- Update lib
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.33.0
 
 ## 3.20.1
