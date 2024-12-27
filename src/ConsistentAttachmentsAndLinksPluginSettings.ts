@@ -25,7 +25,7 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
   }
 
   public set excludePaths(value: string[]) {
-    this.#excludePaths = value;
+    this.#excludePaths = value.filter(Boolean);
     this.#excludePathsRegExp = makeRegExp(this.#excludePaths, NEVER_MATCH_REG_EXP);
   }
 
@@ -34,7 +34,7 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
   }
 
   public set includePaths(value: string[]) {
-    this.#includePaths = value;
+    this.#includePaths = value.filter(Boolean);
     this.#includePathsRegExp = makeRegExp(this.#includePaths, ALWAYS_MATCH_REG_EXP);
   }
 
