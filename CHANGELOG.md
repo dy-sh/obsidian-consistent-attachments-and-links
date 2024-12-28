@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.22.1
+
+- Refactor
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.2.0
+
 ## 3.22.0
 
 - Add collect attachments in folder
