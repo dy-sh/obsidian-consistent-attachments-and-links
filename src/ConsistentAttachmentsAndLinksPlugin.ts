@@ -11,6 +11,7 @@ import {
   PluginSettingTab,
   TFile
 } from 'obsidian';
+import { appendCodeBlock } from 'obsidian-dev-utils/DocumentFragment';
 import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
 import {
   getMarkdownFiles,
@@ -578,11 +579,4 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       }
     }
   }
-}
-
-function appendCodeBlock(fragment: DocumentFragment, text: string): void {
-  fragment.appendChild(createSpan({ cls: 'markdown-rendered code' }, (span) => {
-    span.style.fontWeight = 'bold';
-    span.appendChild(createEl('code', { text }));
-  }));
 }
