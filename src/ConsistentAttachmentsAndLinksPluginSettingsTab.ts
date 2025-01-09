@@ -1,24 +1,39 @@
-import { Setting } from 'obsidian';
+import {
+  setIcon,
+  Setting
+} from 'obsidian';
 import { appendCodeBlock } from 'obsidian-dev-utils/DocumentFragment';
+import { alert } from 'obsidian-dev-utils/obsidian/Modal/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { extend } from 'obsidian-dev-utils/obsidian/Plugin/ValueComponent';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 
 import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
+import type { ConsistentAttachmentsAndLinksPluginSettings } from './ConsistentAttachmentsAndLinksPluginSettings.ts';
 
 export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettingsTabBase<ConsistentAttachmentsAndLinksPlugin> {
   public override display(): void {
     this.containerEl.empty();
 
+    const moveAttachmentsWithNoteSettingName = 'Move Attachments with Note';
     new Setting(this.containerEl)
-      .setName('Move Attachments with Note')
+      .setName(moveAttachmentsWithNoteSettingName)
       .setDesc('Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'moveAttachmentsWithNote'));
+      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'moveAttachmentsWithNote', {
+        onChanged: async () => {
+          await this.checkDangerousSetting('moveAttachmentsWithNote', moveAttachmentsWithNoteSettingName);
+        }
+      }));
 
+    const deleteAttachmentsWithNoteSettingName = 'Delete Unused Attachments with Note';
     new Setting(this.containerEl)
-      .setName('Delete Unused Attachments with Note')
+      .setName(deleteAttachmentsWithNoteSettingName)
       .setDesc('Automatically remove attachments that are no longer referenced in other notes when the note is deleted.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteAttachmentsWithNote'));
+      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteAttachmentsWithNote', {
+        onChanged: async () => {
+          await this.checkDangerousSetting('deleteAttachmentsWithNote', deleteAttachmentsWithNoteSettingName);
+        }
+      }));
 
     new Setting(this.containerEl)
       .setName('Update Links')
@@ -30,10 +45,15 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       .setDesc('Automatically remove empty folders after moving notes with attachments.')
       .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteEmptyFolders'));
 
+    const deleteExistFilesWhenMoveNoteSettingName = 'Delete Duplicate Attachments on Note Move';
     new Setting(this.containerEl)
-      .setName('Delete Duplicate Attachments on Note Move')
+      .setName(deleteExistFilesWhenMoveNoteSettingName)
       .setDesc('Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteExistFilesWhenMoveNote'));
+      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteExistFilesWhenMoveNote', {
+        onChanged: async () => {
+          await this.checkDangerousSetting('deleteExistFilesWhenMoveNote', deleteExistFilesWhenMoveNoteSettingName);
+        }
+      }));
 
     new Setting(this.containerEl)
       .setName('Update Backlink Text on Note Rename')
@@ -64,10 +84,16 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
       }
     };
 
+    const autoCollectAttachmentsSettingName = 'Auto Collect Attachments';
     new Setting(this.containerEl)
-      .setName('Auto Collect Attachments')
+      .setName(autoCollectAttachmentsSettingName)
       .setDesc('Automatically collect attachments when the note is edited.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'autoCollectAttachments'));
+      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'autoCollectAttachments', {
+        onChanged: async () => {
+          await this.checkDangerousSetting('autoCollectAttachments', autoCollectAttachmentsSettingName);
+        }
+      }));
+
     new Setting(this.containerEl)
       .setName('Include paths')
       .setDesc(createFragment((f) => {
@@ -95,5 +121,33 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.appendText('If the setting is empty, no notes are excluded');
       }))
       .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'excludePaths', pathBindSettings));
+  }
+
+  private async checkDangerousSetting(settingKey: keyof ConsistentAttachmentsAndLinksPluginSettings, settingName: string): Promise<void> {
+    if (!this.plugin.settingsCopy[settingKey]) {
+      return;
+    }
+
+    await alert({
+      app: this.app,
+      message: createFragment((f) => {
+        f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
+          wrapper.appendText('You enabled ');
+          wrapper.createEl('strong', { cls: 'markdown-rendered-code', text: settingName });
+          wrapper.appendText(' setting. Without proper configuration it might lead to inconvenient attachment rearrangements or even data loss in your vault.');
+          wrapper.createEl('br');
+          wrapper.appendText('It is ');
+          wrapper.createEl('strong', { text: 'STRONGLY' });
+          wrapper.appendText(' recommended to backup your vault before using the plugin.');
+          wrapper.createEl('br');
+          wrapper.createEl('a', { href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file', text: 'Read more' });
+          wrapper.appendText(' about how to use the plugin.');
+        });
+      }),
+      title: createFragment((f) => {
+        setIcon(f.createSpan(), 'triangle-alert');
+        f.appendText(' Consistent Attachments and Links');
+      })
+    });
   }
 }

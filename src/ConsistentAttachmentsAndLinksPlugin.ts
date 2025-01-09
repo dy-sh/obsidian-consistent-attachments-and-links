@@ -9,9 +9,9 @@ import {
   MarkdownView,
   Notice,
   PluginSettingTab,
+  setIcon,
   TFile
 } from 'obsidian';
-import { appendCodeBlock } from 'obsidian-dev-utils/DocumentFragment';
 import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
 import {
   getMarkdownFiles,
@@ -20,6 +20,7 @@ import {
   isMarkdownFile
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import { loop } from 'obsidian-dev-utils/obsidian/Loop';
+import { alert } from 'obsidian-dev-utils/obsidian/Modal/Alert';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/Queue';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
@@ -66,31 +67,11 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     return new ConsistentAttachmentsAndLinksPluginSettingsTab(this);
   }
 
+  protected override async onLayoutReady(): Promise<void> {
+    await this.showBackupWarning();
+  }
+
   protected override onloadComplete(): void {
-    if (this.settings.showWarning) {
-      const notice = new Notice(createFragment((f) => {
-        f.appendText('Starting from ');
-        appendCodeBlock(f, 'v3.0.0');
-        f.appendText(', the plugin ');
-        appendCodeBlock(f, 'Consistent Attachments and Links');
-        f.appendText(' has setting ');
-        appendCodeBlock(f, 'Attachment Subfolder');
-        f.appendText(' removed. This is a BREAKING CHANGE.');
-        f.appendChild(createEl('br'));
-        f.appendChild(createEl('a', { href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file#attachment-subfolder-setting', text: 'Read more' }));
-      }), 0);
-      notice.noticeEl.onClickEvent((ev) => {
-        addToQueue(this.app, async () => {
-          if (ev.target instanceof HTMLAnchorElement) {
-            window.open(ev.target.href, '_blank');
-          }
-
-          this.settings.showWarning = false;
-          await this.saveSettings(this.settings);
-        });
-      });
-    }
-
     this.registerEvent(
       this.app.metadataCache.on('deleted', (file, prevCache) => {
         if (prevCache) {
@@ -578,5 +559,40 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         await leaf.view.save();
       }
     }
+  }
+
+  private async showBackupWarning(): Promise<void> {
+    if (!this.settings.showBackupWarning) {
+      return;
+    }
+
+    await alert({
+      app: this.app,
+      message: createFragment((f) => {
+        f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
+          wrapper.appendText('Using \'Consistent Attachments and Links\' plugin without proper configuration might lead to inconvenient attachment rearrangements or even data loss in your vault.');
+          wrapper.createEl('br');
+          wrapper.appendText('It is ');
+          wrapper.createEl('strong', { text: 'STRONGLY' });
+          wrapper.appendText(' recommended to backup your vault before using the plugin.');
+          wrapper.createEl('br');
+          if (this.settings.hadDangerousSettingsReverted) {
+            wrapper.appendText('Some of your plugin settings has been changed to their safe values.');
+            wrapper.createEl('br');
+          }
+          wrapper.createEl('a', { href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file', text: 'Read more' });
+          wrapper.appendText(' about how to use the plugin.');
+          wrapper.createEl('br');
+          wrapper.appendText('This warning will not appear again.');
+        });
+      }),
+      title: createFragment((f) => {
+        setIcon(f.createSpan(), 'triangle-alert');
+        f.appendText(' Consistent Attachments and Links');
+      })
+    });
+
+    this.settings.showBackupWarning = false;
+    await this.saveSettings(this.settings);
   }
 }
