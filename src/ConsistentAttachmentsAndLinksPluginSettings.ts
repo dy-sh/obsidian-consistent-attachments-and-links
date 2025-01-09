@@ -14,11 +14,11 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
 
   public changeNoteBacklinksAlt = true;
   public consistencyReportFile = 'consistency-report.md';
-  public deleteAttachmentsWithNote = true;
+  public deleteAttachmentsWithNote = false;
   public deleteEmptyFolders = true;
-  public deleteExistFilesWhenMoveNote = true;
-  public moveAttachmentsWithNote = true;
-  public showWarning = true;
+  public deleteExistFilesWhenMoveNote = false;
+  public moveAttachmentsWithNote = false;
+  public showBackupWarning = true;
   public updateLinks = true;
   public get excludePaths(): string[] {
     return this.#excludePaths;
@@ -27,6 +27,10 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
   public set excludePaths(value: string[]) {
     this.#excludePaths = value.filter(Boolean);
     this.#excludePathsRegExp = makeRegExp(this.#excludePaths, NEVER_MATCH_REG_EXP);
+  }
+
+  public get hadDangerousSettingsReverted(): boolean {
+    return this.#hadDangerousSettingsReverted;
   }
 
   public get includePaths(): string[] {
@@ -41,9 +45,11 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
   #excludePaths: string[] = [];
 
   #excludePathsRegExp = NEVER_MATCH_REG_EXP;
+  #hadDangerousSettingsReverted = false;
 
   #includePaths: string[] = [];
   #includePathsRegExp = ALWAYS_MATCH_REG_EXP;
+
   public constructor(data: unknown) {
     super();
     this.excludePaths = ['/consistency-report\\.md$/'];
@@ -73,6 +79,14 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
     }
 
     super.initFromRecord(legacySettings);
+
+    if (this.showBackupWarning) {
+      this.#hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote || this.autoCollectAttachments;
+      this.deleteAttachmentsWithNote = false;
+      this.deleteExistFilesWhenMoveNote = false;
+      this.moveAttachmentsWithNote = false;
+      this.autoCollectAttachments = false;
+    }
   }
 
   public isPathIgnored(path: string): boolean {
