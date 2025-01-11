@@ -2,7 +2,7 @@ import {
   setIcon,
   Setting
 } from 'obsidian';
-import { appendCodeBlock } from 'obsidian-dev-utils/DocumentFragment';
+import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { alert } from 'obsidian-dev-utils/obsidian/Modal/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { extend } from 'obsidian-dev-utils/obsidian/Plugin/ValueComponent';
