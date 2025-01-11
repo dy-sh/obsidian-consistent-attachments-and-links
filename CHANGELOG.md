@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.24.0
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/12.1.0
+- Fix debug logging
+
 ## 3.23.0
 
 - Show backup warnings
