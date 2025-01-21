@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.24.3
+
+- Replace console.log
+
 ## 3.24.2
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/15.0.0
