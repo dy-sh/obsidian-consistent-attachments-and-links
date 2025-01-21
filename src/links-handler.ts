@@ -264,7 +264,7 @@ export class LinksHandler {
       return link.original;
     }
 
-    const targetPathOrFile = getFileOrNull(this.plugin.app, oldLinkPath) ?? getFileOrNull(this.plugin.app, newLinkPath);
+    const targetPathOrFile = getFileOrNull(this.plugin.app, newLinkPath) ?? getFileOrNull(this.plugin.app, oldLinkPath);
 
     if (!targetPathOrFile) {
       return link.original;
