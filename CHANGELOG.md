@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.24.2
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/15.0.0
+
 ## 3.24.1
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/12.2.1
