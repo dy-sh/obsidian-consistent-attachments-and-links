@@ -47,16 +47,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
   public override async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
     await super.saveSettings(newSettings);
 
-    this.lh = new LinksHandler(
-      this,
-      'Consistent Attachments and Links: '
-    );
+    this.lh = new LinksHandler(this);
 
-    this.fh = new FilesHandler(
-      this,
-      this.lh,
-      'Consistent Attachments and Links: '
-    );
+    this.fh = new FilesHandler(this, this.lh);
   }
 
   protected override createPluginSettings(data: unknown): ConsistentAttachmentsAndLinksPluginSettings {
@@ -185,16 +178,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       this.handleFileMenu(menu, file);
     }));
 
-    this.lh = new LinksHandler(
-      this,
-      'Consistent Attachments and Links: '
-    );
+    this.lh = new LinksHandler(this);
 
-    this.fh = new FilesHandler(
-      this,
-      this.lh,
-      'Consistent Attachments and Links: '
-    );
+    this.fh = new FilesHandler(this, this.lh);
   }
 
   private async checkConsistency(): Promise<void> {
