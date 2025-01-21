@@ -30,7 +30,6 @@ import { LinksHandler } from './links-handler.ts';
 
 export interface MovedAttachmentResult {
   movedAttachments: PathChangeInfo[];
-  renamedFiles: PathChangeInfo[];
 }
 
 export class FilesHandler {
@@ -42,12 +41,11 @@ export class FilesHandler {
   public async collectAttachmentsForCachedNote(notePath: string,
     deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
     if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
-      return { movedAttachments: [], renamedFiles: [] };
+      return { movedAttachments: [] };
     }
 
     const result: MovedAttachmentResult = {
-      movedAttachments: [],
-      renamedFiles: []
+      movedAttachments: []
     };
 
     const cache = await getCacheSafe(this.plugin.app, notePath);
@@ -88,7 +86,6 @@ export class FilesHandler {
       const res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles, deleteEmptyFolders);
 
       result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
-      result.renamedFiles = result.renamedFiles.concat(res.renamedFiles);
     }
 
     return result;
@@ -146,8 +143,7 @@ export class FilesHandler {
     const path = file.path;
 
     const result: MovedAttachmentResult = {
-      movedAttachments: [],
-      renamedFiles: []
+      movedAttachments: []
     };
 
     if (this.plugin.settingsCopy.isPathIgnored(path)) {
@@ -176,40 +172,23 @@ export class FilesHandler {
     }
 
     const oldFolder = file.parent;
-    if (linkedNotes.length == 0) {
-      const existFile = getFileOrNull(this.plugin.app, newLinkPath);
-      if (!existFile) {
-        this.plugin.consoleDebug('move file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
-        result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
-        await renameSafe(this.plugin.app, file, newLinkPath);
+    const isMove = linkedNotes.length == 0;
+    let newLinkFile = getFileOrNull(this.plugin.app, newLinkPath);
+    if (newLinkFile) {
+      if (deleteExistFiles) {
+        this.plugin.consoleDebug(`delete: ${newLinkPath}`);
+        await this.deleteFile(newLinkFile, deleteEmptyFolders);
       } else {
-        if (deleteExistFiles) {
-          this.plugin.consoleDebug('delete file: \n   ' + path);
-          result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
-          await this.deleteFile(file, deleteEmptyFolders);
-        } else {
-          const newFileCopyName = getAvailablePath(this.plugin.app, newLinkPath);
-          this.plugin.consoleDebug('copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
-          result.movedAttachments.push({ newPath: newFileCopyName, oldPath: path });
-          await renameSafe(this.plugin.app, file, newFileCopyName);
-          result.renamedFiles.push({ newPath: newFileCopyName, oldPath: newLinkPath });
-        }
+        newLinkPath = getAvailablePath(this.plugin.app, newLinkPath);
       }
+    }
+
+    this.plugin.consoleDebug(`${isMove ? 'move' : 'copy'}\n  from: ${path}\n  to: ${newLinkPath}`);
+    result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
+    if (isMove) {
+      await renameSafe(this.plugin.app, file, newLinkPath);
     } else {
-      const existFile = getFileOrNull(this.plugin.app, newLinkPath);
-      if (!existFile) {
-        this.plugin.consoleDebug('copy file [from, to]: \n   ' + path + '\n   ' + newLinkPath);
-        result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
-        await renameSafe(this.plugin.app, file, newLinkPath);
-        await copySafe(this.plugin.app, file, path);
-      } else if (!deleteExistFiles) {
-        const newFileCopyName = getAvailablePath(this.plugin.app, newLinkPath);
-        this.plugin.consoleDebug('copy file with new name [from, to]: \n   ' + path + '\n   ' + newFileCopyName);
-        result.movedAttachments.push({ newPath: newFileCopyName, oldPath: file.path });
-        await renameSafe(this.plugin.app, file, newFileCopyName);
-        await copySafe(this.plugin.app, file, path);
-        result.renamedFiles.push({ newPath: newFileCopyName, oldPath: newLinkPath });
-      }
+      await copySafe(this.plugin.app, file, newLinkPath);
     }
 
     if (this.plugin.settingsCopy.deleteEmptyFolders) {
