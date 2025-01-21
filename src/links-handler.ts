@@ -31,8 +31,7 @@ import {
 import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/Reference';
 import {
   dirname,
-  join,
-  resolve
+  join
 } from 'obsidian-dev-utils/Path';
 
 import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
