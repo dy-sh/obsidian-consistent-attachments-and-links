@@ -5,7 +5,6 @@ import {
 import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { alert } from 'obsidian-dev-utils/obsidian/Modal/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
-import { extend } from 'obsidian-dev-utils/obsidian/Plugin/ValueComponent';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 
 import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
@@ -19,7 +18,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     new Setting(this.containerEl)
       .setName(moveAttachmentsWithNoteSettingName)
       .setDesc('Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'moveAttachmentsWithNote', {
+      .addToggle((toggle) => this.bind(toggle, 'moveAttachmentsWithNote', {
         onChanged: async () => {
           await this.checkDangerousSetting('moveAttachmentsWithNote', moveAttachmentsWithNoteSettingName);
         }
@@ -29,7 +28,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     new Setting(this.containerEl)
       .setName(deleteAttachmentsWithNoteSettingName)
       .setDesc('Automatically remove attachments that are no longer referenced in other notes when the note is deleted.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteAttachmentsWithNote', {
+      .addToggle((toggle) => this.bind(toggle, 'deleteAttachmentsWithNote', {
         onChanged: async () => {
           await this.checkDangerousSetting('deleteAttachmentsWithNote', deleteAttachmentsWithNoteSettingName);
         }
@@ -38,18 +37,18 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     new Setting(this.containerEl)
       .setName('Update Links')
       .setDesc('Automatically update links to attachments and other notes when moving notes or attachments.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'updateLinks'));
+      .addToggle((toggle) => this.bind(toggle, 'updateLinks'));
 
     new Setting(this.containerEl)
       .setName('Delete Empty Folders')
       .setDesc('Automatically remove empty folders after moving notes with attachments.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteEmptyFolders'));
+      .addToggle((toggle) => this.bind(toggle, 'deleteEmptyFolders'));
 
     const deleteExistFilesWhenMoveNoteSettingName = 'Delete Duplicate Attachments on Note Move';
     new Setting(this.containerEl)
       .setName(deleteExistFilesWhenMoveNoteSettingName)
       .setDesc('Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'deleteExistFilesWhenMoveNote', {
+      .addToggle((toggle) => this.bind(toggle, 'deleteExistFilesWhenMoveNote', {
         onChanged: async () => {
           await this.checkDangerousSetting('deleteExistFilesWhenMoveNote', deleteExistFilesWhenMoveNoteSettingName);
         }
@@ -58,19 +57,20 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     new Setting(this.containerEl)
       .setName('Update Backlink Text on Note Rename')
       .setDesc('When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'changeNoteBacklinksAlt'));
+      .addToggle((toggle) => this.bind(toggle, 'changeNoteBacklinksAlt'));
 
     new Setting(this.containerEl)
       .setName('Consistency Report Filename')
       .setDesc('Specify the name of the file for the consistency report.')
-      .addText((text) => extend(text).bind(this.plugin, 'consistencyReportFile')
+      .addText((text) => this.bind(text, 'consistencyReportFile')
         .setPlaceholder('Example: consistency-report.md')
       );
 
     const pathBindSettings = {
       componentToPluginSettingsValueConverter: (value: string): string[] => value.split('\n').filter(Boolean),
       pluginSettingsToComponentValueConverter: (value: string[]): string => value.join('\n'),
-      valueValidator: (value: string): null | string => {
+      // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+      valueValidator: (value: string): string | void => {
         const paths = value.split('\n');
         for (const path of paths) {
           if (path.startsWith('/') && path.endsWith('/')) {
@@ -80,7 +80,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
             }
           }
         }
-        return null;
+        return;
       }
     };
 
@@ -88,7 +88,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     new Setting(this.containerEl)
       .setName(autoCollectAttachmentsSettingName)
       .setDesc('Automatically collect attachments when the note is edited.')
-      .addToggle((toggle) => extend(toggle).bind(this.plugin, 'autoCollectAttachments', {
+      .addToggle((toggle) => this.bind(toggle, 'autoCollectAttachments', {
         onChanged: async () => {
           await this.checkDangerousSetting('autoCollectAttachments', autoCollectAttachmentsSettingName);
         }
@@ -106,7 +106,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.createEl('br');
         f.appendText('If the setting is empty, all notes are included');
       }))
-      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'includePaths', pathBindSettings));
+      .addTextArea((textArea) => this.bind(textArea, 'includePaths', pathBindSettings));
 
     new Setting(this.containerEl)
       .setName('Exclude paths')
@@ -120,7 +120,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.createEl('br');
         f.appendText('If the setting is empty, no notes are excluded');
       }))
-      .addTextArea((textArea) => extend(textArea).bind(this.plugin, 'excludePaths', pathBindSettings));
+      .addTextArea((textArea) => this.bind(textArea, 'excludePaths', pathBindSettings));
   }
 
   private async checkDangerousSetting(settingKey: keyof ConsistentAttachmentsAndLinksPluginSettings, settingName: string): Promise<void> {

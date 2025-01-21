@@ -218,9 +218,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     const notePath = this.settings.consistencyReportFile;
     const text
       = badLinks.toString(this.app, notePath)
-      + badEmbeds.toString(this.app, notePath)
-      + wikiLinks.toString(this.app, notePath)
-      + wikiEmbeds.toString(this.app, notePath);
+        + badEmbeds.toString(this.app, notePath)
+        + wikiLinks.toString(this.app, notePath)
+        + wikiEmbeds.toString(this.app, notePath);
     await createFolderSafe(this.app, dirname(notePath));
     const note = await getOrCreateFile(this.app, notePath);
     await this.app.vault.modify(note, text);
