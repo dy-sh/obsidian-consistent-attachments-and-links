@@ -94,8 +94,7 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
 
 export class LinksHandler {
   public constructor(
-    private plugin: ConsistentAttachmentsAndLinksPlugin,
-    private consoleLogPrefix = ''
+    private plugin: ConsistentAttachmentsAndLinksPlugin
   ) { }
 
   public async checkConsistency(note: TFile, badLinks: ConsistencyCheckResult, badEmbeds: ConsistencyCheckResult, wikiLinks: ConsistencyCheckResult, wikiEmbeds: ConsistencyCheckResult): Promise<void> {
@@ -163,7 +162,7 @@ export class LinksHandler {
 
     const noteFile = getFileOrNull(this.plugin.app, notePath);
     if (!noteFile) {
-      console.warn(this.consoleLogPrefix + 'can\'t update wikilinks in note, file not found: ' + notePath);
+      console.warn('can\'t update wikilinks in note, file not found: ' + notePath);
       return 0;
     }
 
@@ -190,7 +189,7 @@ export class LinksHandler {
 
     const note = getFileOrNull(this.plugin.app, notePath);
     if (!note) {
-      console.warn(this.consoleLogPrefix + 'can\'t update links in note, file not found: ' + notePath);
+      console.warn('can\'t update links in note, file not found: ' + notePath);
       return;
     }
 
