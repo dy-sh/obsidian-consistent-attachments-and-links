@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 3.24.4
+
+- Prevent unused alias
+- Use copied file link first
+- Fix infinite copies
+
 ## 3.24.3
 
 - Replace console.log
