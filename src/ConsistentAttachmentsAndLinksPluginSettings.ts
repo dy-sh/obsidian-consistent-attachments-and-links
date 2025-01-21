@@ -21,34 +21,36 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
   public showBackupWarning = true;
   public updateLinks = true;
   public get excludePaths(): string[] {
-    return this.#excludePaths;
+    return this._excludePaths;
   }
 
   public set excludePaths(value: string[]) {
-    this.#excludePaths = value.filter(Boolean);
-    this.#excludePathsRegExp = makeRegExp(this.#excludePaths, NEVER_MATCH_REG_EXP);
+    this._excludePaths = value.filter(Boolean);
+    this._excludePathsRegExp = makeRegExp(this._excludePaths, NEVER_MATCH_REG_EXP);
   }
 
   public get hadDangerousSettingsReverted(): boolean {
-    return this.#hadDangerousSettingsReverted;
+    return this._hadDangerousSettingsReverted;
   }
 
   public get includePaths(): string[] {
-    return this.#includePaths;
+    return this._includePaths;
   }
 
   public set includePaths(value: string[]) {
-    this.#includePaths = value.filter(Boolean);
-    this.#includePathsRegExp = makeRegExp(this.#includePaths, ALWAYS_MATCH_REG_EXP);
+    this._includePaths = value.filter(Boolean);
+    this._includePathsRegExp = makeRegExp(this._includePaths, ALWAYS_MATCH_REG_EXP);
   }
 
-  #excludePaths: string[] = [];
+  private _excludePaths: string[] = [];
 
-  #excludePathsRegExp = NEVER_MATCH_REG_EXP;
-  #hadDangerousSettingsReverted = false;
+  private _excludePathsRegExp = NEVER_MATCH_REG_EXP;
 
-  #includePaths: string[] = [];
-  #includePathsRegExp = ALWAYS_MATCH_REG_EXP;
+  private _hadDangerousSettingsReverted = false;
+
+  private _includePaths: string[] = [];
+
+  private _includePathsRegExp = ALWAYS_MATCH_REG_EXP;
 
   public constructor(data: unknown) {
     super();
@@ -81,7 +83,7 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
     super.initFromRecord(legacySettings);
 
     if (this.showBackupWarning) {
-      this.#hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote || this.autoCollectAttachments;
+      this._hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote || this.autoCollectAttachments;
       this.deleteAttachmentsWithNote = false;
       this.deleteExistFilesWhenMoveNote = false;
       this.moveAttachmentsWithNote = false;
@@ -90,7 +92,7 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
   }
 
   public isPathIgnored(path: string): boolean {
-    return !this.#includePathsRegExp.test(path) || this.#excludePathsRegExp.test(path);
+    return !this._includePathsRegExp.test(path) || this._excludePathsRegExp.test(path);
   }
 
   public override toJSON(): Record<string, unknown> {
