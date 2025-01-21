@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.24.5
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/16.0.2
+
 ## 3.24.4
 
 - Prevent unused alias
