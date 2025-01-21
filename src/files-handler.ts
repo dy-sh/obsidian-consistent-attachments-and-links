@@ -173,7 +173,7 @@ export class FilesHandler {
 
     const oldFolder = file.parent;
     const isMove = linkedNotes.length == 0;
-    let newLinkFile = getFileOrNull(this.plugin.app, newLinkPath);
+    const newLinkFile = getFileOrNull(this.plugin.app, newLinkPath);
     if (newLinkFile) {
       if (deleteExistFiles) {
         this.plugin.consoleDebug(`delete: ${newLinkPath}`);
