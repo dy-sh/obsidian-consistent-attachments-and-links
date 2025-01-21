@@ -31,7 +31,8 @@ import {
 import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/Reference';
 import {
   dirname,
-  join
+  join,
+  resolve
 } from 'obsidian-dev-utils/Path';
 
 import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
@@ -270,8 +271,10 @@ export class LinksHandler {
       return link.original;
     }
 
+    const alias = link.displayText && join(note.parent?.path ?? '', link.displayText) === oldLinkPath ? undefined : link.displayText;
+
     return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkOptions>({
-      alias: link.displayText,
+      alias,
       app: this.plugin.app,
       originalLink: link.original,
       shouldForceRelativePath: forceRelativePath,
