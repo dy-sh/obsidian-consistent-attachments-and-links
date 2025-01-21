@@ -40,7 +40,7 @@ export class FilesHandler {
 
   public async collectAttachmentsForCachedNote(notePath: string,
     deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
-    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
+    if (this.plugin.settings.isPathIgnored(notePath)) {
       return { movedAttachments: [] };
     }
 
@@ -92,7 +92,7 @@ export class FilesHandler {
   }
 
   public async deleteEmptyFolders(dirName: string): Promise<void> {
-    if (this.plugin.settingsCopy.isPathIgnored(dirName)) {
+    if (this.plugin.settings.isPathIgnored(dirName)) {
       return;
     }
 
@@ -146,7 +146,7 @@ export class FilesHandler {
       movedAttachments: []
     };
 
-    if (this.plugin.settingsCopy.isPathIgnored(path)) {
+    if (this.plugin.settings.isPathIgnored(path)) {
       return result;
     }
 
@@ -191,7 +191,7 @@ export class FilesHandler {
       await copySafe(this.plugin.app, file, newLinkPath);
     }
 
-    if (this.plugin.settingsCopy.deleteEmptyFolders) {
+    if (this.plugin.settings.deleteEmptyFolders) {
       await deleteEmptyFolderHierarchy(this.plugin.app, oldFolder);
     }
     return result;
