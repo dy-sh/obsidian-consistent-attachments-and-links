@@ -124,7 +124,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
   }
 
   private async checkDangerousSetting(settingKey: keyof ConsistentAttachmentsAndLinksPluginSettings, settingName: string): Promise<void> {
-    if (!this.plugin.settingsCopy[settingKey]) {
+    if (!this.plugin.settings[settingKey]) {
       return;
     }
 

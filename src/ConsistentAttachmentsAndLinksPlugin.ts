@@ -578,7 +578,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       })
     });
 
-    this.settings.showBackupWarning = false;
-    await this.saveSettings(this.settings);
+    const settings = this.settingsClone;
+    settings.showBackupWarning = false;
+    await this.saveSettings(settings);
   }
 }

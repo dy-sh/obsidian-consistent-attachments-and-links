@@ -98,7 +98,7 @@ export class LinksHandler {
   ) { }
 
   public async checkConsistency(note: TFile, badLinks: ConsistencyCheckResult, badEmbeds: ConsistencyCheckResult, wikiLinks: ConsistencyCheckResult, wikiEmbeds: ConsistencyCheckResult): Promise<void> {
-    if (this.plugin.settingsCopy.isPathIgnored(note.path)) {
+    if (this.plugin.settings.isPathIgnored(note.path)) {
       return;
     }
 
@@ -156,7 +156,7 @@ export class LinksHandler {
   }
 
   public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean): Promise<number> {
-    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
+    if (this.plugin.settings.isPathIgnored(notePath)) {
       return 0;
     }
 
@@ -183,7 +183,7 @@ export class LinksHandler {
   }
 
   public async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[]): Promise<void> {
-    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
+    if (this.plugin.settings.isPathIgnored(notePath)) {
       return;
     }
 
@@ -202,7 +202,7 @@ export class LinksHandler {
   }
 
   private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean): Promise<ReferenceChangeInfo[]> {
-    if (this.plugin.settingsCopy.isPathIgnored(notePath)) {
+    if (this.plugin.settings.isPathIgnored(notePath)) {
       return [];
     }
 
