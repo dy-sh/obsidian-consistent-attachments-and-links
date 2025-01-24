@@ -36,7 +36,7 @@ export class FilesHandler {
   public constructor(
     private plugin: ConsistentAttachmentsAndLinksPlugin,
     private lh: LinksHandler
-  ) { }
+  ) {}
 
   public async collectAttachmentsForCachedNote(notePath: string, deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
     if (this.plugin.settings.isPathIgnored(notePath)) {

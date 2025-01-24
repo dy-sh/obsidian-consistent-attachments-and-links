@@ -314,7 +314,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       new Notice('No files found that need to be moved');
     } else {
       new Notice(
-        `Moved ${movedAttachmentsCount.toString()} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        `Moved ${movedAttachmentsCount.toString()} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+          processedNotesCount > 1 ? 's' : ''
         }`
       );
     }
@@ -349,7 +350,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       new Notice('No embeds found that need to be converted');
     } else {
       new Notice(
-        `Converted ${changedEmbedCount.toString()} embed${changedEmbedCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        `Converted ${changedEmbedCount.toString()} embed${changedEmbedCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+          processedNotesCount > 1 ? 's' : ''
         }`
       );
     }
@@ -397,7 +399,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       new Notice('No links found that need to be converted');
     } else {
       new Notice(
-        `Converted ${changedLinksCount.toString()} link${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        `Converted ${changedLinksCount.toString()} link${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+          processedNotesCount > 1 ? 's' : ''
         }`
       );
     }
@@ -491,7 +494,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       new Notice('No wiki embeds found that need to be replaced');
     } else {
       new Notice(
-        `Replaced ${changedLinksCount.toString()} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        `Replaced ${changedLinksCount.toString()} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+          processedNotesCount > 1 ? 's' : ''
         }`
       );
     }
@@ -536,7 +540,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       new Notice('No wiki links found that need to be replaced');
     } else {
       new Notice(
-        `Replaced ${changedLinksCount.toString()} wikilink${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        `Replaced ${changedLinksCount.toString()} wikilink${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+          processedNotesCount > 1 ? 's' : ''
         }`
       );
     }
