@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.24.8
+
+- Format
+
 ## 3.24.7
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/16.1.0
