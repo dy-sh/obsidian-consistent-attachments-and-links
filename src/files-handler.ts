@@ -105,7 +105,7 @@ export class FilesHandler {
     }
 
     list = await listSafe(this.plugin.app, dirName);
-    if (list.files.length == 0 && list.folders.length == 0) {
+    if (list.files.length === 0 && list.folders.length === 0) {
       this.plugin.consoleDebug(`delete empty folder: \n   ${dirName}`);
       if (await this.plugin.app.vault.exists(dirName)) {
         try {
@@ -159,7 +159,7 @@ export class FilesHandler {
       return result;
     }
 
-    if (path == newLinkPath) {
+    if (path === newLinkPath) {
       console.warn('Can\'t move file. Source and destination path the same.');
       return result;
     }
@@ -177,7 +177,7 @@ export class FilesHandler {
     }
 
     const oldFolder = file.parent;
-    const isMove = linkedNotes.length == 0;
+    const isMove = linkedNotes.length === 0;
     const newLinkFile = getFileOrNull(this.plugin.app, newLinkPath);
     if (newLinkFile) {
       if (deleteExistFiles) {

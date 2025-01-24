@@ -245,7 +245,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
     }
 
-    if (result.movedAttachments.length == 0) {
+    if (result.movedAttachments.length === 0) {
       if (isVerbose) {
         new Notice('No files found that need to be moved');
       }
@@ -310,7 +310,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       shouldContinueOnError: true
     });
 
-    if (movedAttachmentsCount == 0) {
+    if (movedAttachmentsCount === 0) {
       new Notice('No files found that need to be moved');
     } else {
       new Notice(
@@ -345,7 +345,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       shouldContinueOnError: true
     });
 
-    if (changedEmbedCount == 0) {
+    if (changedEmbedCount === 0) {
       new Notice('No embeds found that need to be converted');
     } else {
       new Notice(
@@ -393,7 +393,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       shouldContinueOnError: true
     });
 
-    if (changedLinksCount == 0) {
+    if (changedLinksCount === 0) {
       new Notice('No links found that need to be converted');
     } else {
       new Notice(
@@ -487,7 +487,7 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       shouldContinueOnError: true
     });
 
-    if (changedLinksCount == 0) {
+    if (changedLinksCount === 0) {
       new Notice('No wiki embeds found that need to be replaced');
     } else {
       new Notice(
