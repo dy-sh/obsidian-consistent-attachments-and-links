@@ -202,18 +202,17 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     });
 
     const notePath = this.settings.consistencyReportFile;
-    const text
-      = badLinks.toString(this.app, notePath)
-        + badEmbeds.toString(this.app, notePath)
-        + wikiLinks.toString(this.app, notePath)
-        + wikiEmbeds.toString(this.app, notePath);
+    const text = badLinks.toString(this.app, notePath)
+      + badEmbeds.toString(this.app, notePath)
+      + wikiLinks.toString(this.app, notePath)
+      + wikiEmbeds.toString(this.app, notePath);
     await createFolderSafe(this.app, dirname(notePath));
     const note = await getOrCreateFile(this.app, notePath);
     await this.app.vault.modify(note, text);
 
     let fileOpened = false;
     this.app.workspace.iterateAllLeaves((leaf) => {
-      if (leaf.getDisplayText() != '' && notePath.startsWith(leaf.getDisplayText())) {
+      if (leaf.getDisplayText() !== '' && notePath.startsWith(leaf.getDisplayText())) {
         fileOpened = true;
       }
     });
@@ -239,7 +238,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     const result = await this.fh.collectAttachmentsForCachedNote(
       note.path,
       this.settings.deleteExistFilesWhenMoveNote,
-      this.settings.deleteEmptyFolders);
+      this.settings.deleteEmptyFolders
+    );
 
     if (result.movedAttachments.length > 0) {
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
@@ -298,7 +298,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         const result = await this.fh.collectAttachmentsForCachedNote(
           note.path,
           this.settings.deleteExistFilesWhenMoveNote,
-          this.settings.deleteEmptyFolders);
+          this.settings.deleteEmptyFolders
+        );
 
         if (result.movedAttachments.length > 0) {
           await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
@@ -312,7 +313,10 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     if (movedAttachmentsCount == 0) {
       new Notice('No files found that need to be moved');
     } else {
-      new Notice(`Moved ${movedAttachmentsCount.toString()} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
+      new Notice(
+        `Moved ${movedAttachmentsCount.toString()} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        }`
+      );
     }
   }
 
@@ -344,7 +348,10 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     if (changedEmbedCount == 0) {
       new Notice('No embeds found that need to be converted');
     } else {
-      new Notice(`Converted ${changedEmbedCount.toString()} embed${changedEmbedCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
+      new Notice(
+        `Converted ${changedEmbedCount.toString()} embed${changedEmbedCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        }`
+      );
     }
   }
 
@@ -389,7 +396,10 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     if (changedLinksCount == 0) {
       new Notice('No links found that need to be converted');
     } else {
-      new Notice(`Converted ${changedLinksCount.toString()} link${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
+      new Notice(
+        `Converted ${changedLinksCount.toString()} link${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        }`
+      );
     }
   }
 
@@ -480,7 +490,10 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
     if (changedLinksCount == 0) {
       new Notice('No wiki embeds found that need to be replaced');
     } else {
-      new Notice(`Replaced ${changedLinksCount.toString()} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
+      new Notice(
+        `Replaced ${changedLinksCount.toString()} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        }`
+      );
     }
   }
 
@@ -519,10 +532,13 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       shouldContinueOnError: true
     });
 
-    if (changedLinksCount == 0) {
+    if (changedLinksCount === 0) {
       new Notice('No wiki links found that need to be replaced');
     } else {
-      new Notice(`Replaced ${changedLinksCount.toString()} wikilink${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''}`);
+      new Notice(
+        `Replaced ${changedLinksCount.toString()} wikilink${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${processedNotesCount > 1 ? 's' : ''
+        }`
+      );
     }
   }
 
@@ -556,7 +572,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       app: this.app,
       message: createFragment((f) => {
         f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
-          wrapper.appendText('Using \'Consistent Attachments and Links\' plugin without proper configuration might lead to inconvenient attachment rearrangements or even data loss in your vault.');
+          wrapper.appendText(
+            'Using \'Consistent Attachments and Links\' plugin without proper configuration might lead to inconvenient attachment rearrangements or even data loss in your vault.'
+          );
           wrapper.createEl('br');
           wrapper.appendText('It is ');
           wrapper.createEl('strong', { text: 'STRONGLY' });

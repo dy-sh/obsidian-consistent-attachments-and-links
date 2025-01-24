@@ -18,21 +18,25 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     new Setting(this.containerEl)
       .setName(moveAttachmentsWithNoteSettingName)
       .setDesc('Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.')
-      .addToggle((toggle) => this.bind(toggle, 'moveAttachmentsWithNote', {
-        onChanged: async () => {
-          await this.checkDangerousSetting('moveAttachmentsWithNote', moveAttachmentsWithNoteSettingName);
-        }
-      }));
+      .addToggle((toggle) =>
+        this.bind(toggle, 'moveAttachmentsWithNote', {
+          onChanged: async () => {
+            await this.checkDangerousSetting('moveAttachmentsWithNote', moveAttachmentsWithNoteSettingName);
+          }
+        })
+      );
 
     const deleteAttachmentsWithNoteSettingName = 'Delete Unused Attachments with Note';
     new Setting(this.containerEl)
       .setName(deleteAttachmentsWithNoteSettingName)
       .setDesc('Automatically remove attachments that are no longer referenced in other notes when the note is deleted.')
-      .addToggle((toggle) => this.bind(toggle, 'deleteAttachmentsWithNote', {
-        onChanged: async () => {
-          await this.checkDangerousSetting('deleteAttachmentsWithNote', deleteAttachmentsWithNoteSettingName);
-        }
-      }));
+      .addToggle((toggle) =>
+        this.bind(toggle, 'deleteAttachmentsWithNote', {
+          onChanged: async () => {
+            await this.checkDangerousSetting('deleteAttachmentsWithNote', deleteAttachmentsWithNoteSettingName);
+          }
+        })
+      );
 
     new Setting(this.containerEl)
       .setName('Update Links')
@@ -47,23 +51,30 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     const deleteExistFilesWhenMoveNoteSettingName = 'Delete Duplicate Attachments on Note Move';
     new Setting(this.containerEl)
       .setName(deleteExistFilesWhenMoveNoteSettingName)
-      .setDesc('Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.')
-      .addToggle((toggle) => this.bind(toggle, 'deleteExistFilesWhenMoveNote', {
-        onChanged: async () => {
-          await this.checkDangerousSetting('deleteExistFilesWhenMoveNote', deleteExistFilesWhenMoveNoteSettingName);
-        }
-      }));
+      .setDesc(
+        'Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.'
+      )
+      .addToggle((toggle) =>
+        this.bind(toggle, 'deleteExistFilesWhenMoveNote', {
+          onChanged: async () => {
+            await this.checkDangerousSetting('deleteExistFilesWhenMoveNote', deleteExistFilesWhenMoveNoteSettingName);
+          }
+        })
+      );
 
     new Setting(this.containerEl)
       .setName('Update Backlink Text on Note Rename')
-      .setDesc('When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.')
+      .setDesc(
+        'When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.'
+      )
       .addToggle((toggle) => this.bind(toggle, 'changeNoteBacklinksAlt'));
 
     new Setting(this.containerEl)
       .setName('Consistency Report Filename')
       .setDesc('Specify the name of the file for the consistency report.')
-      .addText((text) => this.bind(text, 'consistencyReportFile')
-        .setPlaceholder('Example: consistency-report.md')
+      .addText((text) =>
+        this.bind(text, 'consistencyReportFile')
+          .setPlaceholder('Example: consistency-report.md')
       );
 
     const pathBindSettings = {
@@ -88,11 +99,13 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
     new Setting(this.containerEl)
       .setName(autoCollectAttachmentsSettingName)
       .setDesc('Automatically collect attachments when the note is edited.')
-      .addToggle((toggle) => this.bind(toggle, 'autoCollectAttachments', {
-        onChanged: async () => {
-          await this.checkDangerousSetting('autoCollectAttachments', autoCollectAttachmentsSettingName);
-        }
-      }));
+      .addToggle((toggle) =>
+        this.bind(toggle, 'autoCollectAttachments', {
+          onChanged: async () => {
+            await this.checkDangerousSetting('autoCollectAttachments', autoCollectAttachmentsSettingName);
+          }
+        })
+      );
 
     new Setting(this.containerEl)
       .setName('Include paths')

@@ -7,6 +7,8 @@
     "build": "obsidian-dev-utils build",
     "build:validate": "obsidian-dev-utils build:validate",
     "dev": "obsidian-dev-utils dev",
+    "format": "obsidian-dev-utils format",
+    "format:check": "obsidian-dev-utils format:check",
     "lint": "obsidian-dev-utils lint",
     "lint:fix": "obsidian-dev-utils lint:fix",
     "spellcheck": "obsidian-dev-utils spellcheck",
@@ -17,9 +19,9 @@
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.10.10",
     "obsidian": "^1.7.2",
-    "obsidian-dev-utils": "^16.1.0",
+    "obsidian-dev-utils": "^16.4.3",
     "obsidian-typings": "^2.14.6"
   },
   "type": "module"

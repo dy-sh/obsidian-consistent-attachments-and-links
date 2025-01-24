@@ -38,8 +38,7 @@ export class FilesHandler {
     private lh: LinksHandler
   ) { }
 
-  public async collectAttachmentsForCachedNote(notePath: string,
-    deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+  public async collectAttachmentsForCachedNote(notePath: string, deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
     if (this.plugin.settings.isPathIgnored(notePath)) {
       return { movedAttachments: [] };
     }
@@ -62,7 +61,7 @@ export class FilesHandler {
       }
 
       const fullPathLink = this.lh.getFullPathForLink(linkPath, notePath);
-      if (result.movedAttachments.findIndex((x) => x.oldPath == fullPathLink) != -1) {
+      if (result.movedAttachments.findIndex((x) => x.oldPath === fullPathLink) !== -1) {
         continue;
       }
 
@@ -139,7 +138,13 @@ export class FilesHandler {
     return !isNote(this.plugin.app, file);
   }
 
-  private async moveAttachment(file: TFile, newLinkPath: string, parentNotePaths: string[], deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+  private async moveAttachment(
+    file: TFile,
+    newLinkPath: string,
+    parentNotePaths: string[],
+    deleteExistFiles: boolean,
+    deleteEmptyFolders: boolean
+  ): Promise<MovedAttachmentResult> {
     const path = file.path;
 
     const result: MovedAttachmentResult = {

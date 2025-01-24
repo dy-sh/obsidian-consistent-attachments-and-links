@@ -95,9 +95,15 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
 export class LinksHandler {
   public constructor(
     private plugin: ConsistentAttachmentsAndLinksPlugin
-  ) { }
+  ) {}
 
-  public async checkConsistency(note: TFile, badLinks: ConsistencyCheckResult, badEmbeds: ConsistencyCheckResult, wikiLinks: ConsistencyCheckResult, wikiEmbeds: ConsistencyCheckResult): Promise<void> {
+  public async checkConsistency(
+    note: TFile,
+    badLinks: ConsistencyCheckResult,
+    badEmbeds: ConsistencyCheckResult,
+    wikiLinks: ConsistencyCheckResult,
+    wikiEmbeds: ConsistencyCheckResult
+  ): Promise<void> {
     if (this.plugin.settings.isPathIgnored(note.path)) {
       return;
     }
@@ -249,17 +255,18 @@ export class LinksHandler {
     note,
     oldNotePath,
     pathChangeMap
-  }:
-    {
-      forceRelativePath?: boolean | undefined;
-      link: Reference;
-      note: TFile;
-      oldNotePath: string;
-      pathChangeMap?: Map<string, string> | undefined;
-    }): string {
+  }: {
+    forceRelativePath?: boolean | undefined;
+    link: Reference;
+    note: TFile;
+    oldNotePath: string;
+    pathChangeMap?: Map<string, string> | undefined;
+  }): string {
     const { linkPath, subpath } = splitSubpath(link.link);
     const oldLinkPath = extractLinkFile(this.plugin.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
-    const newLinkPath = pathChangeMap ? pathChangeMap.get(oldLinkPath) : extractLinkFile(this.plugin.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
+    const newLinkPath = pathChangeMap
+      ? pathChangeMap.get(oldLinkPath)
+      : extractLinkFile(this.plugin.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
     if (!newLinkPath) {
       return link.original;
     }
@@ -336,12 +343,17 @@ export class LinksHandler {
         return [];
       }
       const links = getAllLinks(cache);
-      return links.map((link) => referenceToFileChange(link, this.convertLink({
-        link,
-        note,
-        oldNotePath,
-        pathChangeMap
-      })));
+      return links.map((link) =>
+        referenceToFileChange(
+          link,
+          this.convertLink({
+            link,
+            note,
+            oldNotePath,
+            pathChangeMap
+          })
+        )
+      );
     });
   }
 }

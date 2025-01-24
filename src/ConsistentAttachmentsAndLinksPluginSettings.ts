@@ -83,7 +83,8 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
     super.initFromRecord(legacySettings);
 
     if (this.showBackupWarning) {
-      this._hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote || this.autoCollectAttachments;
+      this._hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote
+        || this.autoCollectAttachments;
       this.deleteAttachmentsWithNote = false;
       this.deleteExistFilesWhenMoveNote = false;
       this.moveAttachmentsWithNote = false;
