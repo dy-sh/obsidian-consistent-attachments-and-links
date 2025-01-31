@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.24.9
+
+- Lint
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/17.2.2
+
 ## 3.24.8
 
 - Format
