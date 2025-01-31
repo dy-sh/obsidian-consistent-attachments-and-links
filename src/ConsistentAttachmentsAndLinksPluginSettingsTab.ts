@@ -91,7 +91,6 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
             }
           }
         }
-        return;
       }
     };
 
