@@ -10,6 +10,7 @@ import {
   normalizePath,
   TFile
 } from 'obsidian';
+import { noop } from 'obsidian-dev-utils/Function';
 import { normalizeOptionalProperties } from 'obsidian-dev-utils/Object';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/FileChange';
 import {
@@ -33,6 +34,7 @@ import {
   dirname,
   join
 } from 'obsidian-dev-utils/Path';
+import { trimStart } from 'obsidian-dev-utils/String';
 
 import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
 
@@ -86,16 +88,17 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
         str += '\n\n';
       }
       return str;
-    } else {
-      return `# ${this.title}\nNo problems found\n\n`;
     }
+    return `# ${this.title}\nNo problems found\n\n`;
   }
 }
 
 export class LinksHandler {
   public constructor(
     private plugin: ConsistentAttachmentsAndLinksPlugin
-  ) {}
+  ) {
+    noop();
+  }
 
   public async checkConsistency(
     note: TFile,
@@ -137,11 +140,11 @@ export class LinksHandler {
   }
 
   public async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
-    return this.convertAllNoteRefPathsToRelative(notePath, true);
+    return await this.convertAllNoteRefPathsToRelative(notePath, true);
   }
 
   public async convertAllNoteLinksPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
-    return this.convertAllNoteRefPathsToRelative(notePath, false);
+    return await this.convertAllNoteRefPathsToRelative(notePath, false);
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
@@ -168,7 +171,7 @@ export class LinksHandler {
 
     const noteFile = getFileOrNull(this.plugin.app, notePath);
     if (!noteFile) {
-      console.warn('can\'t update wikilinks in note, file not found: ' + notePath);
+      console.warn(`can't update wikilinks in note, file not found: ${notePath}`);
       return 0;
     }
 
@@ -195,7 +198,7 @@ export class LinksHandler {
 
     const note = getFileOrNull(this.plugin.app, notePath);
     if (!note) {
-      console.warn('can\'t update links in note, file not found: ' + notePath);
+      console.warn(`can't update links in note, file not found: ${notePath}`);
       return;
     }
 
@@ -329,11 +332,13 @@ export class LinksHandler {
       return false;
     }
 
-    if (subpath.startsWith('#^')) {
-      return Object.keys(cache.blocks ?? {}).includes(subpath.slice(2));
-    } else {
-      return (cache.headings ?? []).map((h) => h.heading.replaceAll('#', ' ')).includes(subpath.slice(1));
+    const BLOCK_PREFIX = '#^';
+    if (subpath.startsWith(BLOCK_PREFIX)) {
+      return Object.keys(cache.blocks ?? {}).includes(trimStart(subpath, BLOCK_PREFIX));
     }
+
+    const HEADING_PREFIX = '#';
+    return (cache.headings ?? []).map((h) => h.heading.replaceAll(HEADING_PREFIX, ' ')).includes(trimStart(subpath, HEADING_PREFIX));
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {

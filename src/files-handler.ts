@@ -1,4 +1,5 @@
 import { TFile } from 'obsidian';
+import { noop } from 'obsidian-dev-utils/Function';
 import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/AttachmentPath';
 import {
   getFileOrNull,
@@ -22,6 +23,7 @@ import {
 } from 'obsidian-dev-utils/obsidian/Vault';
 import { deleteEmptyFolderHierarchy } from 'obsidian-dev-utils/obsidian/VaultEx';
 import { dirname } from 'obsidian-dev-utils/Path';
+import { trimStart } from 'obsidian-dev-utils/String';
 
 import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
 import type { PathChangeInfo } from './links-handler.ts';
@@ -36,7 +38,9 @@ export class FilesHandler {
   public constructor(
     private plugin: ConsistentAttachmentsAndLinksPlugin,
     private lh: LinksHandler
-  ) {}
+  ) {
+    noop();
+  }
 
   public async collectAttachmentsForCachedNote(notePath: string, deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
     if (this.plugin.settings.isPathIgnored(notePath)) {
@@ -95,9 +99,7 @@ export class FilesHandler {
       return;
     }
 
-    if (dirName.startsWith('./')) {
-      dirName = dirName.slice(2);
-    }
+    dirName = trimStart(dirName, './');
 
     let list = await listSafe(this.plugin.app, dirName);
     for (const folder of list.folders) {
