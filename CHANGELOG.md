@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.24.10
+
+- Update template
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/18.4.2
+
 ## 3.24.9
 
 - Lint
