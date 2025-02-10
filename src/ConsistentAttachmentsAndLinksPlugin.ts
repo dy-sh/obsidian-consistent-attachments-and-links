@@ -20,7 +20,7 @@ import {
   isMarkdownFile
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import { loop } from 'obsidian-dev-utils/obsidian/Loop';
-import { alert } from 'obsidian-dev-utils/obsidian/Modal/Alert';
+import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/Queue';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';

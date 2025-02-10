@@ -138,8 +138,8 @@ Removes all empty folders in your library.
 
 ## Installation
 
-- `Consistent Attachments and Links` is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=consistent-attachments-and-links).
-- Beta releases can be installed through [BRAT](https://obsidian.md/plugins?id=obsidian42-brat).
+- The plugin is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=consistent-attachments-and-links).
+- [Beta releases](obsidian://brat?plugin=https://github.com/dy-sh/obsidian-consistent-attachments-and-links) can be installed via [BRAT](https://obsidian.md/plugins?id=obsidian42-brat).
 
 ## Debugging
 
