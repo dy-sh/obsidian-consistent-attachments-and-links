@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.24.13
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.6.0
+
 ## 3.24.12
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.3.0
