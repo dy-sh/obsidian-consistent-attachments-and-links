@@ -138,8 +138,15 @@ Removes all empty folders in your library.
 
 ## Installation
 
-- The plugin is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=consistent-attachments-and-links).
-- [Beta releases](obsidian://brat?plugin=https://github.com/dy-sh/obsidian-consistent-attachments-and-links) can be installed via [BRAT](https://obsidian.md/plugins?id=obsidian42-brat).
+The plugin is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=consistent-attachments-and-links).
+
+### Beta versions
+
+To install the latest beta release of this plugin (regardless if it is available in [the official Community Plugins repository](https://obsidian.md/plugins) or not), follow these steps:
+
+1. Ensure you have the [BRAT plugin](https://obsidian.md/plugins?id=obsidian42-brat) installed and enabled.
+2. Click [Install via BRAT](https://intradeus.github.io/http-protocol-redirector?r=obsidian://brat?plugin=https://github.com/dy-sh/obsidian-consistent-attachments-and-links).
+3. An Obsidian pop-up window should appear. In the window, click the `Add plugin` button once and wait a few seconds for the plugin to install.
 
 ## Debugging
 
