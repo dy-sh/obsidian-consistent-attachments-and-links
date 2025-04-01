@@ -198,7 +198,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       processItem: async (note) => {
         await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
       },
-      shouldContinueOnError: true
+      progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
     });
 
     const notePath = this.settings.consistencyReportFile;
@@ -307,7 +309,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
           processedNotesCount++;
         }
       },
-      shouldContinueOnError: true
+      progressBarTitle: 'Consistent Attachments and Links: Collecting attachments...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
     });
 
     if (movedAttachmentsCount === 0) {
@@ -343,7 +347,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
           processedNotesCount++;
         }
       },
-      shouldContinueOnError: true
+      progressBarTitle: 'Consistent Attachments and Links: Converting embed paths to relative...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
     });
 
     if (changedEmbedCount === 0) {
@@ -392,7 +398,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
           processedNotesCount++;
         }
       },
-      shouldContinueOnError: true
+      progressBarTitle: 'Consistent Attachments and Links: Converting link paths to relative...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
     });
 
     if (changedLinksCount === 0) {
@@ -487,7 +495,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         changedLinksCount += result;
         processedNotesCount++;
       },
-      shouldContinueOnError: true
+      progressBarTitle: 'Consistent Attachments and Links: Replacing wiki embeds with markdown embeds...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
     });
 
     if (changedLinksCount === 0) {
@@ -533,7 +543,9 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
         changedLinksCount += result;
         processedNotesCount++;
       },
-      shouldContinueOnError: true
+      progressBarTitle: 'Consistent Attachments and Links: Replacing wikilinks with markdown links...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
     });
 
     if (changedLinksCount === 0) {
