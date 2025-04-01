@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.25.0
+
+- Show progress bar
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/21.1.0
+
 ## 3.24.16
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.17.5
