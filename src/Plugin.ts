@@ -3,6 +3,7 @@ import type {
   Menu,
   TAbstractFile
 } from 'obsidian';
+import type { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 
 import {
@@ -30,34 +31,37 @@ import {
 } from 'obsidian-dev-utils/obsidian/Vault';
 import { dirname } from 'obsidian-dev-utils/Path';
 
-import { ConsistentAttachmentsAndLinksPluginSettings } from './ConsistentAttachmentsAndLinksPluginSettings.ts';
-import { ConsistentAttachmentsAndLinksPluginSettingsTab } from './ConsistentAttachmentsAndLinksPluginSettingsTab.ts';
 import { FilesHandler } from './files-handler.ts';
 import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
+import { PluginSettings } from './PluginSettings.ts';
+import { PluginSettingsManager } from './PluginSettingsManager.ts';
+import { PluginSettingsTab } from './PluginSettingsTab.ts';
 
-export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAttachmentsAndLinksPluginSettings> {
+export class Plugin extends PluginBase<PluginSettings> {
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
   private fh!: FilesHandler;
   private lh!: LinksHandler;
 
-  public override async saveSettings(newSettings: ConsistentAttachmentsAndLinksPluginSettings): Promise<void> {
-    await super.saveSettings(newSettings);
+  public override onLoadSettings(settings: PluginSettings): void {
+    settings.revertDangerousSettings();
+  }
 
+  public override async onSaveSettings(newSettings: PluginSettings, oldSettings: PluginSettings): Promise<void> {
+    await super.onSaveSettings(newSettings, oldSettings);
     this.lh = new LinksHandler(this);
-
     this.fh = new FilesHandler(this, this.lh);
   }
 
-  protected override createPluginSettings(data: unknown): ConsistentAttachmentsAndLinksPluginSettings {
-    return new ConsistentAttachmentsAndLinksPluginSettings(data);
+  protected override createPluginSettingsTab(): null | PluginSettingTab {
+    return new PluginSettingsTab(this);
   }
 
-  protected override createPluginSettingsTab(): null | PluginSettingTab {
-    return new ConsistentAttachmentsAndLinksPluginSettingsTab(this);
+  protected override createSettingsManager(): PluginSettingsManagerBase<PluginSettings> {
+    return new PluginSettingsManager(this);
   }
 
   protected override async onLayoutReady(): Promise<void> {
@@ -613,8 +617,8 @@ export class ConsistentAttachmentsAndLinksPlugin extends PluginBase<ConsistentAt
       })
     });
 
-    const settings = this.settingsClone;
-    settings.showBackupWarning = false;
-    await this.saveSettings(settings);
+    await this.settingsManager.editAndSave((settings) => {
+      settings.showBackupWarning = false;
+    });
   }
 }

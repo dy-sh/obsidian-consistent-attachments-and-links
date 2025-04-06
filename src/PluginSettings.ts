@@ -1,18 +1,13 @@
-import { PluginSettingsBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsBase';
 import { escapeRegExp } from 'obsidian-dev-utils/RegExp';
 
 const ALWAYS_MATCH_REG_EXP = /(?:)/;
 const NEVER_MATCH_REG_EXP = /$./;
 
-interface LegacySettings extends ConsistentAttachmentsAndLinksPluginSettings {
-  ignoreFiles: string[];
-  ignoreFolders: string[];
-}
-
-export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsBase {
+export class PluginSettings {
   public autoCollectAttachments = false;
 
   public changeNoteBacklinksAlt = true;
+
   public consistencyReportFile = 'consistency-report.md';
   public deleteAttachmentsWithNote = false;
   public deleteEmptyFolders = true;
@@ -42,7 +37,7 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
     this._includePathsRegExp = makeRegExp(this._includePaths, ALWAYS_MATCH_REG_EXP);
   }
 
-  private _excludePaths: string[] = [];
+  private _excludePaths: string[] = ['/consistency-report\\.md$/'];
 
   private _excludePathsRegExp = NEVER_MATCH_REG_EXP;
 
@@ -52,56 +47,20 @@ export class ConsistentAttachmentsAndLinksPluginSettings extends PluginSettingsB
 
   private _includePathsRegExp = ALWAYS_MATCH_REG_EXP;
 
-  public constructor(data: unknown) {
-    super();
-    this.excludePaths = ['/consistency-report\\.md$/'];
-    this.init(data);
-  }
-
-  public override initFromRecord(record: Record<string, unknown>): void {
-    const legacySettings = record as Partial<LegacySettings>;
-
-    if (legacySettings.ignoreFiles || legacySettings.ignoreFolders) {
-      const excludePaths = legacySettings.excludePaths ?? [];
-
-      for (const ignoreFileRegExpStr of legacySettings.ignoreFiles ?? []) {
-        excludePaths.push(`/${ignoreFileRegExpStr}$/`);
-      }
-
-      for (const ignoreFolder of legacySettings.ignoreFolders ?? []) {
-        excludePaths.push(ignoreFolder);
-      }
-
-      if (excludePaths.length > 0) {
-        legacySettings.excludePaths = excludePaths;
-      }
-
-      delete legacySettings.ignoreFiles;
-      delete legacySettings.ignoreFolders;
-    }
-
-    super.initFromRecord(legacySettings);
-
-    if (this.showBackupWarning) {
-      this._hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote
-        || this.autoCollectAttachments;
-      this.deleteAttachmentsWithNote = false;
-      this.deleteExistFilesWhenMoveNote = false;
-      this.moveAttachmentsWithNote = false;
-      this.autoCollectAttachments = false;
-    }
-  }
-
   public isPathIgnored(path: string): boolean {
     return !this._includePathsRegExp.test(path) || this._excludePathsRegExp.test(path);
   }
 
-  public override toJSON(): Record<string, unknown> {
-    return {
-      ...super.toJSON(),
-      excludePaths: this.excludePaths,
-      includePaths: this.includePaths
-    };
+  public revertDangerousSettings(): void {
+    if (!this.showBackupWarning) {
+      return;
+    }
+    this._hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote
+      || this.autoCollectAttachments;
+    this.deleteAttachmentsWithNote = false;
+    this.deleteExistFilesWhenMoveNote = false;
+    this.moveAttachmentsWithNote = false;
+    this.autoCollectAttachments = false;
   }
 }
 

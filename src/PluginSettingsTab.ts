@@ -3,12 +3,11 @@ import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
-import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 
-import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
-import type { ConsistentAttachmentsAndLinksPluginSettings } from './ConsistentAttachmentsAndLinksPluginSettings.ts';
+import type { Plugin } from './Plugin.ts';
+import type { PluginSettings } from './PluginSettings.ts';
 
-export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettingsTabBase<ConsistentAttachmentsAndLinksPlugin> {
+export class PluginSettingsTab extends PluginSettingsTabBase<Plugin> {
   public override display(): void {
     this.containerEl.empty();
 
@@ -100,9 +99,7 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.appendText('If the setting is empty, all notes are included');
       }))
       .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'includePaths', {
-          valueValidator: pathsValidator
-        });
+        this.bind(multipleText, 'includePaths');
       });
 
     new SettingEx(this.containerEl)
@@ -118,13 +115,11 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.appendText('If the setting is empty, no notes are excluded');
       }))
       .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'excludePaths', {
-          valueValidator: pathsValidator
-        });
+        this.bind(multipleText, 'excludePaths');
       });
   }
 
-  private async checkDangerousSetting(settingKey: keyof ConsistentAttachmentsAndLinksPluginSettings, settingName: string): Promise<void> {
+  private async checkDangerousSetting(settingKey: keyof PluginSettings, settingName: string): Promise<void> {
     if (!this.plugin.settings[settingKey]) {
       return;
     }
@@ -150,17 +145,5 @@ export class ConsistentAttachmentsAndLinksPluginSettingsTab extends PluginSettin
         f.appendText(' Consistent Attachments and Links');
       })
     });
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-function pathsValidator(paths: string[]): string | void {
-  for (const path of paths) {
-    if (path.startsWith('/') && path.endsWith('/')) {
-      const regExp = path.slice(1, -1);
-      if (!isValidRegExp(regExp)) {
-        return `Invalid regular expression ${path}`;
-      }
-    }
   }
 }

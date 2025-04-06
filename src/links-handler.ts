@@ -36,7 +36,7 @@ import {
 } from 'obsidian-dev-utils/Path';
 import { trimStart } from 'obsidian-dev-utils/String';
 
-import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
+import type { Plugin } from './Plugin.ts';
 
 export interface LinksAndEmbedsChangedInfo {
   embeds: ReferenceChangeInfo[];
@@ -95,7 +95,7 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
 
 export class LinksHandler {
   public constructor(
-    private plugin: ConsistentAttachmentsAndLinksPlugin
+    private plugin: Plugin
   ) {
     noop();
   }
