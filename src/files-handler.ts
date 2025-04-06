@@ -25,8 +25,8 @@ import { deleteEmptyFolderHierarchy } from 'obsidian-dev-utils/obsidian/VaultEx'
 import { dirname } from 'obsidian-dev-utils/Path';
 import { trimStart } from 'obsidian-dev-utils/String';
 
-import type { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
 import type { PathChangeInfo } from './links-handler.ts';
+import type { Plugin } from './Plugin.ts';
 
 import { LinksHandler } from './links-handler.ts';
 
@@ -36,7 +36,7 @@ export interface MovedAttachmentResult {
 
 export class FilesHandler {
   public constructor(
-    private plugin: ConsistentAttachmentsAndLinksPlugin,
+    private plugin: Plugin,
     private lh: LinksHandler
   ) {
     noop();

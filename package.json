@@ -5,7 +5,10 @@
   "main": "main.js",
   "scripts": {
     "build": "obsidian-dev-utils build",
+    "build:clean": "obsidian-dev-utils build:clean",
     "build:compile": "obsidian-dev-utils build:compile",
+    "build:compile:svelte": "obsidian-dev-utils build:compile:svelte",
+    "build:compile:typescript": "obsidian-dev-utils build:compile:typescript",
     "dev": "obsidian-dev-utils dev",
     "format": "obsidian-dev-utils format",
     "format:check": "obsidian-dev-utils format:check",
@@ -19,10 +22,10 @@
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^22.13.17",
+    "@types/node": "^22.14.0",
     "jiti": "^2.4.2",
     "obsidian": "^1.8.7",
-    "obsidian-dev-utils": "^21.1.0",
+    "obsidian-dev-utils": "^22.1.1-beta.23",
     "obsidian-typings": "^2.41.4"
   },
   "type": "module"

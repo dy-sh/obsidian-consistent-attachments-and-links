@@ -1,4 +1,4 @@
-import { ConsistentAttachmentsAndLinksPlugin } from './ConsistentAttachmentsAndLinksPlugin.ts';
+import { Plugin } from './Plugin.ts';
 
 // eslint-disable-next-line import-x/no-default-export
-export default ConsistentAttachmentsAndLinksPlugin;
+export default Plugin;
