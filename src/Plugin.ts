@@ -46,7 +46,8 @@ export class Plugin extends PluginBase<PluginTypes> {
   private fh!: FilesHandler;
   private lh!: LinksHandler;
 
-  public override onLoadSettings(settings: PluginSettings): void {
+  public override async onLoadSettings(settings: PluginSettings): Promise<void> {
+    await super.onLoadSettings(settings);
     settings.revertDangerousSettings();
   }
 

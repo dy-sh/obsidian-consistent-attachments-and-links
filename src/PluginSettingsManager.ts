@@ -13,16 +13,12 @@ interface LegacySettings extends PluginSettings {
 }
 
 export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes> {
-  protected override addValidators(): void {
-    this.addValidator('includePaths', pathsValidator);
-    this.addValidator('excludePaths', pathsValidator);
-  }
-
   protected override createDefaultSettings(): PluginSettings {
     return new PluginSettings();
   }
 
-  protected override onLoadRecord(record: Record<string, unknown>): void {
+  protected override async onLoadRecord(record: Record<string, unknown>): Promise<void> {
+    await super.onLoadRecord(record);
     const legacySettings = record as Partial<LegacySettings>;
     if (!(legacySettings.ignoreFiles || legacySettings.ignoreFolders)) {
       return;
@@ -44,6 +40,12 @@ export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes
 
     delete legacySettings.ignoreFiles;
     delete legacySettings.ignoreFolders;
+  }
+
+  protected override registerValidators(): void {
+    super.registerValidators();
+    this.registerValidator('includePaths', pathsValidator);
+    this.registerValidator('excludePaths', pathsValidator);
   }
 }
 
