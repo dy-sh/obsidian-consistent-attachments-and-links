@@ -4,10 +4,10 @@ import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
 
-import type { Plugin } from './Plugin.ts';
 import type { PluginSettings } from './PluginSettings.ts';
+import type { PluginTypes } from './PluginTypes.ts';
 
-export class PluginSettingsTab extends PluginSettingsTabBase<Plugin> {
+export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
   public override display(): void {
     this.containerEl.empty();
 
@@ -69,10 +69,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<Plugin> {
     new SettingEx(this.containerEl)
       .setName('Consistency Report Filename')
       .setDesc('Specify the name of the file for the consistency report.')
-      .addText((text) =>
-        this.bind(text, 'consistencyReportFile')
-          .setPlaceholder('Example: consistency-report.md')
-      );
+      .addText((text) => {
+        this.bind(text, 'consistencyReportFile');
+      });
 
     const autoCollectAttachmentsSettingName = 'Auto Collect Attachments';
     new SettingEx(this.containerEl)
