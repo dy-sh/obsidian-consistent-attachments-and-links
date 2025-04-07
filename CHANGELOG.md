@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.25.2
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.0.1
+
 ## 3.25.1
 
 - New template
