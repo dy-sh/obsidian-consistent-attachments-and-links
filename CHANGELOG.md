@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.25.1
+
+- New template
+
 ## 3.25.0
 
 - Show progress bar
