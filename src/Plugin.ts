@@ -3,13 +3,11 @@ import type {
   Menu,
   TAbstractFile
 } from 'obsidian';
-import type { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 
 import {
   MarkdownView,
   Notice,
-  PluginSettingTab,
   setIcon,
   TFile
 } from 'obsidian';
@@ -31,16 +29,18 @@ import {
 } from 'obsidian-dev-utils/obsidian/Vault';
 import { dirname } from 'obsidian-dev-utils/Path';
 
+import type { PluginSettings } from './PluginSettings.ts';
+import type { PluginTypes } from './PluginTypes.ts';
+
 import { FilesHandler } from './files-handler.ts';
 import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
-import { PluginSettings } from './PluginSettings.ts';
 import { PluginSettingsManager } from './PluginSettingsManager.ts';
 import { PluginSettingsTab } from './PluginSettingsTab.ts';
 
-export class Plugin extends PluginBase<PluginSettings> {
+export class Plugin extends PluginBase<PluginTypes> {
   private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
   private fh!: FilesHandler;
@@ -56,11 +56,11 @@ export class Plugin extends PluginBase<PluginSettings> {
     this.fh = new FilesHandler(this, this.lh);
   }
 
-  protected override createPluginSettingsTab(): null | PluginSettingTab {
+  protected override createPluginSettingsTab(): null | PluginSettingsTab {
     return new PluginSettingsTab(this);
   }
 
-  protected override createSettingsManager(): PluginSettingsManagerBase<PluginSettings> {
+  protected override createSettingsManager(): PluginSettingsManager {
     return new PluginSettingsManager(this);
   }
 
@@ -68,7 +68,8 @@ export class Plugin extends PluginBase<PluginSettings> {
     await this.showBackupWarning();
   }
 
-  protected override onloadComplete(): void {
+  protected override async onloadImpl(): Promise<void> {
+    await super.onloadImpl();
     this.registerEvent(
       this.app.metadataCache.on('deleted', (file, prevCache) => {
         if (prevCache) {
