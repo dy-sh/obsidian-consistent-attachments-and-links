@@ -46,13 +46,13 @@ export class Plugin extends PluginBase<PluginTypes> {
   private fh!: FilesHandler;
   private lh!: LinksHandler;
 
-  public override async onLoadSettings(settings: PluginSettings): Promise<void> {
-    await super.onLoadSettings(settings);
+  public override async onLoadSettings(settings: PluginSettings, isInitialLoad: boolean): Promise<void> {
+    await super.onLoadSettings(settings, isInitialLoad);
     settings.revertDangerousSettings();
   }
 
-  public override async onSaveSettings(newSettings: PluginSettings, oldSettings: PluginSettings): Promise<void> {
-    await super.onSaveSettings(newSettings, oldSettings);
+  public override async onSaveSettings(newSettings: PluginSettings, oldSettings: PluginSettings, context?: unknown): Promise<void> {
+    await super.onSaveSettings(newSettings, oldSettings, context);
     this.lh = new LinksHandler(this);
     this.fh = new FilesHandler(this, this.lh);
   }
