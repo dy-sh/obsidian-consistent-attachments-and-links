@@ -9,6 +9,7 @@ import type { PluginTypes } from './PluginTypes.ts';
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
   public override display(): void {
+    super.display();
     this.containerEl.empty();
 
     const moveAttachmentsWithNoteSettingName = 'Move Attachments with Note';
