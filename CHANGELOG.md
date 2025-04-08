@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.25.4
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.1.1
+
 ## 3.25.3
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.1.0
