@@ -3,7 +3,9 @@ import type {
   Menu,
   TAbstractFile
 } from 'obsidian';
+import type { PluginSettingsWrapper } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsWrapper';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import type { ReadonlyDeep } from 'type-fest';
 
 import {
   MarkdownView,
@@ -46,23 +48,27 @@ export class Plugin extends PluginBase<PluginTypes> {
   private fh!: FilesHandler;
   private lh!: LinksHandler;
 
-  public override async onLoadSettings(settings: PluginSettings, isInitialLoad: boolean): Promise<void> {
-    await super.onLoadSettings(settings, isInitialLoad);
-    settings.revertDangerousSettings();
+  public override async onLoadSettings(loadedSettings: ReadonlyDeep<PluginSettingsWrapper<PluginSettings>>, isInitialLoad: boolean): Promise<void> {
+    await super.onLoadSettings(loadedSettings, isInitialLoad);
+    loadedSettings.settings.revertDangerousSettings();
   }
 
-  public override async onSaveSettings(newSettings: PluginSettings, oldSettings: PluginSettings, context?: unknown): Promise<void> {
+  public override async onSaveSettings(
+    newSettings: ReadonlyDeep<PluginSettingsWrapper<PluginSettings>>,
+    oldSettings: ReadonlyDeep<PluginSettingsWrapper<PluginSettings>>,
+    context?: unknown
+  ): Promise<void> {
     await super.onSaveSettings(newSettings, oldSettings, context);
     this.lh = new LinksHandler(this);
     this.fh = new FilesHandler(this, this.lh);
   }
 
-  protected override createPluginSettingsTab(): null | PluginSettingsTab {
-    return new PluginSettingsTab(this);
-  }
-
   protected override createSettingsManager(): PluginSettingsManager {
     return new PluginSettingsManager(this);
+  }
+
+  protected override createSettingsTab(): null | PluginSettingsTab {
+    return new PluginSettingsTab(this);
   }
 
   protected override async onLayoutReady(): Promise<void> {
