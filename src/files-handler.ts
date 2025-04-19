@@ -1,8 +1,11 @@
+import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/FileSystem';
+
 import { TFile } from 'obsidian';
 import { noop } from 'obsidian-dev-utils/Function';
 import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/AttachmentPath';
 import {
   getFileOrNull,
+  getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import {
@@ -76,7 +79,7 @@ export class FilesHandler {
         continue;
       }
 
-      if (!this.isAttachment(file)) {
+      if (this.isNoteEx(file)) {
         continue;
       }
 
@@ -121,6 +124,15 @@ export class FilesHandler {
     }
   }
 
+  public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
+    if (!pathOrFile || !isNote(this.plugin.app, pathOrFile)) {
+      return false;
+    }
+
+    const path = getPath(this.plugin.app, pathOrFile);
+    return this.plugin.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
+  }
+
   private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
     await createFolderSafe(this.plugin.app, dirname(filePath));
   }
@@ -134,10 +146,6 @@ export class FilesHandler {
         dir = dir.parent;
       }
     }
-  }
-
-  private isAttachment(file: TFile): boolean {
-    return !isNote(this.plugin.app, file);
   }
 
   private async moveAttachment(
@@ -157,7 +165,7 @@ export class FilesHandler {
       return result;
     }
 
-    if (!this.isAttachment(file)) {
+    if (this.isNoteEx(file)) {
       return result;
     }
 
