@@ -14,6 +14,7 @@ export class PluginSettings {
   public deleteExistFilesWhenMoveNote = false;
   public moveAttachmentsWithNote = false;
   public showBackupWarning = true;
+  public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
   public updateLinks = true;
   public get excludePaths(): string[] {
     return this._excludePaths;

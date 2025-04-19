@@ -117,6 +117,27 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .addMultipleText((multipleText) => {
         this.bind(multipleText, 'excludePaths');
       });
+
+    new SettingEx(this.containerEl)
+      .setName('Treat as attachment extensions')
+      .setDesc(createFragment((f) => {
+        f.appendText('Treat files with these extensions as attachments.');
+        f.createEl('br');
+        f.appendText('By default, ');
+        appendCodeBlock(f, '.md');
+        f.appendText(' and ');
+        appendCodeBlock(f, '.canvas');
+        f.appendText(' linked files are not treated as attachments and are not moved with the note.');
+        f.createEl('br');
+        f.appendText('You can add custom extensions, e.g. ');
+        appendCodeBlock(f, '.foo.md');
+        f.appendText(', ');
+        appendCodeBlock(f, '.bar.canvas');
+        f.appendText(', to override this behavior.');
+      }))
+      .addMultipleText((multipleText) => {
+        this.bind(multipleText, 'treatAsAttachmentExtensions');
+      });
   }
 
   private async checkDangerousSetting(settingKey: keyof PluginSettings, settingName: string): Promise<void> {
