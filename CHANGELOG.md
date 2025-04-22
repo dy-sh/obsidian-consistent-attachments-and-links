@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.26.1
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/26.11.0
+
 ## 3.26.0
 
 - Treat as attachment extensions setting. Inspired by https://github.com/RainCat1998/obsidian-custom-attachment-location/issues/147
