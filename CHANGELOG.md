@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.26.3
+
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/26.16.0
+
 ## 3.26.2
 
 - Improve performance
