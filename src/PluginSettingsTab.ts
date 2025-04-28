@@ -22,9 +22,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .setName(moveAttachmentsWithNoteSettingName)
       .setDesc('Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.')
       .addToggle((toggle) =>
-        this.bind(toggle, 'moveAttachmentsWithNote', {
+        this.bind(toggle, 'shouldMoveAttachmentsWithNote', {
           onChanged: async () => {
-            await this.checkDangerousSetting('moveAttachmentsWithNote', moveAttachmentsWithNoteSettingName);
+            await this.checkDangerousSetting('shouldMoveAttachmentsWithNote', moveAttachmentsWithNoteSettingName);
           }
         })
       );
@@ -34,9 +34,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .setName(deleteAttachmentsWithNoteSettingName)
       .setDesc('Automatically remove attachments that are no longer referenced in other notes when the note is deleted.')
       .addToggle((toggle) =>
-        this.bind(toggle, 'deleteAttachmentsWithNote', {
+        this.bind(toggle, 'shouldDeleteAttachmentsWithNote', {
           onChanged: async () => {
-            await this.checkDangerousSetting('deleteAttachmentsWithNote', deleteAttachmentsWithNoteSettingName);
+            await this.checkDangerousSetting('shouldDeleteAttachmentsWithNote', deleteAttachmentsWithNoteSettingName);
           }
         })
       );
@@ -44,7 +44,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
     new SettingEx(this.containerEl)
       .setName('Update Links')
       .setDesc('Automatically update links to attachments and other notes when moving notes or attachments.')
-      .addToggle((toggle) => this.bind(toggle, 'updateLinks'));
+      .addToggle((toggle) => this.bind(toggle, 'shouldUpdateLinks'));
 
     new SettingEx(this.containerEl)
       .setName('Empty attachment folder behavior')
@@ -81,9 +81,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
         'Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.'
       )
       .addToggle((toggle) =>
-        this.bind(toggle, 'deleteExistFilesWhenMoveNote', {
+        this.bind(toggle, 'shouldDeleteExistingFilesWhenMovingNote', {
           onChanged: async () => {
-            await this.checkDangerousSetting('deleteExistFilesWhenMoveNote', deleteExistFilesWhenMoveNoteSettingName);
+            await this.checkDangerousSetting('shouldDeleteExistingFilesWhenMovingNote', deleteExistFilesWhenMoveNoteSettingName);
           }
         })
       );
@@ -93,7 +93,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .setDesc(
         'When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.'
       )
-      .addToggle((toggle) => this.bind(toggle, 'changeNoteBacklinksAlt'));
+      .addToggle((toggle) => this.bind(toggle, 'shouldChangeNoteBacklinksDisplayText'));
 
     new SettingEx(this.containerEl)
       .setName('Consistency Report Filename')
@@ -107,9 +107,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .setName(autoCollectAttachmentsSettingName)
       .setDesc('Automatically collect attachments when the note is edited.')
       .addToggle((toggle) =>
-        this.bind(toggle, 'autoCollectAttachments', {
+        this.bind(toggle, 'shouldCollectAttachmentsAutomatically', {
           onChanged: async () => {
-            await this.checkDangerousSetting('autoCollectAttachments', autoCollectAttachmentsSettingName);
+            await this.checkDangerousSetting('shouldCollectAttachmentsAutomatically', autoCollectAttachmentsSettingName);
           }
         })
       );

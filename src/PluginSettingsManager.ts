@@ -9,9 +9,16 @@ import type { PluginTypes } from './PluginTypes.ts';
 import { PluginSettings } from './PluginSettings.ts';
 
 interface LegacySettings extends PluginSettings {
+  autoCollectAttachments: boolean;
+  changeNoteBacklinksAlt: boolean;
+  deleteAttachmentsWithNote: boolean;
   deleteEmptyFolders: boolean;
+  deleteExistFilesWhenMoveNote: boolean;
   ignoreFiles: string[];
   ignoreFolders: string[];
+  moveAttachmentsWithNote: boolean;
+  showBackupWarning: boolean;
+  updateLinks: boolean;
 }
 
 export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes> {
@@ -48,6 +55,42 @@ export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes
       legacySettings.emptyAttachmentFolderBehavior = legacySettings.deleteEmptyFolders
         ? EmptyAttachmentFolderBehavior.DeleteWithEmptyParents
         : EmptyAttachmentFolderBehavior.Keep;
+      delete legacySettings.deleteEmptyFolders;
+    }
+
+    if (legacySettings.autoCollectAttachments !== undefined) {
+      legacySettings.shouldCollectAttachmentsAutomatically = legacySettings.autoCollectAttachments;
+      delete legacySettings.autoCollectAttachments;
+    }
+
+    if (legacySettings.changeNoteBacklinksAlt !== undefined) {
+      legacySettings.shouldChangeNoteBacklinksDisplayText = legacySettings.changeNoteBacklinksAlt;
+      delete legacySettings.changeNoteBacklinksAlt;
+    }
+
+    if (legacySettings.deleteAttachmentsWithNote !== undefined) {
+      legacySettings.shouldDeleteAttachmentsWithNote = legacySettings.deleteAttachmentsWithNote;
+      delete legacySettings.deleteAttachmentsWithNote;
+    }
+
+    if (legacySettings.deleteExistFilesWhenMoveNote !== undefined) {
+      legacySettings.shouldDeleteExistingFilesWhenMovingNote = legacySettings.deleteExistFilesWhenMoveNote;
+      delete legacySettings.deleteExistFilesWhenMoveNote;
+    }
+
+    if (legacySettings.moveAttachmentsWithNote !== undefined) {
+      legacySettings.shouldMoveAttachmentsWithNote = legacySettings.moveAttachmentsWithNote;
+      delete legacySettings.moveAttachmentsWithNote;
+    }
+
+    if (legacySettings.showBackupWarning !== undefined) {
+      legacySettings.shouldShowBackupWarning = legacySettings.showBackupWarning;
+      delete legacySettings.showBackupWarning;
+    }
+
+    if (legacySettings.updateLinks !== undefined) {
+      legacySettings.shouldUpdateLinks = legacySettings.updateLinks;
+      delete legacySettings.updateLinks;
     }
   }
 

@@ -198,7 +198,7 @@ export class FilesHandler {
     const isMove = linkedNotes.length === 0;
     const newLinkFile = getFileOrNull(this.plugin.app, newLinkPath);
     if (newLinkFile) {
-      if (this.plugin.settings.deleteExistFilesWhenMoveNote) {
+      if (this.plugin.settings.shouldDeleteExistingFilesWhenMovingNote) {
         this.plugin.consoleDebug(`delete: ${newLinkPath}`);
         await this.deleteFile(newLinkFile);
       } else {
