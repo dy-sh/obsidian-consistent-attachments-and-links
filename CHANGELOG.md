@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.27.0
+
+- EmptyAttachmentFolderBehavior
+- Update libs
+
 ## 3.26.3
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/26.16.0
