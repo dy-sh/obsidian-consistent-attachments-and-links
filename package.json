@@ -22,10 +22,10 @@
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",
-    "@types/node": "^22.15.2",
+    "@types/node": "^22.15.3",
     "jiti": "^2.4.2",
     "obsidian": "^1.8.7",
-    "obsidian-dev-utils": "^26.16.0",
+    "obsidian-dev-utils": "^26.22.0",
     "obsidian-typings": "^3.3.0"
   },
   "type": "module"
