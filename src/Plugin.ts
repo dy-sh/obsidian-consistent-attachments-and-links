@@ -90,11 +90,11 @@ export class Plugin extends PluginBase<PluginTypes> {
         emptyAttachmentFolderBehavior: this.settings.emptyAttachmentFolderBehavior,
         isNote: (path) => this.fh.isNoteEx(path),
         isPathIgnored: (path) => this.settings.isPathIgnored(path),
-        shouldDeleteConflictingAttachments: this.settings.deleteExistFilesWhenMoveNote,
-        shouldHandleDeletions: this.settings.deleteAttachmentsWithNote,
-        shouldHandleRenames: this.settings.updateLinks,
-        shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
-        shouldUpdateFilenameAliases: this.settings.changeNoteBacklinksAlt
+        shouldDeleteConflictingAttachments: this.settings.shouldDeleteExistingFilesWhenMovingNote,
+        shouldHandleDeletions: this.settings.shouldDeleteAttachmentsWithNote,
+        shouldHandleRenames: this.settings.shouldUpdateLinks,
+        shouldRenameAttachmentFolder: this.settings.shouldMoveAttachmentsWithNote,
+        shouldUpdateFilenameAliases: this.settings.shouldChangeNoteBacklinksDisplayText
       };
       return settings;
     });
@@ -437,7 +437,7 @@ export class Plugin extends PluginBase<PluginTypes> {
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
-    if (!this.settings.deleteAttachmentsWithNote || this.settings.isPathIgnored(file.path) || !isMarkdownFile(this.app, file)) {
+    if (!this.settings.shouldDeleteAttachmentsWithNote || this.settings.isPathIgnored(file.path) || !isMarkdownFile(this.app, file)) {
       return;
     }
 
@@ -457,7 +457,7 @@ export class Plugin extends PluginBase<PluginTypes> {
   }
 
   private async handleMetadataCacheChanged(file: TFile): Promise<void> {
-    if (!this.settings.autoCollectAttachments) {
+    if (!this.settings.shouldCollectAttachmentsAutomatically) {
       return;
     }
 
@@ -586,7 +586,7 @@ export class Plugin extends PluginBase<PluginTypes> {
   }
 
   private async showBackupWarning(): Promise<void> {
-    if (!this.settings.showBackupWarning) {
+    if (!this.settings.shouldShowBackupWarning) {
       return;
     }
 
@@ -619,7 +619,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     });
 
     await this.settingsManager.editAndSave((settings) => {
-      settings.showBackupWarning = false;
+      settings.shouldShowBackupWarning = false;
     });
   }
 }

@@ -5,18 +5,17 @@ const ALWAYS_MATCH_REG_EXP = /(?:)/;
 const NEVER_MATCH_REG_EXP = /$./;
 
 export class PluginSettings {
-  public autoCollectAttachments = false;
-
-  public changeNoteBacklinksAlt = true;
-
   public consistencyReportFile = 'consistency-report.md';
-  public deleteAttachmentsWithNote = false;
-  public deleteExistFilesWhenMoveNote = false;
   public emptyAttachmentFolderBehavior: EmptyAttachmentFolderBehavior = EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
-  public moveAttachmentsWithNote = false;
-  public showBackupWarning = true;
+  public shouldChangeNoteBacklinksDisplayText = true;
+  public shouldCollectAttachmentsAutomatically = false;
+  public shouldDeleteAttachmentsWithNote = false;
+  public shouldDeleteExistingFilesWhenMovingNote = false;
+  public shouldMoveAttachmentsWithNote = false;
+  public shouldShowBackupWarning = true;
+  public shouldUpdateLinks = true;
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
-  public updateLinks = true;
+
   public get excludePaths(): string[] {
     return this._excludePaths;
   }
@@ -54,15 +53,16 @@ export class PluginSettings {
   }
 
   public revertDangerousSettings(): void {
-    if (!this.showBackupWarning) {
+    if (!this.shouldShowBackupWarning) {
       return;
     }
-    this._hadDangerousSettingsReverted = this.deleteAttachmentsWithNote || this.deleteExistFilesWhenMoveNote || this.moveAttachmentsWithNote
-      || this.autoCollectAttachments;
-    this.deleteAttachmentsWithNote = false;
-    this.deleteExistFilesWhenMoveNote = false;
-    this.moveAttachmentsWithNote = false;
-    this.autoCollectAttachments = false;
+    this._hadDangerousSettingsReverted = this.shouldDeleteAttachmentsWithNote || this.shouldDeleteExistingFilesWhenMovingNote
+      || this.shouldMoveAttachmentsWithNote
+      || this.shouldCollectAttachmentsAutomatically;
+    this.shouldDeleteAttachmentsWithNote = false;
+    this.shouldDeleteExistingFilesWhenMovingNote = false;
+    this.shouldMoveAttachmentsWithNote = false;
+    this.shouldCollectAttachmentsAutomatically = false;
   }
 }
 
