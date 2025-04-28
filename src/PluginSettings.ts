@@ -1,3 +1,4 @@
+import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { escapeRegExp } from 'obsidian-dev-utils/RegExp';
 
 const ALWAYS_MATCH_REG_EXP = /(?:)/;
@@ -10,8 +11,8 @@ export class PluginSettings {
 
   public consistencyReportFile = 'consistency-report.md';
   public deleteAttachmentsWithNote = false;
-  public deleteEmptyFolders = true;
   public deleteExistFilesWhenMoveNote = false;
+  public emptyAttachmentFolderBehavior: EmptyAttachmentFolderBehavior = EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
   public moveAttachmentsWithNote = false;
   public showBackupWarning = true;
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
