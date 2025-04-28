@@ -1,7 +1,12 @@
 import { setIcon } from 'obsidian';
+import {
+  getEnumKey,
+  getEnumValue
+} from 'obsidian-dev-utils/Enum';
 import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
+import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
 
 import type { PluginSettings } from './PluginSettings.ts';
@@ -42,9 +47,32 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .addToggle((toggle) => this.bind(toggle, 'updateLinks'));
 
     new SettingEx(this.containerEl)
-      .setName('Delete Empty Folders')
-      .setDesc('Automatically remove empty folders after moving notes with attachments.')
-      .addToggle((toggle) => this.bind(toggle, 'deleteEmptyFolders'));
+      .setName('Empty attachment folder behavior')
+      .setDesc(createFragment((f) => {
+        f.appendText('When the attachment folder becomes empty, ');
+        f.createEl('br');
+        appendCodeBlock(f, 'Keep');
+        f.appendText(' - will keep the empty attachment folder, ');
+        f.createEl('br');
+        appendCodeBlock(f, 'Delete');
+        f.appendText(' - will delete the empty attachment folder, ');
+        f.createEl('br');
+        appendCodeBlock(f, 'Delete with empty parents');
+        f.appendText(' - will delete the empty attachment folder and its empty parent folders.');
+      }))
+      .addDropdown((dropdown) => {
+        dropdown.addOptions({
+          /* eslint-disable perfectionist/sort-objects */
+          [EmptyAttachmentFolderBehavior.Keep]: 'Keep',
+          [EmptyAttachmentFolderBehavior.Delete]: 'Delete',
+          [EmptyAttachmentFolderBehavior.DeleteWithEmptyParents]: 'Delete with empty parents'
+          /* eslint-enable perfectionist/sort-objects */
+        });
+        this.bind(dropdown, 'emptyAttachmentFolderBehavior', {
+          componentToPluginSettingsValueConverter: (value) => getEnumValue(EmptyAttachmentFolderBehavior, value),
+          pluginSettingsToComponentValueConverter: (value) => getEnumKey(EmptyAttachmentFolderBehavior, value)
+        });
+      });
 
     const deleteExistFilesWhenMoveNoteSettingName = 'Delete Duplicate Attachments on Note Move';
     new SettingEx(this.containerEl)

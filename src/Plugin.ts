@@ -87,10 +87,10 @@ export class Plugin extends PluginBase<PluginTypes> {
 
     registerRenameDeleteHandlers(this, () => {
       const settings: Partial<RenameDeleteHandlerSettings> = {
+        emptyAttachmentFolderBehavior: this.settings.emptyAttachmentFolderBehavior,
         isNote: (path) => this.fh.isNoteEx(path),
         isPathIgnored: (path) => this.settings.isPathIgnored(path),
         shouldDeleteConflictingAttachments: this.settings.deleteExistFilesWhenMoveNote,
-        shouldDeleteEmptyFolders: this.settings.deleteEmptyFolders,
         shouldHandleDeletions: this.settings.deleteAttachmentsWithNote,
         shouldHandleRenames: this.settings.updateLinks,
         shouldRenameAttachmentFolder: this.settings.moveAttachmentsWithNote,
@@ -250,11 +250,7 @@ export class Plugin extends PluginBase<PluginTypes> {
 
     await this.saveAllOpenNotes();
 
-    const result = await this.fh.collectAttachmentsForCachedNote(
-      note.path,
-      this.settings.deleteExistFilesWhenMoveNote,
-      this.settings.deleteEmptyFolders
-    );
+    const result = await this.fh.collectAttachmentsForCachedNote(note.path);
 
     if (result.movedAttachments.length > 0) {
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
@@ -310,11 +306,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.fh.collectAttachmentsForCachedNote(
-          note.path,
-          this.settings.deleteExistFilesWhenMoveNote,
-          this.settings.deleteEmptyFolders
-        );
+        const result = await this.fh.collectAttachmentsForCachedNote(note.path);
 
         if (result.movedAttachments.length > 0) {
           await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);

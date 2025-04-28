@@ -17,6 +17,7 @@ import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
+import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import {
   copySafe,
   createFolderSafe,
@@ -24,7 +25,10 @@ import {
   listSafe,
   renameSafe
 } from 'obsidian-dev-utils/obsidian/Vault';
-import { deleteEmptyFolderHierarchy } from 'obsidian-dev-utils/obsidian/VaultEx';
+import {
+  deleteEmptyFolderHierarchy,
+  deleteSafe
+} from 'obsidian-dev-utils/obsidian/VaultEx';
 import { dirname } from 'obsidian-dev-utils/Path';
 import { trimStart } from 'obsidian-dev-utils/String';
 
@@ -45,7 +49,7 @@ export class FilesHandler {
     noop();
   }
 
-  public async collectAttachmentsForCachedNote(notePath: string, deleteExistFiles: boolean, deleteEmptyFolders: boolean): Promise<MovedAttachmentResult> {
+  public async collectAttachmentsForCachedNote(notePath: string): Promise<MovedAttachmentResult> {
     if (this.plugin.settings.isPathIgnored(notePath)) {
       return { movedAttachments: [] };
     }
@@ -89,7 +93,7 @@ export class FilesHandler {
         continue;
       }
 
-      const res = await this.moveAttachment(file, newPath, [notePath], deleteExistFiles, deleteEmptyFolders);
+      const res = await this.moveAttachment(file, newPath, [notePath]);
 
       result.movedAttachments = result.movedAttachments.concat(res.movedAttachments);
     }
@@ -137,23 +141,27 @@ export class FilesHandler {
     await createFolderSafe(this.plugin.app, dirname(filePath));
   }
 
-  private async deleteFile(file: TFile, deleteEmptyFolders: boolean): Promise<void> {
+  private async deleteFile(file: TFile): Promise<void> {
     await this.plugin.app.fileManager.trashFile(file);
-    if (deleteEmptyFolders) {
-      let dir = file.parent;
-      while (dir && dir.children.length === 0) {
-        await this.plugin.app.fileManager.trashFile(dir);
-        dir = dir.parent;
-      }
+    if (!file.parent) {
+      return;
+    }
+    switch (this.plugin.settings.emptyAttachmentFolderBehavior) {
+      case EmptyAttachmentFolderBehavior.Delete:
+        await deleteSafe(this.plugin.app, file.parent, undefined, undefined, true);
+        break;
+      case EmptyAttachmentFolderBehavior.DeleteWithEmptyParents:
+        await deleteEmptyFolderHierarchy(this.plugin.app, file.parent);
+        break;
+      default:
+        break;
     }
   }
 
   private async moveAttachment(
     file: TFile,
     newLinkPath: string,
-    parentNotePaths: string[],
-    deleteExistFiles: boolean,
-    deleteEmptyFolders: boolean
+    parentNotePaths: string[]
   ): Promise<MovedAttachmentResult> {
     const path = file.path;
 
@@ -183,16 +191,16 @@ export class FilesHandler {
 
     if (path !== file.path) {
       console.warn('File was moved already');
-      return await this.moveAttachment(file, newLinkPath, parentNotePaths, deleteExistFiles, deleteEmptyFolders);
+      return await this.moveAttachment(file, newLinkPath, parentNotePaths);
     }
 
     const oldFolder = file.parent;
     const isMove = linkedNotes.length === 0;
     const newLinkFile = getFileOrNull(this.plugin.app, newLinkPath);
     if (newLinkFile) {
-      if (deleteExistFiles) {
+      if (this.plugin.settings.deleteExistFilesWhenMoveNote) {
         this.plugin.consoleDebug(`delete: ${newLinkPath}`);
-        await this.deleteFile(newLinkFile, deleteEmptyFolders);
+        await this.deleteFile(newLinkFile);
       } else {
         newLinkPath = getAvailablePath(this.plugin.app, newLinkPath);
       }
@@ -206,9 +214,19 @@ export class FilesHandler {
       await copySafe(this.plugin.app, file, newLinkPath);
     }
 
-    if (this.plugin.settings.deleteEmptyFolders) {
-      await deleteEmptyFolderHierarchy(this.plugin.app, oldFolder);
+    if (oldFolder) {
+      switch (this.plugin.settings.emptyAttachmentFolderBehavior) {
+        case EmptyAttachmentFolderBehavior.Delete:
+          await deleteSafe(this.plugin.app, oldFolder, undefined, undefined, true);
+          break;
+        case EmptyAttachmentFolderBehavior.DeleteWithEmptyParents:
+          await deleteEmptyFolderHierarchy(this.plugin.app, oldFolder);
+          break;
+        default:
+          break;
+      }
     }
+
     return result;
   }
 }
