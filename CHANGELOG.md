@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.28.0
+
+- Hide notice when non-verbose
+- Update libs
+
 ## 3.27.0
 
 - EmptyAttachmentFolderBehavior
