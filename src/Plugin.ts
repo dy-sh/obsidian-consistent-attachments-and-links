@@ -244,7 +244,9 @@ export class Plugin extends PluginBase<PluginTypes> {
 
   private async collectAttachments(note: TFile, isVerbose = true): Promise<void> {
     if (this.settings.isPathIgnored(note.path)) {
-      new Notice('Note path is ignored');
+      if (isVerbose) {
+        new Notice('Note path is ignored');
+      }
       return;
     }
 
