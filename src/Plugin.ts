@@ -73,10 +73,7 @@ export class Plugin extends PluginBase<PluginTypes> {
 
   protected override async onLayoutReady(): Promise<void> {
     await this.showBackupWarning();
-  }
 
-  protected override async onloadImpl(): Promise<void> {
-    await super.onloadImpl();
     this.registerEvent(
       this.app.metadataCache.on('deleted', (file, prevCache) => {
         if (prevCache) {
@@ -84,6 +81,14 @@ export class Plugin extends PluginBase<PluginTypes> {
         }
       })
     );
+
+    this.registerEvent(this.app.metadataCache.on('changed', (file) => {
+      addToQueue(this.app, () => this.handleMetadataCacheChanged(file));
+    }));
+  }
+
+  protected override async onloadImpl(): Promise<void> {
+    await super.onloadImpl();
 
     registerRenameDeleteHandlers(this, () => {
       const settings: Partial<RenameDeleteHandlerSettings> = {
@@ -182,10 +187,6 @@ export class Plugin extends PluginBase<PluginTypes> {
       id: 'check-consistency',
       name: 'Check Vault consistency'
     });
-
-    this.registerEvent(this.app.metadataCache.on('changed', (file) => {
-      addToQueue(this.app, () => this.handleMetadataCacheChanged(file));
-    }));
 
     this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => {
       this.handleFileMenu(menu, file);
