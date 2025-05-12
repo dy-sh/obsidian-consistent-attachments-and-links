@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.28.1
+
+- Update libs
+
 ## 3.28.0
 
 - Hide notice when non-verbose
