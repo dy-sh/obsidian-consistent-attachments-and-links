@@ -204,13 +204,13 @@ export class Plugin extends PluginBase<PluginTypes> {
     const badEmbeds = new ConsistencyCheckResult('Bad embeds');
     const wikiLinks = new ConsistencyCheckResult('Wiki links');
     const wikiEmbeds = new ConsistencyCheckResult('Wiki embeds');
-
+    const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
     await loop({
       abortSignal: this.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
-        await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds);
+        await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks);
       },
       progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
       shouldContinueOnError: true,
@@ -218,10 +218,10 @@ export class Plugin extends PluginBase<PluginTypes> {
     });
 
     const notePath = this.settings.consistencyReportFile;
-    const text = badLinks.toString(this.app, notePath)
-      + badEmbeds.toString(this.app, notePath)
-      + wikiLinks.toString(this.app, notePath)
-      + wikiEmbeds.toString(this.app, notePath);
+
+    const text = [badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks]
+      .map((result) => result.toString(this.app, notePath))
+      .join('');
     await createFolderSafe(this.app, dirname(notePath));
     const note = await getOrCreateFile(this.app, notePath);
     await this.app.vault.modify(note, text);
