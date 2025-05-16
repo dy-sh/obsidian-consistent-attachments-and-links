@@ -35,6 +35,10 @@ import {
   join
 } from 'obsidian-dev-utils/Path';
 import { trimStart } from 'obsidian-dev-utils/String';
+import {
+  isFrontmatterLinkCache,
+  isReferenceCache
+} from 'obsidian-typings/implementations';
 
 import type { Plugin } from './Plugin.ts';
 
@@ -53,12 +57,12 @@ export interface ReferenceChangeInfo {
   old: ReferenceCache;
 }
 
-export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
+export class ConsistencyCheckResult extends Map<string, Reference[]> {
   public constructor(private title: string) {
     super();
   }
 
-  public add(notePath: string, link: ReferenceCache): void {
+  public add(notePath: string, link: Reference): void {
     if (!this.has(notePath)) {
       this.set(notePath, []);
     }
@@ -83,7 +87,11 @@ export class ConsistencyCheckResult extends Map<string, ReferenceCache[]> {
         });
         str += `${linkStr}:\n`;
         for (const link of this.get(notePath) ?? []) {
-          str += `- (line ${(link.position.start.line + 1).toString()}): \`${link.link}\`\n`;
+          if (isReferenceCache(link)) {
+            str += `- (line ${(link.position.start.line + 1).toString()}): \`${link.link}\`\n`;
+          } else if (isFrontmatterLinkCache(link)) {
+            str += `- (key ${link.key}): \`${link.link}\`\n`;
+          }
         }
         str += '\n\n';
       }
@@ -105,7 +113,8 @@ export class LinksHandler {
     badLinks: ConsistencyCheckResult,
     badEmbeds: ConsistencyCheckResult,
     wikiLinks: ConsistencyCheckResult,
-    wikiEmbeds: ConsistencyCheckResult
+    wikiEmbeds: ConsistencyCheckResult,
+    badFrontmatterLinks: ConsistencyCheckResult
   ): Promise<void> {
     if (this.plugin.settings.isPathIgnored(note.path)) {
       return;
@@ -117,6 +126,7 @@ export class LinksHandler {
     }
     const links = cache.links ?? [];
     const embeds = cache.embeds ?? [];
+    const frontmatterLinks = cache.frontmatterLinks ?? [];
 
     for (const link of links) {
       if (!(await this.isValidLink(link, note.path))) {
@@ -135,6 +145,12 @@ export class LinksHandler {
 
       if (testWikilink(embed.original)) {
         wikiEmbeds.add(note.path, embed);
+      }
+    }
+
+    for (const frontmatterLink of frontmatterLinks) {
+      if (!(await this.isValidLink(frontmatterLink, note.path))) {
+        badFrontmatterLinks.add(note.path, frontmatterLink);
       }
     }
   }
@@ -293,7 +309,7 @@ export class LinksHandler {
     }));
   }
 
-  private async isValidLink(link: ReferenceCache, notePath: string): Promise<boolean> {
+  private async isValidLink(link: Reference, notePath: string): Promise<boolean> {
     const { linkPath, subpath } = splitSubpath(link.link);
 
     let fullLinkPath: string;
