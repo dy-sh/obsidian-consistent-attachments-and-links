@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.29.1
+
+- Update libs
+
 ## 3.29.0
 
 - Handle frontmatter links
