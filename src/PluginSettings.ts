@@ -6,16 +6,20 @@ const NEVER_MATCH_REG_EXP = /$./;
 
 export class PluginSettings {
   public consistencyReportFile = 'consistency-report.md';
+
   public emptyAttachmentFolderBehavior: EmptyAttachmentFolderBehavior = EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
+
   public shouldChangeNoteBacklinksDisplayText = true;
+
   public shouldCollectAttachmentsAutomatically = false;
+
   public shouldDeleteAttachmentsWithNote = false;
+
   public shouldDeleteExistingFilesWhenMovingNote = false;
   public shouldMoveAttachmentsWithNote = false;
   public shouldShowBackupWarning = true;
   public shouldUpdateLinks = true;
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
-
   public get excludePaths(): string[] {
     return this._excludePaths;
   }
@@ -23,6 +27,15 @@ export class PluginSettings {
   public set excludePaths(value: string[]) {
     this._excludePaths = value.filter(Boolean);
     this._excludePathsRegExp = makeRegExp(this._excludePaths, NEVER_MATCH_REG_EXP);
+  }
+
+  public get excludePathsFromAttachmentCollecting(): string[] {
+    return this._excludePathsFromAttachmentCollecting;
+  }
+
+  public set excludePathsFromAttachmentCollecting(value: string[]) {
+    this._excludePathsFromAttachmentCollecting = value.filter(Boolean);
+    this._excludePathsFromAttachmentCollectingRegExp = makeRegExp(this._excludePathsFromAttachmentCollecting, NEVER_MATCH_REG_EXP);
   }
 
   public get hadDangerousSettingsReverted(): boolean {
@@ -40,6 +53,10 @@ export class PluginSettings {
 
   private _excludePaths: string[] = ['/consistency-report\\.md$/'];
 
+  private _excludePathsFromAttachmentCollecting: string[] = [];
+
+  private _excludePathsFromAttachmentCollectingRegExp: RegExp = NEVER_MATCH_REG_EXP;
+
   private _excludePathsRegExp = NEVER_MATCH_REG_EXP;
 
   private _hadDangerousSettingsReverted = false;
@@ -47,6 +64,10 @@ export class PluginSettings {
   private _includePaths: string[] = [];
 
   private _includePathsRegExp = ALWAYS_MATCH_REG_EXP;
+
+  public isExcludedFromAttachmentCollecting(path: string): boolean {
+    return this._excludePathsFromAttachmentCollectingRegExp.test(path);
+  }
 
   public isPathIgnored(path: string): boolean {
     return !this._includePathsRegExp.test(path) || this._excludePathsRegExp.test(path);
