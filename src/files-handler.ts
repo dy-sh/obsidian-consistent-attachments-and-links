@@ -87,6 +87,10 @@ export class FilesHandler {
         continue;
       }
 
+      if (this.plugin.settings.isExcludedFromAttachmentCollecting(file.path)) {
+        continue;
+      }
+
       const newPath = await getAttachmentFilePath(this.plugin.app, file.path, notePath);
 
       if (dirname(newPath) === dirname(file.path)) {
