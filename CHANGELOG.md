@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.30.0
+
+- Exclude paths from attachment collecting
+- Update libs
+
 ## 3.29.3
 
 - Update libs
