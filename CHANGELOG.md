@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.30.1
+
+- Update libs
+
 ## 3.30.0
 
 - Exclude paths from attachment collecting
