@@ -99,7 +99,7 @@ export class Plugin extends PluginBase<PluginTypes> {
         shouldHandleDeletions: this.settings.shouldDeleteAttachmentsWithNote,
         shouldHandleRenames: this.settings.shouldUpdateLinks,
         shouldRenameAttachmentFolder: this.settings.shouldMoveAttachmentsWithNote,
-        shouldUpdateFilenameAliases: this.settings.shouldChangeNoteBacklinksDisplayText
+        shouldUpdateFileNameAliases: this.settings.shouldChangeNoteBacklinksDisplayText
       };
       return settings;
     });
