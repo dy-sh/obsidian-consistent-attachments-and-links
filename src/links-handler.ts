@@ -247,19 +247,14 @@ export class LinksHandler {
       const changes: FileChange[] = [];
 
       for (const ref of refs) {
-        const change = {
-          endIndex: ref.position.end.offset,
-          newContent: this.convertLink({
-            forceRelativePath: true,
-            link: ref,
-            note,
-            oldNotePath: notePath
-          }),
-          oldContent: ref.original,
-          startIndex: ref.position.start.offset
-        };
-        changes.push(change);
-        changedRefs.push({ newLink: change.newContent, old: ref });
+        const newContent = this.convertLink({
+          forceRelativePath: true,
+          link: ref,
+          note,
+          oldNotePath: notePath
+        });
+        changes.push(referenceToFileChange(ref, newContent));
+        changedRefs.push({ newLink: newContent, old: ref });
       }
 
       return changes;
