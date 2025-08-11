@@ -11,7 +11,7 @@ import {
   TFile
 } from 'obsidian';
 import { noop } from 'obsidian-dev-utils/Function';
-import { normalizeOptionalProperties } from 'obsidian-dev-utils/Object';
+import { normalizeOptionalProperties } from 'obsidian-dev-utils/ObjectUtils';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/FileChange';
 import {
   getFileOrNull,
