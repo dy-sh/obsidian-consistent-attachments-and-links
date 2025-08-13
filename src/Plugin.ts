@@ -83,7 +83,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     );
 
     this.registerEvent(this.app.metadataCache.on('changed', (file) => {
-      addToQueue(this.app, () => this.handleMetadataCacheChanged(file));
+      addToQueue(this.app, (abortSignal) => this.handleMetadataCacheChanged(file, abortSignal), this.abortSignal);
     }));
   }
 
@@ -129,7 +129,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     });
 
     this.addCommand({
-      callback: () => this.convertAllLinkPathsToRelative(),
+      callback: () => this.convertAllLinkPathsToRelative(this.abortSignal),
       id: 'convert-all-link-paths-to-relative',
       name: 'Convert All Link Paths to Relative'
     });
@@ -240,10 +240,11 @@ export class Plugin extends PluginBase<PluginTypes> {
   }
 
   private async collectAllAttachments(): Promise<void> {
-    await this.collectAttachmentsInFolder('/');
+    await this.collectAttachmentsInFolder('/', this.abortSignal);
   }
 
-  private async collectAttachments(note: TFile, isVerbose = true): Promise<void> {
+  private async collectAttachments(note: TFile, abortSignal: AbortSignal, isVerbose = true): Promise<void> {
+    abortSignal.throwIfAborted();
     if (this.settings.isPathIgnored(note.path)) {
       if (isVerbose) {
         new Notice('Note path is ignored');
@@ -252,11 +253,14 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     await this.saveAllOpenNotes();
+    abortSignal.throwIfAborted();
 
     const result = await this.fh.collectAttachmentsForCachedNote(note.path);
+    abortSignal.throwIfAborted();
 
     if (result.movedAttachments.length > 0) {
       await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
+      abortSignal.throwIfAborted();
     }
 
     if (result.movedAttachments.length === 0) {
@@ -275,7 +279,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, () => this.collectAttachmentsInFolder(note.parent?.path ?? '/'));
+      addToQueue(this.app, (abortSignal) => this.collectAttachmentsInFolder(note.parent?.path ?? '/', abortSignal), this.abortSignal);
     }
 
     return true;
@@ -288,31 +292,35 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, () => this.collectAttachments(note));
+      addToQueue(this.app, (abortSignal) => this.collectAttachments(note, abortSignal), this.abortSignal);
     }
 
     return true;
   }
 
-  private async collectAttachmentsInFolder(folderPath: string): Promise<void> {
+  private async collectAttachmentsInFolder(folderPath: string, abortSignal: AbortSignal): Promise<void> {
+    abortSignal.throwIfAborted();
     let movedAttachmentsCount = 0;
     let processedNotesCount = 0;
 
     await this.saveAllOpenNotes();
 
     await loop({
-      abortSignal: this.abortSignal,
+      abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Collecting attachments ${iterationStr} - ${note.path}`,
       items: getMarkdownFiles(this.app, folderPath, true),
       processItem: async (note) => {
+        abortSignal.throwIfAborted();
         if (this.settings.isPathIgnored(note.path)) {
           return;
         }
 
         const result = await this.fh.collectAttachmentsForCachedNote(note.path);
+        abortSignal.throwIfAborted();
 
         if (result.movedAttachments.length > 0) {
           await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
+          abortSignal.throwIfAborted();
           movedAttachmentsCount += result.movedAttachments.length;
           processedNotesCount++;
         }
@@ -348,7 +356,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path);
+        const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path, this.abortSignal);
 
         if (result.length > 0) {
           changedEmbedCount += result.length;
@@ -378,20 +386,22 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteEmbedsPathsToRelative(note.path)));
+      addToQueue(this.app, omitAsyncReturnType((abortSignal) => this.lh.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)), this.abortSignal);
     }
 
     return true;
   }
 
-  private async convertAllLinkPathsToRelative(): Promise<void> {
+  private async convertAllLinkPathsToRelative(abortSignal: AbortSignal): Promise<void> {
+    abortSignal.throwIfAborted();
     await this.saveAllOpenNotes();
+    abortSignal.throwIfAborted();
 
     let changedLinksCount = 0;
     let processedNotesCount = 0;
 
     await loop({
-      abortSignal: this.abortSignal,
+      abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
@@ -399,7 +409,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path);
+        const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path, abortSignal);
 
         if (result.length > 0) {
           changedLinksCount += result.length;
@@ -429,7 +439,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, omitAsyncReturnType(() => this.lh.convertAllNoteLinksPathsToRelative(note.path)));
+      addToQueue(this.app, omitAsyncReturnType((abortSignal) => this.lh.convertAllNoteLinksPathsToRelative(note.path, abortSignal)), this.abortSignal);
     }
 
     return true;
@@ -455,11 +465,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     menu.addItem((item) => {
       item.setTitle('Collect attachments in folder')
         .setIcon('download')
-        .onClick(() => this.collectAttachmentsInFolder(file.path));
+        .onClick(() => this.collectAttachmentsInFolder(file.path, this.abortSignal));
     });
   }
 
-  private async handleMetadataCacheChanged(file: TFile): Promise<void> {
+  private async handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): Promise<void> {
+    abortSignal.throwIfAborted();
     if (!this.settings.shouldCollectAttachmentsAutomatically) {
       return;
     }
@@ -469,7 +480,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       return;
     }
 
-    await this.collectAttachments(file, false);
+    await this.collectAttachments(file, abortSignal, false);
   }
 
   private async reorganizeVault(): Promise<void> {
@@ -478,7 +489,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     await this.replaceAllWikilinksWithMarkdownLinks();
     await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
     await this.convertAllEmbedsPathsToRelative();
-    await this.convertAllLinkPathsToRelative();
+    await this.convertAllLinkPathsToRelative(this.abortSignal);
     await this.collectAllAttachments();
     await this.deleteEmptyFolders();
     new Notice('Reorganization of the vault completed');
@@ -499,7 +510,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true);
+        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, this.abortSignal);
         changedLinksCount += result;
         processedNotesCount++;
       },
@@ -526,7 +537,11 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true)));
+      addToQueue(
+        this.app,
+        omitAsyncReturnType((abortSignal) => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
+        this.abortSignal
+      );
     }
 
     return true;
@@ -547,7 +562,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false);
+        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, this.abortSignal);
         changedLinksCount += result;
         processedNotesCount++;
       },
@@ -574,7 +589,11 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, omitAsyncReturnType(() => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false)));
+      addToQueue(
+        this.app,
+        omitAsyncReturnType((abortSignal) => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
+        this.abortSignal
+      );
     }
 
     return true;
