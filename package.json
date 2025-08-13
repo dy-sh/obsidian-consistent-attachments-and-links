@@ -25,7 +25,7 @@
     "@types/node": "^24.2.1",
     "jiti": "^2.5.1",
     "obsidian": "^1.8.7",
-    "obsidian-dev-utils": "^31.0.0",
+    "obsidian-dev-utils": "^31.3.0",
     "obsidian-typings": "^3.16.0"
   },
   "type": "module",
