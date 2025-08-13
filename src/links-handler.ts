@@ -155,12 +155,12 @@ export class LinksHandler {
     }
   }
 
-  public async convertAllNoteEmbedsPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative(notePath, true);
+  public async convertAllNoteEmbedsPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
+    return await this.convertAllNoteRefPathsToRelative(notePath, true, abortSignal);
   }
 
-  public async convertAllNoteLinksPathsToRelative(notePath: string): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative(notePath, false);
+  public async convertAllNoteLinksPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
+    return await this.convertAllNoteRefPathsToRelative(notePath, false, abortSignal);
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
@@ -180,7 +180,7 @@ export class LinksHandler {
     return fullPath;
   }
 
-  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean): Promise<number> {
+  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean, abortSignal: AbortSignal): Promise<number> {
     if (this.plugin.settings.isPathIgnored(notePath)) {
       return 0;
     }
@@ -192,6 +192,7 @@ export class LinksHandler {
     }
 
     const cache = await getCacheSafe(this.plugin.app, noteFile);
+    abortSignal.throwIfAborted();
     if (!cache) {
       return 0;
     }
@@ -226,7 +227,7 @@ export class LinksHandler {
     await this.updateLinks(note, note.path, pathChangeMap);
   }
 
-  private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean): Promise<ReferenceChangeInfo[]> {
+  private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
     if (this.plugin.settings.isPathIgnored(notePath)) {
       return [];
     }
@@ -238,8 +239,9 @@ export class LinksHandler {
 
     const changedRefs: ReferenceChangeInfo[] = [];
 
-    await applyFileChanges(this.plugin.app, note, async () => {
+    await applyFileChanges(this.plugin.app, note, async (abortSignal2) => {
       const cache = await getCacheSafe(this.plugin.app, note);
+      abortSignal2.throwIfAborted();
       if (!cache) {
         return [];
       }
@@ -258,7 +260,7 @@ export class LinksHandler {
       }
 
       return changes;
-    });
+    }, { abortSignal });
 
     return changedRefs;
   }
