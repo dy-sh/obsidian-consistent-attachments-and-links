@@ -21,16 +21,15 @@
   "author": "Dmitry Savosh",
   "license": "MIT",
   "devDependencies": {
-    "@antfu/utils": "^9.2.0",
     "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^24.2.1",
     "jiti": "^2.5.1",
     "obsidian": "^1.8.7",
-    "obsidian-dev-utils": "^30.5.1",
+    "obsidian-dev-utils": "^31.0.0",
     "obsidian-typings": "^3.16.0"
   },
   "type": "module",
   "overrides": {
-    "@antfu/utils": "$@antfu/utils"
+    "@antfu/utils": "9.2.0"
   }
 }
