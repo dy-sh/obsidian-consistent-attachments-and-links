@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.30.8
+
+- Update libs
+
 ## 3.30.7
 
 - More abortSignal
