@@ -98,7 +98,7 @@ export class Plugin extends PluginBase<PluginTypes> {
         shouldDeleteConflictingAttachments: this.settings.shouldDeleteExistingFilesWhenMovingNote,
         shouldHandleDeletions: this.settings.shouldDeleteAttachmentsWithNote,
         shouldHandleRenames: this.settings.shouldUpdateLinks,
-        shouldRenameAttachmentFolder: this.settings.shouldMoveAttachmentsWithNote,
+        shouldRenameAttachments: this.settings.shouldMoveAttachmentsWithNote,
         shouldUpdateFileNameAliases: this.settings.shouldChangeNoteBacklinksDisplayText
       };
       return settings;
