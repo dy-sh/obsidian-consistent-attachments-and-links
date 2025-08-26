@@ -20,6 +20,7 @@ import {
 import {
   extractLinkFile,
   generateMarkdownLink,
+  LinkStyle,
   splitSubpath,
   testWikilink,
   updateLinksInFile
@@ -201,8 +202,8 @@ export class LinksHandler {
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
       app: this.plugin.app,
+      linkStyle: LinkStyle.Markdown,
       newSourcePathOrFile: noteFile,
-      shouldForceMarkdownLinks: true,
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
     });
     return result;
