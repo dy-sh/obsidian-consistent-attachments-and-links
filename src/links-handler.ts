@@ -75,7 +75,7 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 
   public override toString(app: App, reportPath: string): string {
     if (this.size > 0) {
-      let str = `# ${this.title} (${this.size.toString()} files)\n`;
+      let str = `# ${this.title} (${String(this.size)} files)\n`;
       for (const notePath of this.keys()) {
         const note = getFileOrNull(app, notePath);
         if (!note) {
@@ -89,7 +89,7 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
         str += `${linkStr}:\n`;
         for (const link of this.get(notePath) ?? []) {
           if (isReferenceCache(link)) {
-            str += `- (line ${(link.position.start.line + 1).toString()}): \`${link.link}\`\n`;
+            str += `- (line ${String(link.position.start.line + 1)}): \`${link.link}\`\n`;
           } else if (isFrontmatterLinkCache(link)) {
             str += `- (key ${link.key}): \`${link.link}\`\n`;
           }

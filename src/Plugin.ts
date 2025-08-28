@@ -268,7 +268,7 @@ export class Plugin extends PluginBase<PluginTypes> {
         new Notice('No files found that need to be moved');
       }
     } else {
-      new Notice(`Moved ${result.movedAttachments.length.toString()} attachment${result.movedAttachments.length > 1 ? 's' : ''}`);
+      new Notice(`Moved ${String(result.movedAttachments.length)} attachment${result.movedAttachments.length > 1 ? 's' : ''}`);
     }
   }
 
@@ -334,7 +334,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       new Notice('No files found that need to be moved');
     } else {
       new Notice(
-        `Moved ${movedAttachmentsCount.toString()} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+        `Moved ${String(movedAttachmentsCount)} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
           processedNotesCount > 1 ? 's' : ''
         }`
       );
@@ -372,7 +372,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       new Notice('No embeds found that need to be converted');
     } else {
       new Notice(
-        `Converted ${changedEmbedCount.toString()} embed${changedEmbedCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+        `Converted ${String(changedEmbedCount)} embed${changedEmbedCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
           processedNotesCount > 1 ? 's' : ''
         }`
       );
@@ -425,7 +425,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       new Notice('No links found that need to be converted');
     } else {
       new Notice(
-        `Converted ${changedLinksCount.toString()} link${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+        `Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
           processedNotesCount > 1 ? 's' : ''
         }`
       );
@@ -523,7 +523,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       new Notice('No wiki embeds found that need to be replaced');
     } else {
       new Notice(
-        `Replaced ${changedLinksCount.toString()} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+        `Replaced ${String(changedLinksCount)} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
           processedNotesCount > 1 ? 's' : ''
         }`
       );
@@ -575,7 +575,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       new Notice('No wiki links found that need to be replaced');
     } else {
       new Notice(
-        `Replaced ${changedLinksCount.toString()} wikilink${changedLinksCount > 1 ? 's' : ''} from ${processedNotesCount.toString()} note${
+        `Replaced ${String(changedLinksCount)} wikilink${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
           processedNotesCount > 1 ? 's' : ''
         }`
       );
