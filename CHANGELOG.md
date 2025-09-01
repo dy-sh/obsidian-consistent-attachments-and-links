@@ -1,45 +1,48 @@
 # CHANGELOG
 
+## 3.30.13
+
+- Minor changes
+
 ## 3.30.12
 
-- Update libs
+- Minor changes
 
 ## 3.30.11
 
-- Update libs
+- Minor changes
 
 ## 3.30.10
 
-- Update libs
+- Minor changes
 
 ## 3.30.9
 
-- Update libs
+- Minor changes
 
 ## 3.30.8
 
-- Update libs
+- Minor changes
 
 ## 3.30.7
 
 - More abortSignal
-- Update libs
 
 ## 3.30.6
 
-- Update libs
+- Minor changes
 
 ## 3.30.5
 
-- Update libs
+- Minor changes
 
 ## 3.30.4
 
-- Update libs
+- Minor changes
 
 ## 3.30.3
 
-- Update libs
+- Minor changes
 
 ## 3.30.2
 
@@ -47,24 +50,23 @@
 
 ## 3.30.1
 
-- Update libs
+- Minor changes
 
 ## 3.30.0
 
 - Exclude paths from attachment collecting
-- Update libs
 
 ## 3.29.3
 
-- Update libs
+- Minor changes
 
 ## 3.29.2
 
-- Update libs
+- Minor changes
 
 ## 3.29.1
 
-- Update libs
+- Minor changes
 
 ## 3.29.0
 
@@ -72,30 +74,27 @@
 
 ## 3.28.1
 
-- Update libs
+- Minor changes
 
 ## 3.28.0
 
 - Hide notice when non-verbose
-- Update libs
 
 ## 3.27.0
 
 - EmptyAttachmentFolderBehavior
-- Update libs
 
 ## 3.26.3
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/26.16.0
+- Minor changes
 
 ## 3.26.2
 
 - Improve performance
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/26.15.2
 
 ## 3.26.1
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/26.11.0
+- Minor changes
 
 ## 3.26.0
 
@@ -103,15 +102,15 @@
 
 ## 3.25.4
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.1.1
+- Minor changes
 
 ## 3.25.3
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.1.0
+- Minor changes
 
 ## 3.25.2
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.0.1
+- Minor changes
 
 ## 3.25.1
 
@@ -120,41 +119,38 @@
 ## 3.25.0
 
 - Show progress bar
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/21.1.0
 
 ## 3.24.16
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.17.5
+- Minor changes
 
 ## 3.24.15
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.17.2
+- Minor changes
 
 ## 3.24.14
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.8.2
+- Minor changes
 
 ## 3.24.13
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.6.0
+- Minor changes
 
 ## 3.24.12
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.3.0
+- Minor changes
 
 ## 3.24.11
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/19.2.1
+- Minor changes
 
 ## 3.24.10
 
 - Update template
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/18.4.2
 
 ## 3.24.9
 
 - Lint
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/17.2.2
 
 ## 3.24.8
 
@@ -162,7 +158,7 @@
 
 ## 3.24.7
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/16.1.0
+- Minor changes
 
 ## 3.24.6
 
@@ -170,7 +166,7 @@
 
 ## 3.24.5
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/16.0.2
+- Minor changes
 
 ## 3.24.4
 
@@ -184,15 +180,14 @@
 
 ## 3.24.2
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/15.0.0
+- Minor changes
 
 ## 3.24.1
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/12.2.1
+- Minor changes
 
 ## 3.24.0
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/12.1.0
 - Fix debug logging
 
 ## 3.23.0
@@ -202,98 +197,91 @@
 ## 3.22.1
 
 - Refactor
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.2.0
 
 ## 3.22.0
 
 - Add collect attachments in folder
 - Exclude empty paths
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.1.0
 
 ## 3.21.18
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/11.0.0
+- Minor changes
 
 ## 3.21.17
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/9.0.2
 - Add include/exclude paths
 
 ## 3.21.16
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/9.0.0
+- Minor changes
 
 ## 3.21.15
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/6.0.0
+- Minor changes
 
 ## 3.21.14
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/5.3.1
+- Minor changes
 
 ## 3.21.13
 
 - Refactor to loop
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/5.2.0
 
 ## 3.21.12
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.19.0
+- Minor changes
 
 ## 3.21.11
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.14.0
+- Minor changes
 
 ## 3.21.10
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.13.0
 - Avoid default exports
 
 ## 3.21.9
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.11.0
+- Minor changes
 
 ## 3.21.8
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/4.8.2
+- Minor changes
 
 ## 3.21.7
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.44.0
+- Minor changes
 
 ## 3.21.6
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.43.2
+- Minor changes
 
 ## 3.21.5
 
 - Save only non-deferred views
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.43.1
 
 ## 3.21.4
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.42.1
+- Minor changes
 
 ## 3.21.3
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.42.0
+- Minor changes
 
 ## 3.21.2
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.35.0
+- Minor changes
 
 ## 3.21.1
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.34.0
+- Minor changes
 
 ## 3.21.0
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.33.0
+- Minor changes
 
 ## 3.20.1
 
 - Refactor
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.29.0
 
 ## 3.20.0
 
@@ -304,53 +292,44 @@
 - Pass `shouldUpdateFilenameAliases`
 - Assign all `registerRenameDeleteHandlers` props
 - Ensure `RenameDeleteHandler` is executed only once
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.26.1
 
 ## 3.19.0
 
 - Extract settings from originalLink
 - Always preserve displayText
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.17.1
 
 ## 3.18.0
 
 - Don't remove folders with hidden files
 - Pass `shouldDeleteOrphanAttachments`
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.16.0
 
 ## 3.17.0
 
 - Remove to trash
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.13.0
 
 ## 3.16.0
 
 - Preserve angle brackets and leading dot
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.12.0
 
 ## 3.15.0
 
 - Reuse RenameDeleteHandler
 - Integrate with Better Markdown Links
 - Handle same case scenarios
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.10.0
 
 ## 3.14.0
 
 - Don't change alias for markdown links
 - Fix mobile build
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/3.5.0
 
 ## 3.13.3
 
 - Handle removed parent folder case
 - Rename attachments before changing links
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/2.26.2
 
 ## 3.13.2
 
 - Keep link/embed format
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/2.26.1
 
 ## 3.13.1
 
@@ -360,7 +339,6 @@
 
 - Check for race conditions
 - Don't create fake files
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/2.25.1
 
 ## 3.12.0
 
