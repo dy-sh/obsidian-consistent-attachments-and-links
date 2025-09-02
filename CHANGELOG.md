@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.30.14
+
+- Minor changes
+
 ## 3.30.13
 
 - Minor changes
