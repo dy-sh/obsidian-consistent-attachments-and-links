@@ -240,9 +240,14 @@ export class LinksHandler {
 
     const changedRefs: ReferenceChangeInfo[] = [];
 
-    await applyFileChanges(this.plugin.app, note, async (abortSignal2) => {
+    await applyFileChanges(this.plugin.app, note, async (abortSignal2, content) => {
       const cache = await getCacheSafe(this.plugin.app, note);
       abortSignal2.throwIfAborted();
+      const cachedContent = await this.plugin.app.vault.cachedRead(note);
+      abortSignal2.throwIfAborted();
+      if (content !== cachedContent) {
+        return null;
+      }
       if (!cache) {
         return [];
       }
@@ -356,8 +361,15 @@ export class LinksHandler {
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
-    await applyFileChanges(this.plugin.app, note, async () => {
+    await applyFileChanges(this.plugin.app, note, async (abortSignal, content) => {
+      abortSignal.throwIfAborted();
       const cache = await getCacheSafe(this.plugin.app, note);
+      abortSignal.throwIfAborted();
+      const cachedContent = await this.plugin.app.vault.cachedRead(note);
+      abortSignal.throwIfAborted();
+      if (content !== cachedContent) {
+        return null;
+      }
       if (!cache) {
         return [];
       }
