@@ -91,7 +91,12 @@ export class FilesHandler {
         continue;
       }
 
-      const newPath = await getAttachmentFilePath(this.plugin.app, file.path, notePath, true);
+      const newPath = await getAttachmentFilePath({
+        app: this.plugin.app,
+        attachmentPathOrFile: file,
+        notePathOrFile: notePath,
+        shouldSkipDuplicateCheck: true
+      });
 
       if (dirname(newPath) === dirname(file.path)) {
         continue;
