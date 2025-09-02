@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.30.15
+
+- More accurate file changes
+
 ## 3.30.14
 
 - Minor changes
