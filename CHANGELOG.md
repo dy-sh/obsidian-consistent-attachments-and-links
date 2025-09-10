@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.31.1
+
+- Minor changes
+
 ## 3.31.0
 
 - Validate nested subpath links
