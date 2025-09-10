@@ -8,6 +8,7 @@ import type { GenerateMarkdownLinkOptions } from 'obsidian-dev-utils/obsidian/Li
 import {
   App,
   normalizePath,
+  resolveSubpath,
   TFile
 } from 'obsidian';
 import { noop } from 'obsidian-dev-utils/Function';
@@ -35,7 +36,6 @@ import {
   dirname,
   join
 } from 'obsidian-dev-utils/Path';
-import { trimStart } from 'obsidian-dev-utils/String';
 import {
   isFrontmatterLinkCache,
   isReferenceCache
@@ -351,13 +351,7 @@ export class LinksHandler {
       return false;
     }
 
-    const BLOCK_PREFIX = '#^';
-    if (subpath.startsWith(BLOCK_PREFIX)) {
-      return Object.keys(cache.blocks ?? {}).includes(trimStart(subpath, BLOCK_PREFIX));
-    }
-
-    const HEADING_PREFIX = '#';
-    return (cache.headings ?? []).map((h) => h.heading.replaceAll(HEADING_PREFIX, ' ')).includes(trimStart(subpath, HEADING_PREFIX));
+    return !!resolveSubpath(cache, subpath);
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
