@@ -2,7 +2,10 @@ import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/FileSystem'
 
 import { TFile } from 'obsidian';
 import { noop } from 'obsidian-dev-utils/Function';
-import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/AttachmentPath';
+import {
+  AttachmentPathContext,
+  getAttachmentFilePath
+} from 'obsidian-dev-utils/obsidian/AttachmentPath';
 import {
   getFileOrNull,
   getPath,
@@ -94,6 +97,7 @@ export class FilesHandler {
       const newPath = await getAttachmentFilePath({
         app: this.plugin.app,
         attachmentPathOrFile: file,
+        context: 'consistent-attachments-and-links' as AttachmentPathContext,
         notePathOrFile: notePath,
         shouldSkipDuplicateCheck: true
       });
