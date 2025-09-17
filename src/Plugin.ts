@@ -43,7 +43,7 @@ import { PluginSettingsManager } from './PluginSettingsManager.ts';
 import { PluginSettingsTab } from './PluginSettingsTab.ts';
 
 export class Plugin extends PluginBase<PluginTypes> {
-  private deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
+  private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
   private fh!: FilesHandler;
   private lh!: LinksHandler;
