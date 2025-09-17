@@ -59,7 +59,7 @@ export interface ReferenceChangeInfo {
 }
 
 export class ConsistencyCheckResult extends Map<string, Reference[]> {
-  public constructor(private title: string) {
+  public constructor(private readonly title: string) {
     super();
   }
 
@@ -104,7 +104,7 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 
 export class LinksHandler {
   public constructor(
-    private plugin: Plugin
+    private readonly plugin: Plugin
   ) {
     noop();
   }

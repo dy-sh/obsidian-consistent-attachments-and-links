@@ -46,8 +46,8 @@ export interface MovedAttachmentResult {
 
 export class FilesHandler {
   public constructor(
-    private plugin: Plugin,
-    private lh: LinksHandler
+    private readonly plugin: Plugin,
+    private readonly lh: LinksHandler
   ) {
     noop();
   }
