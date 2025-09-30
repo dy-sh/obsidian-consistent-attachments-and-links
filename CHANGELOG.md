@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.31.9
+
+- chore: enable conventional commits
+
 ## 3.31.8
 
 - Minor changes
