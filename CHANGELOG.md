@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.31.10
+
+- fix: build
+- chore: update libs
+
 ## 3.31.9
 
 - chore: enable conventional commits
