@@ -62,11 +62,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       }))
       .addDropdown((dropdown) => {
         dropdown.addOptions({
-          /* eslint-disable perfectionist/sort-objects */
+          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
           [EmptyAttachmentFolderBehavior.Keep]: 'Keep',
           [EmptyAttachmentFolderBehavior.Delete]: 'Delete',
           [EmptyAttachmentFolderBehavior.DeleteWithEmptyParents]: 'Delete with empty parents'
-          /* eslint-enable perfectionist/sort-objects */
+          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
         this.bind(dropdown, 'emptyAttachmentFolderBehavior', {
           componentToPluginSettingsValueConverter: (value) => getEnumValue(EmptyAttachmentFolderBehavior, value),

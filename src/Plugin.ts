@@ -45,8 +45,8 @@ import { PluginSettingsTab } from './PluginSettingsTab.ts';
 export class Plugin extends PluginBase<PluginTypes> {
   private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
-  private fh!: FilesHandler;
-  private lh!: LinksHandler;
+  private fh?: FilesHandler;
+  private lh?: LinksHandler;
 
   public override async onLoadSettings(loadedSettings: ReadonlyDeep<PluginSettingsWrapper<PluginSettings>>, isInitialLoad: boolean): Promise<void> {
     await super.onLoadSettings(loadedSettings, isInitialLoad);
@@ -233,7 +233,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Can change in await calls.
     if (!fileOpened) {
       await this.app.workspace.openLinkText(notePath, '/', false);
     }
