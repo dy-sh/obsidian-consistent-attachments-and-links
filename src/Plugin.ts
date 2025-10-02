@@ -45,8 +45,8 @@ import { PluginSettingsTab } from './PluginSettingsTab.ts';
 export class Plugin extends PluginBase<PluginTypes> {
   private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
-  private fh?: FilesHandler;
-  private lh?: LinksHandler;
+  private linksHandler: LinksHandler = new LinksHandler(this);
+  private filesHandler: FilesHandler = new FilesHandler(this, this.linksHandler);
 
   public override async onLoadSettings(loadedSettings: ReadonlyDeep<PluginSettingsWrapper<PluginSettings>>, isInitialLoad: boolean): Promise<void> {
     await super.onLoadSettings(loadedSettings, isInitialLoad);
@@ -59,8 +59,8 @@ export class Plugin extends PluginBase<PluginTypes> {
     context?: unknown
   ): Promise<void> {
     await super.onSaveSettings(newSettings, oldSettings, context);
-    this.lh = new LinksHandler(this);
-    this.fh = new FilesHandler(this, this.lh);
+    this.linksHandler = new LinksHandler(this);
+    this.filesHandler = new FilesHandler(this, this.linksHandler);
   }
 
   protected override createSettingsManager(): PluginSettingsManager {
@@ -93,7 +93,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     registerRenameDeleteHandlers(this, () => {
       const settings: Partial<RenameDeleteHandlerSettings> = {
         emptyAttachmentFolderBehavior: this.settings.emptyAttachmentFolderBehavior,
-        isNote: (path) => this.fh.isNoteEx(path),
+        isNote: (path) => this.filesHandler.isNoteEx(path),
         isPathIgnored: (path) => this.settings.isPathIgnored(path),
         shouldDeleteConflictingAttachments: this.settings.shouldDeleteExistingFilesWhenMovingNote,
         shouldHandleDeletions: this.settings.shouldDeleteAttachmentsWithNote,
@@ -192,9 +192,9 @@ export class Plugin extends PluginBase<PluginTypes> {
       this.handleFileMenu(menu, file);
     }));
 
-    this.lh = new LinksHandler(this);
+    this.linksHandler = new LinksHandler(this);
 
-    this.fh = new FilesHandler(this, this.lh);
+    this.filesHandler = new FilesHandler(this, this.linksHandler);
   }
 
   private async checkConsistency(): Promise<void> {
@@ -210,7 +210,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
       processItem: async (note) => {
-        await this.lh.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks);
+        await this.linksHandler.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks);
       },
       progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
       shouldContinueOnError: true,
@@ -255,11 +255,11 @@ export class Plugin extends PluginBase<PluginTypes> {
     await this.saveAllOpenNotes();
     abortSignal.throwIfAborted();
 
-    const result = await this.fh.collectAttachmentsForCachedNote(note.path);
+    const result = await this.filesHandler.collectAttachmentsForCachedNote(note.path);
     abortSignal.throwIfAborted();
 
     if (result.movedAttachments.length > 0) {
-      await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
+      await this.linksHandler.updateChangedPathsInNote(note.path, result.movedAttachments);
       abortSignal.throwIfAborted();
     }
 
@@ -315,11 +315,11 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.fh.collectAttachmentsForCachedNote(note.path);
+        const result = await this.filesHandler.collectAttachmentsForCachedNote(note.path);
         abortSignal.throwIfAborted();
 
         if (result.movedAttachments.length > 0) {
-          await this.lh.updateChangedPathsInNote(note.path, result.movedAttachments);
+          await this.linksHandler.updateChangedPathsInNote(note.path, result.movedAttachments);
           abortSignal.throwIfAborted();
           movedAttachmentsCount += result.movedAttachments.length;
           processedNotesCount++;
@@ -356,7 +356,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.convertAllNoteEmbedsPathsToRelative(note.path, this.abortSignal);
+        const result = await this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, this.abortSignal);
 
         if (result.length > 0) {
           changedEmbedCount += result.length;
@@ -386,7 +386,11 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, omitAsyncReturnType((abortSignal) => this.lh.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)), this.abortSignal);
+      addToQueue(
+        this.app,
+        omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
+        this.abortSignal
+      );
     }
 
     return true;
@@ -409,7 +413,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.convertAllNoteLinksPathsToRelative(note.path, abortSignal);
+        const result = await this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal);
 
         if (result.length > 0) {
           changedLinksCount += result.length;
@@ -439,14 +443,18 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, omitAsyncReturnType((abortSignal) => this.lh.convertAllNoteLinksPathsToRelative(note.path, abortSignal)), this.abortSignal);
+      addToQueue(
+        this.app,
+        omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
+        this.abortSignal
+      );
     }
 
     return true;
   }
 
   private async deleteEmptyFolders(): Promise<void> {
-    await this.fh.deleteEmptyFolders('/');
+    await this.filesHandler.deleteEmptyFolders('/');
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
@@ -510,7 +518,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, this.abortSignal);
+        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, this.abortSignal);
         changedLinksCount += result;
         processedNotesCount++;
       },
@@ -539,7 +547,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     if (!checking) {
       addToQueue(
         this.app,
-        omitAsyncReturnType((abortSignal) => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
+        omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
         this.abortSignal
       );
     }
@@ -562,7 +570,7 @@ export class Plugin extends PluginBase<PluginTypes> {
           return;
         }
 
-        const result = await this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, this.abortSignal);
+        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, this.abortSignal);
         changedLinksCount += result;
         processedNotesCount++;
       },
@@ -591,7 +599,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     if (!checking) {
       addToQueue(
         this.app,
-        omitAsyncReturnType((abortSignal) => this.lh.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
+        omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
         this.abortSignal
       );
     }
