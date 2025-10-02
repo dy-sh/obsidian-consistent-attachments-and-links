@@ -21,6 +21,7 @@ import {
 import {
   extractLinkFile,
   generateMarkdownLink,
+  LinkPathStyle,
   LinkStyle,
   splitSubpath,
   testWikilink,
@@ -304,8 +305,8 @@ export class LinksHandler {
     return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkOptions>({
       alias,
       app: this.plugin.app,
+      linkPathStyle: forceRelativePath ? LinkPathStyle.RelativePathToTheSource : LinkPathStyle.ObsidianSettingsDefault,
       originalLink: link.original,
-      shouldForceRelativePath: forceRelativePath,
       sourcePathOrFile: note.path,
       subpath,
       targetPathOrFile
