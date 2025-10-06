@@ -23,15 +23,17 @@ The following Obsidian settings are not mandatory but can improve performance an
 - To improve performance of certain plugin operations, consider installing [`Backlink Cache`](https://obsidian.md/plugins?id=backlink-cache) plugin.
 - Disabling `[[Wikilinks]]` in favor of `[Markdown Links](Markdown%20Links.md)` makes your vault more compatible with other markdown editors.
 
-![](./images/wikilinks.png)
+![Wikilinks](./images/wikilinks.png)
 
 - Setting `New link format` to `Relative path to file` makes your vault more compatible with other markdown editors.
 
-![](./images/new-link-format.png)
+![New link format](./images/new-link-format.png)
 
 - If you want to use `[Markdown Links](Markdown%20Links.md)` but find those `%20` parts unreadable, consider installing [`Better Markdown Links`](https://obsidian.md/plugins?id=better-markdown-links) plugin.
 
+<!-- markdownlint-disable MD033 -->
 ## `Attachment Subfolder` setting <span id="attachment-subfolder-setting"></span>
+<!-- markdownlint-disable MD033 -->
 
 Starting from [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) `Attachment Subfolder` setting is no longer managed by the plugin.
 
@@ -164,7 +166,9 @@ For more details, refer to the [documentation](https://github.com/mnaoumov/obsid
 
 ## Support
 
-<a href="https://www.buymeacoffee.com/mnaoumov" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;"></a>
+<!-- markdownlint-disable MD033 -->
+<a href="https://www.buymeacoffee.com/mnaoumov" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
+<!-- markdownlint-enable MD033 -->
 
 ## License
 
