@@ -163,7 +163,8 @@
 
 ## 3.26.0
 
-- Treat as attachment extensions setting. Inspired by https://github.com/RainCat1998/obsidian-custom-attachment-location/issues/147
+- Treat as attachment extensions setting
+  - Inspired by: <https://github.com/RainCat1998/obsidian-custom-attachment-location/issues/147>
 
 ## 3.25.4
 
@@ -511,21 +512,21 @@
 
 ## 1.0.11
 
-- FIX: wrong movement of transclusion markdown or canvas note as attachment by @jiyee in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/67
-- Bugfix: diff between collect attachments and mov ing files by @jiyee in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/71
+- FIX: wrong movement of transclusion markdown or canvas note as attachment by @jiyee in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/67>
+- Bugfix: diff between collect attachments and mov ing files by @jiyee in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/71>
 
 ## 1.0.9
 
-- Update README.md by @kkYrusobad in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/35
-- Recognize path for invalid links as Obsidian does by @mnaoumov in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/40
-- Fix typo by @JadoJodo in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/42
-- Ability to use regex in ignoreFiles by @i-KishoreVarma in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/36
-- Increase line number by @mnaoumov in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/49
-- Remove part after # when resolve file by @mnaoumov in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/46
-- Check for renamed files before removing by @mnaoumov in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/60
-- Do accurate searches when validating vault consistency without hurting performance by @mnaoumov in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/51
-- Improve grammar and wording by @mairas in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/61
-- Get exact matching file before removal by @mnaoumov in https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/63
+- Update README.md by @kkYrusobad in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/35>
+- Recognize path for invalid links as Obsidian does by @mnaoumov in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/40>
+- Fix typo by @JadoJodo in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/42>
+- Ability to use regex in ignoreFiles by @i-KishoreVarma in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/36>
+- Increase line number by @mnaoumov in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/49>
+- Remove part after # when resolve file by @mnaoumov in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/46>
+- Check for renamed files before removing by @mnaoumov in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/60>
+- Do accurate searches when validating vault consistency without hurting performance by @mnaoumov in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/51>
+- Improve grammar and wording by @mairas in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/61>
+- Get exact matching file before removal by @mnaoumov in <https://github.com/dy-sh/obsidian-consistent-attachments-and-links/pull/63>
 
 ## 1.0.8
 
