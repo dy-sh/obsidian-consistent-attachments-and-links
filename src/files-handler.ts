@@ -96,9 +96,9 @@ export class FilesHandler {
 
       const newPath = await getAttachmentFilePath({
         app: this.plugin.app,
-        attachmentPathOrFile: file,
         context: 'consistent-attachments-and-links' as AttachmentPathContext,
         notePathOrFile: notePath,
+        oldAttachmentPathOrFile: file,
         shouldSkipDuplicateCheck: true
       });
 
