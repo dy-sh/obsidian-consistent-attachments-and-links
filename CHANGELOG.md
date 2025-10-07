@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.31.11
+
+- chore: update libs
+- chore: enable markdownlint
+
 ## 3.31.10
 
 - fix: build
