@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.31.15
+
+- fix: handling include/exclude paths not ending with /
+
 ## 3.31.14
 
 - chore: update libs
