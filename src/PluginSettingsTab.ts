@@ -42,7 +42,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       );
 
     new SettingEx(this.containerEl)
-      .setName('Update Links')
+      .setName('Update links')
       .setDesc('Automatically update links to attachments and other notes when moving notes or attachments.')
       .addToggle((toggle) => this.bind(toggle, 'shouldUpdateLinks'));
 
@@ -89,14 +89,14 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       );
 
     new SettingEx(this.containerEl)
-      .setName('Update Backlink Text on Note Rename')
+      .setName('Update backlink text on note rename')
       .setDesc(
         'When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.'
       )
       .addToggle((toggle) => this.bind(toggle, 'shouldChangeNoteBacklinksDisplayText'));
 
     new SettingEx(this.containerEl)
-      .setName('Consistency Report Filename')
+      .setName('Consistency report filename')
       .setDesc('Specify the name of the file for the consistency report.')
       .addText((text) => {
         this.bind(text, 'consistencyReportFile');
