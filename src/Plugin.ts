@@ -107,85 +107,85 @@ export class Plugin extends PluginBase<PluginTypes> {
     this.addCommand({
       callback: () => this.collectAllAttachments(),
       id: 'collect-all-attachments',
-      name: 'Collect All Attachments'
+      name: 'Collect all attachments'
     });
 
     this.addCommand({
       checkCallback: (checking) => this.collectAttachmentsCurrentFolder(checking),
       id: 'collect-attachments-current-folder',
-      name: 'Collect Attachments in Current Folder'
+      name: 'Collect attachments in current folder'
     });
 
     this.addCommand({
       checkCallback: this.collectAttachmentsCurrentNote.bind(this),
       id: 'collect-attachments-current-note',
-      name: 'Collect Attachments in Current Note'
+      name: 'Collect attachments in current note'
     });
 
     this.addCommand({
       callback: () => this.deleteEmptyFolders(),
       id: 'delete-empty-folders',
-      name: 'Delete Empty Folders'
+      name: 'Delete empty folders'
     });
 
     this.addCommand({
       callback: () => this.convertAllLinkPathsToRelative(this.abortSignal),
       id: 'convert-all-link-paths-to-relative',
-      name: 'Convert All Link Paths to Relative'
+      name: 'Convert all link paths to relative'
     });
 
     this.addCommand({
       checkCallback: this.convertAllLinkPathsToRelativeCurrentNote.bind(this),
       id: 'convert-all-link-paths-to-relative-current-note',
-      name: 'Convert All Link Paths to Relative in Current Note'
+      name: 'Convert all link paths to relative in current note'
     });
 
     this.addCommand({
       callback: () => this.convertAllEmbedsPathsToRelative(),
       id: 'convert-all-embed-paths-to-relative',
-      name: 'Convert All Embed Paths to Relative'
+      name: 'Convert all embed paths to relative'
     });
 
     this.addCommand({
       checkCallback: this.convertAllEmbedsPathsToRelativeCurrentNote.bind(this),
       id: 'convert-all-embed-paths-to-relative-current-note',
-      name: 'Convert All Embed Paths to Relative in Current Note'
+      name: 'Convert all embed paths to relative in current note'
     });
 
     this.addCommand({
       callback: () => this.replaceAllWikilinksWithMarkdownLinks(),
       id: 'replace-all-wikilinks-with-markdown-links',
-      name: 'Replace All Wiki Links with Markdown Links'
+      name: 'Replace all wikilinks with Markdown links'
     });
 
     this.addCommand({
       checkCallback: this.replaceAllWikilinksWithMarkdownLinksCurrentNote.bind(this),
       id: 'replace-all-wikilinks-with-markdown-links-current-note',
-      name: 'Replace All Wiki Links with Markdown Links in Current Note'
+      name: 'Replace all wikilinks with Markdown links in current note'
     });
 
     this.addCommand({
       callback: () => this.replaceAllWikiEmbedsWithMarkdownEmbeds(),
       id: 'replace-all-wiki-embeds-with-markdown-embeds',
-      name: 'Replace All Wiki Embeds with Markdown Embeds'
+      name: 'Replace all wiki embeds with Markdown embeds'
     });
 
     this.addCommand({
       checkCallback: this.replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote.bind(this),
       id: 'replace-all-wiki-embeds-with-markdown-embeds-current-note',
-      name: 'Replace All Wiki Embeds with Markdown Embeds in Current Note'
+      name: 'Replace all wiki embeds with Markdown embeds in current note'
     });
 
     this.addCommand({
       callback: () => this.reorganizeVault(),
       id: 'reorganize-vault',
-      name: 'Reorganize Vault'
+      name: 'Reorganize vault'
     });
 
     this.addCommand({
       callback: () => this.checkConsistency(),
       id: 'check-consistency',
-      name: 'Check Vault consistency'
+      name: 'Check vault consistency'
     });
 
     this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => {
