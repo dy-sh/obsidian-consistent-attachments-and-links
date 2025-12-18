@@ -83,7 +83,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     );
 
     this.registerEvent(this.app.metadataCache.on('changed', (file) => {
-      addToQueue(this.app, (abortSignal) => this.handleMetadataCacheChanged(file, abortSignal), this.abortSignal);
+      addToQueue({
+        abortSignal: this.abortSignal,
+        app: this.app,
+        operationFn: (abortSignal) => this.handleMetadataCacheChanged(file, abortSignal),
+        operationName: 'handleMetadataCacheChanged'
+      });
     }));
   }
 
@@ -279,7 +284,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, (abortSignal) => this.collectAttachmentsInFolder(note.parent?.path ?? '/', abortSignal), this.abortSignal);
+      addToQueue({
+        abortSignal: this.abortSignal,
+        app: this.app,
+        operationFn: (abortSignal) => this.collectAttachmentsInFolder(note.parent?.path ?? '/', abortSignal),
+        operationName: 'Collect attachments in current folder'
+      });
     }
 
     return true;
@@ -292,7 +302,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(this.app, (abortSignal) => this.collectAttachments(note, abortSignal), this.abortSignal);
+      addToQueue({
+        abortSignal: this.abortSignal,
+        app: this.app,
+        operationFn: (abortSignal) => this.collectAttachments(note, abortSignal),
+        operationName: 'Collect attachments in current note'
+      });
     }
 
     return true;
@@ -386,11 +401,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(
-        this.app,
-        omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
-        this.abortSignal
-      );
+      addToQueue({
+        abortSignal: this.abortSignal,
+        app: this.app,
+        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
+        operationName: 'Convert all embed paths to relative in current note'
+      });
     }
 
     return true;
@@ -443,11 +459,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(
-        this.app,
-        omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
-        this.abortSignal
-      );
+      addToQueue({
+        abortSignal: this.abortSignal,
+        app: this.app,
+        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
+        operationName: 'Convert all link paths to relative in current note'
+      });
     }
 
     return true;
@@ -545,11 +562,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(
-        this.app,
-        omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
-        this.abortSignal
-      );
+      addToQueue({
+        abortSignal: this.abortSignal,
+        app: this.app,
+        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
+        operationName: 'Replace all wiki embeds with markdown embeds in current note'
+      });
     }
 
     return true;
@@ -597,11 +615,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     if (!checking) {
-      addToQueue(
-        this.app,
-        omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
-        this.abortSignal
-      );
+      addToQueue({
+        abortSignal: this.abortSignal,
+        app: this.app,
+        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
+        operationName: 'Replace all wiki embeds with markdown embeds in current note'
+      });
     }
 
     return true;
