@@ -4,6 +4,7 @@ import {
   getEnumValue
 } from 'obsidian-dev-utils/Enum';
 import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
+import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
@@ -11,6 +12,11 @@ import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
 
 import type { PluginSettings } from './PluginSettings.ts';
 import type { PluginTypes } from './PluginTypes.ts';
+
+import {
+  CollectAttachmentUsedByMultipleNotesMode,
+  MoveAttachmentToProperFolderUsedByMultipleNotesMode
+} from './PluginSettings.ts';
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
   public override display(): void {
@@ -183,6 +189,85 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       }))
       .addMultipleText((multipleText) => {
         this.bind(multipleText, 'treatAsAttachmentExtensions');
+      });
+
+    new SettingEx(this.containerEl)
+      .setName(t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.name))
+      .setDesc(createFragment((f) => {
+        f.appendText(t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.description.part1));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.description));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.description));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.description));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.description));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.description));
+      }))
+      .addDropdown((dropdown) => {
+        dropdown.addOptions({
+          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+          [CollectAttachmentUsedByMultipleNotesMode.Skip]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText),
+          [CollectAttachmentUsedByMultipleNotesMode.Move]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText),
+          [CollectAttachmentUsedByMultipleNotesMode.Copy]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText),
+          [CollectAttachmentUsedByMultipleNotesMode.Cancel]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText),
+          [CollectAttachmentUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText)
+          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+        });
+        this.bind(dropdown, 'collectAttachmentUsedByMultipleNotesMode');
+      });
+
+    new SettingEx(this.containerEl)
+      .setName(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.name))
+      .setDesc(createFragment((f) => {
+        f.appendText(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.description.part1));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.description));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.description));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.description));
+        f.createEl('br');
+        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText));
+        f.appendText(' - ');
+        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.description));
+      }))
+      .addDropdown((dropdown) => {
+        dropdown.addOptions({
+          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(($) =>
+            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText
+          ),
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(($) =>
+            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText
+          ),
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(($) =>
+            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText
+          ),
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(($) =>
+            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText
+          )
+          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+        });
+        this.bind(dropdown, 'moveAttachmentToProperFolderUsedByMultipleNotesMode');
       });
   }
 

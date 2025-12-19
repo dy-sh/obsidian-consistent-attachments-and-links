@@ -4,10 +4,28 @@ import { escapeRegExp } from 'obsidian-dev-utils/RegExp';
 const ALWAYS_MATCH_REG_EXP = /(?:)/;
 const NEVER_MATCH_REG_EXP = /$./;
 
-export class PluginSettings {
-  public consistencyReportFile = 'consistency-report.md';
+export enum CollectAttachmentUsedByMultipleNotesMode {
+  Cancel = 'Cancel',
+  Copy = 'Copy',
+  Move = 'Move',
+  Prompt = 'Prompt',
+  Skip = 'Skip'
+}
 
+export enum MoveAttachmentToProperFolderUsedByMultipleNotesMode {
+  Cancel = 'Cancel',
+  CopyAll = 'CopyAll',
+  Prompt = 'Prompt',
+  Skip = 'Skip'
+}
+
+export class PluginSettings {
+  public collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
+  public consistencyReportFile = 'consistency-report.md';
   public emptyAttachmentFolderBehavior: EmptyAttachmentFolderBehavior = EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
+
+  public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode =
+    MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
 
   public shouldChangeNoteBacklinksDisplayText = true;
 

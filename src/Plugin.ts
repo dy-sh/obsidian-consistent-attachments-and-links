@@ -1,8 +1,5 @@
-import type {
-  CachedMetadata,
-  Menu,
-  TAbstractFile
-} from 'obsidian';
+import type { CachedMetadata } from 'obsidian';
+import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import type { PluginSettingsWrapper } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsWrapper';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import type { ReadonlyDeep } from 'type-fest';
@@ -15,9 +12,7 @@ import {
 } from 'obsidian';
 import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
 import {
-  getMarkdownFiles,
   getOrCreateFile,
-  isFolder,
   isMarkdownFile
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import { loop } from 'obsidian-dev-utils/obsidian/Loop';
@@ -34,13 +29,22 @@ import { dirname } from 'obsidian-dev-utils/Path';
 import type { PluginSettings } from './PluginSettings.ts';
 import type { PluginTypes } from './PluginTypes.ts';
 
+import {
+  collectAttachmentsEntireVault,
+  collectAttachmentsInAbstractFiles
+} from './AttachmentCollector.ts';
 import { FilesHandler } from './files-handler.ts';
+import { translationsMap } from './i18n/locales/translationsMap.ts';
 import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
 import { PluginSettingsManager } from './PluginSettingsManager.ts';
 import { PluginSettingsTab } from './PluginSettingsTab.ts';
+import { CollectAttachmentsEntireVaultCommand } from './Commands/CollectAttachmentsEntireVaultCommand.ts';
+import { CollectAttachmentsInCurrentFolderCommand } from './Commands/CollectAttachmentsInCurrentFolderCommand.ts';
+import { CollectAttachmentsInFileCommand } from './Commands/CollectAttachmentsInFileCommand.ts';
+import { MoveAttachmentToProperFolderCommand } from './Commands/MoveAttachmentToProperFolderCommand.ts';
 
 export class Plugin extends PluginBase<PluginTypes> {
   private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
@@ -69,6 +73,10 @@ export class Plugin extends PluginBase<PluginTypes> {
 
   protected override createSettingsTab(): null | PluginSettingsTab {
     return new PluginSettingsTab(this);
+  }
+
+  protected override createTranslationsMap(): TranslationsMap<PluginTypes> {
+    return translationsMap;
   }
 
   protected override async onLayoutReady(): Promise<void> {
@@ -109,23 +117,10 @@ export class Plugin extends PluginBase<PluginTypes> {
       return settings;
     });
 
-    this.addCommand({
-      callback: () => this.collectAllAttachments(),
-      id: 'collect-all-attachments',
-      name: 'Collect all attachments'
-    });
-
-    this.addCommand({
-      checkCallback: (checking) => this.collectAttachmentsCurrentFolder(checking),
-      id: 'collect-attachments-current-folder',
-      name: 'Collect attachments in current folder'
-    });
-
-    this.addCommand({
-      checkCallback: this.collectAttachmentsCurrentNote.bind(this),
-      id: 'collect-attachments-current-note',
-      name: 'Collect attachments in current note'
-    });
+    new CollectAttachmentsInFileCommand(this).register();
+    new CollectAttachmentsInCurrentFolderCommand(this).register();
+    new CollectAttachmentsEntireVaultCommand(this).register();
+    new MoveAttachmentToProperFolderCommand(this).register();
 
     this.addCommand({
       callback: () => this.deleteEmptyFolders(),
@@ -193,10 +188,6 @@ export class Plugin extends PluginBase<PluginTypes> {
       name: 'Check vault consistency'
     });
 
-    this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => {
-      this.handleFileMenu(menu, file);
-    }));
-
     this.linksHandler = new LinksHandler(this);
 
     this.filesHandler = new FilesHandler(this, this.linksHandler);
@@ -241,118 +232,6 @@ export class Plugin extends PluginBase<PluginTypes> {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Can change in await calls.
     if (!fileOpened) {
       await this.app.workspace.openLinkText(notePath, '/', false);
-    }
-  }
-
-  private async collectAllAttachments(): Promise<void> {
-    await this.collectAttachmentsInFolder('/', this.abortSignal);
-  }
-
-  private async collectAttachments(note: TFile, abortSignal: AbortSignal, isVerbose = true): Promise<void> {
-    abortSignal.throwIfAborted();
-    if (this.settings.isPathIgnored(note.path)) {
-      if (isVerbose) {
-        new Notice('Note path is ignored');
-      }
-      return;
-    }
-
-    await this.saveAllOpenNotes();
-    abortSignal.throwIfAborted();
-
-    const result = await this.filesHandler.collectAttachmentsForCachedNote(note.path);
-    abortSignal.throwIfAborted();
-
-    if (result.movedAttachments.length > 0) {
-      await this.linksHandler.updateChangedPathsInNote(note.path, result.movedAttachments);
-      abortSignal.throwIfAborted();
-    }
-
-    if (result.movedAttachments.length === 0) {
-      if (isVerbose) {
-        new Notice('No files found that need to be moved');
-      }
-    } else {
-      new Notice(`Moved ${String(result.movedAttachments.length)} attachment${result.movedAttachments.length > 1 ? 's' : ''}`);
-    }
-  }
-
-  private collectAttachmentsCurrentFolder(checking: boolean): boolean {
-    const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(this.app, note)) {
-      return false;
-    }
-
-    if (!checking) {
-      addToQueue({
-        abortSignal: this.abortSignal,
-        app: this.app,
-        operationFn: (abortSignal) => this.collectAttachmentsInFolder(note.parent?.path ?? '/', abortSignal),
-        operationName: 'Collect attachments in current folder'
-      });
-    }
-
-    return true;
-  }
-
-  private collectAttachmentsCurrentNote(checking: boolean): boolean {
-    const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(this.app, note)) {
-      return false;
-    }
-
-    if (!checking) {
-      addToQueue({
-        abortSignal: this.abortSignal,
-        app: this.app,
-        operationFn: (abortSignal) => this.collectAttachments(note, abortSignal),
-        operationName: 'Collect attachments in current note'
-      });
-    }
-
-    return true;
-  }
-
-  private async collectAttachmentsInFolder(folderPath: string, abortSignal: AbortSignal): Promise<void> {
-    abortSignal.throwIfAborted();
-    let movedAttachmentsCount = 0;
-    let processedNotesCount = 0;
-
-    await this.saveAllOpenNotes();
-
-    await loop({
-      abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Collecting attachments ${iterationStr} - ${note.path}`,
-      items: getMarkdownFiles(this.app, folderPath, true),
-      processItem: async (note) => {
-        abortSignal.throwIfAborted();
-        if (this.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.filesHandler.collectAttachmentsForCachedNote(note.path);
-        abortSignal.throwIfAborted();
-
-        if (result.movedAttachments.length > 0) {
-          await this.linksHandler.updateChangedPathsInNote(note.path, result.movedAttachments);
-          abortSignal.throwIfAborted();
-          movedAttachmentsCount += result.movedAttachments.length;
-          processedNotesCount++;
-        }
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Collecting attachments...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (movedAttachmentsCount === 0) {
-      new Notice('No files found that need to be moved');
-    } else {
-      new Notice(
-        `Moved ${String(movedAttachmentsCount)} attachment${movedAttachmentsCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
-      );
     }
   }
 
@@ -482,18 +361,6 @@ export class Plugin extends PluginBase<PluginTypes> {
     this.deletedNoteCache.set(file.path, prevCache);
   }
 
-  private handleFileMenu(menu: Menu, file: TAbstractFile): void {
-    if (!isFolder(file)) {
-      return;
-    }
-
-    menu.addItem((item) => {
-      item.setTitle('Collect attachments in folder')
-        .setIcon('download')
-        .onClick(() => this.collectAttachmentsInFolder(file.path, this.abortSignal));
-    });
-  }
-
   private async handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): Promise<void> {
     abortSignal.throwIfAborted();
     if (!this.settings.shouldCollectAttachmentsAutomatically) {
@@ -505,7 +372,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       return;
     }
 
-    await this.collectAttachments(file, abortSignal, false);
+    collectAttachmentsInAbstractFiles(this, [file]);
   }
 
   private async reorganizeVault(): Promise<void> {
@@ -515,7 +382,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
     await this.convertAllEmbedsPathsToRelative();
     await this.convertAllLinkPathsToRelative(this.abortSignal);
-    await this.collectAllAttachments();
+    collectAttachmentsEntireVault(this);
     await this.deleteEmptyFolders();
     new Notice('Reorganization of the vault completed');
   }
