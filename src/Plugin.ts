@@ -33,6 +33,21 @@ import {
   collectAttachmentsEntireVault,
   collectAttachmentsInAbstractFiles
 } from './AttachmentCollector.ts';
+import { CheckConsistencyCommand } from './Commands/CheckConsistencyCommand.ts';
+import { CollectAttachmentsEntireVaultCommand } from './Commands/CollectAttachmentsEntireVaultCommand.ts';
+import { CollectAttachmentsInCurrentFolderCommand } from './Commands/CollectAttachmentsInCurrentFolderCommand.ts';
+import { CollectAttachmentsInFileCommand } from './Commands/CollectAttachmentsInFileCommand.ts';
+import { ConvertAllEmbedsPathsToRelativeCommand } from './Commands/ConvertAllEmbedsPathsToRelativeCommand.ts';
+import { ConvertAllEmbedsPathsToRelativeCurrentNoteCommand } from './Commands/ConvertAllEmbedsPathsToRelativeCurrentNoteCommand.ts';
+import { ConvertAllLinkPathsToRelativeCommand } from './Commands/ConvertAllLinkPathsToRelativeCommand.ts';
+import { ConvertAllLinkPathsToRelativeCurrentNoteCommand } from './Commands/ConvertAllLinkPathsToRelativeCurrentNoteCommand.ts';
+import { DeleteEmptyFoldersCommand } from './Commands/DeleteEmptyFoldersCommand.ts';
+import { MoveAttachmentToProperFolderCommand } from './Commands/MoveAttachmentToProperFolderCommand.ts';
+import { ReorganizeVaultCommand } from './Commands/ReorganizeVaultCommand.ts';
+import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCommand } from './Commands/ReplaceAllWikiEmbedsWithMarkdownEmbedsCommand.ts';
+import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommand } from './Commands/ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommand.ts';
+import { ReplaceAllWikilinksWithMarkdownLinksCommand } from './Commands/ReplaceAllWikilinksWithMarkdownLinksCommand.ts';
+import { ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommand } from './Commands/ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommand.ts';
 import { FilesHandler } from './files-handler.ts';
 import { translationsMap } from './i18n/locales/translationsMap.ts';
 import {
@@ -41,16 +56,154 @@ import {
 } from './links-handler.ts';
 import { PluginSettingsManager } from './PluginSettingsManager.ts';
 import { PluginSettingsTab } from './PluginSettingsTab.ts';
-import { CollectAttachmentsEntireVaultCommand } from './Commands/CollectAttachmentsEntireVaultCommand.ts';
-import { CollectAttachmentsInCurrentFolderCommand } from './Commands/CollectAttachmentsInCurrentFolderCommand.ts';
-import { CollectAttachmentsInFileCommand } from './Commands/CollectAttachmentsInFileCommand.ts';
-import { MoveAttachmentToProperFolderCommand } from './Commands/MoveAttachmentToProperFolderCommand.ts';
 
 export class Plugin extends PluginBase<PluginTypes> {
   private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
 
   private linksHandler: LinksHandler = new LinksHandler(this);
   private filesHandler: FilesHandler = new FilesHandler(this, this.linksHandler);
+
+  public async checkConsistency(): Promise<void> {
+    await this.saveAllOpenNotes();
+
+    const badLinks = new ConsistencyCheckResult('Bad links');
+    const badEmbeds = new ConsistencyCheckResult('Bad embeds');
+    const wikiLinks = new ConsistencyCheckResult('Wiki links');
+    const wikiEmbeds = new ConsistencyCheckResult('Wiki embeds');
+    const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        await this.linksHandler.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks);
+      },
+      progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
+
+    const notePath = this.settings.consistencyReportFile;
+
+    const text = [badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks]
+      .map((result) => result.toString(this.app, notePath))
+      .join('');
+    await createFolderSafe(this.app, dirname(notePath));
+    const note = await getOrCreateFile(this.app, notePath);
+    await this.app.vault.modify(note, text);
+
+    let fileOpened = false;
+    this.app.workspace.iterateAllLeaves((leaf) => {
+      if (leaf.getDisplayText() !== '' && notePath.startsWith(leaf.getDisplayText())) {
+        fileOpened = true;
+      }
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Can change in await calls.
+    if (!fileOpened) {
+      await this.app.workspace.openLinkText(notePath, '/', false);
+    }
+  }
+
+  public async convertAllEmbedsPathsToRelative(): Promise<void> {
+    await this.saveAllOpenNotes();
+
+    let changedEmbedCount = 0;
+    let processedNotesCount = 0;
+
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.settings.isPathIgnored(note.path)) {
+          return;
+        }
+
+        const result = await this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, this.abortSignal);
+
+        if (result.length > 0) {
+          changedEmbedCount += result.length;
+          processedNotesCount++;
+        }
+      },
+      progressBarTitle: 'Consistent Attachments and Links: Converting embed paths to relative...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
+
+    if (changedEmbedCount === 0) {
+      new Notice('No embeds found that need to be converted');
+    } else {
+      new Notice(
+        `Converted ${String(changedEmbedCount)} embed${changedEmbedCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
+          processedNotesCount > 1 ? 's' : ''
+        }`
+      );
+    }
+  }
+
+  public convertAllEmbedsPathsToRelativeCurrentNote(note: TFile): void {
+    addToQueue({
+      abortSignal: this.abortSignal,
+      app: this.app,
+      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
+      operationName: 'Convert all embed paths to relative in current note'
+    });
+  }
+
+  public async convertAllLinkPathsToRelative(abortSignal: AbortSignal): Promise<void> {
+    abortSignal.throwIfAborted();
+    await this.saveAllOpenNotes();
+    abortSignal.throwIfAborted();
+
+    let changedLinksCount = 0;
+    let processedNotesCount = 0;
+
+    await loop({
+      abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.settings.isPathIgnored(note.path)) {
+          return;
+        }
+
+        const result = await this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal);
+
+        if (result.length > 0) {
+          changedLinksCount += result.length;
+          processedNotesCount++;
+        }
+      },
+      progressBarTitle: 'Consistent Attachments and Links: Converting link paths to relative...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
+
+    if (changedLinksCount === 0) {
+      new Notice('No links found that need to be converted');
+    } else {
+      new Notice(
+        `Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
+          processedNotesCount > 1 ? 's' : ''
+        }`
+      );
+    }
+  }
+
+  public convertAllLinkPathsToRelativeCurrentNote(note: TFile): void {
+    addToQueue({
+      abortSignal: this.abortSignal,
+      app: this.app,
+      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
+      operationName: 'Convert all link paths to relative in current note'
+    });
+  }
+
+  public async deleteEmptyFolders(): Promise<void> {
+    await this.filesHandler.deleteEmptyFolders('/');
+  }
 
   public override async onLoadSettings(loadedSettings: ReadonlyDeep<PluginSettingsWrapper<PluginSettings>>, isInitialLoad: boolean): Promise<void> {
     await super.onLoadSettings(loadedSettings, isInitialLoad);
@@ -65,6 +218,106 @@ export class Plugin extends PluginBase<PluginTypes> {
     await super.onSaveSettings(newSettings, oldSettings, context);
     this.linksHandler = new LinksHandler(this);
     this.filesHandler = new FilesHandler(this, this.linksHandler);
+  }
+
+  public async reorganizeVault(): Promise<void> {
+    await this.saveAllOpenNotes();
+
+    await this.replaceAllWikilinksWithMarkdownLinks();
+    await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
+    await this.convertAllEmbedsPathsToRelative();
+    await this.convertAllLinkPathsToRelative(this.abortSignal);
+    collectAttachmentsEntireVault(this);
+    await this.deleteEmptyFolders();
+    new Notice('Reorganization of the vault completed');
+  }
+
+  public async replaceAllWikiEmbedsWithMarkdownEmbeds(): Promise<void> {
+    await this.saveAllOpenNotes();
+
+    let changedLinksCount = 0;
+    let processedNotesCount = 0;
+
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.settings.isPathIgnored(note.path)) {
+          return;
+        }
+
+        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, this.abortSignal);
+        changedLinksCount += result;
+        processedNotesCount++;
+      },
+      progressBarTitle: 'Consistent Attachments and Links: Replacing wiki embeds with markdown embeds...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
+
+    if (changedLinksCount === 0) {
+      new Notice('No wiki embeds found that need to be replaced');
+    } else {
+      new Notice(
+        `Replaced ${String(changedLinksCount)} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
+          processedNotesCount > 1 ? 's' : ''
+        }`
+      );
+    }
+  }
+
+  public replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(note: TFile): void {
+    addToQueue({
+      abortSignal: this.abortSignal,
+      app: this.app,
+      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
+      operationName: 'Replace all wiki embeds with markdown embeds in current note'
+    });
+  }
+
+  public async replaceAllWikilinksWithMarkdownLinks(): Promise<void> {
+    await this.saveAllOpenNotes();
+
+    let changedLinksCount = 0;
+    let processedNotesCount = 0;
+
+    await loop({
+      abortSignal: this.abortSignal,
+      buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
+      items: getMarkdownFilesSorted(this.app),
+      processItem: async (note) => {
+        if (this.settings.isPathIgnored(note.path)) {
+          return;
+        }
+
+        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, this.abortSignal);
+        changedLinksCount += result;
+        processedNotesCount++;
+      },
+      progressBarTitle: 'Consistent Attachments and Links: Replacing wikilinks with markdown links...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
+
+    if (changedLinksCount === 0) {
+      new Notice('No wiki links found that need to be replaced');
+    } else {
+      new Notice(
+        `Replaced ${String(changedLinksCount)} wikilink${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
+          processedNotesCount > 1 ? 's' : ''
+        }`
+      );
+    }
+  }
+
+  public replaceAllWikilinksWithMarkdownLinksCurrentNote(note: TFile): void {
+    addToQueue({
+      abortSignal: this.abortSignal,
+      app: this.app,
+      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
+      operationName: 'Replace all wiki embeds with markdown embeds in current note'
+    });
   }
 
   protected override createSettingsManager(): PluginSettingsManager {
@@ -121,236 +374,21 @@ export class Plugin extends PluginBase<PluginTypes> {
     new CollectAttachmentsInCurrentFolderCommand(this).register();
     new CollectAttachmentsEntireVaultCommand(this).register();
     new MoveAttachmentToProperFolderCommand(this).register();
-
-    this.addCommand({
-      callback: () => this.deleteEmptyFolders(),
-      id: 'delete-empty-folders',
-      name: 'Delete empty folders'
-    });
-
-    this.addCommand({
-      callback: () => this.convertAllLinkPathsToRelative(this.abortSignal),
-      id: 'convert-all-link-paths-to-relative',
-      name: 'Convert all link paths to relative'
-    });
-
-    this.addCommand({
-      checkCallback: this.convertAllLinkPathsToRelativeCurrentNote.bind(this),
-      id: 'convert-all-link-paths-to-relative-current-note',
-      name: 'Convert all link paths to relative in current note'
-    });
-
-    this.addCommand({
-      callback: () => this.convertAllEmbedsPathsToRelative(),
-      id: 'convert-all-embed-paths-to-relative',
-      name: 'Convert all embed paths to relative'
-    });
-
-    this.addCommand({
-      checkCallback: this.convertAllEmbedsPathsToRelativeCurrentNote.bind(this),
-      id: 'convert-all-embed-paths-to-relative-current-note',
-      name: 'Convert all embed paths to relative in current note'
-    });
-
-    this.addCommand({
-      callback: () => this.replaceAllWikilinksWithMarkdownLinks(),
-      id: 'replace-all-wikilinks-with-markdown-links',
-      name: 'Replace all wikilinks with Markdown links'
-    });
-
-    this.addCommand({
-      checkCallback: this.replaceAllWikilinksWithMarkdownLinksCurrentNote.bind(this),
-      id: 'replace-all-wikilinks-with-markdown-links-current-note',
-      name: 'Replace all wikilinks with Markdown links in current note'
-    });
-
-    this.addCommand({
-      callback: () => this.replaceAllWikiEmbedsWithMarkdownEmbeds(),
-      id: 'replace-all-wiki-embeds-with-markdown-embeds',
-      name: 'Replace all wiki embeds with Markdown embeds'
-    });
-
-    this.addCommand({
-      checkCallback: this.replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote.bind(this),
-      id: 'replace-all-wiki-embeds-with-markdown-embeds-current-note',
-      name: 'Replace all wiki embeds with Markdown embeds in current note'
-    });
-
-    this.addCommand({
-      callback: () => this.reorganizeVault(),
-      id: 'reorganize-vault',
-      name: 'Reorganize vault'
-    });
-
-    this.addCommand({
-      callback: () => this.checkConsistency(),
-      id: 'check-consistency',
-      name: 'Check vault consistency'
-    });
+    new DeleteEmptyFoldersCommand(this).register();
+    new ConvertAllLinkPathsToRelativeCommand(this).register();
+    new ConvertAllLinkPathsToRelativeCurrentNoteCommand(this).register();
+    new ConvertAllEmbedsPathsToRelativeCommand(this).register();
+    new ConvertAllEmbedsPathsToRelativeCurrentNoteCommand(this).register();
+    new ReplaceAllWikilinksWithMarkdownLinksCommand(this).register();
+    new ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommand(this).register();
+    new ReplaceAllWikiEmbedsWithMarkdownEmbedsCommand(this).register();
+    new ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommand(this).register();
+    new ReorganizeVaultCommand(this).register();
+    new CheckConsistencyCommand(this).register();
 
     this.linksHandler = new LinksHandler(this);
 
     this.filesHandler = new FilesHandler(this, this.linksHandler);
-  }
-
-  private async checkConsistency(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    const badLinks = new ConsistencyCheckResult('Bad links');
-    const badEmbeds = new ConsistencyCheckResult('Bad embeds');
-    const wikiLinks = new ConsistencyCheckResult('Wiki links');
-    const wikiEmbeds = new ConsistencyCheckResult('Wiki embeds');
-    const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
-    await loop({
-      abortSignal: this.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      processItem: async (note) => {
-        await this.linksHandler.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks);
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    const notePath = this.settings.consistencyReportFile;
-
-    const text = [badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks]
-      .map((result) => result.toString(this.app, notePath))
-      .join('');
-    await createFolderSafe(this.app, dirname(notePath));
-    const note = await getOrCreateFile(this.app, notePath);
-    await this.app.vault.modify(note, text);
-
-    let fileOpened = false;
-    this.app.workspace.iterateAllLeaves((leaf) => {
-      if (leaf.getDisplayText() !== '' && notePath.startsWith(leaf.getDisplayText())) {
-        fileOpened = true;
-      }
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Can change in await calls.
-    if (!fileOpened) {
-      await this.app.workspace.openLinkText(notePath, '/', false);
-    }
-  }
-
-  private async convertAllEmbedsPathsToRelative(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    let changedEmbedCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal: this.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      processItem: async (note) => {
-        if (this.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, this.abortSignal);
-
-        if (result.length > 0) {
-          changedEmbedCount += result.length;
-          processedNotesCount++;
-        }
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Converting embed paths to relative...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedEmbedCount === 0) {
-      new Notice('No embeds found that need to be converted');
-    } else {
-      new Notice(
-        `Converted ${String(changedEmbedCount)} embed${changedEmbedCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
-      );
-    }
-  }
-
-  private convertAllEmbedsPathsToRelativeCurrentNote(checking: boolean): boolean {
-    const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(this.app, note)) {
-      return false;
-    }
-
-    if (!checking) {
-      addToQueue({
-        abortSignal: this.abortSignal,
-        app: this.app,
-        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
-        operationName: 'Convert all embed paths to relative in current note'
-      });
-    }
-
-    return true;
-  }
-
-  private async convertAllLinkPathsToRelative(abortSignal: AbortSignal): Promise<void> {
-    abortSignal.throwIfAborted();
-    await this.saveAllOpenNotes();
-    abortSignal.throwIfAborted();
-
-    let changedLinksCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      processItem: async (note) => {
-        if (this.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal);
-
-        if (result.length > 0) {
-          changedLinksCount += result.length;
-          processedNotesCount++;
-        }
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Converting link paths to relative...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedLinksCount === 0) {
-      new Notice('No links found that need to be converted');
-    } else {
-      new Notice(
-        `Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
-      );
-    }
-  }
-
-  private convertAllLinkPathsToRelativeCurrentNote(checking: boolean): boolean {
-    const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(this.app, note)) {
-      return false;
-    }
-
-    if (!checking) {
-      addToQueue({
-        abortSignal: this.abortSignal,
-        app: this.app,
-        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
-        operationName: 'Convert all link paths to relative in current note'
-      });
-    }
-
-    return true;
-  }
-
-  private async deleteEmptyFolders(): Promise<void> {
-    await this.filesHandler.deleteEmptyFolders('/');
   }
 
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
@@ -373,124 +411,6 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     collectAttachmentsInAbstractFiles(this, [file]);
-  }
-
-  private async reorganizeVault(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    await this.replaceAllWikilinksWithMarkdownLinks();
-    await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
-    await this.convertAllEmbedsPathsToRelative();
-    await this.convertAllLinkPathsToRelative(this.abortSignal);
-    collectAttachmentsEntireVault(this);
-    await this.deleteEmptyFolders();
-    new Notice('Reorganization of the vault completed');
-  }
-
-  private async replaceAllWikiEmbedsWithMarkdownEmbeds(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    let changedLinksCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal: this.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      processItem: async (note) => {
-        if (this.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, this.abortSignal);
-        changedLinksCount += result;
-        processedNotesCount++;
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Replacing wiki embeds with markdown embeds...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedLinksCount === 0) {
-      new Notice('No wiki embeds found that need to be replaced');
-    } else {
-      new Notice(
-        `Replaced ${String(changedLinksCount)} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
-      );
-    }
-  }
-
-  private replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(checking: boolean): boolean {
-    const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(this.app, note)) {
-      return false;
-    }
-
-    if (!checking) {
-      addToQueue({
-        abortSignal: this.abortSignal,
-        app: this.app,
-        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
-        operationName: 'Replace all wiki embeds with markdown embeds in current note'
-      });
-    }
-
-    return true;
-  }
-
-  private async replaceAllWikilinksWithMarkdownLinks(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    let changedLinksCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal: this.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      processItem: async (note) => {
-        if (this.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, this.abortSignal);
-        changedLinksCount += result;
-        processedNotesCount++;
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Replacing wikilinks with markdown links...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedLinksCount === 0) {
-      new Notice('No wiki links found that need to be replaced');
-    } else {
-      new Notice(
-        `Replaced ${String(changedLinksCount)} wikilink${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
-      );
-    }
-  }
-
-  private replaceAllWikilinksWithMarkdownLinksCurrentNote(checking: boolean): boolean {
-    const note = this.app.workspace.getActiveFile();
-    if (!note || !isMarkdownFile(this.app, note)) {
-      return false;
-    }
-
-    if (!checking) {
-      addToQueue({
-        abortSignal: this.abortSignal,
-        app: this.app,
-        operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
-        operationName: 'Replace all wiki embeds with markdown embeds in current note'
-      });
-    }
-
-    return true;
   }
 
   private async saveAllOpenNotes(): Promise<void> {
