@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 3.32.0
+
+- refactor: extract commands
+- feat: reuse collect/move commands from <https://github.com/RainCat1998/obsidian-custom-attachment-location> re #146
+- fix: compilation
+- chore: update libs
+
 ## 3.31.16
 
 - chore: update libs
