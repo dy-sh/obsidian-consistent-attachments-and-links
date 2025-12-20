@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.32.1
+
+- feat: improve description re #144
+
 ## 3.32.0
 
 - refactor: extract commands
