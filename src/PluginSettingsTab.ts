@@ -186,6 +186,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
         f.appendText(', ');
         appendCodeBlock(f, '.bar.canvas');
         f.appendText(', to override this behavior.');
+        f.createEl('br');
+        f.appendText('Insert each extension on a new line.');
       }))
       .addMultipleText((multipleText) => {
         this.bind(multipleText, 'treatAsAttachmentExtensions');
