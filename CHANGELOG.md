@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.32.2
+
+- fix: hide unnecessary notices re #149
+- chore: update libs
+
 ## 3.32.1
 
 - feat: improve description re #144
