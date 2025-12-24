@@ -15,6 +15,7 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/AbortController';
+import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
 import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import {
   AttachmentPathContext,
@@ -83,7 +84,10 @@ export async function collectAttachments(
     return;
   }
 
-  const notice = new Notice(t(($) => $.notice.collectingAttachments, { noteFilePath: note.path }), 0);
+  let notice = null as Notice | null;
+  const DELAY_BEFORE_SHOWING_NOTICE_IN_MILLISECONDS = 500;
+  let isDone = false;
+  invokeAsyncSafely(showNotice);
 
   try {
     const isCanvas = isCanvasFile(app, note);
@@ -224,7 +228,16 @@ export async function collectAttachments(
       }
     }
   } finally {
-    notice.hide();
+    notice?.hide();
+    isDone = true;
+  }
+
+  async function showNotice(): Promise<void> {
+    await sleep(DELAY_BEFORE_SHOWING_NOTICE_IN_MILLISECONDS);
+    if (isDone) {
+      return;
+    }
+    notice = new Notice(t(($) => $.notice.collectingAttachments, { noteFilePath: note.path }), 0);
   }
 }
 
