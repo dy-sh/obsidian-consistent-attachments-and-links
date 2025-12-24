@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.32.3
+
+- chore: update libs
+- fix: handle suggestions from other windows
+
 ## 3.32.2
 
 - fix: hide unnecessary notices re #149
