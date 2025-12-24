@@ -405,8 +405,8 @@ export class Plugin extends PluginBase<PluginTypes> {
       return;
     }
 
-    const suggestionContainer = document.querySelector<HTMLDivElement>('.suggestion-container');
-    if (suggestionContainer && suggestionContainer.style.display !== 'none') {
+    const suggestionContainer = activeDocument.querySelector<HTMLDivElement>('.suggestion-container');
+    if (suggestionContainer?.isShown()) {
       return;
     }
 
