@@ -188,12 +188,6 @@ export const defaultTranslations = {
       specialCharactersMustNotContainSlash: 'Special characters must not contain /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Special character replacement must not contain invalid file name path characters.'
-    },
-    version: {
-      part1: 'Your settings file ',
-      part2: 'has version',
-      part3: 'which is newer than the current plugin version',
-      part4: 'The plugin might not work as expected. Please update the plugin to the latest version or ensure that the settings are correct.'
     }
   },
   pluginSettingsTab: {
