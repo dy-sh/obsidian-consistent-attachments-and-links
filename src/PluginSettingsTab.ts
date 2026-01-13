@@ -1,8 +1,4 @@
 import { setIcon } from 'obsidian';
-import {
-  getEnumKey,
-  getEnumValue
-} from 'obsidian-dev-utils/Enum';
 import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
@@ -74,10 +70,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
           [EmptyFolderBehavior.DeleteWithEmptyParents]: 'Delete with empty parents'
           /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
-        this.bind(dropdown, 'emptyFolderBehavior', {
-          componentToPluginSettingsValueConverter: (value) => getEnumValue(EmptyFolderBehavior, value),
-          pluginSettingsToComponentValueConverter: (value) => getEnumKey(EmptyFolderBehavior, value)
-        });
+        this.bind(dropdown, 'emptyFolderBehavior');
       });
 
     const deleteExistFilesWhenMoveNoteSettingName = 'Delete Duplicate Attachments on Note Move';
