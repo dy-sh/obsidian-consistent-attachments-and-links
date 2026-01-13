@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 3.32.5
+
+- refactor: unneeded enum converters
+- refactor: registerLegacySettingsConverters
+- fix: rename emptyFolderBehavior
+
 ## 3.32.4
 
 - chore: update libs
