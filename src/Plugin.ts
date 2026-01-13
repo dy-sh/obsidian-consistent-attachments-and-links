@@ -358,7 +358,7 @@ export class Plugin extends PluginBase<PluginTypes> {
 
     registerRenameDeleteHandlers(this, () => {
       const settings: Partial<RenameDeleteHandlerSettings> = {
-        emptyAttachmentFolderBehavior: this.settings.emptyAttachmentFolderBehavior,
+        emptyFolderBehavior: this.settings.emptyFolderBehavior,
         isNote: (path) => this.filesHandler.isNoteEx(path),
         isPathIgnored: (path) => this.settings.isPathIgnored(path),
         shouldDeleteConflictingAttachments: this.settings.shouldDeleteExistingFilesWhenMovingNote,

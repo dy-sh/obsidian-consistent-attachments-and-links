@@ -1,7 +1,7 @@
 import type { MaybeReturn } from 'obsidian-dev-utils/Type';
 
 import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
-import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 
 import type { PluginTypes } from './PluginTypes.ts';
@@ -14,6 +14,7 @@ interface LegacySettings extends PluginSettings {
   deleteAttachmentsWithNote: boolean;
   deleteEmptyFolders: boolean;
   deleteExistFilesWhenMoveNote: boolean;
+  emptyAttachmentFolderBehavior: EmptyFolderBehavior;
   ignoreFiles: string[];
   ignoreFolders: string[];
   moveAttachmentsWithNote: boolean;
@@ -52,10 +53,15 @@ export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes
     }
 
     if (legacySettings.deleteEmptyFolders !== undefined) {
-      legacySettings.emptyAttachmentFolderBehavior = legacySettings.deleteEmptyFolders
-        ? EmptyAttachmentFolderBehavior.DeleteWithEmptyParents
-        : EmptyAttachmentFolderBehavior.Keep;
+      legacySettings.emptyFolderBehavior = legacySettings.deleteEmptyFolders
+        ? EmptyFolderBehavior.DeleteWithEmptyParents
+        : EmptyFolderBehavior.Keep;
       delete legacySettings.deleteEmptyFolders;
+    }
+
+    if (legacySettings.emptyAttachmentFolderBehavior !== undefined) {
+      legacySettings.emptyFolderBehavior = legacySettings.emptyAttachmentFolderBehavior;
+      delete legacySettings.emptyAttachmentFolderBehavior;
     }
 
     if (legacySettings.autoCollectAttachments !== undefined) {

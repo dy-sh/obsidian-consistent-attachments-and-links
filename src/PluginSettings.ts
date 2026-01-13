@@ -1,4 +1,4 @@
-import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { escapeRegExp } from 'obsidian-dev-utils/RegExp';
 
 const ALWAYS_MATCH_REG_EXP = /(?:)/;
@@ -22,7 +22,7 @@ export enum MoveAttachmentToProperFolderUsedByMultipleNotesMode {
 export class PluginSettings {
   public collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
   public consistencyReportFile = 'consistency-report.md';
-  public emptyAttachmentFolderBehavior: EmptyAttachmentFolderBehavior = EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
+  public emptyFolderBehavior: EmptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
 
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode =
     MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;

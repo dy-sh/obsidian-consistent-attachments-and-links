@@ -7,7 +7,7 @@ import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
-import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
 
 import type { PluginSettings } from './PluginSettings.ts';
@@ -53,30 +53,30 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .addToggle((toggle) => this.bind(toggle, 'shouldUpdateLinks'));
 
     new SettingEx(this.containerEl)
-      .setName('Empty attachment folder behavior')
+      .setName('Empty folder behavior')
       .setDesc(createFragment((f) => {
-        f.appendText('When the attachment folder becomes empty, ');
+        f.appendText('When the folder becomes empty, ');
         f.createEl('br');
         appendCodeBlock(f, 'Keep');
-        f.appendText(' - will keep the empty attachment folder, ');
+        f.appendText(' - will keep the empty folder, ');
         f.createEl('br');
         appendCodeBlock(f, 'Delete');
-        f.appendText(' - will delete the empty attachment folder, ');
+        f.appendText(' - will delete the empty folder, ');
         f.createEl('br');
         appendCodeBlock(f, 'Delete with empty parents');
-        f.appendText(' - will delete the empty attachment folder and its empty parent folders.');
+        f.appendText(' - will delete the empty folder and its empty parent folders.');
       }))
       .addDropdown((dropdown) => {
         dropdown.addOptions({
           /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [EmptyAttachmentFolderBehavior.Keep]: 'Keep',
-          [EmptyAttachmentFolderBehavior.Delete]: 'Delete',
-          [EmptyAttachmentFolderBehavior.DeleteWithEmptyParents]: 'Delete with empty parents'
+          [EmptyFolderBehavior.Keep]: 'Keep',
+          [EmptyFolderBehavior.Delete]: 'Delete',
+          [EmptyFolderBehavior.DeleteWithEmptyParents]: 'Delete with empty parents'
           /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
-        this.bind(dropdown, 'emptyAttachmentFolderBehavior', {
-          componentToPluginSettingsValueConverter: (value) => getEnumValue(EmptyAttachmentFolderBehavior, value),
-          pluginSettingsToComponentValueConverter: (value) => getEnumKey(EmptyAttachmentFolderBehavior, value)
+        this.bind(dropdown, 'emptyFolderBehavior', {
+          componentToPluginSettingsValueConverter: (value) => getEnumValue(EmptyFolderBehavior, value),
+          pluginSettingsToComponentValueConverter: (value) => getEnumKey(EmptyFolderBehavior, value)
         });
       });
 
