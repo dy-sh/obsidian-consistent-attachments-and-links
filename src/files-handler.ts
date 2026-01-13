@@ -20,7 +20,7 @@ import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
-import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import {
   copySafe,
   createFolderSafe,
@@ -159,11 +159,11 @@ export class FilesHandler {
     if (!file.parent) {
       return;
     }
-    switch (this.plugin.settings.emptyAttachmentFolderBehavior) {
-      case EmptyAttachmentFolderBehavior.Delete:
+    switch (this.plugin.settings.emptyFolderBehavior) {
+      case EmptyFolderBehavior.Delete:
         await deleteSafe(this.plugin.app, file.parent, undefined, undefined, true);
         break;
-      case EmptyAttachmentFolderBehavior.DeleteWithEmptyParents:
+      case EmptyFolderBehavior.DeleteWithEmptyParents:
         await deleteEmptyFolderHierarchy(this.plugin.app, file.parent);
         break;
       default:
@@ -228,11 +228,11 @@ export class FilesHandler {
     }
 
     if (oldFolder) {
-      switch (this.plugin.settings.emptyAttachmentFolderBehavior) {
-        case EmptyAttachmentFolderBehavior.Delete:
+      switch (this.plugin.settings.emptyFolderBehavior) {
+        case EmptyFolderBehavior.Delete:
           await deleteSafe(this.plugin.app, oldFolder, undefined, undefined, true);
           break;
-        case EmptyAttachmentFolderBehavior.DeleteWithEmptyParents:
+        case EmptyFolderBehavior.DeleteWithEmptyParents:
           await deleteEmptyFolderHierarchy(this.plugin.app, oldFolder);
           break;
         default:
