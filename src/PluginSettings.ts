@@ -1,8 +1,5 @@
+import { PathSettings } from 'obsidian-dev-utils/obsidian/Plugin/PathSettings';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
-import { escapeRegExp } from 'obsidian-dev-utils/RegExp';
-
-const ALWAYS_MATCH_REG_EXP = /(?:)/;
-const NEVER_MATCH_REG_EXP = /$./;
 
 export enum CollectAttachmentUsedByMultipleNotesMode {
   Cancel = 'Cancel',
@@ -38,22 +35,21 @@ export class PluginSettings {
   public shouldShowBackupWarning = true;
   public shouldUpdateLinks = true;
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
+
   public get excludePaths(): string[] {
-    return this._excludePaths;
+    return this._pathSettings.excludePaths;
   }
 
   public set excludePaths(value: string[]) {
-    this._excludePaths = value.filter(Boolean);
-    this._excludePathsRegExp = makeRegExp(this._excludePaths, NEVER_MATCH_REG_EXP);
+    this._pathSettings.excludePaths = value;
   }
 
   public get excludePathsFromAttachmentCollecting(): string[] {
-    return this._excludePathsFromAttachmentCollecting;
+    return this._attachmentCollectingPaths.excludePaths;
   }
 
   public set excludePathsFromAttachmentCollecting(value: string[]) {
-    this._excludePathsFromAttachmentCollecting = value.filter(Boolean);
-    this._excludePathsFromAttachmentCollectingRegExp = makeRegExp(this._excludePathsFromAttachmentCollecting, NEVER_MATCH_REG_EXP);
+    this._attachmentCollectingPaths.excludePaths = value;
   }
 
   public get hadDangerousSettingsReverted(): boolean {
@@ -61,34 +57,25 @@ export class PluginSettings {
   }
 
   public get includePaths(): string[] {
-    return this._includePaths;
+    return this._pathSettings.includePaths;
   }
 
   public set includePaths(value: string[]) {
-    this._includePaths = value.filter(Boolean);
-    this._includePathsRegExp = makeRegExp(this._includePaths, ALWAYS_MATCH_REG_EXP);
+    this._pathSettings.includePaths = value;
   }
 
-  private _excludePaths: string[] = ['/consistency-report\\.md$/'];
-
-  private _excludePathsFromAttachmentCollecting: string[] = [];
-
-  private _excludePathsFromAttachmentCollectingRegExp: RegExp = NEVER_MATCH_REG_EXP;
-
-  private _excludePathsRegExp = NEVER_MATCH_REG_EXP;
+  private readonly _attachmentCollectingPaths = new PathSettings();
 
   private _hadDangerousSettingsReverted = false;
 
-  private _includePaths: string[] = [];
-
-  private _includePathsRegExp = ALWAYS_MATCH_REG_EXP;
+  private readonly _pathSettings = new PathSettings();
 
   public isExcludedFromAttachmentCollecting(path: string): boolean {
-    return this._excludePathsFromAttachmentCollectingRegExp.test(path);
+    return this._attachmentCollectingPaths.isPathIgnored(path);
   }
 
   public isPathIgnored(path: string): boolean {
-    return !this._includePathsRegExp.test(path) || this._excludePathsRegExp.test(path);
+    return this._pathSettings.isPathIgnored(path);
   }
 
   public revertDangerousSettings(): void {
@@ -103,29 +90,4 @@ export class PluginSettings {
     this.shouldMoveAttachmentsWithNote = false;
     this.shouldCollectAttachmentsAutomatically = false;
   }
-}
-
-function makeRegExp(paths: string[], defaultRegExp: RegExp): RegExp {
-  if (paths.length === 0) {
-    return defaultRegExp;
-  }
-
-  const regExpStrCombined = paths.map((path) => {
-    if (path === '/') {
-      return defaultRegExp.source;
-    }
-
-    if (path.startsWith('/') && path.endsWith('/')) {
-      return path.slice(1, -1);
-    }
-
-    if (path.endsWith('/')) {
-      return `^${escapeRegExp(path)}`;
-    }
-
-    return `^${escapeRegExp(path)}(/|$)`;
-  })
-    .map((regExpStr) => `(${regExpStr})`)
-    .join('|');
-  return new RegExp(regExpStrCombined);
 }
