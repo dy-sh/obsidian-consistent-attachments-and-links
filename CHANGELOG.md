@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.33.0
+
+- refactor: path settings
+
 ## 3.32.5
 
 - refactor: unneeded enum converters
