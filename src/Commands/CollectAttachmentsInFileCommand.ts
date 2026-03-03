@@ -41,11 +41,10 @@ class CollectAttachmentsInFilesCommandInvocation extends AbstractFilesCommandInv
 }
 
 export class CollectAttachmentsInFileCommand extends AbstractFileCommandBase<Plugin> {
-  public override fileMenuItemName = t(($) => $.menuItems.collectAttachmentsInFile);
-  public override filesMenuItemName = t(($) => $.menuItems.collectAttachmentsInFiles);
-
   public constructor(plugin: Plugin) {
     super({
+      fileMenuItemName: t(($) => $.menuItems.collectAttachmentsInFile),
+      filesMenuItemName: t(($) => $.menuItems.collectAttachmentsInFiles),
       icon: 'download',
       id: 'collect-attachments-in-file',
       name: t(($) => $.commands.collectAttachmentsCurrentNote),
