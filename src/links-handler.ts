@@ -3,7 +3,7 @@ import type {
   ReferenceCache
 } from 'obsidian';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/FileChange';
-import type { GenerateMarkdownLinkOptions } from 'obsidian-dev-utils/obsidian/Link';
+import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/Link';
 
 import {
   App,
@@ -302,7 +302,7 @@ export class LinksHandler {
 
     const alias = link.displayText && join(note.parent?.path ?? '', link.displayText) === oldLinkPath ? undefined : link.displayText;
 
-    return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkOptions>({
+    return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkParams>({
       alias,
       app: this.plugin.app,
       linkPathStyle: forceRelativePath ? LinkPathStyle.RelativePathToTheSource : LinkPathStyle.ObsidianSettingsDefault,
