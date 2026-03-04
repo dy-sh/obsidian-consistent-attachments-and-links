@@ -27,7 +27,7 @@ import {
 import { loop } from 'obsidian-dev-utils/obsidian/Loop';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/MetadataCache';
 import { copySafe } from 'obsidian-dev-utils/obsidian/Vault';
-import { deleteSafe } from 'obsidian-dev-utils/obsidian/VaultEx';
+import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/VaultDelete';
 
 import type { Plugin } from '../Plugin.ts';
 
@@ -168,7 +168,7 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
     backlinks = await getBacklinksForFileSafe(this.plugin.app, attachmentFile);
 
     if (backlinks.keys().length === 0) {
-      await deleteSafe(this.plugin.app, attachmentFile);
+      await deleteIfNotUsed(this.plugin.app, attachmentFile);
     }
 
     return true;

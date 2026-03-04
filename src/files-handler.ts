@@ -24,14 +24,13 @@ import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHan
 import {
   copySafe,
   createFolderSafe,
+  deleteEmptyFolderHierarchy,
   getAvailablePath,
   listSafe,
-  renameSafe
+  renameSafe,
+  trashSafe
 } from 'obsidian-dev-utils/obsidian/Vault';
-import {
-  deleteEmptyFolderHierarchy,
-  deleteSafe
-} from 'obsidian-dev-utils/obsidian/VaultEx';
+import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/VaultDelete';
 import { dirname } from 'obsidian-dev-utils/Path';
 import { trimStart } from 'obsidian-dev-utils/String';
 
@@ -155,13 +154,13 @@ export class FilesHandler {
   }
 
   private async deleteFile(file: TFile): Promise<void> {
-    await this.plugin.app.fileManager.trashFile(file);
+    await trashSafe(this.plugin.app, file);
     if (!file.parent) {
       return;
     }
     switch (this.plugin.settings.emptyFolderBehavior) {
       case EmptyFolderBehavior.Delete:
-        await deleteSafe(this.plugin.app, file.parent, undefined, undefined, true);
+        await deleteIfNotUsed(this.plugin.app, file.parent, undefined, undefined, true);
         break;
       case EmptyFolderBehavior.DeleteWithEmptyParents:
         await deleteEmptyFolderHierarchy(this.plugin.app, file.parent);
@@ -230,7 +229,7 @@ export class FilesHandler {
     if (oldFolder) {
       switch (this.plugin.settings.emptyFolderBehavior) {
         case EmptyFolderBehavior.Delete:
-          await deleteSafe(this.plugin.app, oldFolder, undefined, undefined, true);
+          await deleteIfNotUsed(this.plugin.app, oldFolder, undefined, undefined, true);
           break;
         case EmptyFolderBehavior.DeleteWithEmptyParents:
           await deleteEmptyFolderHierarchy(this.plugin.app, oldFolder);
