@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.33.3
+
+- feat: safer trashing
+
 ## 3.33.2
 
 - chore: update libs
