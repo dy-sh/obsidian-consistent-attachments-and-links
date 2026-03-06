@@ -8,6 +8,10 @@ body:
     attributes:
       value: |
         ## Bug report
+
+        > [!WARNING]
+        >
+        > Both a video and a sample vault are required for bug reproduction. Incomplete, vague, or poorly described bug reports will be closed.
   - type: textarea
     attributes:
       label: Description
@@ -16,44 +20,74 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Steps to Reproduce
+      label: Steps to reproduce
       description: Provide a step-by-step description.
-      value: |
+      placeholder: |
         1. Go to '...'
         2. Click on '...'
         3. Notice that '...'
-        ...
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Expected Behavior
+      label: Expected behavior
       description: What did you expect to happen?
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Actual Behavior
+      label: Actual behavior
       description: What actually happened? Include error messages if available.
     validations:
       required: true
-  - type: textarea
+  - type: input
     attributes:
-      label: Environment Information
-      description: Environment Information
-      value: |
-        - **Plugin Version**: [e.g., 1.0.0]
-        - **Obsidian Version**: [e.g., v1.3.2]
-        - **Operating System**: [e.g., Windows 10]
+      label: Plugin version
+      description: ⚠️ Must be the latest version. If not, explain why above.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Obsidian version
+      description: ⚠️ Must be the latest version. If not, explain why above.
+      placeholder: 1.3.2
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Operating system
+      placeholder: Windows 10
     validations:
       required: true
   - type: textarea
     attributes:
       label: Attachments
-      description: Required for bug reproduction
-      value: |
-        - Please attach a video showing the bug. It is not mandatory, but might be very helpful to speed up the bug fix
-        - Please attach a sample vault where the bug can be reproduced. It is not mandatory, but might be very helpful to speed up the bug fix
+      description: Attach a video and a sample vault.
+      placeholder: Drag and drop files here.
+  - type: dropdown
+    attributes:
+      label: Video
+      options:
+        - "Not attached. ⚠️ The bug report will be closed if the maintainer is unable to reproduce it without the attachment."
+        - "Attached"
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Sample vault
+      options:
+        - "Not attached. ⚠️ The bug report will be closed if the maintainer is unable to reproduce it without the attachment."
+        - "Attached"
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Bug isolation
+      description: Did you verify the bug in isolation from other plugins?
+      options:
+        - "No, only with other plugins enabled (provide details in the description field). ⚠️ Sample vault required or the bug report will be closed."
+        - "Yes, I could reproduce the bug in the vault with only this plugin enabled."
     validations:
       required: true
   - type: checkboxes
@@ -61,11 +95,5 @@ body:
       label: Confirmations
       description: Ensure the following conditions are met
       options:
-        - label: I attached a video showing the bug, or it is not necessary
-          required: true
-        - label: I attached a sample vault where the bug can be reproduced, or it is not necessary
-          required: true
-        - label: I have tested the bug with the latest version of the plugin
-          required: true
-        - label: I have checked GitHub for existing bugs
+        - label: I have checked the plugin's GitHub repository and haven't found any similar bugs
           required: true
