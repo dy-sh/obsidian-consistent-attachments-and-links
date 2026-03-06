@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.33.4
+
+- chore: update template
+
 ## 3.33.3
 
 - feat: safer trashing
