@@ -1,5 +1,9 @@
 # Consistent Attachments and Links
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov)
+[![GitHub release](https://img.shields.io/github/v/release/dy-sh/obsidian-consistent-attachments-and-links)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases)
+[![GitHub downloads](https://img.shields.io/github/downloads/dy-sh/obsidian-consistent-attachments-and-links/total)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases)
+
 The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your vault to make it more consistent. Next, the plugin will automatically maintain the consistency of your library.
 
 > [!WARNING]
@@ -167,8 +171,14 @@ For more details, refer to the [documentation](https://github.com/mnaoumov/obsid
 ## Support
 
 <!-- markdownlint-disable MD033 -->
+
 <a href="https://www.buymeacoffee.com/mnaoumov" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
+
 <!-- markdownlint-enable MD033 -->
+
+## My other Obsidian resources
+
+[See my other Obsidian resources](https://github.com/mnaoumov/obsidian-resources).
 
 ## License
 

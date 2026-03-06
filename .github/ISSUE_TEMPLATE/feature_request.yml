@@ -7,7 +7,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## Feature Request
+        ## Feature request
+
+        > [!WARNING]
+        >
+        > Incomplete, vague, or poorly described requests will be closed.
   - type: textarea
     attributes:
       label: Description
@@ -16,34 +20,55 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Details
-      description: Provide a step-by-step description.
-      value: |
-        1. Go to '...'
-        2. Click on '...'
-        3. Notice that '...'
-        ...
+      label: Use case
+      description: Describe a scenario where this feature would be useful.
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Desired Behavior
+      label: Desired behavior
       description: What do you want to happen?
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Current Behavior
+      label: Current behavior
       description: What actually happens?
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Plugin version
+      description: ⚠️ Must be the latest version. If not, explain why above.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Obsidian version
+      description: ⚠️ Must be the latest version. If not, explain why above.
+      placeholder: 1.3.2
     validations:
       required: true
   - type: textarea
     attributes:
       label: Attachments
-      description: Required for feature investigation
-      value: |
-        - Please attach a video showing the current behavior. It is not mandatory, but might be very helpful to speed up the feature implementation
-        - Please attach a sample vault where the desired Feature Request could be applied. It is not mandatory, but might be very helpful to speed up the feature implementation
+      description: Attach a video and a sample vault.
+      placeholder: Drag and drop files here.
+  - type: dropdown
+    attributes:
+      label: Video
+      options:
+        - "Not attached. ⚠️ Providing a video helps the maintainer understand the request and speeds up implementation."
+        - "Attached"
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Sample vault
+      options:
+        - "Not attached. ⚠️ Providing a sample vault helps the maintainer understand the request and speeds up implementation."
+        - "Attached"
     validations:
       required: true
   - type: checkboxes
@@ -51,11 +76,5 @@ body:
       label: Confirmations
       description: Ensure the following conditions are met
       options:
-        - label: I attached a video showing the current behavior, or it is not necessary
-          required: true
-        - label: I attached a sample vault where the desired Feature Request could be applied, or it is not necessary
-          required: true
-        - label: I have tested the absence of the requested feature with the latest version of the plugin
-          required: true
-        - label: I have checked GitHub for existing Feature Requests
+        - label: I have checked the plugin's GitHub repository and haven't found any similar feature requests
           required: true
