@@ -12,6 +12,8 @@ body:
         > [!WARNING]
         >
         > Both a video and a sample vault are required for bug reproduction. Incomplete, vague, or poorly described bug reports will be closed.
+        >
+        > The bug report and all attachments (screenshots, videos, sample vaults) must be in English. Exception: the bug is directly related to non-English language usage. Non-English bug reports will be closed.
   - type: textarea
     attributes:
       label: Description
