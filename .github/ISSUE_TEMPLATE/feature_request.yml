@@ -12,6 +12,8 @@ body:
         > [!WARNING]
         >
         > Incomplete, vague, or poorly described requests will be closed.
+        >
+        > The feature request and all attachments (screenshots, videos, sample vaults) must be in English. Exception: the request is directly related to non-English language usage. Non-English feature requests will be closed.
   - type: textarea
     attributes:
       label: Description
