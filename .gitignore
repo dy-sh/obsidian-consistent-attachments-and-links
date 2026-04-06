@@ -25,3 +25,5 @@ dist
 .env
 
 /tsconfig.tsbuildinfo
+
+.claude/settings.local.json

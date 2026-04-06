@@ -1,6 +1,6 @@
 name: Bug report
 description: Report a bug and help improve the plugin
-title: "[BUG] Short description of the bug"
+title: "[BUG] Don't forget to write a meaningful title"
 labels: bug
 assignees: mnaoumov
 body:

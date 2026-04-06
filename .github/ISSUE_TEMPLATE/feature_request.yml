@@ -1,6 +1,6 @@
 name: Feature request
 description: Request a feature and help improve the plugin
-title: "[FR] Short description of the feature"
+title: "[FR] Don't forget to write a meaningful title"
 labels: enhancement
 assignees: mnaoumov
 body:
