@@ -1,8 +1,3 @@
-import type { UserConfig } from '@commitlint/types';
+import { config } from './scripts/commitlint-config.ts';
 
-const config: UserConfig = {
-  extends: ['@commitlint/config-conventional']
-};
-
-// eslint-disable-next-line import-x/no-default-export -- Commitlint infrastructure requires a default export.
 export default config;

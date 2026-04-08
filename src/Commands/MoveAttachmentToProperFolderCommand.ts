@@ -8,7 +8,7 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/AbortController';
-import { toJson } from 'obsidian-dev-utils/ObjectUtils';
+import { toJson } from 'obsidian-dev-utils/object-utils';
 import {
   AbstractFileCommandBase,
   AbstractFileCommandInvocationBase,

@@ -11,8 +11,8 @@ import {
   resolveSubpath,
   TFile
 } from 'obsidian';
-import { noop } from 'obsidian-dev-utils/Function';
-import { normalizeOptionalProperties } from 'obsidian-dev-utils/ObjectUtils';
+import { noop } from 'obsidian-dev-utils/function';
+import { normalizeOptionalProperties } from 'obsidian-dev-utils/object-utils';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/FileChange';
 import {
   getFileOrNull,
@@ -36,7 +36,7 @@ import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/Reference';
 import {
   dirname,
   join
-} from 'obsidian-dev-utils/Path';
+} from 'obsidian-dev-utils/path';
 import {
   isFrontmatterLinkCache,
   isReferenceCache

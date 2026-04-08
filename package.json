@@ -4,22 +4,21 @@
   "description": "This plugin ensures the consistency of attachments and links",
   "main": "main.js",
   "scripts": {
-    "build": "obsidian-dev-utils build",
-    "build:clean": "obsidian-dev-utils build:clean",
-    "build:compile": "obsidian-dev-utils build:compile",
-    "build:compile:svelte": "obsidian-dev-utils build:compile:svelte",
-    "build:compile:typescript": "obsidian-dev-utils build:compile:typescript",
-    "commit": "cz",
-    "dev": "obsidian-dev-utils dev",
-    "format": "obsidian-dev-utils format",
-    "format:check": "obsidian-dev-utils format:check",
-    "lint": "obsidian-dev-utils lint",
-    "lint:fix": "obsidian-dev-utils lint:fix",
-    "lint:md": "obsidian-dev-utils lint:md",
-    "lint:md:fix": "obsidian-dev-utils lint:md:fix",
-    "prepare": "husky",
-    "spellcheck": "obsidian-dev-utils spellcheck",
-    "version": "obsidian-dev-utils version"
+    "build": "jiti scripts/build.ts",
+    "build:clean": "jiti scripts/build-clean.ts",
+    "build:compile": "jiti scripts/build-compile.ts",
+    "build:compile:typescript": "jiti scripts/build-compile-typescript.ts",
+    "commit": "jiti scripts/commit.ts",
+    "dev": "jiti scripts/dev.ts",
+    "format": "jiti scripts/format.ts",
+    "format:check": "jiti scripts/format-check.ts",
+    "lint": "jiti scripts/lint.ts",
+    "lint:fix": "jiti scripts/lint-fix.ts",
+    "lint:md": "jiti scripts/lint-md.ts",
+    "lint:md:fix": "jiti scripts/lint-md-fix.ts",
+    "prepare": "jiti scripts/prepare.ts",
+    "spellcheck": "jiti scripts/spellcheck.ts",
+    "version": "jiti scripts/version.ts"
   },
   "keywords": [],
   "author": "Dmitry Savosh",
@@ -34,8 +33,10 @@
     "better-typescript-lib": "latest",
     "commitizen": "latest",
     "cz-conventional-changelog": "latest",
+    "eslint": "latest",
     "husky": "latest",
     "jiti": "latest",
+    "nano-staged": "latest",
     "obsidian": "latest",
     "obsidian-dev-utils": "latest",
     "obsidian-typings": "obsidian-public-latest"
@@ -45,6 +46,8 @@
     "@antfu/utils": "9.2.0",
     "boolean": "npm:dry-uninstall",
     "dompurify": "3.0.1",
-    "type-fest": "latest"
+    "eslint": "latest",
+    "type-fest": "latest",
+    "typescript": "latest"
   }
 }

@@ -1,7 +1,7 @@
 import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/FileSystem';
 
 import { TFile } from 'obsidian';
-import { noop } from 'obsidian-dev-utils/Function';
+import { noop } from 'obsidian-dev-utils/function';
 import {
   AttachmentPathContext,
   getAttachmentFilePath
@@ -31,8 +31,8 @@ import {
   trashSafe
 } from 'obsidian-dev-utils/obsidian/Vault';
 import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/VaultDelete';
-import { dirname } from 'obsidian-dev-utils/Path';
-import { trimStart } from 'obsidian-dev-utils/String';
+import { dirname } from 'obsidian-dev-utils/path';
+import { trimStart } from 'obsidian-dev-utils/string';
 
 import type { PathChangeInfo } from './links-handler.ts';
 import type { Plugin } from './Plugin.ts';

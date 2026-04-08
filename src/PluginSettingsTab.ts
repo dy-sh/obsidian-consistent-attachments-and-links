@@ -1,10 +1,10 @@
 import { setIcon } from 'obsidian';
-import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
+import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
-import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
+import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
+import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
-import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
+import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
 
 import type { PluginSettings } from './PluginSettings.ts';
 import type { PluginTypes } from './PluginTypes.ts';

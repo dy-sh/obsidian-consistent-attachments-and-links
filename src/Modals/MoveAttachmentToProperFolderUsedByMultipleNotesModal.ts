@@ -1,12 +1,12 @@
 import type { App } from 'obsidian';
-import type { PromiseResolve } from 'obsidian-dev-utils/Async';
+import type { PromiseResolve } from 'obsidian-dev-utils/async';
 
 import {
   Modal,
   Setting
 } from 'obsidian';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
-import { createFragmentAsync } from 'obsidian-dev-utils/HTMLElement';
+import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
+import { createFragmentAsync } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { renderInternalLink } from 'obsidian-dev-utils/obsidian/Markdown';
 
