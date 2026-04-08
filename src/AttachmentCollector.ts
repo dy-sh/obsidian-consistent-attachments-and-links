@@ -4,7 +4,7 @@ import type {
   TAbstractFile
 } from 'obsidian';
 import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/FileSystem';
-import type { MaybeReturn } from 'obsidian-dev-utils/Type';
+import type { MaybeReturn } from 'obsidian-dev-utils/type';
 import type { CanvasData } from 'obsidian/canvas.d.ts';
 
 import {
@@ -15,8 +15,8 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/AbortController';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
-import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
+import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
+import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   AttachmentPathContext,
   getAttachmentFilePath
@@ -41,7 +41,7 @@ import {
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
 import { confirm } from 'obsidian-dev-utils/obsidian/Modals/Confirm';
-import { addToQueue } from 'obsidian-dev-utils/obsidian/Queue';
+import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import {
   copySafe,
   renameSafe

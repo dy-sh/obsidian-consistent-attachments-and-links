@@ -1,4 +1,4 @@
-import type { PluginTypesBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginTypesBase';
+import type { PluginTypesBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-types-base';
 
 import type { defaultTranslations } from './i18n/locales/default.ts';
 import type { Plugin } from './Plugin.ts';

@@ -10,21 +10,21 @@ import {
   setIcon,
   TFile
 } from 'obsidian';
-import { omitAsyncReturnType } from 'obsidian-dev-utils/Function';
+import { omitAsyncReturnType } from 'obsidian-dev-utils/function';
 import {
   getOrCreateFile,
   isMarkdownFile
 } from 'obsidian-dev-utils/obsidian/FileSystem';
 import { loop } from 'obsidian-dev-utils/obsidian/Loop';
-import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
-import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
-import { addToQueue } from 'obsidian-dev-utils/obsidian/Queue';
+import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
+import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-base';
+import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import {
   createFolderSafe,
   getMarkdownFilesSorted
 } from 'obsidian-dev-utils/obsidian/Vault';
-import { dirname } from 'obsidian-dev-utils/Path';
+import { dirname } from 'obsidian-dev-utils/path';
 
 import type { PluginSettings } from './PluginSettings.ts';
 import type { PluginTypes } from './PluginTypes.ts';

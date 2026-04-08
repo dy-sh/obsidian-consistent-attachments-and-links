@@ -1,6 +1,6 @@
-import type { MaybeReturn } from 'obsidian-dev-utils/Type';
+import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
-import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
+import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-manager-base';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 
