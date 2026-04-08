@@ -1,5 +1,5 @@
-import { PathSettings } from 'obsidian-dev-utils/obsidian/Plugin/PathSettings';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { PathSettings } from 'obsidian-dev-utils/obsidian/plugin/path-settings';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 
 export enum CollectAttachmentUsedByMultipleNotesMode {
   Cancel = 'Cancel',

@@ -7,27 +7,27 @@ import {
   Notice,
   Vault
 } from 'obsidian';
-import { abortSignalAny } from 'obsidian-dev-utils/AbortController';
+import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { toJson } from 'obsidian-dev-utils/object-utils';
 import {
   AbstractFileCommandBase,
   AbstractFileCommandInvocationBase,
   AbstractFilesCommandInvocationBase,
   ArrayDelegatingAbstractFileCommandInvocation
-} from 'obsidian-dev-utils/obsidian/Commands/AbstractFileCommandBase';
+} from 'obsidian-dev-utils/obsidian/commands/abstract-file-command-base';
 import {
   isFile,
   isFolder
-} from 'obsidian-dev-utils/obsidian/FileSystem';
+} from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   editLinks,
   updateLink
-} from 'obsidian-dev-utils/obsidian/Link';
-import { loop } from 'obsidian-dev-utils/obsidian/Loop';
-import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/MetadataCache';
-import { copySafe } from 'obsidian-dev-utils/obsidian/Vault';
-import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/VaultDelete';
+} from 'obsidian-dev-utils/obsidian/link';
+import { loop } from 'obsidian-dev-utils/obsidian/loop';
+import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
+import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 
 import type { Plugin } from '../Plugin.ts';
 

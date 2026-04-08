@@ -3,7 +3,7 @@ import type { TFolder } from 'obsidian';
 import {
   FolderCommandBase,
   FolderCommandInvocationBase
-} from 'obsidian-dev-utils/obsidian/Commands/FolderCommandBase';
+} from 'obsidian-dev-utils/obsidian/commands/folder-command-base';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
 import type { Plugin } from '../Plugin.ts';

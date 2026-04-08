@@ -3,7 +3,7 @@ import type {
   ReferenceCache,
   TAbstractFile
 } from 'obsidian';
-import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/FileSystem';
+import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 import type { CanvasData } from 'obsidian/canvas.d.ts';
 
@@ -14,38 +14,38 @@ import {
   TFile,
   Vault
 } from 'obsidian';
-import { abortSignalAny } from 'obsidian-dev-utils/AbortController';
+import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   AttachmentPathContext,
   getAttachmentFilePath
-} from 'obsidian-dev-utils/obsidian/AttachmentPath';
+} from 'obsidian-dev-utils/obsidian/attachment-path';
 import {
   getPath,
   isCanvasFile,
   isFile,
   isFolder,
   isNote
-} from 'obsidian-dev-utils/obsidian/FileSystem';
+} from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   editLinks,
   extractLinkFile,
   updateLink
-} from 'obsidian-dev-utils/obsidian/Link';
-import { loop } from 'obsidian-dev-utils/obsidian/Loop';
+} from 'obsidian-dev-utils/obsidian/link';
+import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import {
   getAllLinks,
   getBacklinksForFileSafe,
   getCacheSafe
-} from 'obsidian-dev-utils/obsidian/MetadataCache';
-import { confirm } from 'obsidian-dev-utils/obsidian/Modals/Confirm';
+} from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import {
   copySafe,
   renameSafe
-} from 'obsidian-dev-utils/obsidian/Vault';
+} from 'obsidian-dev-utils/obsidian/vault';
 
 import type { Plugin } from './Plugin.ts';
 

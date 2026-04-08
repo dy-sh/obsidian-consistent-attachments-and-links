@@ -8,7 +8,7 @@ import {
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { createFragmentAsync } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { renderInternalLink } from 'obsidian-dev-utils/obsidian/Markdown';
+import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../PluginSettings.ts';
 

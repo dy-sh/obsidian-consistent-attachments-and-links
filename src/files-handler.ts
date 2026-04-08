@@ -1,26 +1,26 @@
-import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/FileSystem';
+import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
 
 import { TFile } from 'obsidian';
 import { noop } from 'obsidian-dev-utils/function';
 import {
   AttachmentPathContext,
   getAttachmentFilePath
-} from 'obsidian-dev-utils/obsidian/AttachmentPath';
+} from 'obsidian-dev-utils/obsidian/attachment-path';
 import {
   getFileOrNull,
   getPath,
   isNote
-} from 'obsidian-dev-utils/obsidian/FileSystem';
+} from 'obsidian-dev-utils/obsidian/file-system';
 import {
   extractLinkFile,
   splitSubpath,
   testEmbed
-} from 'obsidian-dev-utils/obsidian/Link';
+} from 'obsidian-dev-utils/obsidian/link';
 import {
   getAllLinks,
   getCacheSafe
-} from 'obsidian-dev-utils/obsidian/MetadataCache';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+} from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import {
   copySafe,
   createFolderSafe,
@@ -29,8 +29,8 @@ import {
   listSafe,
   renameSafe,
   trashSafe
-} from 'obsidian-dev-utils/obsidian/Vault';
-import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/VaultDelete';
+} from 'obsidian-dev-utils/obsidian/vault';
+import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 import { dirname } from 'obsidian-dev-utils/path';
 import { trimStart } from 'obsidian-dev-utils/string';
 

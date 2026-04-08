@@ -1,4 +1,4 @@
-import type { CustomTypeOptionsBase } from 'obsidian-dev-utils/obsidian/i18n/CustomTypeOptionsBase';
+import type { CustomTypeOptionsBase } from 'obsidian-dev-utils/obsidian/i18n/custom-type-options-base';
 
 import type { PluginTypes } from '../PluginTypes.ts';
 

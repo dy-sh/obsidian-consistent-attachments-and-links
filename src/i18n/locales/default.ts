@@ -1,4 +1,4 @@
-import type { DefaultTranslationsBase } from 'obsidian-dev-utils/obsidian/i18n/DefaultTranslationsBase';
+import type { DefaultTranslationsBase } from 'obsidian-dev-utils/obsidian/i18n/default-translations-base';
 
 export const defaultTranslations = {
   attachmentCollector: {
