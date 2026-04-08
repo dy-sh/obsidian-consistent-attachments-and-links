@@ -3,7 +3,7 @@ import type { TFile } from 'obsidian';
 import {
   FileCommandBase,
   FileCommandInvocationBase
-} from 'obsidian-dev-utils/obsidian/Commands/FileCommandBase';
+} from 'obsidian-dev-utils/obsidian/commands/file-command-base';
 
 import type { Plugin } from '../Plugin.ts';
 

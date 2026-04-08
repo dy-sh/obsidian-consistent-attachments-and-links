@@ -2,8 +2,8 @@ import type {
   Reference,
   ReferenceCache
 } from 'obsidian';
-import type { FileChange } from 'obsidian-dev-utils/obsidian/FileChange';
-import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/Link';
+import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
+import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/link';
 
 import {
   App,
@@ -13,11 +13,11 @@ import {
 } from 'obsidian';
 import { noop } from 'obsidian-dev-utils/function';
 import { normalizeOptionalProperties } from 'obsidian-dev-utils/object-utils';
-import { applyFileChanges } from 'obsidian-dev-utils/obsidian/FileChange';
+import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
   getFileOrNull,
   MARKDOWN_FILE_EXTENSION
-} from 'obsidian-dev-utils/obsidian/FileSystem';
+} from 'obsidian-dev-utils/obsidian/file-system';
 import {
   extractLinkFile,
   generateMarkdownLink,
@@ -26,13 +26,13 @@ import {
   splitSubpath,
   testWikilink,
   updateLinksInFile
-} from 'obsidian-dev-utils/obsidian/Link';
+} from 'obsidian-dev-utils/obsidian/link';
 import {
   getAllLinks,
   getBacklinksForFileSafe,
   getCacheSafe
-} from 'obsidian-dev-utils/obsidian/MetadataCache';
-import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/Reference';
+} from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/reference';
 import {
   dirname,
   join
@@ -57,6 +57,14 @@ export interface PathChangeInfo {
 export interface ReferenceChangeInfo {
   newLink: string;
   old: ReferenceCache;
+}
+
+interface ConvertLinkParams {
+  forceRelativePath?: boolean | undefined;
+  link: Reference;
+  note: TFile;
+  oldNotePath: string;
+  pathChangeMap?: Map<string, string> | undefined;
 }
 
 export class ConsistencyCheckResult extends Map<string, Reference[]> {
@@ -278,13 +286,7 @@ export class LinksHandler {
     note,
     oldNotePath,
     pathChangeMap
-  }: {
-    forceRelativePath?: boolean | undefined;
-    link: Reference;
-    note: TFile;
-    oldNotePath: string;
-    pathChangeMap?: Map<string, string> | undefined;
-  }): string {
+  }: ConvertLinkParams): string {
     const { linkPath, subpath } = splitSubpath(link.link);
     const oldLinkPath = extractLinkFile(this.plugin.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
     const newLinkPath = pathChangeMap

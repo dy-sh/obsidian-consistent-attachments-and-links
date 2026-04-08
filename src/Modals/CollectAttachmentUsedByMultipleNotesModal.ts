@@ -11,7 +11,7 @@ import {
   createFragmentAsync
 } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { renderInternalLink } from 'obsidian-dev-utils/obsidian/Markdown';
+import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
 import { CollectAttachmentUsedByMultipleNotesMode } from '../PluginSettings.ts';
 

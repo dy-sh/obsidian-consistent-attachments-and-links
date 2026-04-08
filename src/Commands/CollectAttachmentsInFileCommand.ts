@@ -5,11 +5,11 @@ import {
   AbstractFileCommandInvocationBase,
   AbstractFilesCommandInvocationBase,
   ArrayDelegatingAbstractFileCommandInvocation
-} from 'obsidian-dev-utils/obsidian/Commands/AbstractFileCommandBase';
+} from 'obsidian-dev-utils/obsidian/commands/abstract-file-command-base';
 import {
   isFile,
   isNote
-} from 'obsidian-dev-utils/obsidian/FileSystem';
+} from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
 import type { Plugin } from '../Plugin.ts';
