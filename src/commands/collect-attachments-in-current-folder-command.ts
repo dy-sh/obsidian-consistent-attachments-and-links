@@ -6,9 +6,9 @@ import {
 } from 'obsidian-dev-utils/obsidian/commands/folder-command-base';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
-import type { Plugin } from '../Plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
-import { collectAttachmentsInAbstractFiles } from '../AttachmentCollector.ts';
+import { collectAttachmentsInAbstractFiles } from '../attachment-collector.ts';
 
 class CollectAttachmentsInFolderCommandInvocation extends FolderCommandInvocationBase<Plugin> {
   public constructor(plugin: Plugin, folder: null | TFolder) {

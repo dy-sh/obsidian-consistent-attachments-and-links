@@ -26,36 +26,36 @@ import {
 } from 'obsidian-dev-utils/obsidian/vault';
 import { dirname } from 'obsidian-dev-utils/path';
 
-import type { PluginSettings } from './PluginSettings.ts';
-import type { PluginTypes } from './PluginTypes.ts';
+import type { PluginSettings } from './plugin-settings.ts';
+import type { PluginTypes } from './plugin-types.ts';
 
 import {
   collectAttachmentsEntireVault,
   collectAttachmentsInAbstractFiles
-} from './AttachmentCollector.ts';
-import { CheckConsistencyCommand } from './Commands/CheckConsistencyCommand.ts';
-import { CollectAttachmentsEntireVaultCommand } from './Commands/CollectAttachmentsEntireVaultCommand.ts';
-import { CollectAttachmentsInCurrentFolderCommand } from './Commands/CollectAttachmentsInCurrentFolderCommand.ts';
-import { CollectAttachmentsInFileCommand } from './Commands/CollectAttachmentsInFileCommand.ts';
-import { ConvertAllEmbedsPathsToRelativeCommand } from './Commands/ConvertAllEmbedsPathsToRelativeCommand.ts';
-import { ConvertAllEmbedsPathsToRelativeCurrentNoteCommand } from './Commands/ConvertAllEmbedsPathsToRelativeCurrentNoteCommand.ts';
-import { ConvertAllLinkPathsToRelativeCommand } from './Commands/ConvertAllLinkPathsToRelativeCommand.ts';
-import { ConvertAllLinkPathsToRelativeCurrentNoteCommand } from './Commands/ConvertAllLinkPathsToRelativeCurrentNoteCommand.ts';
-import { DeleteEmptyFoldersCommand } from './Commands/DeleteEmptyFoldersCommand.ts';
-import { MoveAttachmentToProperFolderCommand } from './Commands/MoveAttachmentToProperFolderCommand.ts';
-import { ReorganizeVaultCommand } from './Commands/ReorganizeVaultCommand.ts';
-import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCommand } from './Commands/ReplaceAllWikiEmbedsWithMarkdownEmbedsCommand.ts';
-import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommand } from './Commands/ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommand.ts';
-import { ReplaceAllWikilinksWithMarkdownLinksCommand } from './Commands/ReplaceAllWikilinksWithMarkdownLinksCommand.ts';
-import { ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommand } from './Commands/ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommand.ts';
+} from './attachment-collector.ts';
+import { CheckConsistencyCommand } from './commands/check-consistency-command.ts';
+import { CollectAttachmentsEntireVaultCommand } from './commands/collect-attachments-entire-vault-command.ts';
+import { CollectAttachmentsInCurrentFolderCommand } from './commands/collect-attachments-in-current-folder-command.ts';
+import { CollectAttachmentsInFileCommand } from './commands/collect-attachments-in-file-command.ts';
+import { ConvertAllEmbedsPathsToRelativeCommand } from './commands/convert-all-embeds-paths-to-relative-command.ts';
+import { ConvertAllEmbedsPathsToRelativeCurrentNoteCommand } from './commands/convert-all-embeds-paths-to-relative-current-note-command.ts';
+import { ConvertAllLinkPathsToRelativeCommand } from './commands/convert-all-link-paths-to-relative-command.ts';
+import { ConvertAllLinkPathsToRelativeCurrentNoteCommand } from './commands/convert-all-link-paths-to-relative-current-note-command.ts';
+import { DeleteEmptyFoldersCommand } from './commands/delete-empty-folders-command.ts';
+import { MoveAttachmentToProperFolderCommand } from './commands/move-attachment-to-proper-folder-command.ts';
+import { ReorganizeVaultCommand } from './commands/reorganize-vault-command.ts';
+import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCommand } from './commands/replace-all-wiki-embeds-with-markdown-embeds-command.ts';
+import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommand } from './commands/replace-all-wiki-embeds-with-markdown-embeds-current-note-command.ts';
+import { ReplaceAllWikilinksWithMarkdownLinksCommand } from './commands/replace-all-wikilinks-with-markdown-links-command.ts';
+import { ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommand } from './commands/replace-all-wikilinks-with-markdown-links-current-note-command.ts';
 import { FilesHandler } from './files-handler.ts';
-import { translationsMap } from './i18n/locales/translationsMap.ts';
+import { translationsMap } from './i18n/locales/translations-map.ts';
 import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
-import { PluginSettingsManager } from './PluginSettingsManager.ts';
-import { PluginSettingsTab } from './PluginSettingsTab.ts';
+import { PluginSettingsManager } from './plugin-settings-manager.ts';
+import { PluginSettingsTab } from './plugin-settings-tab.ts';
 
 export class Plugin extends PluginBase<PluginTypes> {
   private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();

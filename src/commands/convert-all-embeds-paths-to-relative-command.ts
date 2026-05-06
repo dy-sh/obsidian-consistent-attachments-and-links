@@ -1,29 +1,29 @@
 import { CommandInvocationBase } from 'obsidian-dev-utils/obsidian/commands/command-base';
 import { NonEditorCommandBase } from 'obsidian-dev-utils/obsidian/commands/non-editor-command-base';
 
-import type { Plugin } from '../Plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
-class ConvertAllLinkPathsToRelativeCommandInvocation extends CommandInvocationBase<Plugin> {
+class ConvertAllEmbedsPathsToRelativeCommandInvocation extends CommandInvocationBase<Plugin> {
   public constructor(plugin: Plugin) {
     super(plugin);
   }
 
   protected override async execute(): Promise<void> {
-    await this.plugin.convertAllLinkPathsToRelative(this.plugin.abortSignal);
+    await this.plugin.convertAllEmbedsPathsToRelative();
   }
 }
 
-export class ConvertAllLinkPathsToRelativeCommand extends NonEditorCommandBase<Plugin> {
+export class ConvertAllEmbedsPathsToRelativeCommand extends NonEditorCommandBase<Plugin> {
   public constructor(plugin: Plugin) {
     super({
       icon: 'activity',
-      id: 'convert-all-link-paths-to-relative',
-      name: 'Convert all link paths to relative',
+      id: 'convert-all-embed-paths-to-relative',
+      name: 'Convert all embed paths to relative',
       plugin
     });
   }
 
   protected override createCommandInvocation(): CommandInvocationBase {
-    return new ConvertAllLinkPathsToRelativeCommandInvocation(this.plugin);
+    return new ConvertAllEmbedsPathsToRelativeCommandInvocation(this.plugin);
   }
 }

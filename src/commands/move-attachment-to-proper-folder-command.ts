@@ -29,15 +29,15 @@ import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-ca
 import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
 import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 
-import type { Plugin } from '../Plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
-import { ActionContext } from '../ActionContext.ts';
+import { ActionContext } from '../action-context.ts';
 import {
   getProperAttachmentPath,
   isNoteEx
-} from '../AttachmentCollector.ts';
-import { selectMode } from '../Modals/MoveAttachmentToProperFolderUsedByMultipleNotesModal.ts';
-import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../PluginSettings.ts';
+} from '../attachment-collector.ts';
+import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
+import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 interface MoveAttachmentToProperFolderContext {
   mode?: MoveAttachmentToProperFolderUsedByMultipleNotesMode;

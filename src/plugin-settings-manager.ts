@@ -4,9 +4,9 @@ import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/plugin/pl
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
 
-import type { PluginTypes } from './PluginTypes.ts';
+import type { PluginTypes } from './plugin-types.ts';
 
-import { PluginSettings } from './PluginSettings.ts';
+import { PluginSettings } from './plugin-settings.ts';
 
 class LegacySettings {
   public autoCollectAttachments = false;

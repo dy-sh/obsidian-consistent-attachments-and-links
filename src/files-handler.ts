@@ -35,7 +35,7 @@ import { dirname } from 'obsidian-dev-utils/path';
 import { trimStart } from 'obsidian-dev-utils/string';
 
 import type { PathChangeInfo } from './links-handler.ts';
-import type { Plugin } from './Plugin.ts';
+import type { Plugin } from './plugin.ts';
 
 import { LinksHandler } from './links-handler.ts';
 

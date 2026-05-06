@@ -13,7 +13,7 @@ import {
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
-import { CollectAttachmentUsedByMultipleNotesMode } from '../PluginSettings.ts';
+import { CollectAttachmentUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 interface CollectAttachmentUsedByMultipleNotesModalResult {
   mode: CollectAttachmentUsedByMultipleNotesMode;

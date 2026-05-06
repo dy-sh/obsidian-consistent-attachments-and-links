@@ -1,29 +1,29 @@
 import { CommandInvocationBase } from 'obsidian-dev-utils/obsidian/commands/command-base';
 import { NonEditorCommandBase } from 'obsidian-dev-utils/obsidian/commands/non-editor-command-base';
 
-import type { Plugin } from '../Plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
-class CheckConsistencyCommandInvocation extends CommandInvocationBase<Plugin> {
+class ReorganizeVaultCommandInvocation extends CommandInvocationBase<Plugin> {
   public constructor(plugin: Plugin) {
     super(plugin);
   }
 
   protected override async execute(): Promise<void> {
-    await this.plugin.checkConsistency();
+    await this.plugin.reorganizeVault();
   }
 }
 
-export class CheckConsistencyCommand extends NonEditorCommandBase<Plugin> {
+export class ReorganizeVaultCommand extends NonEditorCommandBase<Plugin> {
   public constructor(plugin: Plugin) {
     super({
-      icon: 'check',
-      id: 'check-consistency',
-      name: 'Check vault consistency',
+      icon: 'sort-asc',
+      id: 'reorganize-vault',
+      name: 'Reorganize vault',
       plugin
     });
   }
 
   protected override createCommandInvocation(): CommandInvocationBase {
-    return new CheckConsistencyCommandInvocation(this.plugin);
+    return new ReorganizeVaultCommandInvocation(this.plugin);
   }
 }
