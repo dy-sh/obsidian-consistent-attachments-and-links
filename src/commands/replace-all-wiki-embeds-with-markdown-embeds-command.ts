@@ -1,7 +1,7 @@
 import { CommandInvocationBase } from 'obsidian-dev-utils/obsidian/commands/command-base';
 import { NonEditorCommandBase } from 'obsidian-dev-utils/obsidian/commands/non-editor-command-base';
 
-import type { Plugin } from '../Plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
 class ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandInvocation extends CommandInvocationBase<Plugin> {
   public constructor(plugin: Plugin) {

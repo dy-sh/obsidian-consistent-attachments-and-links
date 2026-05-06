@@ -5,7 +5,7 @@ import {
   FileCommandInvocationBase
 } from 'obsidian-dev-utils/obsidian/commands/file-command-base';
 
-import type { Plugin } from '../Plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
 class ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandInvocation extends FileCommandInvocationBase<Plugin> {
   public constructor(plugin: Plugin, file: null | TFile) {

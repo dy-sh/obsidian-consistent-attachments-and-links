@@ -47,11 +47,11 @@ import {
   renameSafe
 } from 'obsidian-dev-utils/obsidian/vault';
 
-import type { Plugin } from './Plugin.ts';
+import type { Plugin } from './plugin.ts';
 
-import { ActionContext } from './ActionContext.ts';
-import { selectMode } from './Modals/CollectAttachmentUsedByMultipleNotesModal.ts';
-import { CollectAttachmentUsedByMultipleNotesMode } from './PluginSettings.ts';
+import { ActionContext } from './action-context.ts';
+import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
+import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
 export interface GetProperAttachmentPathOptions {
   actionContext: ActionContext;

@@ -10,7 +10,7 @@ import { createFragmentAsync } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
-import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../PluginSettings.ts';
+import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 interface MoveAttachmentToProperFolderUsedByMultipleNotesModalResult {
   backlinksToCopy: string[];

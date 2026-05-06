@@ -42,7 +42,7 @@ import {
   isReferenceCache
 } from 'obsidian-typings/implementations';
 
-import type { Plugin } from './Plugin.ts';
+import type { Plugin } from './plugin.ts';
 
 export interface LinksAndEmbedsChangedInfo {
   embeds: ReferenceChangeInfo[];

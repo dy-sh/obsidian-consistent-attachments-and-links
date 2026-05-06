@@ -1,29 +1,29 @@
 import { CommandInvocationBase } from 'obsidian-dev-utils/obsidian/commands/command-base';
 import { NonEditorCommandBase } from 'obsidian-dev-utils/obsidian/commands/non-editor-command-base';
 
-import type { Plugin } from '../Plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
-class DeleteEmptyFoldersCommandInvocation extends CommandInvocationBase<Plugin> {
+class CheckConsistencyCommandInvocation extends CommandInvocationBase<Plugin> {
   public constructor(plugin: Plugin) {
     super(plugin);
   }
 
   protected override async execute(): Promise<void> {
-    await this.plugin.deleteEmptyFolders();
+    await this.plugin.checkConsistency();
   }
 }
 
-export class DeleteEmptyFoldersCommand extends NonEditorCommandBase<Plugin> {
+export class CheckConsistencyCommand extends NonEditorCommandBase<Plugin> {
   public constructor(plugin: Plugin) {
     super({
-      icon: 'trash',
-      id: 'delete-empty-folders',
-      name: 'Delete empty folders',
+      icon: 'check',
+      id: 'check-consistency',
+      name: 'Check vault consistency',
       plugin
     });
   }
 
   protected override createCommandInvocation(): CommandInvocationBase {
-    return new DeleteEmptyFoldersCommandInvocation(this.plugin);
+    return new CheckConsistencyCommandInvocation(this.plugin);
   }
 }

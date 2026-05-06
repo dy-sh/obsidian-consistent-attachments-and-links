@@ -6,13 +6,13 @@ import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
 
-import type { PluginSettings } from './PluginSettings.ts';
-import type { PluginTypes } from './PluginTypes.ts';
+import type { PluginSettings } from './plugin-settings.ts';
+import type { PluginTypes } from './plugin-types.ts';
 
 import {
   CollectAttachmentUsedByMultipleNotesMode,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
-} from './PluginSettings.ts';
+} from './plugin-settings.ts';
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
   public override display(): void {
