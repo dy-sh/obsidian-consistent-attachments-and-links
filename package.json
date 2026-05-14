@@ -2,6 +2,10 @@
   "name": "consistent-attachments-and-links",
   "version": "3.33.4",
   "description": "This plugin ensures the consistency of attachments and links",
+  "keywords": [],
+  "license": "MIT",
+  "author": "Dmitry Savosh",
+  "type": "module",
   "main": "main.js",
   "scripts": {
     "build": "jiti scripts/build.ts",
@@ -20,9 +24,14 @@
     "spellcheck": "jiti scripts/spellcheck.ts",
     "version": "jiti scripts/version.ts"
   },
-  "keywords": [],
-  "author": "Dmitry Savosh",
-  "license": "MIT",
+  "overrides": {
+    "@antfu/utils": "9.2.0",
+    "boolean": "npm:dry-uninstall",
+    "dompurify": "3.0.1",
+    "eslint": "latest",
+    "type-fest": "latest",
+    "typescript": "latest"
+  },
   "devDependencies": {
     "@commitlint/cli": "latest",
     "@commitlint/config-conventional": "latest",
@@ -31,8 +40,7 @@
     "@tsconfig/strictest": "latest",
     "@types/node": "25.0.3",
     "better-typescript-lib": "latest",
-    "commitizen": "latest",
-    "cz-conventional-changelog": "latest",
+    "czg": "latest",
     "eslint": "latest",
     "husky": "latest",
     "jiti": "latest",
@@ -40,14 +48,5 @@
     "obsidian": "latest",
     "obsidian-dev-utils": "latest",
     "obsidian-typings": "obsidian-public-latest"
-  },
-  "type": "module",
-  "overrides": {
-    "@antfu/utils": "9.2.0",
-    "boolean": "npm:dry-uninstall",
-    "dompurify": "3.0.1",
-    "eslint": "latest",
-    "type-fest": "latest",
-    "typescript": "latest"
   }
 }
