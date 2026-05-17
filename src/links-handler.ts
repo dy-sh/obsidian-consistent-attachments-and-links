@@ -40,7 +40,7 @@ import {
 import {
   isFrontmatterLinkCache,
   isReferenceCache
-} from 'obsidian-typings/implementations';
+} from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import type { Plugin } from './plugin.ts';
 

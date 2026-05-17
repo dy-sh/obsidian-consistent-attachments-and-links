@@ -1,0 +1,24 @@
+name: Attest Release Assets
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "${{ github.event.release.tag_name }}" --repo "${{ github.repository }}" --dir assets
+
+      - name: Generate artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: assets/*
