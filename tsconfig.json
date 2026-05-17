@@ -10,6 +10,7 @@
     "inlineSources": true,
     "lib": [
       "DOM",
+        "DOM.Iterable",
       "ESNext"
     ],
     "libReplacement": true,
@@ -22,7 +23,7 @@
     "types": [
       "@total-typescript/ts-reset",
       "node",
-      "obsidian-typings"
+      "@obsidian-typings/obsidian-public-latest"
     ],
     "verbatimModuleSyntax": true
   },
@@ -31,6 +32,7 @@
     "./commitlint.config.ts",
     "./eslint.config.mts",
     "./src/**/*.ts",
-    "./scripts/**/*.ts"
+    "./scripts/**/*.ts",
+    "./vitest.config.ts"
   ]
 }
