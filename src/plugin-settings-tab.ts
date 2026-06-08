@@ -1,21 +1,29 @@
+import type { PluginSettingsTabBaseConstructorParams } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
+
 import { setIcon } from 'obsidian';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
-import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
+import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
 
 import type { PluginSettings } from './plugin-settings.ts';
-import type { PluginTypes } from './plugin-types.ts';
 
 import {
   CollectAttachmentUsedByMultipleNotesMode,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
 } from './plugin-settings.ts';
 
-export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
+type PluginSettingsTabConstructorParams = PluginSettingsTabBaseConstructorParams<PluginSettings>;
+
+export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
+  public constructor(params: PluginSettingsTabConstructorParams) {
+    super(params);
+  }
+
   public override display(): void {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- super.display() calls the PluginSettingsTabBase override; the inherited @deprecated tag on Obsidian's SettingTab.display propagates via TS getJsDocTags.
     super.display();
     this.containerEl.empty();
 
@@ -248,17 +256,17 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .addDropdown((dropdown) => {
         dropdown.addOptions({
           /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(
+            ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText
           ),
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(
+            ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText
           ),
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(
+            ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText
           ),
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText
+          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(
+            ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText
           )
           /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
@@ -267,7 +275,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
   }
 
   private async checkDangerousSetting(settingKey: keyof PluginSettings, settingName: string): Promise<void> {
-    if (!this.plugin.settings[settingKey]) {
+    if (!this.pluginSettingsComponent.settings[settingKey]) {
       return;
     }
 

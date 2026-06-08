@@ -6,6 +6,7 @@ import {
   AttachmentPathContext,
   getAttachmentFilePath
 } from 'obsidian-dev-utils/obsidian/attachment-path';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   getFileOrNull,
   getPath,
@@ -20,7 +21,6 @@ import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import {
   copySafe,
   createFolderSafe,
@@ -52,7 +52,7 @@ export class FilesHandler {
   }
 
   public async collectAttachmentsForCachedNote(notePath: string): Promise<MovedAttachmentResult> {
-    if (this.plugin.settings.isPathIgnored(notePath)) {
+    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return { movedAttachments: [] };
     }
 
@@ -89,7 +89,7 @@ export class FilesHandler {
         continue;
       }
 
-      if (this.plugin.settings.isExcludedFromAttachmentCollecting(file.path)) {
+      if (this.plugin.pluginSettingsComponent.settings.isExcludedFromAttachmentCollecting(file.path)) {
         continue;
       }
 
@@ -114,7 +114,7 @@ export class FilesHandler {
   }
 
   public async deleteEmptyFolders(dirName: string): Promise<void> {
-    if (this.plugin.settings.isPathIgnored(dirName)) {
+    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(dirName)) {
       return;
     }
 
@@ -127,7 +127,6 @@ export class FilesHandler {
 
     list = await listSafe(this.plugin.app, dirName);
     if (list.files.length === 0 && list.folders.length === 0) {
-      this.plugin.consoleDebug(`delete empty folder: \n   ${dirName}`);
       if (await this.plugin.app.vault.exists(dirName)) {
         try {
           await this.plugin.app.vault.adapter.rmdir(dirName, false);
@@ -146,7 +145,7 @@ export class FilesHandler {
     }
 
     const path = getPath(this.plugin.app, pathOrFile);
-    return this.plugin.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
+    return this.plugin.pluginSettingsComponent.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
   }
 
   private async createFolderForAttachmentFromPath(filePath: string): Promise<void> {
@@ -158,7 +157,7 @@ export class FilesHandler {
     if (!file.parent) {
       return;
     }
-    switch (this.plugin.settings.emptyFolderBehavior) {
+    switch (this.plugin.pluginSettingsComponent.settings.emptyFolderBehavior) {
       case EmptyFolderBehavior.Delete:
         await deleteIfNotUsed(this.plugin.app, file.parent, undefined, undefined, true);
         break;
@@ -181,7 +180,7 @@ export class FilesHandler {
       movedAttachments: []
     };
 
-    if (this.plugin.settings.isPathIgnored(path)) {
+    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(path)) {
       return result;
     }
 
@@ -210,15 +209,13 @@ export class FilesHandler {
     const isMove = linkedNotes.length === 0;
     const newLinkFile = getFileOrNull(this.plugin.app, newLinkPath);
     if (newLinkFile) {
-      if (this.plugin.settings.shouldDeleteExistingFilesWhenMovingNote) {
-        this.plugin.consoleDebug(`delete: ${newLinkPath}`);
+      if (this.plugin.pluginSettingsComponent.settings.shouldDeleteExistingFilesWhenMovingNote) {
         await this.deleteFile(newLinkFile);
       } else {
         newLinkPath = getAvailablePath(this.plugin.app, newLinkPath);
       }
     }
 
-    this.plugin.consoleDebug(`${isMove ? 'move' : 'copy'}\n  from: ${path}\n  to: ${newLinkPath}`);
     result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
     if (isMove) {
       await renameSafe(this.plugin.app, file, newLinkPath);
@@ -227,7 +224,7 @@ export class FilesHandler {
     }
 
     if (oldFolder) {
-      switch (this.plugin.settings.emptyFolderBehavior) {
+      switch (this.plugin.pluginSettingsComponent.settings.emptyFolderBehavior) {
         case EmptyFolderBehavior.Delete:
           await deleteIfNotUsed(this.plugin.app, oldFolder, undefined, undefined, true);
           break;
