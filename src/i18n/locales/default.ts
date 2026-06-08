@@ -1,6 +1,9 @@
-import type { DefaultTranslationsBase } from 'obsidian-dev-utils/obsidian/i18n/default-translations-base';
+import type { DefaultTranslationsBase } from 'obsidian-dev-utils/obsidian/i18n/default-translations';
+
+import { en as obsidianDevUtilsEn } from 'obsidian-dev-utils/obsidian/i18n/locales/en';
 
 export const defaultTranslations = {
+  ...obsidianDevUtilsEn,
   attachmentCollector: {
     confirm: {
       part1: 'Do you want to collect attachments for all notes in folders recursively?',
@@ -61,20 +64,6 @@ export const defaultTranslations = {
       part2: 'setting.'
     },
     notePathIsIgnored: 'Note path is ignored'
-  },
-  obsidianDevUtils: {
-    buttons: {
-      cancel: 'Cancel',
-      ok: 'OK'
-    },
-    dataview: {
-      itemsPerPage: 'Items per page:',
-      jumpToPage: 'Jump to page:'
-    },
-    notices: {
-      attachmentIsStillUsed: 'Attachment {{attachmentPath}} is still used by other notes. It will not be deleted.',
-      unhandledError: 'An unhandled error occurred. Please check the console for more information.'
-    }
   },
   pluginSettings: {
     attachmentRenameMode: {

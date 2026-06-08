@@ -49,16 +49,14 @@ import {
 
 import type { Plugin } from './plugin.ts';
 
-import { ActionContext } from './action-context.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
 export interface GetProperAttachmentPathOptions {
-  actionContext: ActionContext;
-  attachmentFile: TFile;
-  noteFilePath: string;
-  plugin: Plugin;
-  reference: Reference;
+  readonly attachmentFile: TFile;
+  readonly noteFilePath: string;
+  readonly plugin: Plugin;
+  readonly reference: Reference;
 }
 
 interface AttachmentMoveResult {
@@ -121,7 +119,7 @@ export async function collectAttachments(
         continue;
       }
 
-      if (plugin.settings.isExcludedFromAttachmentCollecting(attachmentMoveResult.oldAttachmentPath)) {
+      if (plugin.pluginSettingsComponent.settings.isExcludedFromAttachmentCollecting(attachmentMoveResult.oldAttachmentPath)) {
         console.warn(`Skipping collecting attachment ${attachmentMoveResult.oldAttachmentPath} as it is excluded from attachment collecting.`);
         continue;
       }
@@ -145,7 +143,7 @@ export async function collectAttachments(
               console.error(
                 `Cancelling collecting attachments, as attachment ${attachmentMoveResult.oldAttachmentPath} is referenced by multiple notes.\n${backlinksStr}`
               );
-              if (plugin.settings.collectAttachmentUsedByMultipleNotesMode === CollectAttachmentUsedByMultipleNotesMode.Cancel) {
+              if (plugin.pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode === CollectAttachmentUsedByMultipleNotesMode.Cancel) {
                 await selectMode(app, attachmentMoveResult.oldAttachmentPath, backlinksSorted, true);
               }
               ctx.isAborted = true;
@@ -197,7 +195,9 @@ export async function collectAttachments(
               );
               return false;
             default:
-              throw new Error(`Unknown collect attachment used by multiple notes mode: ${plugin.settings.collectAttachmentUsedByMultipleNotesMode}`);
+              throw new Error(
+                `Unknown collect attachment used by multiple notes mode: ${plugin.pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode}`
+              );
           }
 
           return true;
@@ -205,7 +205,7 @@ export async function collectAttachments(
 
         if (
           !await applyCollectAttachmentUsedByMultipleNotesMode(
-            ctx.collectAttachmentUsedByMultipleNotesMode ?? plugin.settings.collectAttachmentUsedByMultipleNotesMode
+            ctx.collectAttachmentUsedByMultipleNotesMode ?? plugin.pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode
           )
         ) {
           abortSignal.throwIfAborted();
@@ -262,7 +262,7 @@ export function collectAttachmentsInAbstractFiles(plugin: Plugin, abstractFiles:
 export async function getProperAttachmentPath(options: GetProperAttachmentPathOptions): Promise<null | string> {
   const newAttachmentPath = await getAttachmentFilePath({
     app: options.plugin.app,
-    context: options.actionContext as unknown as AttachmentPathContext,
+    context: AttachmentPathContext.Unknown,
     notePathOrFile: options.noteFilePath,
     oldAttachmentPathOrFile: options.attachmentFile,
     shouldSkipDuplicateCheck: true
@@ -281,14 +281,14 @@ export function isNoteEx(plugin: Plugin, pathOrFile: null | PathOrAbstractFile):
   }
 
   const path = getPath(plugin.app, pathOrFile);
-  return plugin.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
+  return plugin.pluginSettingsComponent.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
 }
 
 async function collectAttachmentsInAbstractFilesImpl(plugin: Plugin, abstractFiles: TAbstractFile[], abortSignal: AbortSignal): Promise<void> {
   abortSignal.throwIfAborted();
   const singleFile: null | TFile = abstractFiles.length === 1 && isFile(abstractFiles[0]) ? abstractFiles[0] : null;
 
-  if (singleFile && plugin.settings.isPathIgnored(singleFile.path)) {
+  if (singleFile && plugin.pluginSettingsComponent.settings.isPathIgnored(singleFile.path)) {
     new Notice(t(($) => $.notice.notePathIsIgnored));
     console.warn(`Cannot collect attachments in the note as note path is ignored: ${singleFile.path}.`);
     return;
@@ -322,7 +322,6 @@ async function collectAttachmentsInAbstractFilesImpl(plugin: Plugin, abstractFil
     abortSignal.throwIfAborted();
     return;
   }
-  plugin.consoleDebug(`Collect attachments in files:\n${abstractFiles.map((abstractFile) => abstractFile.path).join('\n')}`);
   const noteFilesSet = new Set<TFile>();
 
   for (const abstractFile of abstractFiles) {
@@ -353,7 +352,7 @@ async function collectAttachmentsInAbstractFilesImpl(plugin: Plugin, abstractFil
     items: noteFiles,
     processItem: async (noteFile) => {
       combinedAbortSignal.throwIfAborted();
-      if (plugin.settings.isPathIgnored(noteFile.path)) {
+      if (plugin.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
         console.warn(`Cannot collect attachments in the note as note path is ignored: ${noteFile.path}.`);
         return;
       }
@@ -413,7 +412,6 @@ async function prepareAttachmentToMove(
   }
 
   const newAttachmentPath = await getProperAttachmentPath({
-    actionContext: ActionContext.CollectAttachments,
     attachmentFile: oldAttachmentFile,
     noteFilePath: newNotePath,
     plugin,

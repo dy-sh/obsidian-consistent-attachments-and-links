@@ -1,12 +1,17 @@
+import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
+import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
-import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-manager-base';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
+import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
 
-import type { PluginTypes } from './plugin-types.ts';
-
 import { PluginSettings } from './plugin-settings.ts';
+
+interface PluginSettingsComponentConstructorParams {
+  readonly dataHandler: DataHandler;
+  readonly pluginEventSource: PluginEventSource;
+}
 
 class LegacySettings {
   public autoCollectAttachments = false;
@@ -22,9 +27,12 @@ class LegacySettings {
   public updateLinks = false;
 }
 
-export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes> {
-  protected override createDefaultSettings(): PluginSettings {
-    return new PluginSettings();
+export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginSettings> {
+  public constructor(params: PluginSettingsComponentConstructorParams) {
+    super({
+      ...params,
+      pluginSettingsClass: PluginSettings
+    });
   }
 
   protected override registerLegacySettingsConverters(): void {

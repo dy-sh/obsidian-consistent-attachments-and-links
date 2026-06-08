@@ -6,6 +6,10 @@ import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
 import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/link';
 
 import {
+  isFrontmatterLinkCache,
+  isReferenceCache
+} from '@obsidian-typings/obsidian-public-latest/implementations';
+import {
   App,
   normalizePath,
   resolveSubpath,
@@ -37,10 +41,6 @@ import {
   dirname,
   join
 } from 'obsidian-dev-utils/path';
-import {
-  isFrontmatterLinkCache,
-  isReferenceCache
-} from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import type { Plugin } from './plugin.ts';
 
@@ -60,11 +60,11 @@ export interface ReferenceChangeInfo {
 }
 
 interface ConvertLinkParams {
-  forceRelativePath?: boolean | undefined;
-  link: Reference;
-  note: TFile;
-  oldNotePath: string;
-  pathChangeMap?: Map<string, string> | undefined;
+  readonly forceRelativePath?: boolean | undefined;
+  readonly link: Reference;
+  readonly note: TFile;
+  readonly oldNotePath: string;
+  readonly pathChangeMap?: Map<string, string> | undefined;
 }
 
 export class ConsistencyCheckResult extends Map<string, Reference[]> {
@@ -126,7 +126,7 @@ export class LinksHandler {
     wikiEmbeds: ConsistencyCheckResult,
     badFrontmatterLinks: ConsistencyCheckResult
   ): Promise<void> {
-    if (this.plugin.settings.isPathIgnored(note.path)) {
+    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
       return;
     }
 
@@ -191,7 +191,7 @@ export class LinksHandler {
   }
 
   public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean, abortSignal: AbortSignal): Promise<number> {
-    if (this.plugin.settings.isPathIgnored(notePath)) {
+    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return 0;
     }
 
@@ -219,7 +219,7 @@ export class LinksHandler {
   }
 
   public async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[]): Promise<void> {
-    if (this.plugin.settings.isPathIgnored(notePath)) {
+    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return;
     }
 
@@ -238,7 +238,7 @@ export class LinksHandler {
   }
 
   private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
-    if (this.plugin.settings.isPathIgnored(notePath)) {
+    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return [];
     }
 
@@ -249,7 +249,7 @@ export class LinksHandler {
 
     const changedRefs: ReferenceChangeInfo[] = [];
 
-    await applyFileChanges(this.plugin.app, note, async (abortSignal2, content) => {
+    await applyFileChanges(this.plugin.app, note, async ({ abortSignal: abortSignal2, content }) => {
       const cache = await getCacheSafe(this.plugin.app, note);
       abortSignal2.throwIfAborted();
       const cachedContent = await this.plugin.app.vault.cachedRead(note);
@@ -358,7 +358,7 @@ export class LinksHandler {
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
-    await applyFileChanges(this.plugin.app, note, async (abortSignal, content) => {
+    await applyFileChanges(this.plugin.app, note, async ({ abortSignal, content }) => {
       abortSignal.throwIfAborted();
       const cache = await getCacheSafe(this.plugin.app, note);
       abortSignal.throwIfAborted();
