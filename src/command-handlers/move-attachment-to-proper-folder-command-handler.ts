@@ -144,7 +144,8 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         continue;
       }
 
-      const link = backlinks.get(backlink)?.[0];
+      const references = backlinks.get(backlink);
+      const link = references?.[0];
       if (!link) {
         continue;
       }
@@ -160,7 +161,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         continue;
       }
 
-      const linkJsons = new Set((backlinks.get(backlink) ?? []).map((reference) => toJson(reference)));
+      const linkJsons = new Set(references.map((reference) => toJson(reference)));
 
       await copySafe(this.plugin.app, attachmentFile, newAttachmentPath);
       await editLinks(this.plugin.app, backlinkFile, (link2) => {

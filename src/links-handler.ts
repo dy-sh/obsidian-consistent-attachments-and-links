@@ -41,6 +41,7 @@ import {
   dirname,
   join
 } from 'obsidian-dev-utils/path';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { Plugin } from './plugin.ts';
 
@@ -76,10 +77,8 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
     if (!this.has(notePath)) {
       this.set(notePath, []);
     }
-    const arr = this.get(notePath);
-    if (arr) {
-      arr.push(link);
-    }
+    const arr = ensureNonNullable(this.get(notePath));
+    arr.push(link);
   }
 
   public override toString(app: App, reportPath: string): string {
@@ -96,7 +95,7 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
           targetPathOrFile: note
         });
         str += `${linkStr}:\n`;
-        for (const link of this.get(notePath) ?? []) {
+        for (const link of ensureNonNullable(this.get(notePath))) {
           if (isReferenceCache(link)) {
             str += `- (line ${String(link.position.start.line + 1)}): \`${link.link}\`\n`;
           } else if (isFrontmatterLinkCache(link)) {
