@@ -46,6 +46,7 @@ import {
   copySafe,
   renameSafe
 } from 'obsidian-dev-utils/obsidian/vault';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { Plugin } from './plugin.ts';
 
@@ -134,45 +135,47 @@ export async function collectAttachments(
           collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode
         ): Promise<boolean> {
           abortSignal.throwIfAborted();
-          if (!attachmentMoveResult) {
-            return false;
-          }
+          const definedAttachmentMoveResult = ensureNonNullable(attachmentMoveResult);
 
           switch (collectAttachmentUsedByMultipleNotesMode) {
             case CollectAttachmentUsedByMultipleNotesMode.Cancel:
               console.error(
-                `Cancelling collecting attachments, as attachment ${attachmentMoveResult.oldAttachmentPath} is referenced by multiple notes.\n${backlinksStr}`
+                `Cancelling collecting attachments, as attachment ${definedAttachmentMoveResult.oldAttachmentPath} is referenced by multiple notes.\n${backlinksStr}`
               );
               if (plugin.pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode === CollectAttachmentUsedByMultipleNotesMode.Cancel) {
-                await selectMode(app, attachmentMoveResult.oldAttachmentPath, backlinksSorted, true);
+                await selectMode(app, definedAttachmentMoveResult.oldAttachmentPath, backlinksSorted, true);
               }
               ctx.isAborted = true;
               return false;
             case CollectAttachmentUsedByMultipleNotesMode.Copy:
-              if (!attachmentMoveResult.newAttachmentPath) {
-                console.warn(`Skipping collecting attachment ${attachmentMoveResult.oldAttachmentPath} as it is already in the destination folder.`);
+              if (!definedAttachmentMoveResult.newAttachmentPath) {
+                console.warn(`Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is already in the destination folder.`);
                 return false;
               }
               // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
-              attachmentMoveResult.newAttachmentPath = await copySafe(app, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath);
+              definedAttachmentMoveResult.newAttachmentPath = await copySafe(
+                app,
+                definedAttachmentMoveResult.oldAttachmentPath,
+                definedAttachmentMoveResult.newAttachmentPath
+              );
               await editLinks(app, note, (link2): MaybeReturn<string> => {
                 const linkFile = extractLinkFile(app, link2, note);
-                if (linkFile?.path !== attachmentMoveResult.oldAttachmentPath) {
+                if (linkFile?.path !== definedAttachmentMoveResult.oldAttachmentPath) {
                   return;
                 }
                 return updateLink({
                   app,
                   link: link2,
                   newSourcePathOrFile: note,
-                  newTargetPathOrFile: attachmentMoveResult.newAttachmentPath ?? '',
+                  newTargetPathOrFile: ensureNonNullable(definedAttachmentMoveResult.newAttachmentPath),
                   oldSourcePathOrFile: note,
-                  oldTargetPathOrFile: attachmentMoveResult.oldAttachmentPath
+                  oldTargetPathOrFile: definedAttachmentMoveResult.oldAttachmentPath
                 });
               });
               break;
             case CollectAttachmentUsedByMultipleNotesMode.Move:
-              if (!attachmentMoveResult.newAttachmentPath) {
-                console.warn(`Skipping collecting attachment ${attachmentMoveResult.oldAttachmentPath} as it is already in the destination folder.`);
+              if (!definedAttachmentMoveResult.newAttachmentPath) {
+                console.warn(`Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is already in the destination folder.`);
                 return false;
               }
               await registerMoveAttachment();
@@ -181,7 +184,7 @@ export async function collectAttachments(
             case CollectAttachmentUsedByMultipleNotesMode.Prompt: {
               const { mode, shouldUseSameActionForOtherProblematicAttachments } = await selectMode(
                 app,
-                attachmentMoveResult.oldAttachmentPath,
+                definedAttachmentMoveResult.oldAttachmentPath,
                 backlinksSorted
               );
               if (shouldUseSameActionForOtherProblematicAttachments) {
@@ -191,7 +194,7 @@ export async function collectAttachments(
             }
             case CollectAttachmentUsedByMultipleNotesMode.Skip:
               console.warn(
-                `Skipping collecting attachment ${attachmentMoveResult.oldAttachmentPath} as it is referenced by multiple notes.\n${backlinksStr}`
+                `Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is referenced by multiple notes.\n${backlinksStr}`
               );
               return false;
             default:

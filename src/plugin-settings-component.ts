@@ -46,7 +46,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       }
 
       if (legacySettings.ignoreFolders) {
-        for (const ignoreFolder of legacySettings.ignoreFolders ?? []) {
+        for (const ignoreFolder of legacySettings.ignoreFolders) {
           excludePaths.push(ignoreFolder);
         }
       }
