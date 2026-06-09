@@ -1,7 +1,8 @@
 import type { ToggleComponent } from 'obsidian';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
-import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
+import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
+import { AsyncEvents } from 'obsidian-dev-utils/async-events';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
@@ -52,12 +53,15 @@ class MockDataHandler implements DataHandler {
 
 const originalAddToggle = SettingEx.prototype.addToggle;
 
-function createTab(): CreatedTab {
+async function createTab(): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const pluginSettingsComponent = new PluginSettingsComponent({
     dataHandler: new MockDataHandler(),
-    pluginEventSource: strictProxy<PluginEventSource>({})
+    pluginEventSource: new AsyncEvents<PluginEventMap>()
   });
+  // The component must be loaded before its settings can be edited; obsidian-dev-utils 70.0.0
+  // Makes setProperty/editAndSave throw when the component is not loaded.
+  await pluginSettingsComponent.loadWithPromises();
   const plugin = strictProxy<Plugin>({ app: app.asOriginalType__() });
   const toggles: ToggleComponent[] = [];
   const addToggleSpy = vi.spyOn(SettingEx.prototype, 'addToggle');
@@ -114,13 +118,13 @@ describe('PluginSettingsTab', () => {
     vi.restoreAllMocks();
   });
 
-  it('should be constructable', () => {
-    const { tab } = createTab();
+  it('should be constructable', async () => {
+    const { tab } = await createTab();
     expect(tab).toBeInstanceOf(PluginSettingsTab);
   });
 
-  it('should render all settings', () => {
-    const { tab } = createTab();
+  it('should render all settings', async () => {
+    const { tab } = await createTab();
     const names = getSettingNames(tab);
     expect(names).toContain('Move Attachments with Note');
     expect(names).toContain('Update links');
@@ -131,13 +135,13 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Treat as attachment extensions');
   });
 
-  it('should capture toggles for the dangerous settings', () => {
-    const { toggles } = createTab();
+  it('should capture toggles for the dangerous settings', async () => {
+    const { toggles } = await createTab();
     expect(toggles.length).toBeGreaterThan(0);
   });
 
   it('should show a warning when a dangerous setting is enabled', async () => {
-    const { toggles } = createTab();
+    const { toggles } = await createTab();
     const moveAttachmentsToggle = toggles[0];
     expect(moveAttachmentsToggle).toBeDefined();
     moveAttachmentsToggle?.setValue(true);
@@ -146,7 +150,7 @@ describe('PluginSettingsTab', () => {
   });
 
   it('should run the dangerous-setting check for every dangerous toggle', async () => {
-    const { toggles } = createTab();
+    const { toggles } = await createTab();
     for (const toggle of toggles) {
       toggle.setValue(true);
       await flushMicrotasks();
@@ -158,7 +162,7 @@ describe('PluginSettingsTab', () => {
   });
 
   it('should not show a warning when a dangerous setting is disabled', async () => {
-    const { toggles } = createTab();
+    const { toggles } = await createTab();
     const moveAttachmentsToggle = toggles[0];
     expect(moveAttachmentsToggle).toBeDefined();
     moveAttachmentsToggle?.setValue(false);
