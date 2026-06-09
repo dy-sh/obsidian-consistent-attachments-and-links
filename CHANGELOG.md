@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 3.33.5
+
+- chore: update libs
+- test: bring consistent-attachments-and-links to 100% coverage Author unit tests across the command handlers, core logic (attachment collector, links/files handlers, action context), plugin wiring, settings, modals, and i18n to reach 100% statements, branches, functions, and lines (305 tests, up from ~4.7%). Replace unreachable guards with ensureNonNullable (attachment-collector, links-handler) and drop dead `?? []` fallbacks (move-attachment handler, plugin-settings-component) so every branch is reachable. Scope-disable @stylistic/object-curly-newline for the extra-long single-name command-handler imports in plugin.ts that dprint wraps onto multiple lines (the two formatters disagree and the shared config cannot reconcile them).
+- chore: upgrade dependencies and migrate to obsidian 1.13.0 APIs Resolve the Plugin.settings collision introduced by obsidian 1.13.0 by dropping the typed settings getter and reading pluginSettingsComponent.settings directly at each use site. Migrate registerRenameDeleteHandlers to RenameDeleteHandlerComponent. Unit-test suite is authored in follow-up commits.
+- chore: update libs
+- refactor: migrate to @obsidian-typings/obsidian-public-latest - Replace obsidian-typings with @obsidian-typings/obsidian-public-latest - Update vitest config: replace ssr.noExternal with server.deps.inline - Add DOM.Iterable to tsconfig lib - Remove obsolete overrides (@antfu/utils, boolean, dompurify) - Upgrade dependencies via npm-check-updates
+- build: replace commitizen with czg Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+- refactor: rename files and directories to kebab-case Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+- chore: update libs
+- chore: update template
+- chore: update libs Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+- chore: add @total-typescript/ts-reset, better-typescript-lib, and libReplacement Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+- chore: unify rules
+- chore: add English language requirement to issue templates Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+
 ## 3.33.4
 
 - chore: update template
