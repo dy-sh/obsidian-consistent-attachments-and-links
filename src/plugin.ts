@@ -46,7 +46,6 @@ import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
 import { ConvertAllEmbedsPathsToRelativeCommandHandler } from './command-handlers/convert-all-embeds-paths-to-relative-command-handler.ts';
-/* eslint-disable @stylistic/object-curly-newline -- dprint wraps these extra-long single-name command-handler imports onto multiple lines, which @stylistic/object-curly-newline forbids; the two formatters disagree and the shared config cannot reconcile them, so the rule is disabled for this import block. */
 import { ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler } from './command-handlers/convert-all-embeds-paths-to-relative-current-note-command-handler.ts';
 import { ConvertAllLinkPathsToRelativeCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-command-handler.ts';
 import { ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-current-note-command-handler.ts';
@@ -57,7 +56,6 @@ import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler } from './command-
 import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler } from './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-current-note-command-handler.ts';
 import { ReplaceAllWikilinksWithMarkdownLinksCommandHandler } from './command-handlers/replace-all-wikilinks-with-markdown-links-command-handler.ts';
 import { ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler } from './command-handlers/replace-all-wikilinks-with-markdown-links-current-note-command-handler.ts';
-/* eslint-enable @stylistic/object-curly-newline -- End of the dprint-vs-object-curly-newline import block. */
 import { FilesHandler } from './files-handler.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import {
