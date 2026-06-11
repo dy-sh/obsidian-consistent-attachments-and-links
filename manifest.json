@@ -3,7 +3,7 @@
   "name": "Consistent Attachments and Links",
   "version": "3.33.7",
   "minAppVersion": "1.12.7",
-  "description": "This plugin ensures the consistency of attachments and links",
+  "description": "This plugin ensures the consistency of attachments and links.",
   "author": "Dmitry Savosh",
   "authorUrl": "https://github.com/dy-sh/",
   "isDesktopOnly": false,
