@@ -21,8 +21,7 @@ export class PluginSettings {
   public consistencyReportFile = 'consistency-report.md';
   public emptyFolderBehavior: EmptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
 
-  public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode =
-    MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+  public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
 
   public shouldChangeNoteBacklinksDisplayText = true;
 

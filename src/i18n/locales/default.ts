@@ -76,8 +76,7 @@ export const defaultTranslations = {
         displayText: 'None'
       },
       onlyPastedImages: {
-        description:
-          'only pasted images are renamed. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
+        description: 'only pasted images are renamed. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
         displayText: 'Only pasted images'
       }
     },
@@ -142,8 +141,7 @@ export const defaultTranslations = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Custom tokens were commented out as they have to be updated to the new format introduced in plugin version 9.0.0.\n// Refer to the documentation (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for more information.',
+      codeComment: '// Custom tokens were commented out as they have to be updated to the new format introduced in plugin version 9.0.0.\n// Refer to the documentation (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for more information.',
       deprecated: {
         part1: 'In plugin version 9.0.0, the format of custom token registration changed. Please update your tokens accordingly. Refer to the',
         part2: 'documentation',
@@ -175,8 +173,7 @@ export const defaultTranslations = {
       invalidCustomTokensCode: 'Invalid custom tokens code',
       invalidRegularExpression: 'Invalid regular expression {{regExp}}',
       specialCharactersMustNotContainSlash: 'Special characters must not contain /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Special character replacement must not contain invalid file name path characters.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Special character replacement must not contain invalid file name path characters.'
     }
   },
   pluginSettingsTab: {
@@ -317,8 +314,7 @@ export const defaultTranslations = {
       title: 'Reset to sample custom tokens'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Whether to convert pasted images to JPEG. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
+      description: 'Whether to convert pasted images to JPEG. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
       name: 'Should convert pasted images to JPEG'
     },
     shouldDeleteOrphanAttachments: {
