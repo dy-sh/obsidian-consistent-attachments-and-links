@@ -21,10 +21,8 @@ vi.mock('obsidian-dev-utils/obsidian/command-handlers/file-command-handler', () 
   }
 }));
 
-/* eslint-disable @stylistic/object-curly-newline -- A single-line import here exceeds dprint's line width, so dprint wraps this single-member import; the wrap then conflicts with object-curly-newline, which reports on both brace lines of the multi-line statement. */
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler } from './replace-all-wiki-embeds-with-markdown-embeds-current-note-command-handler.ts';
-/* eslint-enable @stylistic/object-curly-newline -- Re-enable after the conflicting import. */
 
 interface CommandHandlerPrivate {
   executeFile(file: TFile): void;
