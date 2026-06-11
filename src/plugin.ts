@@ -47,22 +47,16 @@ import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handl
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
 import { ConvertAllEmbedsPathsToRelativeCommandHandler } from './command-handlers/convert-all-embeds-paths-to-relative-command-handler.ts';
 /* eslint-disable @stylistic/object-curly-newline -- dprint wraps these extra-long single-name command-handler imports onto multiple lines, which @stylistic/object-curly-newline forbids; the two formatters disagree and the shared config cannot reconcile them, so the rule is disabled for this import block. */
-import {
-  ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler
-} from './command-handlers/convert-all-embeds-paths-to-relative-current-note-command-handler.ts';
+import { ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler } from './command-handlers/convert-all-embeds-paths-to-relative-current-note-command-handler.ts';
 import { ConvertAllLinkPathsToRelativeCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-command-handler.ts';
 import { ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-current-note-command-handler.ts';
 import { DeleteEmptyFoldersCommandHandler } from './command-handlers/delete-empty-folders-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { ReorganizeVaultCommandHandler } from './command-handlers/reorganize-vault-command-handler.ts';
 import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler } from './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-command-handler.ts';
-import {
-  ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler
-} from './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-current-note-command-handler.ts';
+import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler } from './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-current-note-command-handler.ts';
 import { ReplaceAllWikilinksWithMarkdownLinksCommandHandler } from './command-handlers/replace-all-wikilinks-with-markdown-links-command-handler.ts';
-import {
-  ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler
-} from './command-handlers/replace-all-wikilinks-with-markdown-links-current-note-command-handler.ts';
+import { ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler } from './command-handlers/replace-all-wikilinks-with-markdown-links-current-note-command-handler.ts';
 /* eslint-enable @stylistic/object-curly-newline -- End of the dprint-vs-object-curly-newline import block. */
 import { FilesHandler } from './files-handler.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
@@ -252,9 +246,7 @@ export class Plugin extends PluginBase {
       new Notice('No embeds found that need to be converted');
     } else {
       new Notice(
-        `Converted ${String(changedEmbedCount)} embed${changedEmbedCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
+        `Converted ${String(changedEmbedCount)} embed${changedEmbedCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
       );
     }
   }
@@ -301,9 +293,7 @@ export class Plugin extends PluginBase {
       new Notice('No links found that need to be converted');
     } else {
       new Notice(
-        `Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
+        `Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
       );
     }
   }
@@ -361,9 +351,7 @@ export class Plugin extends PluginBase {
       new Notice('No wiki embeds found that need to be replaced');
     } else {
       new Notice(
-        `Replaced ${String(changedLinksCount)} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
+        `Replaced ${String(changedLinksCount)} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
       );
     }
   }
@@ -405,9 +393,7 @@ export class Plugin extends PluginBase {
       new Notice('No wiki links found that need to be replaced');
     } else {
       new Notice(
-        `Replaced ${String(changedLinksCount)} wikilink${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${
-          processedNotesCount > 1 ? 's' : ''
-        }`
+        `Replaced ${String(changedLinksCount)} wikilink${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
       );
     }
   }

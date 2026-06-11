@@ -89,8 +89,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     await loop({
       abortSignal: combinedAbortSignal,
-      buildNoticeMessage: (attachmentFile, iterationStr) =>
-        t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: attachmentFile.path, iterationStr }),
+      buildNoticeMessage: (attachmentFile, iterationStr) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: attachmentFile.path, iterationStr }),
       items: attachmentFiles,
       processItem: async (attachmentFile) => {
         combinedAbortSignal.throwIfAborted();
