@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.33.8
+
+- chore: update version script
+- chore: update manifest
+
 ## 3.33.7
 
 - chore: format
