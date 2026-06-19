@@ -1,11 +1,9 @@
 import { GlobalCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/global-command-handler';
 
-import type { Plugin } from '../plugin.ts';
-
-import { collectAttachmentsEntireVault } from '../attachment-collector.ts';
+import type { AttachmentCollector } from '../attachment-collector.ts';
 
 export class CollectAttachmentsEntireVaultCommandHandler extends GlobalCommandHandler {
-  public constructor(private readonly plugin: Plugin) {
+  public constructor(private readonly attachmentCollector: AttachmentCollector) {
     super({
       icon: 'download',
       id: 'collect-attachments-entire-vault',
@@ -14,6 +12,6 @@ export class CollectAttachmentsEntireVaultCommandHandler extends GlobalCommandHa
   }
 
   protected override execute(): void {
-    collectAttachmentsEntireVault(this.plugin);
+    this.attachmentCollector.collectAttachmentsEntireVault();
   }
 }

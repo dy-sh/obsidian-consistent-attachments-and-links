@@ -9,7 +9,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/global-command-handler', () => ({
   GlobalCommandHandler: class {
@@ -37,7 +37,7 @@ describe('ReorganizeVaultCommandHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     reorganizeVault = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
-    handler = new ReorganizeVaultCommandHandler(strictProxy<Plugin>({
+    handler = new ReorganizeVaultCommandHandler(strictProxy<ConsistentAttachmentsAndLinksComponent>({
       reorganizeVault
     }));
   });

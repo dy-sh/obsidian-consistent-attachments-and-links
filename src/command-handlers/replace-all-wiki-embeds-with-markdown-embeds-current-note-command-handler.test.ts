@@ -11,7 +11,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/file-command-handler', () => ({
   FileCommandHandler: class {
@@ -39,7 +39,7 @@ describe('ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler', () =
   beforeEach(() => {
     vi.clearAllMocks();
     replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote = vi.fn<(file: TFile) => void>();
-    handler = new ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler(strictProxy<Plugin>({
+    handler = new ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler(strictProxy<ConsistentAttachmentsAndLinksComponent>({
       replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote
     }));
   });

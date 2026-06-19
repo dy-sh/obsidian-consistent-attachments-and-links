@@ -1,9 +1,9 @@
 import { GlobalCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/global-command-handler';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 export class ConvertAllEmbedsPathsToRelativeCommandHandler extends GlobalCommandHandler {
-  public constructor(private readonly plugin: Plugin) {
+  public constructor(private readonly consistentAttachmentsAndLinksComponent: ConsistentAttachmentsAndLinksComponent) {
     super({
       icon: 'activity',
       id: 'convert-all-embed-paths-to-relative',
@@ -12,6 +12,6 @@ export class ConvertAllEmbedsPathsToRelativeCommandHandler extends GlobalCommand
   }
 
   protected override async execute(): Promise<void> {
-    await this.plugin.convertAllEmbedsPathsToRelative();
+    await this.consistentAttachmentsAndLinksComponent.convertAllEmbedsPathsToRelative();
   }
 }

@@ -36,6 +36,8 @@
   },
   "overrides": {
     "eslint": "$eslint",
+    "js-yaml": "^4.2.0",
+    "markdown-it": "^14.2.0",
     "type-fest": "^5.6.0",
     "typescript": "^6.0.3"
   },
@@ -46,19 +48,19 @@
     "@obsidian-typings/obsidian-public-latest": "^6.15.0",
     "@total-typescript/ts-reset": "^0.6.1",
     "@tsconfig/strictest": "^2.0.8",
-    "@types/node": "^25.9.3",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@types/node": "^26.0.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "better-typescript-lib": "^2.12.0",
     "czg": "^1.13.1",
-    "eslint": "^10.4.1",
+    "eslint": "^10.5.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "jsdom": "^29.1.1",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
-    "obsidian-dev-utils": "^70.2.1",
-    "obsidian-integration-testing": "^4.2.4",
+    "obsidian-dev-utils": "^74.0.0",
+    "obsidian-integration-testing": "^4.2.6",
     "obsidian-test-mocks": "^3.1.1",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   }
 }

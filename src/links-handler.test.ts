@@ -1,4 +1,5 @@
 import type {
+  App,
   FrontmatterLinkCache,
   Reference,
   ReferenceCache,
@@ -45,7 +46,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from './plugin.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 vi.mock('obsidian', async (importOriginal) => {
   const actual = await importOriginal<typeof import('obsidian')>();
@@ -184,10 +185,10 @@ function createReferenceCache(overrides: Partial<FrontmatterLinkCache & Referenc
 }
 
 describe('LinksHandler', () => {
-  let app: Plugin['app'];
+  let app: App;
   let cachedRead: Mock<(file: TFile) => Promise<string>>;
   let handler: LinksHandler;
-  let plugin: Plugin;
+  let pluginSettingsComponent: PluginSettingsComponent;
   let settings: SettingsLike;
   let warnSpy: MockInstance<typeof console.warn>;
 
@@ -197,18 +198,18 @@ describe('LinksHandler', () => {
       isPathIgnored: vi.fn().mockReturnValue(false)
     };
     cachedRead = vi.fn<(file: TFile) => Promise<string>>().mockResolvedValue('content');
-    app = strictProxy<Plugin['app']>({
-      vault: strictProxy<Plugin['app']['vault']>({
+    app = strictProxy<App>({
+      vault: strictProxy<App['vault']>({
         cachedRead
       })
     });
-    plugin = strictProxy<Plugin>({
-      app,
-      pluginSettingsComponent: strictProxy<Plugin['pluginSettingsComponent']>({
-        settings: castTo<Plugin['pluginSettingsComponent']['settings']>(settings)
-      })
+    pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+      settings: castTo<PluginSettingsComponent['settings']>(settings)
     });
-    handler = new LinksHandler(plugin);
+    handler = new LinksHandler({
+      app,
+      pluginSettingsComponent
+    });
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     mockNormalizePath.mockImplementation((p: string) => p.replace(/^\//, ''));
   });
@@ -734,11 +735,11 @@ describe('LinksHandler', () => {
 });
 
 describe('ConsistencyCheckResult', () => {
-  let app: Plugin['app'];
+  let app: App;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    app = strictProxy<Plugin['app']>({});
+    app = strictProxy<App>({});
   });
 
   it('should add references grouped by note path', () => {
@@ -751,14 +752,14 @@ describe('ConsistencyCheckResult', () => {
 
   it('should report no problems found when empty', () => {
     const result = new ConsistencyCheckResult('My Title');
-    expect(result.toString(castTo<Plugin['app']>(app), 'report.md')).toBe('# My Title\nNo problems found\n\n');
+    expect(result.toString(castTo<App>(app), 'report.md')).toBe('# My Title\nNo problems found\n\n');
   });
 
   it('should skip notes that cannot be resolved to a file', () => {
     const result = new ConsistencyCheckResult('Title');
     result.add('missing.md', createReferenceCache());
     mockGetFileOrNull.mockReturnValue(null);
-    expect(result.toString(castTo<Plugin['app']>(app), 'report.md')).toContain('Title (1 files)');
+    expect(result.toString(castTo<App>(app), 'report.md')).toContain('Title (1 files)');
   });
 
   it('should render reference cache and frontmatter link entries', () => {
@@ -771,7 +772,7 @@ describe('ConsistencyCheckResult', () => {
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
     mockIsReferenceCache.mockImplementation((link: Reference) => link === refLink);
     mockIsFrontmatterLinkCache.mockImplementation((link: Reference) => link === fmLink);
-    const str = result.toString(castTo<Plugin['app']>(app), 'report.md');
+    const str = result.toString(castTo<App>(app), 'report.md');
     expect(str).toContain('(line 1): `a`');
     expect(str).toContain('(key prop): `b`');
   });
@@ -784,7 +785,7 @@ describe('ConsistencyCheckResult', () => {
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
     mockIsReferenceCache.mockReturnValue(false);
     mockIsFrontmatterLinkCache.mockReturnValue(false);
-    const str = result.toString(castTo<Plugin['app']>(app), 'report.md');
+    const str = result.toString(castTo<App>(app), 'report.md');
     expect(str).toContain('[[note]]:');
   });
 
@@ -799,7 +800,7 @@ describe('ConsistencyCheckResult', () => {
     result.set('note.md', []);
     mockGetFileOrNull.mockReturnValue(createFile('note.md'));
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
-    const str = result.toString(castTo<Plugin['app']>(app), 'report.md');
+    const str = result.toString(castTo<App>(app), 'report.md');
     expect(str).toContain('[[note]]:');
   });
 });

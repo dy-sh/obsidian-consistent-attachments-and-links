@@ -9,7 +9,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/global-command-handler', () => ({
   GlobalCommandHandler: class {
@@ -37,7 +37,7 @@ describe('DeleteEmptyFoldersCommandHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     deleteEmptyFolders = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
-    handler = new DeleteEmptyFoldersCommandHandler(strictProxy<Plugin>({
+    handler = new DeleteEmptyFoldersCommandHandler(strictProxy<ConsistentAttachmentsAndLinksComponent>({
       deleteEmptyFolders
     }));
   });

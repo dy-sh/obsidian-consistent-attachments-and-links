@@ -5,6 +5,7 @@ import type {
   TFile,
   TFolder
 } from 'obsidian';
+import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type {
   Mock,
   MockInstance
@@ -56,7 +57,8 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from './plugin.ts';
+import type { AttachmentCollectorGetProperAttachmentPathParams } from './attachment-collector.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
@@ -148,17 +150,18 @@ vi.mock('./modals/collect-attachment-used-by-multiple-notes-modal.ts', () => ({
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import {
-  collectAttachments,
-  collectAttachmentsEntireVault,
-  collectAttachmentsInAbstractFiles,
-  getProperAttachmentPath,
-  isNoteEx
-} from './attachment-collector.ts';
+import { AttachmentCollector } from './attachment-collector.ts';
 
-interface CtxLike {
+interface CollectAttachmentContextLike {
   collectAttachmentUsedByMultipleNotesMode?: CollectAttachmentUsedByMultipleNotesMode;
   isAborted?: boolean;
+}
+
+interface CollectAttachmentsParamsLike {
+  abortSignal: AbortSignal;
+  abortSignalComponent: AbortSignalComponent;
+  ctx: CollectAttachmentContextLike;
+  note: TFile;
 }
 
 interface LoopOptionsLike {
@@ -173,6 +176,10 @@ interface NoticeMockLike {
 
 interface NoticeStaticLike {
   instances: NoticeMockLike[];
+}
+
+interface PrivateAttachmentCollector {
+  collectAttachments(params: CollectAttachmentsParamsLike): Promise<void>;
 }
 
 interface QueueParamsLike {
@@ -230,9 +237,11 @@ function createReference(overrides: Partial<Reference> = {}): Reference {
   });
 }
 
-describe('attachment-collector', () => {
+describe('AttachmentCollector', () => {
   let app: App;
-  let plugin: Plugin;
+  let abortSignalComponent: AbortSignalComponent;
+  let collector: AttachmentCollector;
+  let privateCollector: PrivateAttachmentCollector;
   let readJson: Mock<(path: string) => Promise<null | object>>;
   let getRoot: Mock<() => TFolder>;
   let settings: SettingsLike;
@@ -255,14 +264,18 @@ describe('attachment-collector', () => {
         readJson
       })
     });
-    plugin = strictProxy<Plugin>({
-      abortSignal: new AbortController().signal,
+    abortSignalComponent = strictProxy<AbortSignalComponent>({
+      abortSignal: new AbortController().signal
+    });
+    collector = new AttachmentCollector({
+      abortSignalComponent,
       app,
-      manifest: strictProxy<Plugin['manifest']>({ name: 'Plugin' }),
-      pluginSettingsComponent: strictProxy<Plugin['pluginSettingsComponent']>({
-        settings: castTo<Plugin['pluginSettingsComponent']['settings']>(settings)
+      pluginName: 'Plugin',
+      pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
+        settings: castTo<PluginSettingsComponent['settings']>(settings)
       })
     });
+    privateCollector = castTo<PrivateAttachmentCollector>(collector);
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     mockInvokeAsyncSafely.mockImplementation(() => undefined);
@@ -275,58 +288,56 @@ describe('attachment-collector', () => {
 
   describe('isNoteEx', () => {
     it('should return false when pathOrFile is null', () => {
-      expect(isNoteEx(plugin, null)).toBe(false);
+      expect(collector.isNoteEx(null)).toBe(false);
     });
 
     it('should return false when not a note', () => {
       mockIsNote.mockReturnValue(false);
-      expect(isNoteEx(plugin, 'img.png')).toBe(false);
+      expect(collector.isNoteEx('img.png')).toBe(false);
     });
 
     it('should return true when a note and not treated as attachment', () => {
       mockIsNote.mockReturnValue(true);
       mockGetPath.mockReturnValue('note.md');
       settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
-      expect(isNoteEx(plugin, 'note.md')).toBe(true);
+      expect(collector.isNoteEx('note.md')).toBe(true);
     });
 
     it('should return false when path ends with a treated-as-attachment extension', () => {
       mockIsNote.mockReturnValue(true);
       mockGetPath.mockReturnValue('a.excalidraw.md');
       settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
-      expect(isNoteEx(plugin, 'a.excalidraw.md')).toBe(false);
+      expect(collector.isNoteEx('a.excalidraw.md')).toBe(false);
     });
   });
 
   describe('getProperAttachmentPath', () => {
+    function buildParams(attachmentFile: TFile): AttachmentCollectorGetProperAttachmentPathParams {
+      return {
+        attachmentFile,
+        noteFilePath: 'note.md',
+        reference: createReference()
+      };
+    }
+
     it('should return null when the new path equals the current path', async () => {
       const attachmentFile = createFile('img.png');
       mockGetAttachmentFilePath.mockResolvedValue('img.png');
-      const result = await getProperAttachmentPath({
-        attachmentFile,
-        noteFilePath: 'note.md',
-        plugin,
-        reference: createReference()
-      });
+      const result = await collector.getProperAttachmentPath(buildParams(attachmentFile));
       expect(result).toBeNull();
     });
 
     it('should return the new path when it differs', async () => {
       const attachmentFile = createFile('img.png');
       mockGetAttachmentFilePath.mockResolvedValue('attachments/img.png');
-      const result = await getProperAttachmentPath({
-        attachmentFile,
-        noteFilePath: 'note.md',
-        plugin,
-        reference: createReference()
-      });
+      const result = await collector.getProperAttachmentPath(buildParams(attachmentFile));
       expect(result).toBe('attachments/img.png');
     });
   });
 
   describe('collectAttachmentsEntireVault', () => {
     it('should enqueue an operation for the vault root', () => {
-      collectAttachmentsEntireVault(plugin);
+      collector.collectAttachmentsEntireVault();
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
       expect(params.app).toBe(app);
       expect(params.operationName).toBe('translated');
@@ -338,7 +349,7 @@ describe('attachment-collector', () => {
       mockConfirm.mockResolvedValue(true);
       mockIsFile.mockReturnValue(false);
       mockIsFolder.mockReturnValue(false);
-      collectAttachmentsEntireVault(plugin);
+      collector.collectAttachmentsEntireVault();
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
       await params.operationFn(new AbortController().signal);
       expect(getRoot).toHaveBeenCalled();
@@ -349,7 +360,7 @@ describe('attachment-collector', () => {
   describe('collectAttachmentsInAbstractFiles', () => {
     it('should enqueue an operation for the given files', () => {
       const files = [strictProxy<TAbstractFile>({ path: 'a.md' })];
-      collectAttachmentsInAbstractFiles(plugin, files);
+      collector.collectAttachmentsInAbstractFiles(files);
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
       expect(params.app).toBe(app);
     });
@@ -358,6 +369,15 @@ describe('attachment-collector', () => {
   describe('collectAttachments', () => {
     let abortSignal: AbortSignal;
     let note: TFile;
+
+    function collectAttachments(ctx: CollectAttachmentContextLike, signal: AbortSignal): Promise<void> {
+      return privateCollector.collectAttachments({
+        abortSignal: signal,
+        abortSignalComponent,
+        ctx,
+        note
+      });
+    }
 
     beforeEach(() => {
       abortSignal = new AbortController().signal;
@@ -370,11 +390,11 @@ describe('attachment-collector', () => {
     it('should throw immediately when the signal is already aborted', async () => {
       const controller = new AbortController();
       controller.abort();
-      await expect(collectAttachments(plugin, note, {}, controller.signal)).rejects.toThrow();
+      await expect(collectAttachments({}, controller.signal)).rejects.toThrow();
     });
 
     it('should return early when ctx.isAborted is true', async () => {
-      await collectAttachments(plugin, note, { isAborted: true }, abortSignal);
+      await collectAttachments({ isAborted: true }, abortSignal);
       expect(mockGetCacheSafe).not.toHaveBeenCalled();
     });
 
@@ -384,13 +404,13 @@ describe('attachment-collector', () => {
         ctx.isAborted = true;
         return Promise.resolve(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       });
-      await collectAttachments(plugin, note, ctx, abortSignal);
+      await collectAttachments(ctx, abortSignal);
       expect(mockGetAllLinks).not.toHaveBeenCalled();
     });
 
     it('should return when there is no cache', async () => {
       mockGetCacheSafe.mockResolvedValue(null);
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(mockGetAllLinks).not.toHaveBeenCalled();
     });
 
@@ -403,7 +423,7 @@ describe('attachment-collector', () => {
         ]
       });
       mockExtractLinkFile.mockReturnValue(null);
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(readJson).toHaveBeenCalledWith('note.md');
       expect(mockGetAllLinks).not.toHaveBeenCalled();
     });
@@ -411,7 +431,7 @@ describe('attachment-collector', () => {
     it('should skip when the attachment cannot be prepared (no link file)', async () => {
       mockGetAllLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(null);
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(mockGetBacklinksForFileSafe).not.toHaveBeenCalled();
     });
 
@@ -420,7 +440,7 @@ describe('attachment-collector', () => {
       mockExtractLinkFile.mockReturnValue(createFile('other.md'));
       mockIsNote.mockReturnValue(true);
       mockGetPath.mockReturnValue('other.md');
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(mockGetBacklinksForFileSafe).not.toHaveBeenCalled();
     });
 
@@ -431,7 +451,7 @@ describe('attachment-collector', () => {
       mockGetAttachmentFilePath.mockResolvedValue('attachments/img.png');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       mockRenameSafe.mockResolvedValue('attachments/img.png');
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
     });
 
@@ -439,7 +459,7 @@ describe('attachment-collector', () => {
       mockGetAllLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png', true));
       mockIsNote.mockReturnValue(false);
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('could not be resolved'));
     });
 
@@ -449,7 +469,7 @@ describe('attachment-collector', () => {
       mockIsNote.mockReturnValue(false);
       mockGetAttachmentFilePath.mockResolvedValue('attachments/img.png');
       castTo<ReturnType<typeof vi.fn>>(settings.isExcludedFromAttachmentCollecting).mockReturnValue(true);
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('excluded from attachment collecting'));
     });
 
@@ -460,7 +480,7 @@ describe('attachment-collector', () => {
       mockGetAttachmentFilePath.mockResolvedValue('attachments/img.png');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       mockRenameSafe.mockResolvedValue('attachments/img.png');
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(mockRenameSafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
     });
 
@@ -470,7 +490,7 @@ describe('attachment-collector', () => {
       mockIsNote.mockReturnValue(false);
       mockGetAttachmentFilePath.mockResolvedValue('img.png');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
-      await collectAttachments(plugin, note, {}, abortSignal);
+      await collectAttachments({}, abortSignal);
       expect(mockRenameSafe).not.toHaveBeenCalled();
     });
 
@@ -487,16 +507,16 @@ describe('attachment-collector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockSelectMode.mockResolvedValue({ mode: CollectAttachmentUsedByMultipleNotesMode.Cancel, shouldUseSameActionForOtherProblematicAttachments: false });
         const ctx = {};
-        await collectAttachments(plugin, note, ctx, abortSignal);
+        await collectAttachments(ctx, abortSignal);
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
         expect(mockSelectMode).toHaveBeenCalledWith(app, 'img.png', ['note.md', 'other.md'], true);
-        expect(castTo<CtxLike>(ctx).isAborted).toBe(true);
+        expect(castTo<CollectAttachmentContextLike>(ctx).isAborted).toBe(true);
       });
 
       it('should not invoke selectMode in Cancel mode when the setting differs', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
         const ctx = { collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Cancel };
-        await collectAttachments(plugin, note, ctx, abortSignal);
+        await collectAttachments(ctx, abortSignal);
         expect(mockSelectMode).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalled();
       });
@@ -515,7 +535,7 @@ describe('attachment-collector', () => {
           return ref.link === 'other.png' ? createFile('other.png') : createFile('img.png');
         });
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         expect(mockCopySafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
         expect(matchingResult).toBe('![](attachments/img.png)');
         expect(nonMatchingResult).toBeUndefined();
@@ -524,7 +544,7 @@ describe('attachment-collector', () => {
       it('should skip Copy mode when the new attachment path is null', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
         mockGetAttachmentFilePath.mockResolvedValue('img.png');
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         expect(mockCopySafe).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('already in the destination folder'));
       });
@@ -539,7 +559,7 @@ describe('attachment-collector', () => {
         });
         mockExtractLinkFile.mockReturnValue(createFile('img.png'));
         mockUpdateLink.mockReturnValue('![](img.png)');
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         expect(handlerResult).toBe('![](img.png)');
         expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ newTargetPathOrFile: '' }));
       });
@@ -547,21 +567,21 @@ describe('attachment-collector', () => {
       it('should move in Move mode', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
         mockRenameSafe.mockResolvedValue('attachments/img.png');
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         expect(mockRenameSafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
       });
 
       it('should skip Move mode when the new attachment path is null', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
         mockGetAttachmentFilePath.mockResolvedValue('img.png');
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         expect(mockRenameSafe).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('already in the destination folder'));
       });
 
       it('should skip in Skip mode', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
         expect(mockRenameSafe).not.toHaveBeenCalled();
       });
@@ -570,7 +590,7 @@ describe('attachment-collector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Prompt;
         mockSelectMode.mockResolvedValue({ mode: CollectAttachmentUsedByMultipleNotesMode.Move, shouldUseSameActionForOtherProblematicAttachments: false });
         mockRenameSafe.mockResolvedValue('attachments/img.png');
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         expect(mockSelectMode).toHaveBeenCalledWith(app, 'img.png', ['note.md', 'other.md']);
         expect(mockRenameSafe).toHaveBeenCalled();
       });
@@ -578,20 +598,20 @@ describe('attachment-collector', () => {
       it('should remember the chosen mode for other attachments when requested', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Prompt;
         mockSelectMode.mockResolvedValue({ mode: CollectAttachmentUsedByMultipleNotesMode.Skip, shouldUseSameActionForOtherProblematicAttachments: true });
-        const ctx: CtxLike = {};
-        await collectAttachments(plugin, note, ctx, abortSignal);
+        const ctx: CollectAttachmentContextLike = {};
+        await collectAttachments(ctx, abortSignal);
         expect(ctx.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Skip);
       });
 
       it('should throw for an unknown mode', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = castTo<CollectAttachmentUsedByMultipleNotesMode>('Unknown');
-        await expect(collectAttachments(plugin, note, {}, abortSignal)).rejects.toThrow('Unknown collect attachment used by multiple notes mode');
+        await expect(collectAttachments({}, abortSignal)).rejects.toThrow('Unknown collect attachment used by multiple notes mode');
       });
 
       it('should use the ctx mode when present', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
         const ctx = { collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Skip };
-        await collectAttachments(plugin, note, ctx, abortSignal);
+        await collectAttachments(ctx, abortSignal);
         expect(mockRenameSafe).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
       });
@@ -605,10 +625,10 @@ describe('attachment-collector', () => {
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
       settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
       const ctx = {};
-      await collectAttachments(plugin, note, ctx, abortSignal);
+      await collectAttachments(ctx, abortSignal);
       // The first link sets ctx.isAborted; the second iteration returns early.
       expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
-      expect(castTo<CtxLike>(ctx).isAborted).toBe(true);
+      expect(castTo<CollectAttachmentContextLike>(ctx).isAborted).toBe(true);
     });
 
     it('should show the notice while running and hide it on the finally block', async () => {
@@ -627,7 +647,7 @@ describe('attachment-collector', () => {
             resolveCache = resolve;
           })
         );
-        const promise = collectAttachments(plugin, note, {}, abortSignal);
+        const promise = collectAttachments({}, abortSignal);
         // Drive showNotice to completion while the main flow is suspended on getCacheSafe.
         await showNoticeFn();
         expect(noticeInstances).toHaveLength(1);
@@ -649,7 +669,7 @@ describe('attachment-collector', () => {
           showNoticeFn = fn;
         });
         mockGetCacheSafe.mockResolvedValue(null);
-        await collectAttachments(plugin, note, {}, abortSignal);
+        await collectAttachments({}, abortSignal);
         // The operation already finished (isDone === true), so showNotice creates no Notice.
         await showNoticeFn();
       } finally {
@@ -661,7 +681,7 @@ describe('attachment-collector', () => {
 
   describe('collectAttachmentsInAbstractFilesImpl (via queue operationFn)', () => {
     async function runOperation(abstractFiles: TAbstractFile[]): Promise<void> {
-      collectAttachmentsInAbstractFiles(plugin, abstractFiles);
+      collector.collectAttachmentsInAbstractFiles(abstractFiles);
       const params = mockAddToQueue.mock.calls[0]?.[0];
       const operationFn = castTo<QueueParamsLike>(params).operationFn;
       await operationFn(new AbortController().signal);
@@ -673,7 +693,7 @@ describe('attachment-collector', () => {
     });
 
     it('should throw when the signal is already aborted', async () => {
-      collectAttachmentsInAbstractFiles(plugin, []);
+      collector.collectAttachmentsInAbstractFiles([]);
       const params = mockAddToQueue.mock.calls[0]?.[0];
       const operationFn = castTo<QueueParamsLike>(params).operationFn;
       const controller = new AbortController();

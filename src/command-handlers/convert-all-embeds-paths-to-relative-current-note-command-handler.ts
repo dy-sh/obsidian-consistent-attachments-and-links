@@ -2,10 +2,10 @@ import type { TFile } from 'obsidian';
 
 import { FileCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/file-command-handler';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 export class ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler extends FileCommandHandler {
-  public constructor(private readonly plugin: Plugin) {
+  public constructor(private readonly consistentAttachmentsAndLinksComponent: ConsistentAttachmentsAndLinksComponent) {
     super({
       icon: 'activity',
       id: 'convert-all-embed-paths-to-relative-current-note',
@@ -14,6 +14,6 @@ export class ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler extends Fi
   }
 
   protected override executeFile(file: TFile): void {
-    this.plugin.convertAllEmbedsPathsToRelativeCurrentNote(file);
+    this.consistentAttachmentsAndLinksComponent.convertAllEmbedsPathsToRelativeCurrentNote(file);
   }
 }
