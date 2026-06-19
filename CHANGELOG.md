@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.33.9
+
+- chore: update template
+
 ## 3.33.8
 
 - chore: update version script
