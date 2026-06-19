@@ -16,8 +16,8 @@ import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 import { CollectAttachmentUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 interface CollectAttachmentUsedByMultipleNotesModalResult {
-  mode: CollectAttachmentUsedByMultipleNotesMode;
-  shouldUseSameActionForOtherProblematicAttachments: boolean;
+  readonly mode: CollectAttachmentUsedByMultipleNotesMode;
+  readonly shouldUseSameActionForOtherProblematicAttachments: boolean;
 }
 
 class CollectAttachmentUsedByMultipleNotesModal extends Modal {

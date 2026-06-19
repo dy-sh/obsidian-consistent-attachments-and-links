@@ -1,4 +1,7 @@
-import type { TAbstractFile } from 'obsidian';
+import type {
+  App,
+  TAbstractFile
+} from 'obsidian';
 
 import { AbstractFileCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler';
 import {
@@ -6,12 +9,18 @@ import {
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
 
-import type { Plugin } from '../plugin.ts';
+import type { AttachmentCollector } from '../attachment-collector.ts';
 
-import { collectAttachmentsInAbstractFiles } from '../attachment-collector.ts';
+interface CollectAttachmentsInFileCommandHandlerConstructorParams {
+  readonly app: App;
+  readonly attachmentCollector: AttachmentCollector;
+}
 
 export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandHandler {
-  public constructor(private readonly plugin: Plugin) {
+  private readonly app: App;
+  private readonly attachmentCollector: AttachmentCollector;
+
+  public constructor(params: CollectAttachmentsInFileCommandHandlerConstructorParams) {
     super({
       fileMenuItemName: 'Collect attachments in file',
       filesMenuItemName: 'Collect attachments in files',
@@ -19,15 +28,18 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
       id: 'collect-attachments-in-file',
       name: 'Collect attachments in current note'
     });
+
+    this.app = params.app;
+    this.attachmentCollector = params.attachmentCollector;
   }
 
   protected override canExecuteAbstractFile(abstractFile: TAbstractFile): boolean {
-    return !isFile(abstractFile) || isNote(this.plugin.app, abstractFile);
+    return !isFile(abstractFile) || isNote(this.app, abstractFile);
   }
 
   protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && !isNote(this.plugin.app, abstractFile)) {
+      if (isFile(abstractFile) && !isNote(this.app, abstractFile)) {
         return false;
       }
     }
@@ -35,11 +47,11 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
   }
 
   protected override executeAbstractFile(abstractFile: TAbstractFile): void {
-    collectAttachmentsInAbstractFiles(this.plugin, [abstractFile]);
+    this.attachmentCollector.collectAttachmentsInAbstractFiles([abstractFile]);
   }
 
   protected override executeAbstractFiles(abstractFiles: TAbstractFile[]): void {
-    collectAttachmentsInAbstractFiles(this.plugin, abstractFiles);
+    this.attachmentCollector.collectAttachmentsInAbstractFiles(abstractFiles);
   }
 
   protected override shouldAddToAbstractFileMenu(): boolean {

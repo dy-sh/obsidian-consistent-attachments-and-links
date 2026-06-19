@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- Test mocks require empty constructors. */
 import type { CustomArrayDict } from '@obsidian-typings/obsidian-public-latest';
 import type {
   App,
@@ -7,6 +6,7 @@ import type {
   TFile,
   TFolder
 } from 'obsidian';
+import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -32,17 +32,16 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { AttachmentCollector } from '../attachment-collector.ts';
+import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
-import {
-  getProperAttachmentPath,
-  isNoteEx
-} from '../attachment-collector.ts';
 import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- Test mock requires an empty class.
   AbstractFileCommandHandler: class {
+    // eslint-disable-next-line @typescript-eslint/no-useless-constructor -- Test mock requires an empty constructor.
     public constructor(_params: unknown) {
       // Base no-op.
     }
@@ -99,11 +98,6 @@ vi.mock('obsidian-dev-utils/obsidian/vault-delete', () => ({
   deleteIfNotUsed: vi.fn()
 }));
 
-vi.mock('../attachment-collector.ts', () => ({
-  getProperAttachmentPath: vi.fn(),
-  isNoteEx: vi.fn()
-}));
-
 vi.mock('../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts', () => ({
   selectMode: vi.fn()
 }));
@@ -140,10 +134,8 @@ const mockCopySafe = vi.mocked(copySafe);
 const mockDeleteIfNotUsed = vi.mocked(deleteIfNotUsed);
 const mockEditLinks = vi.mocked(editLinks);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
-const mockGetProperAttachmentPath = vi.mocked(getProperAttachmentPath);
 const mockIsFile = vi.mocked(isFile);
 const mockIsFolder = vi.mocked(isFolder);
-const mockIsNoteEx = vi.mocked(isNoteEx);
 const mockLoop = vi.mocked(loop);
 const mockSelectMode = vi.mocked(selectMode);
 const mockUpdateLink = vi.mocked(updateLink);
@@ -179,8 +171,9 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   let app: App;
   let combinedAbortSignal: AbortSignal;
   let getFileByPath: ReturnType<typeof vi.fn<(path: string) => null | TFile>>;
+  let getProperAttachmentPath: ReturnType<typeof vi.fn<(params: unknown) => Promise<null | string>>>;
   let handler: MoveAttachmentToProperFolderCommandHandler;
-  let plugin: Plugin;
+  let isNoteEx: ReturnType<typeof vi.fn<(pathOrFile: unknown) => boolean>>;
   let settings: PluginSettingsLike;
 
   beforeEach(() => {
@@ -189,16 +182,16 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     mockDeleteIfNotUsed.mockReset();
     mockEditLinks.mockReset();
     mockGetBacklinksForFileSafe.mockReset();
-    mockGetProperAttachmentPath.mockReset();
     mockIsFile.mockReset();
     mockIsFolder.mockReset();
-    mockIsNoteEx.mockReset();
     mockLoop.mockReset();
     mockSelectMode.mockReset();
     combinedAbortSignal = new AbortController().signal;
     mockAbortSignalAny.mockReturnValue(combinedAbortSignal);
     mockUpdateLink.mockReturnValue('new-link');
     getFileByPath = vi.fn<(path: string) => null | TFile>();
+    getProperAttachmentPath = vi.fn<(params: unknown) => Promise<null | string>>();
+    isNoteEx = vi.fn<(pathOrFile: unknown) => boolean>();
     settings = {
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll
@@ -208,15 +201,20 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         getFileByPath: (path: string) => getFileByPath(path)
       })
     });
-    plugin = strictProxy<Plugin>({
-      abortSignal: new AbortController().signal,
+    handler = new MoveAttachmentToProperFolderCommandHandler({
+      abortSignalComponent: strictProxy<AbortSignalComponent>({
+        abortSignal: new AbortController().signal
+      }),
       app,
-      manifest: strictProxy<Plugin['manifest']>({ name: 'My Plugin' }),
-      pluginSettingsComponent: strictProxy<Plugin['pluginSettingsComponent']>({
-        settings: castTo<Plugin['pluginSettingsComponent']['settings']>(settings)
+      attachmentCollector: strictProxy<AttachmentCollector>({
+        getProperAttachmentPath: (params: unknown) => getProperAttachmentPath(params),
+        isNoteEx: (pathOrFile: unknown) => isNoteEx(pathOrFile)
+      }),
+      pluginName: 'My Plugin',
+      pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
+        settings: castTo<PluginSettingsComponent['settings']>(settings)
       })
     });
-    handler = new MoveAttachmentToProperFolderCommandHandler(plugin);
   });
 
   it('should create an instance', () => {
@@ -227,18 +225,18 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     it('should return true when the abstract file is not a file', () => {
       mockIsFile.mockReturnValue(false);
       expect(asPrivate(handler).canExecuteAbstractFile(createFolder('folder'))).toBe(true);
-      expect(mockIsNoteEx).not.toHaveBeenCalled();
+      expect(isNoteEx).not.toHaveBeenCalled();
     });
 
     it('should return true when the file is not a note', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       expect(asPrivate(handler).canExecuteAbstractFile(createFile('image.png'))).toBe(true);
     });
 
     it('should return false when the file is a note', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(true);
+      isNoteEx.mockReturnValue(true);
       expect(asPrivate(handler).canExecuteAbstractFile(createFile('note.md'))).toBe(false);
     });
   });
@@ -246,14 +244,14 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   describe('canExecuteAbstractFiles', () => {
     it('should return false when a file is a note', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValueOnce(false).mockReturnValueOnce(true);
+      isNoteEx.mockReturnValueOnce(false).mockReturnValueOnce(true);
       const files = [createFile('image.png'), createFile('note.md')];
       expect(asPrivate(handler).canExecuteAbstractFiles(files)).toBe(false);
     });
 
     it('should return true when no file is a note', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       const files = [createFile('a.png'), createFile('b.png')];
       expect(asPrivate(handler).canExecuteAbstractFiles(files)).toBe(true);
     });
@@ -262,7 +260,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       mockIsFile.mockReturnValue(false);
       const files = [createFolder('folder1'), createFolder('folder2')];
       expect(asPrivate(handler).canExecuteAbstractFiles(files)).toBe(true);
-      expect(mockIsNoteEx).not.toHaveBeenCalled();
+      expect(isNoteEx).not.toHaveBeenCalled();
     });
   });
 
@@ -277,7 +275,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   describe('executeAbstractFile', () => {
     it('should delegate to executeAbstractFiles with the single file', async () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       mockLoop.mockResolvedValue();
       const file = createFile('image.png');
       await asPrivate(handler).executeAbstractFile(file);
@@ -297,7 +295,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       mockIsFile.mockImplementation((value) => castTo<TAbstractFile>(value).path.endsWith('.png') || castTo<TAbstractFile>(value).path.endsWith('.md'));
       mockIsFolder.mockImplementation((value) => castTo<TAbstractFile>(value) === folder);
-      mockIsNoteEx.mockImplementation((_plugin, value) => castTo<TAbstractFile>(value).path.endsWith('.md'));
+      isNoteEx.mockImplementation((value) => castTo<TAbstractFile>(value).path.endsWith('.md'));
       mockLoop.mockResolvedValue();
 
       await asPrivate(handler).executeAbstractFiles([attachmentA, attachmentB, note, folder]);
@@ -312,14 +310,12 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const attachment = createFile('ignored.png');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       vi.mocked(settings.isPathIgnored).mockReturnValue(true);
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-      let captured: LoopParams | undefined;
       mockLoop.mockImplementation(async (params) => {
-        captured = castTo<LoopParams>(params);
-        await captured.processItem(attachment);
+        await castTo<LoopParams>(params).processItem(attachment);
       });
 
       await asPrivate(handler).executeAbstractFiles([attachment]);
@@ -333,7 +329,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const attachment = createFile('attachment.png');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
@@ -363,7 +359,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     async function runProcessItem(attachment: TFile): Promise<void> {
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       mockLoop.mockImplementation(async (params) => {
         await castTo<LoopParams>(params).processItem(attachment);
       });
@@ -381,7 +377,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       expect(mockDeleteIfNotUsed).not.toHaveBeenCalled();
     });
 
-    it('should copy attachments and update links for a single backlink (CopyAll via single backlink path)', async () => {
+    it('should not copy for a single backlink (handleMode not invoked)', async () => {
       const attachment = createFile('attachment.png');
       const reference = createReference('[[attachment]]');
       const backlinkFile = createFile('note1.md');
@@ -390,7 +386,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(new Map([['note1.md', [reference]]])));
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
       getFileByPath.mockReturnValue(backlinkFile);
-      mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
+      getProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
       mockEditLinks.mockResolvedValue();
 
       await runProcessItem(attachment);
@@ -414,7 +410,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         ))
         .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
-      mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
+      getProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
       mockEditLinks.mockImplementation(async (_app, _file, converter) => {
         await converter(reference);
         await converter(createReference('non-matching'));
@@ -479,7 +475,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         ))
         .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[attachment]]')]]])));
       getFileByPath.mockReturnValue(backlinkFile);
-      mockGetProperAttachmentPath.mockResolvedValue(null);
+      getProperAttachmentPath.mockResolvedValue(null);
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
       await runProcessItem(attachment);
@@ -495,7 +491,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const attachment = createFile('attachment.png');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = mode;
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
@@ -520,7 +516,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const attachment = createFile('attachment.png');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
@@ -549,7 +545,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const backlinkFile = createFile('note1.md');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
       const reference = createReference('[[a]]');
       mockGetBacklinksForFileSafe
@@ -561,7 +557,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         ))
         .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[a]]2')]]])));
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
-      mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png');
+      getProperAttachmentPath.mockResolvedValue('new/attachment.png');
       mockEditLinks.mockResolvedValue();
       mockLoop.mockImplementation(async (params) => {
         await castTo<LoopParams>(params).processItem(attachment);
@@ -577,7 +573,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const backlinkFile = createFile('note1.md');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
       const reference = createReference('[[a]]');
       mockGetBacklinksForFileSafe
@@ -594,7 +590,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         shouldUseSameActionForOtherProblematicAttachments: true
       });
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
-      mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png');
+      getProperAttachmentPath.mockResolvedValue('new/attachment.png');
       mockEditLinks.mockResolvedValue();
       mockLoop.mockImplementation(async (params) => {
         await castTo<LoopParams>(params).processItem(attachment);
@@ -611,7 +607,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const backlinkFile = createFile('note1.md');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
       const reference = createReference('[[a]]');
       mockGetBacklinksForFileSafe
@@ -628,7 +624,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         shouldUseSameActionForOtherProblematicAttachments: false
       });
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
-      mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png');
+      getProperAttachmentPath.mockResolvedValue('new/attachment.png');
       mockEditLinks.mockResolvedValue();
       mockLoop.mockImplementation(async (params) => {
         await castTo<LoopParams>(params).processItem(attachment);
@@ -648,7 +644,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const attachment = createFile('attachment.png');
       mockIsFile.mockReturnValue(true);
       mockIsFolder.mockReturnValue(false);
-      mockIsNoteEx.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = castTo<MoveAttachmentToProperFolderUsedByMultipleNotesMode>('UnknownMode');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
@@ -669,4 +665,3 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     });
   });
 });
-/* eslint-enable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- End of test file. */

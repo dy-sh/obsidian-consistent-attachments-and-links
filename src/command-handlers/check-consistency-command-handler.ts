@@ -1,9 +1,9 @@
 import { GlobalCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/global-command-handler';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 export class CheckConsistencyCommandHandler extends GlobalCommandHandler {
-  public constructor(private readonly plugin: Plugin) {
+  public constructor(private readonly consistentAttachmentsAndLinksComponent: ConsistentAttachmentsAndLinksComponent) {
     super({
       icon: 'check',
       id: 'check-consistency',
@@ -12,6 +12,6 @@ export class CheckConsistencyCommandHandler extends GlobalCommandHandler {
   }
 
   protected override async execute(): Promise<void> {
-    await this.plugin.checkConsistency();
+    await this.consistentAttachmentsAndLinksComponent.checkConsistency();
   }
 }

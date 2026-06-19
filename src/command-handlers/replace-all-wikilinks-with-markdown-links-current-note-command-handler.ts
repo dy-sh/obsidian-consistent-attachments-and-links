@@ -2,10 +2,10 @@ import type { TFile } from 'obsidian';
 
 import { FileCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/file-command-handler';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 export class ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler extends FileCommandHandler {
-  public constructor(private readonly plugin: Plugin) {
+  public constructor(private readonly consistentAttachmentsAndLinksComponent: ConsistentAttachmentsAndLinksComponent) {
     super({
       icon: 'replace',
       id: 'replace-all-wikilinks-with-markdown-links-current-note',
@@ -14,6 +14,6 @@ export class ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler exten
   }
 
   protected override executeFile(file: TFile): void {
-    this.plugin.replaceAllWikilinksWithMarkdownLinksCurrentNote(file);
+    this.consistentAttachmentsAndLinksComponent.replaceAllWikilinksWithMarkdownLinksCurrentNote(file);
   }
 }

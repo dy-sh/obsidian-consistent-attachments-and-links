@@ -75,8 +75,8 @@ async function createTab(): Promise<CreatedTab> {
     plugin,
     pluginSettingsComponent
   });
-  // eslint-disable-next-line @typescript-eslint/no-deprecated -- SettingTab.display() is deprecated in Obsidian, but PluginSettingsTabBase still uses display().
-  tab.display();
+
+  tab.displayLegacy();
   addToggleSpy.mockRestore();
   return { pluginSettingsComponent, tab, toggles };
 }

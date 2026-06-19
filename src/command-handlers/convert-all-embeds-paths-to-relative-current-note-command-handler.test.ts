@@ -11,7 +11,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/file-command-handler', () => ({
   FileCommandHandler: class {
@@ -39,7 +39,7 @@ describe('ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     convertAllEmbedsPathsToRelativeCurrentNote = vi.fn<(file: TFile) => void>();
-    handler = new ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler(strictProxy<Plugin>({
+    handler = new ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler(strictProxy<ConsistentAttachmentsAndLinksComponent>({
       convertAllEmbedsPathsToRelativeCurrentNote
     }));
   });

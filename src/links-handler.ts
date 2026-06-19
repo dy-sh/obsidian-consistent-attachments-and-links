@@ -15,7 +15,6 @@ import {
   resolveSubpath,
   TFile
 } from 'obsidian';
-import { noop } from 'obsidian-dev-utils/function';
 import { normalizeOptionalProperties } from 'obsidian-dev-utils/object-utils';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
@@ -43,7 +42,7 @@ import {
 } from 'obsidian-dev-utils/path';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
-import type { Plugin } from './plugin.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 export interface LinksAndEmbedsChangedInfo {
   embeds: ReferenceChangeInfo[];
@@ -66,6 +65,11 @@ interface ConvertLinkParams {
   readonly note: TFile;
   readonly oldNotePath: string;
   readonly pathChangeMap?: Map<string, string> | undefined;
+}
+
+interface LinksHandlerConstructorParams {
+  readonly app: App;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 export class ConsistencyCheckResult extends Map<string, Reference[]> {
@@ -111,10 +115,12 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 }
 
 export class LinksHandler {
-  public constructor(
-    private readonly plugin: Plugin
-  ) {
-    noop();
+  private readonly app: App;
+  private readonly pluginSettingsComponent: PluginSettingsComponent;
+
+  public constructor(params: LinksHandlerConstructorParams) {
+    this.app = params.app;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
   public async checkConsistency(
@@ -125,11 +131,11 @@ export class LinksHandler {
     wikiEmbeds: ConsistencyCheckResult,
     badFrontmatterLinks: ConsistencyCheckResult
   ): Promise<void> {
-    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
+    if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
       return;
     }
 
-    const cache = await getCacheSafe(this.plugin.app, note.path);
+    const cache = await getCacheSafe(this.app, note.path);
     if (!cache) {
       return;
     }
@@ -173,12 +179,12 @@ export class LinksHandler {
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
-    const file = getFileOrNull(this.plugin.app, filePath);
+    const file = getFileOrNull(this.app, filePath);
     if (!file) {
       return [];
     }
 
-    const backlinks = await getBacklinksForFileSafe(this.plugin.app, file);
+    const backlinks = await getBacklinksForFileSafe(this.app, file);
     return backlinks.keys();
   }
 
@@ -190,17 +196,17 @@ export class LinksHandler {
   }
 
   public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean, abortSignal: AbortSignal): Promise<number> {
-    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
+    if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return 0;
     }
 
-    const noteFile = getFileOrNull(this.plugin.app, notePath);
+    const noteFile = getFileOrNull(this.app, notePath);
     if (!noteFile) {
       console.warn(`can't update wikilinks in note, file not found: ${notePath}`);
       return 0;
     }
 
-    const cache = await getCacheSafe(this.plugin.app, noteFile);
+    const cache = await getCacheSafe(this.app, noteFile);
     abortSignal.throwIfAborted();
     if (!cache) {
       return 0;
@@ -209,7 +215,7 @@ export class LinksHandler {
     const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
-      app: this.plugin.app,
+      app: this.app,
       linkStyle: LinkStyle.Markdown,
       newSourcePathOrFile: noteFile,
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
@@ -218,11 +224,11 @@ export class LinksHandler {
   }
 
   public async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[]): Promise<void> {
-    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
+    if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return;
     }
 
-    const note = getFileOrNull(this.plugin.app, notePath);
+    const note = getFileOrNull(this.app, notePath);
     if (!note) {
       console.warn(`can't update links in note, file not found: ${notePath}`);
       return;
@@ -237,21 +243,21 @@ export class LinksHandler {
   }
 
   private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
-    if (this.plugin.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
+    if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return [];
     }
 
-    const note = getFileOrNull(this.plugin.app, notePath);
+    const note = getFileOrNull(this.app, notePath);
     if (!note) {
       return [];
     }
 
     const changedRefs: ReferenceChangeInfo[] = [];
 
-    await applyFileChanges(this.plugin.app, note, async ({ abortSignal: abortSignal2, content }) => {
-      const cache = await getCacheSafe(this.plugin.app, note);
+    await applyFileChanges(this.app, note, async ({ abortSignal: abortSignal2, content }) => {
+      const cache = await getCacheSafe(this.app, note);
       abortSignal2.throwIfAborted();
-      const cachedContent = await this.plugin.app.vault.cachedRead(note);
+      const cachedContent = await this.app.vault.cachedRead(note);
       abortSignal2.throwIfAborted();
       if (content !== cachedContent) {
         return null;
@@ -287,15 +293,15 @@ export class LinksHandler {
     pathChangeMap
   }: ConvertLinkParams): string {
     const { linkPath, subpath } = splitSubpath(link.link);
-    const oldLinkPath = extractLinkFile(this.plugin.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
+    const oldLinkPath = extractLinkFile(this.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
     const newLinkPath = pathChangeMap
       ? pathChangeMap.get(oldLinkPath)
-      : extractLinkFile(this.plugin.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
+      : extractLinkFile(this.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
     if (!newLinkPath) {
       return link.original;
     }
 
-    const targetPathOrFile = getFileOrNull(this.plugin.app, newLinkPath) ?? getFileOrNull(this.plugin.app, oldLinkPath);
+    const targetPathOrFile = getFileOrNull(this.app, newLinkPath) ?? getFileOrNull(this.app, oldLinkPath);
 
     if (!targetPathOrFile) {
       return link.original;
@@ -305,7 +311,7 @@ export class LinksHandler {
 
     return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkParams>({
       alias,
-      app: this.plugin.app,
+      app: this.app,
       linkPathStyle: forceRelativePath ? LinkPathStyle.RelativePathToTheSource : LinkPathStyle.ObsidianSettingsDefault,
       originalLink: link.original,
       sourcePathOrFile: note.path,
@@ -327,7 +333,7 @@ export class LinksHandler {
       fullLinkPath = join(dirname(notePath), linkPath);
     }
 
-    const file = getFileOrNull(this.plugin.app, fullLinkPath);
+    const file = getFileOrNull(this.app, fullLinkPath);
 
     if (!file) {
       return false;
@@ -347,7 +353,7 @@ export class LinksHandler {
       return false;
     }
 
-    const cache = await getCacheSafe(this.plugin.app, file);
+    const cache = await getCacheSafe(this.app, file);
 
     if (!cache) {
       return false;
@@ -357,11 +363,11 @@ export class LinksHandler {
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
-    await applyFileChanges(this.plugin.app, note, async ({ abortSignal, content }) => {
+    await applyFileChanges(this.app, note, async ({ abortSignal, content }) => {
       abortSignal.throwIfAborted();
-      const cache = await getCacheSafe(this.plugin.app, note);
+      const cache = await getCacheSafe(this.app, note);
       abortSignal.throwIfAborted();
-      const cachedContent = await this.plugin.app.vault.cachedRead(note);
+      const cachedContent = await this.app.vault.cachedRead(note);
       abortSignal.throwIfAborted();
       if (content !== cachedContent) {
         return null;

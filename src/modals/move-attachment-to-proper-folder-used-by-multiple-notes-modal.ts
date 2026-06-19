@@ -13,9 +13,9 @@ import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 interface MoveAttachmentToProperFolderUsedByMultipleNotesModalResult {
-  backlinksToCopy: string[];
-  mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
-  shouldUseSameActionForOtherProblematicAttachments: boolean;
+  readonly backlinksToCopy: string[];
+  readonly mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
+  readonly shouldUseSameActionForOtherProblematicAttachments: boolean;
 }
 
 class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {

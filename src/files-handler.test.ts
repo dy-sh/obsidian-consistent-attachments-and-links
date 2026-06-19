@@ -1,4 +1,7 @@
-import type { TFile } from 'obsidian';
+import type {
+  App,
+  TFile
+} from 'obsidian';
 import type { MockInstance } from 'vitest';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -40,7 +43,7 @@ import {
 } from 'vitest';
 
 import type { LinksHandler } from './links-handler.ts';
-import type { Plugin } from './plugin.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/attachment-path', () => ({
   AttachmentPathContext: {},
@@ -152,7 +155,7 @@ function createFile(path: string, parent: null | ParentLike = null): TFile {
 }
 
 describe('FilesHandler', () => {
-  let app: Plugin['app'];
+  let app: App;
   let exists: ReturnType<typeof vi.fn<(path: string, isCaseSensitive?: boolean) => Promise<boolean>>>;
   let adapterExists: ReturnType<typeof vi.fn<(normalizedPath: string, sensitive?: boolean) => Promise<boolean>>>;
   let rmdir: ReturnType<typeof vi.fn<(normalizedPath: string, recursive: boolean) => Promise<void>>>;
@@ -160,7 +163,7 @@ describe('FilesHandler', () => {
   let getFullPathForLink: ReturnType<typeof vi.fn<(link: string, owningNotePath: string) => string>>;
   let handler: FilesHandler;
   let lh: LinksHandler;
-  let plugin: Plugin;
+  let pluginSettingsComponent: PluginSettingsComponent;
   let settings: SettingsLike;
   let warnSpy: MockInstance<typeof console.warn>;
 
@@ -179,9 +182,9 @@ describe('FilesHandler', () => {
     adapterExists = vi.fn<(normalizedPath: string, sensitive?: boolean) => Promise<boolean>>().mockResolvedValue(false);
     rmdir = vi.fn<(normalizedPath: string, recursive: boolean) => Promise<void>>().mockResolvedValue(undefined);
 
-    app = strictProxy<Plugin['app']>({
-      vault: strictProxy<Plugin['app']['vault']>({
-        adapter: strictProxy<Plugin['app']['vault']['adapter']>({
+    app = strictProxy<App>({
+      vault: strictProxy<App['vault']>({
+        adapter: strictProxy<App['vault']['adapter']>({
           exists: adapterExists,
           rmdir
         }),
@@ -189,11 +192,8 @@ describe('FilesHandler', () => {
       })
     });
 
-    plugin = strictProxy<Plugin>({
-      app,
-      pluginSettingsComponent: strictProxy<Plugin['pluginSettingsComponent']>({
-        settings: castTo<Plugin['pluginSettingsComponent']['settings']>(settings)
-      })
+    pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+      settings: castTo<PluginSettingsComponent['settings']>(settings)
     });
 
     getCachedNotesThatHaveLinkToFile = vi.fn<(path: string) => Promise<string[]>>().mockResolvedValue([]);
@@ -203,7 +203,11 @@ describe('FilesHandler', () => {
       getFullPathForLink
     });
 
-    handler = new FilesHandler(plugin, lh);
+    handler = new FilesHandler({
+      app,
+      linksHandler: lh,
+      pluginSettingsComponent
+    });
 
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     mockDirname.mockImplementation((p: string) => {

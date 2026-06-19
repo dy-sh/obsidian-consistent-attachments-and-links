@@ -18,9 +18,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
-
-import { collectAttachmentsInAbstractFiles } from '../attachment-collector.ts';
+import type { AttachmentCollector } from '../attachment-collector.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler', () => ({
   AbstractFileCommandHandler: class {
@@ -33,10 +31,6 @@ vi.mock('obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-hand
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   isFile: vi.fn(),
   isNote: vi.fn()
-}));
-
-vi.mock('../attachment-collector.ts', () => ({
-  collectAttachmentsInAbstractFiles: vi.fn()
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
@@ -64,14 +58,19 @@ function createAbstractFile(path: string): TAbstractFile {
 
 describe('CollectAttachmentsInFileCommandHandler', () => {
   let app: App;
+  let collectAttachmentsInAbstractFiles: ReturnType<typeof vi.fn<(abstractFiles: TAbstractFile[]) => void>>;
   let handler: CollectAttachmentsInFileCommandHandler;
-  let plugin: Plugin;
 
   beforeEach(() => {
     vi.clearAllMocks();
     app = strictProxy<App>({});
-    plugin = strictProxy<Plugin>({ app });
-    handler = new CollectAttachmentsInFileCommandHandler(plugin);
+    collectAttachmentsInAbstractFiles = vi.fn<(abstractFiles: TAbstractFile[]) => void>();
+    handler = new CollectAttachmentsInFileCommandHandler({
+      app,
+      attachmentCollector: strictProxy<AttachmentCollector>({
+        collectAttachmentsInAbstractFiles
+      })
+    });
   });
 
   it('should create an instance', () => {
@@ -125,7 +124,7 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
     it('should call collectAttachmentsInAbstractFiles with the single file wrapped in an array', () => {
       const file = createAbstractFile('note.md');
       asPrivate(handler).executeAbstractFile(file);
-      expect(collectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith(plugin, [file]);
+      expect(collectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith([file]);
     });
   });
 
@@ -133,7 +132,7 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
     it('should call collectAttachmentsInAbstractFiles with all files', () => {
       const files = [createAbstractFile('a.md'), createAbstractFile('b.md')];
       asPrivate(handler).executeAbstractFiles(files);
-      expect(collectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith(plugin, files);
+      expect(collectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith(files);
     });
   });
 

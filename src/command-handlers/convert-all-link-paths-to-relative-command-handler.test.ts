@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- Test mocks require empty constructors. */
+import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
@@ -9,7 +11,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/global-command-handler', () => ({
   GlobalCommandHandler: class {
@@ -39,17 +41,21 @@ describe('ConvertAllLinkPathsToRelativeCommandHandler', () => {
     vi.clearAllMocks();
     abortSignal = new AbortController().signal;
     convertAllLinkPathsToRelative = vi.fn<(abortSignal: AbortSignal) => Promise<void>>().mockResolvedValue(undefined);
-    handler = new ConvertAllLinkPathsToRelativeCommandHandler(strictProxy<Plugin>({
-      abortSignal,
-      convertAllLinkPathsToRelative
-    }));
+    handler = new ConvertAllLinkPathsToRelativeCommandHandler({
+      abortSignalComponent: strictProxy<AbortSignalComponent>({
+        abortSignal
+      }),
+      consistentAttachmentsAndLinksComponent: strictProxy<ConsistentAttachmentsAndLinksComponent>({
+        convertAllLinkPathsToRelative
+      })
+    });
   });
 
   it('should create an instance', () => {
     expect(handler).toBeInstanceOf(ConvertAllLinkPathsToRelativeCommandHandler);
   });
 
-  it('should call convertAllLinkPathsToRelative with the plugin abort signal on execute', async () => {
+  it('should call convertAllLinkPathsToRelative with the abort signal on execute', async () => {
     await asPrivate(handler).execute();
     expect(convertAllLinkPathsToRelative).toHaveBeenCalledExactlyOnceWith(abortSignal);
   });

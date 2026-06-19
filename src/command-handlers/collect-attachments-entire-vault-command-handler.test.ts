@@ -9,9 +9,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
-
-import { collectAttachmentsEntireVault } from '../attachment-collector.ts';
+import type { AttachmentCollector } from '../attachment-collector.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/command-handlers/global-command-handler', () => ({
   GlobalCommandHandler: class {
@@ -19,10 +17,6 @@ vi.mock('obsidian-dev-utils/obsidian/command-handlers/global-command-handler', (
       // Base no-op.
     }
   }
-}));
-
-vi.mock('../attachment-collector.ts', () => ({
-  collectAttachmentsEntireVault: vi.fn()
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
@@ -37,22 +31,24 @@ function asPrivate(handler: CollectAttachmentsEntireVaultCommandHandler): Comman
 }
 
 describe('CollectAttachmentsEntireVaultCommandHandler', () => {
+  let collectAttachmentsEntireVault: ReturnType<typeof vi.fn<() => void>>;
   let handler: CollectAttachmentsEntireVaultCommandHandler;
-  let plugin: Plugin;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    plugin = strictProxy<Plugin>({});
-    handler = new CollectAttachmentsEntireVaultCommandHandler(plugin);
+    collectAttachmentsEntireVault = vi.fn<() => void>();
+    handler = new CollectAttachmentsEntireVaultCommandHandler(strictProxy<AttachmentCollector>({
+      collectAttachmentsEntireVault
+    }));
   });
 
   it('should create an instance', () => {
     expect(handler).toBeInstanceOf(CollectAttachmentsEntireVaultCommandHandler);
   });
 
-  it('should call collectAttachmentsEntireVault with the plugin on execute', () => {
+  it('should call collectAttachmentsEntireVault on execute', () => {
     asPrivate(handler).execute();
-    expect(collectAttachmentsEntireVault).toHaveBeenCalledExactlyOnceWith(plugin);
+    expect(collectAttachmentsEntireVault).toHaveBeenCalledOnce();
   });
 });
 /* eslint-enable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- End of test file. */
