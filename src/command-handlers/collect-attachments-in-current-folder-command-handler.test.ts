@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- Test mocks require empty constructors. */
 import type {
   TAbstractFile,
   TFolder
@@ -16,15 +15,6 @@ import {
 
 import type { AttachmentCollector } from '../attachment-collector.ts';
 
-vi.mock('obsidian-dev-utils/obsidian/command-handlers/folder-command-handler', () => ({
-  FolderCommandHandler: class {
-    public constructor(_params: unknown) {
-      // Base no-op.
-    }
-  }
-}));
-
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect-attachments-in-current-folder-command-handler.ts';
 
 interface CommandHandlerPrivate {
@@ -57,4 +47,3 @@ describe('CollectAttachmentsInCurrentFolderCommandHandler', () => {
     expect(collectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith([folder]);
   });
 });
-/* eslint-enable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- End of test file. */

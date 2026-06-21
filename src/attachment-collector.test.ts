@@ -30,6 +30,7 @@ import {
   isFolder,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   editLinks,
   extractLinkFile,
@@ -50,6 +51,7 @@ import {
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   afterEach,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -60,6 +62,8 @@ import {
 import type { AttachmentCollectorGetProperAttachmentPathParams } from './attachment-collector.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { AttachmentCollector } from './attachment-collector.ts';
+import { translationsMap } from './i18n/locales/translations-map.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
@@ -92,10 +96,13 @@ vi.mock('obsidian-dev-utils/html-element', () => ({
   appendCodeBlock: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/attachment-path', () => ({
-  AttachmentPathContext: { Unknown: 'Unknown' },
-  getAttachmentFilePath: vi.fn()
-}));
+vi.mock('obsidian-dev-utils/obsidian/attachment-path', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/attachment-path')>();
+  return {
+    ...actual,
+    getAttachmentFilePath: vi.fn()
+  };
+});
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   getPath: vi.fn(),
@@ -103,17 +110,6 @@ vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   isFile: vi.fn(),
   isFolder: vi.fn(),
   isNote: vi.fn()
-}));
-
-vi.mock('obsidian-dev-utils/obsidian/i18n/i18n', () => ({
-  t: vi.fn((selector: (translations: unknown) => unknown): string => {
-    const accessor: unknown = new Proxy((): undefined => undefined, {
-      apply: (): string => 'translated',
-      get: (): unknown => accessor
-    });
-    selector(accessor);
-    return 'translated';
-  })
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/link', () => ({
@@ -148,9 +144,6 @@ vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
 vi.mock('./modals/collect-attachment-used-by-multiple-notes-modal.ts', () => ({
   selectMode: vi.fn()
 }));
-
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { AttachmentCollector } from './attachment-collector.ts';
 
 interface CollectAttachmentContextLike {
   collectAttachmentUsedByMultipleNotesMode?: CollectAttachmentUsedByMultipleNotesMode;
@@ -248,6 +241,10 @@ describe('AttachmentCollector', () => {
   let warnSpy: MockInstance<typeof console.warn>;
   let errorSpy: MockInstance<typeof console.error>;
 
+  beforeAll(async () => {
+    await initI18N(translationsMap);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     settings = {
@@ -340,7 +337,7 @@ describe('AttachmentCollector', () => {
       collector.collectAttachmentsEntireVault();
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
       expect(params.app).toBe(app);
-      expect(params.operationName).toBe('translated');
+      expect(params.operationName).toBe('Collect attachments in entire vault');
     });
 
     it('should run the operation against the vault root', async () => {
@@ -811,7 +808,7 @@ describe('AttachmentCollector', () => {
       mockAbortSignalAny.mockReturnValue(new AbortController().signal);
       mockLoop.mockImplementation(async (options) => {
         const typed = castTo<LoopOptionsLike>(options);
-        expect(typed.buildNoticeMessage(noteFile, '1/1')).toBe('translated');
+        expect(typed.buildNoticeMessage(noteFile, '1/1')).toBe('Collecting attachments 1/1 - \'a.md\'.');
         await noopAsync();
       });
       await runOperation([noteFile]);

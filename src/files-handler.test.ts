@@ -31,7 +31,6 @@ import {
   trashSafe
 } from 'obsidian-dev-utils/obsidian/vault';
 import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
-import { dirname } from 'obsidian-dev-utils/path';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   afterEach,
@@ -45,17 +44,9 @@ import {
 import type { LinksHandler } from './links-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
-vi.mock('obsidian-dev-utils/obsidian/attachment-path', () => ({
-  AttachmentPathContext: {},
+vi.mock('obsidian-dev-utils/obsidian/attachment-path', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/attachment-path')>(),
   getAttachmentFilePath: vi.fn()
-}));
-
-vi.mock('obsidian-dev-utils/obsidian/components/rename-delete-handler-component', () => ({
-  EmptyFolderBehavior: {
-    Delete: 'Delete',
-    DeleteWithEmptyParents: 'DeleteWithEmptyParents',
-    Keep: 'Keep'
-  }
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
@@ -87,10 +78,6 @@ vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
 
 vi.mock('obsidian-dev-utils/obsidian/vault-delete', () => ({
   deleteIfNotUsed: vi.fn()
-}));
-
-vi.mock('obsidian-dev-utils/path', () => ({
-  dirname: vi.fn()
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
@@ -141,7 +128,6 @@ const mockListSafe = vi.mocked(listSafe);
 const mockRenameSafe = vi.mocked(renameSafe);
 const mockTrashSafe = vi.mocked(trashSafe);
 const mockDeleteIfNotUsed = vi.mocked(deleteIfNotUsed);
-const mockDirname = vi.mocked(dirname);
 
 function asPrivate(handler: FilesHandler): FilesHandlerPrivate {
   return castTo<FilesHandlerPrivate>(handler);
@@ -210,10 +196,6 @@ describe('FilesHandler', () => {
     });
 
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    mockDirname.mockImplementation((p: string) => {
-      const idx = p.lastIndexOf('/');
-      return idx === -1 ? '' : p.slice(0, idx);
-    });
   });
 
   afterEach(() => {
