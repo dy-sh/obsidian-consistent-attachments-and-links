@@ -312,8 +312,7 @@ describe('AttachmentCollector', () => {
     function buildParams(attachmentFile: TFile): AttachmentCollectorGetProperAttachmentPathParams {
       return {
         attachmentFile,
-        noteFilePath: 'note.md',
-        reference: createReference()
+        noteFilePath: 'note.md'
       };
     }
 
