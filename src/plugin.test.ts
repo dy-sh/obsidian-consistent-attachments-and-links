@@ -9,7 +9,7 @@ import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { Component } from 'obsidian';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
-import { getObsidianDevUtilsState } from 'obsidian-dev-utils/obsidian/app';
+import { getObsidianDevUtilsState } from 'obsidian-dev-utils/obsidian-dev-utils-state';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
   beforeEach,
@@ -236,7 +236,7 @@ async function createLoadedPlugin(): Promise<Plugin> {
 }
 
 function getRegisteredSettingsBuilder(): SettingsBuilder {
-  const renameDeleteHandlersMap = getObsidianDevUtilsState(app, 'renameDeleteHandlersMap', new Map<string, SettingsBuilder>()).value;
+  const renameDeleteHandlersMap = getObsidianDevUtilsState('renameDeleteHandlersMap', new Map<string, SettingsBuilder>()).value;
   const builder = renameDeleteHandlersMap.get(PLUGIN_ID);
   if (!builder) {
     throw new Error('Rename/delete settings builder was not registered.');
