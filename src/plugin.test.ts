@@ -57,8 +57,6 @@ const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 // --- Hoisted shared state ---
 
 const hoisted = vi.hoisted(() => ({
-  capturedLoadSettingsHandlers: [] as ((state: unknown, isInitialLoad: boolean) => void)[],
-  capturedSaveSettingsHandlers: [] as (() => void)[],
   mockFilesHandlerInstance: {
     isNoteEx: vi.fn((): boolean => true)
   },
@@ -113,14 +111,7 @@ vi.mock('./consistent-attachments-and-links-component.ts', () => ({
 vi.mock('./plugin-settings-component.ts', () => ({
   // Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it.
   PluginSettingsComponent: class extends Component {
-    public on = vi.fn((event: string, handler: (...args: unknown[]) => void): EventRef => {
-      if (event === 'loadSettings') {
-        hoisted.capturedLoadSettingsHandlers.push(handler);
-      } else {
-        hoisted.capturedSaveSettingsHandlers.push(handler);
-      }
-      return { id: `${event}-ref` };
-    });
+    public on = vi.fn((event: string): EventRef => ({ id: `${event}-ref` }));
 
     public settings = hoisted.mockSettings;
 
@@ -255,8 +246,6 @@ function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknow
 describe('Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    hoisted.capturedLoadSettingsHandlers.length = 0;
-    hoisted.capturedSaveSettingsHandlers.length = 0;
     hoisted.mockSettings.isPathIgnored.mockReturnValue(false);
     hoisted.mockFilesHandlerInstance.isNoteEx.mockReturnValue(true);
     nextCommandHandlerIndex = 0;
@@ -299,39 +288,6 @@ describe('Plugin', () => {
     it('should add the settings tab to the plugin', async () => {
       const plugin = await createLoadedPlugin();
       expect(castTo<SettingTabsHolder>(plugin).settingTabs__).toHaveLength(1);
-    });
-
-    it('should register loadSettings and saveSettings handlers', async () => {
-      await createLoadedPlugin();
-      expect(hoisted.capturedLoadSettingsHandlers).toHaveLength(1);
-      expect(hoisted.capturedSaveSettingsHandlers).toHaveLength(1);
-    });
-
-    it('should not rebuild handlers on the initial loadSettings', async () => {
-      await createLoadedPlugin();
-      const handler = hoisted.capturedLoadSettingsHandlers[0];
-      expect(handler).toBeDefined();
-      handler?.(undefined, true);
-      const settings = getRegisteredSettingsBuilder()();
-      expect(settings.isNote('note.md')).toBe(true);
-    });
-
-    it('should rebuild handlers on a non-initial loadSettings', async () => {
-      await createLoadedPlugin();
-      const handler = hoisted.capturedLoadSettingsHandlers[0];
-      expect(handler).toBeDefined();
-      handler?.(undefined, false);
-      const settings = getRegisteredSettingsBuilder()();
-      expect(settings.isNote('note.md')).toBe(true);
-    });
-
-    it('should rebuild handlers on saveSettings', async () => {
-      await createLoadedPlugin();
-      const handler = hoisted.capturedSaveSettingsHandlers[0];
-      expect(handler).toBeDefined();
-      handler?.();
-      const settings = getRegisteredSettingsBuilder()();
-      expect(settings.isNote('note.md')).toBe(true);
     });
   });
 

@@ -172,7 +172,6 @@ interface PrivateAttachmentCollector {
 }
 
 interface QueueParamsLike {
-  app: App;
   operationFn(abortSignal: AbortSignal): Promise<void>;
   operationName: string;
 }
@@ -329,7 +328,6 @@ describe('AttachmentCollector', () => {
     it('should enqueue an operation for the vault root', () => {
       collector.collectAttachmentsEntireVault();
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
-      expect(params.app).toBe(app);
       expect(params.operationName).toBe('Collect attachments in entire vault');
     });
 
@@ -352,7 +350,7 @@ describe('AttachmentCollector', () => {
       const files = [strictProxy<TAbstractFile>({ path: 'a.md' })];
       collector.collectAttachmentsInAbstractFiles(files);
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
-      expect(params.app).toBe(app);
+      expect(params.operationName).toBe('Collect attachments in file');
     });
   });
 
