@@ -57,12 +57,10 @@ import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 export interface AttachmentCollectorGetProperAttachmentPathParams {
   readonly attachmentFile: TFile;
   readonly noteFilePath: string;
-  readonly reference: Reference;
 }
 
 interface AttachmentCollectorCollectAttachmentsParams {
   readonly abortSignal: AbortSignal;
-  readonly abortSignalComponent: AbortSignalComponent;
   readonly ctx: CollectAttachmentContext;
   readonly note: TFile;
 }
@@ -392,7 +390,6 @@ export class AttachmentCollector {
         }
         await this.collectAttachments({
           abortSignal: combinedAbortSignal,
-          abortSignalComponent: this.abortSignalComponent,
           ctx,
           note: noteFile
         });
@@ -436,8 +433,7 @@ export class AttachmentCollector {
 
     const newAttachmentPath = await this.getProperAttachmentPath({
       attachmentFile: oldAttachmentFile,
-      noteFilePath: newNotePath,
-      reference
+      noteFilePath: newNotePath
     });
 
     return {

@@ -171,8 +171,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
       const newAttachmentPath = await this.attachmentCollector.getProperAttachmentPath({
         attachmentFile,
-        noteFilePath: backlink,
-        reference: link
+        noteFilePath: backlink
       });
       if (!newAttachmentPath) {
         console.warn(`Skipping moving attachment ${attachmentFile.path} to proper folder as it is already in the destination folder.`);
