@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 3.33.10
+
+- test: fix
+- refactor: new template
+- refactor: don't reset handlers
+- test: adopt async-operation tracking for fire-and-forget assertions
+- chore: update obsidian-dev-utils to 74.2.0
+- chore: unify tsconfig
+- test: use real obsidian-dev-utils implementations in unit tests
+
 ## 3.33.9
 
 - chore: update template
