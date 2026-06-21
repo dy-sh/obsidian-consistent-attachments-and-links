@@ -51,41 +51,15 @@ export class Plugin extends PluginBase {
       })
     );
 
-    let linksHandler = new LinksHandler({
+    const linksHandler = new LinksHandler({
       app: this.app,
       pluginSettingsComponent
     });
-    let filesHandler = new FilesHandler({
+
+    const filesHandler = new FilesHandler({
       app: this.app,
       linksHandler,
       pluginSettingsComponent
-    });
-
-    pluginSettingsComponent.on('loadSettings', (_state, isInitialLoad) => {
-      if (isInitialLoad) {
-        return;
-      }
-      linksHandler = new LinksHandler({
-        app: this.app,
-        pluginSettingsComponent
-      });
-      filesHandler = new FilesHandler({
-        app: this.app,
-        linksHandler,
-        pluginSettingsComponent
-      });
-    });
-
-    pluginSettingsComponent.on('saveSettings', () => {
-      linksHandler = new LinksHandler({
-        app: this.app,
-        pluginSettingsComponent
-      });
-      filesHandler = new FilesHandler({
-        app: this.app,
-        linksHandler,
-        pluginSettingsComponent
-      });
     });
 
     const pluginSettingsTab = new PluginSettingsTab({
