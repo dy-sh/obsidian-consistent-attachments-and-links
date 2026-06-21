@@ -1,7 +1,8 @@
 import type {
-  App,
+  App as AppOriginal,
   CachedMetadata,
-  TFile
+  TFile,
+  WorkspaceLeaf
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 
@@ -12,6 +13,7 @@ import {
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+import { App } from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
   beforeEach,
@@ -30,14 +32,9 @@ import type {
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
-interface AddToQueueParams {
-  operationFn(abortSignal: AbortSignal): unknown;
-}
-
 interface ComponentPrivate {
   handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void;
   handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void;
-  onLayoutReady(): void;
   saveAllOpenNotes(): Promise<void>;
   showBackupWarning(): Promise<void>;
 }
@@ -46,34 +43,21 @@ interface DisplayTextLeaf {
   getDisplayText(): string;
 }
 
-interface EventRef {
-  id: string;
+interface GlobalAppHolder {
+  app: unknown;
 }
 
-interface LoopParams {
-  buildNoticeMessage?(item: TFile, iterationStr: string): string;
-  readonly items: TFile[];
-  processItem(item: TFile): Promise<void> | void;
+interface LayoutReadyWorkspace {
+  setLayoutReady__(): void;
 }
 
-interface MockApp {
-  metadataCache: MockAppMetadataCache;
-  vault: MockAppVault;
-  workspace: MockAppWorkspace;
+interface MockNoticeInstance {
+  hide(): void;
+  setMessage(): void;
 }
 
-interface MockAppMetadataCache {
-  on: ReturnType<typeof vi.fn>;
-}
-
-interface MockAppVault {
-  modify: ReturnType<typeof vi.fn>;
-}
-
-interface MockAppWorkspace {
-  getLeavesOfType: ReturnType<typeof vi.fn>;
-  iterateAllLeaves: ReturnType<typeof vi.fn>;
-  openLinkText: ReturnType<typeof vi.fn>;
+interface ObsidianDevUtilsStateHolder {
+  obsidianDevUtilsState: Record<string, unknown>;
 }
 
 interface SavableView {
@@ -83,21 +67,20 @@ interface SavableView {
 // --- Hoisted shared state ---
 
 const hoisted = vi.hoisted(() => ({
-  mockAddToQueue: vi.fn((params: AddToQueueParams): void => {
-    params.operationFn(new AbortController().signal);
-  }),
   mockAlert: vi.fn((..._args: unknown[]): Promise<void> => noopAsync()),
   mockCreateFolderSafe: vi.fn((..._args: unknown[]): Promise<void> => noopAsync()),
   mockGetMarkdownFilesSorted: vi.fn((): TFile[] => []),
-  mockGetOrCreateFile: vi.fn((..._args: unknown[]): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path: 'report.md' }))),
-  registeredEventRefs: [] as unknown[]
+  mockGetOrCreateFile: vi.fn((..._args: unknown[]): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path: 'report.md' })))
 }));
 
 vi.mock('obsidian', async (importOriginal) => {
   const original = await importOriginal<typeof import('obsidian')>();
   return {
     ...original,
-    Notice: vi.fn()
+    Notice: vi.fn(function MockNotice(this: MockNoticeInstance): void {
+      this.hide = vi.fn();
+      this.setMessage = vi.fn();
+    })
   };
 });
 
@@ -118,56 +101,13 @@ vi.mock('./files-handler.ts', () => ({
   FilesHandler: class {}
 }));
 
-vi.mock('obsidian-dev-utils/async', () => ({
-  invokeAsyncSafely: vi.fn((fn: () => Promise<void>): void => {
-    fn().catch((): void => undefined);
-  })
-}));
-
-vi.mock('obsidian-dev-utils/function', async (importOriginal) => {
-  const original = await importOriginal<typeof import('obsidian-dev-utils/function')>();
-  return {
-    ...original,
-    omitAsyncReturnType: vi.fn((fn: (abortSignal: AbortSignal) => Promise<unknown>) => fn)
-  };
-});
-
-vi.mock('obsidian-dev-utils/obsidian/components/layout-ready-component', () => ({
-  LayoutReadyComponent: class {
-    public app: unknown;
-
-    public constructor(app: unknown) {
-      this.app = app;
-    }
-
-    protected registerEvent(ref: unknown): void {
-      hoisted.registeredEventRefs.push(ref);
-    }
-  }
-}));
-
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   getOrCreateFile: (...args: unknown[]): Promise<TFile> => hoisted.mockGetOrCreateFile(...args),
   isMarkdownFile: vi.fn(() => true)
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/loop', () => ({
-  loop: vi.fn(async (params: LoopParams): Promise<void> => {
-    for (const item of params.items) {
-      params.buildNoticeMessage?.(item, '1/1');
-      await params.processItem(item);
-    }
-  })
-}));
-
 vi.mock('obsidian-dev-utils/obsidian/modals/alert', () => ({
   alert: (...args: unknown[]): Promise<void> => hoisted.mockAlert(...args)
-}));
-
-vi.mock('obsidian-dev-utils/obsidian/queue', () => ({
-  addToQueue: (params: AddToQueueParams): void => {
-    hoisted.mockAddToQueue(params);
-  }
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
@@ -175,21 +115,13 @@ vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
   getMarkdownFilesSorted: (): TFile[] => hoisted.mockGetMarkdownFilesSorted()
 }));
 
-vi.mock('obsidian-dev-utils/path', () => ({
-  dirname: vi.fn((path: string) => {
-    const index = path.lastIndexOf('/');
-    return index >= 0 ? path.slice(0, index) : '';
-  })
-}));
-
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 
 const mockAlert = hoisted.mockAlert;
 
-const metadataCacheHandlers = new Map<string, (...args: unknown[]) => void>();
-
-const mockApp = createMockApp();
+let app: AppOriginal;
+let previousGlobalApp: unknown;
 
 const mockSettings = {
   consistencyReportFile: 'report.md',
@@ -236,7 +168,7 @@ function asPrivate(component: ConsistentAttachmentsAndLinksComponent): Component
 function createComponent(): ConsistentAttachmentsAndLinksComponent {
   return new ConsistentAttachmentsAndLinksComponent({
     abortSignalComponent: mockAbortSignalComponent,
-    app: castTo<App>(mockApp),
+    app,
     attachmentCollector: mockAttachmentCollector,
     filesHandler: mockFilesHandler,
     linksHandler: mockLinksHandler,
@@ -244,23 +176,18 @@ function createComponent(): ConsistentAttachmentsAndLinksComponent {
   });
 }
 
-function createMockApp(): MockApp {
-  return {
-    metadataCache: {
-      on: vi.fn((event: string, handler: (...args: unknown[]) => void): EventRef => {
-        metadataCacheHandlers.set(event, handler);
-        return { id: `${event}-ref` };
-      })
-    },
-    vault: {
-      modify: vi.fn((): Promise<void> => noopAsync())
-    },
-    workspace: {
-      getLeavesOfType: vi.fn((): unknown[] => []),
-      iterateAllLeaves: vi.fn(),
-      openLinkText: vi.fn((): Promise<void> => noopAsync())
-    }
-  };
+async function flushAsync(): Promise<void> {
+  await noopAsync();
+  await noopAsync();
+}
+
+async function loadAndFireLayoutReady(component: ConsistentAttachmentsAndLinksComponent): Promise<void> {
+  component.load();
+  castTo<LayoutReadyWorkspace>(app.workspace).setLayoutReady__();
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, 0);
+  });
+  await flushAsync();
 }
 
 // --- Tests ---
@@ -268,8 +195,13 @@ function createMockApp(): MockApp {
 describe('ConsistentAttachmentsAndLinksComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    metadataCacheHandlers.clear();
-    hoisted.registeredEventRefs.length = 0;
+    const appMock = App.createConfigured__();
+    // Initialize the dev-utils shared-state holder so the real `addToQueue` can read/write its queue through the strict-proxied app without tripping the unmocked-property guard.
+    castTo<ObsidianDevUtilsStateHolder>(appMock).obsidianDevUtilsState = {};
+    app = castTo<AppOriginal>(appMock);
+    // Point the Obsidian global at the configured app so dev-utils helpers that resolve the app implicitly (e.g. `getLibDebugger`) share the same initialized shared-state holder.
+    previousGlobalApp = castTo<GlobalAppHolder>(window).app;
+    castTo<GlobalAppHolder>(window).app = appMock;
     hoisted.mockGetMarkdownFilesSorted.mockReturnValue([]);
     mockSettings.isPathIgnored.mockReturnValue(false);
     mockSettings.shouldShowBackupWarning = true;
@@ -282,6 +214,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   });
 
   afterEach(() => {
+    castTo<GlobalAppHolder>(window).app = previousGlobalApp;
     vi.restoreAllMocks();
   });
 
@@ -296,28 +229,35 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     it('should write the consistency report and open it when not already open', async () => {
       const component = createComponent();
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
+      const modifySpy = vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();
       expect(mockLinksHandler.checkConsistency).toHaveBeenCalled();
       expect(hoisted.mockCreateFolderSafe).toHaveBeenCalled();
-      expect(mockApp.workspace.openLinkText).toHaveBeenCalledWith('report.md', '/', false);
+      expect(modifySpy).toHaveBeenCalled();
+      expect(openLinkTextSpy).toHaveBeenCalledWith('report.md', '/', false);
     });
 
     it('should not reopen the report when it is already open', async () => {
       const component = createComponent();
-      mockApp.workspace.iterateAllLeaves.mockImplementation((cb: (leaf: DisplayTextLeaf) => void) => {
-        cb({ getDisplayText: () => 'report.md' });
+      vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((cb: (leaf: WorkspaceLeaf) => void) => {
+        cb(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => 'report.md' })));
       });
+      const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();
-      expect(mockApp.workspace.openLinkText).not.toHaveBeenCalled();
+      expect(openLinkTextSpy).not.toHaveBeenCalled();
     });
 
     it('should ignore leaves with an empty display text', async () => {
       const component = createComponent();
-      mockApp.workspace.iterateAllLeaves.mockImplementation((cb: (leaf: DisplayTextLeaf) => void) => {
-        cb({ getDisplayText: () => '' });
+      vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((cb: (leaf: WorkspaceLeaf) => void) => {
+        cb(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => '' })));
       });
+      const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();
-      expect(mockApp.workspace.openLinkText).toHaveBeenCalled();
+      expect(openLinkTextSpy).toHaveBeenCalled();
     });
   });
 
@@ -358,10 +298,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   });
 
   describe('convertAllEmbedsPathsToRelativeCurrentNote', () => {
-    it('should enqueue the conversion for the current note', () => {
+    it('should enqueue the conversion for the current note', async () => {
       const component = createComponent();
       component.convertAllEmbedsPathsToRelativeCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      expect(hoisted.mockAddToQueue).toHaveBeenCalled();
+      await vi.waitFor(() => {
+        expect(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).toHaveBeenCalledWith('note.md', expect.anything());
+      });
     });
   });
 
@@ -409,10 +351,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   });
 
   describe('convertAllLinkPathsToRelativeCurrentNote', () => {
-    it('should enqueue the conversion for the current note', () => {
+    it('should enqueue the conversion for the current note', async () => {
       const component = createComponent();
       component.convertAllLinkPathsToRelativeCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      expect(hoisted.mockAddToQueue).toHaveBeenCalled();
+      await vi.waitFor(() => {
+        expect(mockLinksHandler.convertAllNoteLinksPathsToRelative).toHaveBeenCalledWith('note.md', expect.anything());
+      });
     });
   });
 
@@ -471,10 +415,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   });
 
   describe('replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote', () => {
-    it('should enqueue the replacement for the current note', () => {
+    it('should enqueue the replacement for the current note', async () => {
       const component = createComponent();
       component.replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      expect(hoisted.mockAddToQueue).toHaveBeenCalled();
+      await vi.waitFor(() => {
+        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith('note.md', true, expect.anything());
+      });
     });
   });
 
@@ -515,10 +461,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   });
 
   describe('replaceAllWikilinksWithMarkdownLinksCurrentNote', () => {
-    it('should enqueue the replacement for the current note', () => {
+    it('should enqueue the replacement for the current note', async () => {
       const component = createComponent();
       component.replaceAllWikilinksWithMarkdownLinksCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      expect(hoisted.mockAddToQueue).toHaveBeenCalled();
+      await vi.waitFor(() => {
+        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith('note.md', false, expect.anything());
+      });
     });
   });
 
@@ -528,16 +476,16 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const save = vi.fn((): Promise<void> => noopAsync());
       const view = castTo<SavableView>(Object.create(MarkdownView.prototype));
       view.save = save;
-      mockApp.workspace.getLeavesOfType.mockReturnValue([{ view }]);
+      vi.spyOn(app.workspace, 'getLeavesOfType').mockReturnValue([castTo<WorkspaceLeaf>({ view: castTo<MarkdownView>(view) })]);
       await asPrivate(component).saveAllOpenNotes();
       expect(save).toHaveBeenCalled();
     });
 
     it('should ignore leaves that are not markdown views', async () => {
       const component = createComponent();
-      mockApp.workspace.getLeavesOfType.mockReturnValue([{ view: {} }]);
+      const getLeavesOfTypeSpy = vi.spyOn(app.workspace, 'getLeavesOfType').mockReturnValue([castTo<WorkspaceLeaf>({ view: castTo<MarkdownView>({}) })]);
       await asPrivate(component).saveAllOpenNotes();
-      expect(mockApp.workspace.getLeavesOfType).toHaveBeenCalledWith('markdown');
+      expect(getLeavesOfTypeSpy).toHaveBeenCalledWith('markdown');
     });
   });
 
@@ -607,44 +555,37 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   });
 
   describe('onLayoutReady', () => {
-    it('should register metadata-cache deleted and changed handlers', () => {
-      const component = createComponent();
-      mockSettings.shouldShowBackupWarning = false;
-      asPrivate(component).onLayoutReady();
-      expect(mockApp.metadataCache.on).toHaveBeenCalledWith('deleted', expect.any(Function));
-      expect(mockApp.metadataCache.on).toHaveBeenCalledWith('changed', expect.any(Function));
-      expect(hoisted.registeredEventRefs).toHaveLength(2);
-    });
-
-    it('should handle the deleted event with a previous cache', () => {
+    it('should register the deleted-metadata handler that caches the previous cache', async () => {
       const component = createComponent();
       mockSettings.shouldShowBackupWarning = false;
       mockSettings.shouldDeleteAttachmentsWithNote = true;
-      asPrivate(component).onLayoutReady();
-      const deletedHandler = metadataCacheHandlers.get('deleted');
-      expect(deletedHandler).toBeDefined();
-      deletedHandler?.(strictProxy<TFile>({ path: 'note.md' }), castTo<CachedMetadata>({}));
-      expect(deletedHandler).toBeDefined();
+      const handleDeletedMetadataSpy = vi.spyOn(asPrivate(component), 'handleDeletedMetadata');
+      await loadAndFireLayoutReady(component);
+      const file = strictProxy<TFile>({ path: 'note.md' });
+      const prevCache = castTo<CachedMetadata>({});
+      app.metadataCache.trigger('deleted', file, prevCache);
+      expect(handleDeletedMetadataSpy).toHaveBeenCalledWith(file, prevCache);
     });
 
-    it('should ignore the deleted event with no previous cache', () => {
+    it('should ignore the deleted event with no previous cache', async () => {
       const component = createComponent();
       mockSettings.shouldShowBackupWarning = false;
-      asPrivate(component).onLayoutReady();
-      const deletedHandler = metadataCacheHandlers.get('deleted');
-      deletedHandler?.(strictProxy<TFile>({ path: 'note.md' }), null);
-      expect(deletedHandler).toBeDefined();
+      const handleDeletedMetadataSpy = vi.spyOn(asPrivate(component), 'handleDeletedMetadata');
+      await loadAndFireLayoutReady(component);
+      app.metadataCache.trigger('deleted', strictProxy<TFile>({ path: 'note.md' }), null);
+      expect(handleDeletedMetadataSpy).not.toHaveBeenCalled();
     });
 
-    it('should enqueue handling for the changed event', () => {
+    it('should enqueue handling for the changed event', async () => {
       const component = createComponent();
       mockSettings.shouldShowBackupWarning = false;
-      mockSettings.shouldCollectAttachmentsAutomatically = false;
-      asPrivate(component).onLayoutReady();
-      const changedHandler = metadataCacheHandlers.get('changed');
-      expect(changedHandler).toBeDefined();
-      changedHandler?.(strictProxy<TFile>({ path: 'note.md' }));
-      expect(hoisted.mockAddToQueue).toHaveBeenCalled();
+      mockSettings.shouldCollectAttachmentsAutomatically = true;
+      await loadAndFireLayoutReady(component);
+      const file = strictProxy<TFile>({ path: 'note.md' });
+      app.metadataCache.trigger('changed', file);
+      await vi.waitFor(() => {
+        expect(mockAttachmentCollector.collectAttachmentsInAbstractFiles).toHaveBeenCalledWith([file]);
+      });
     });
   });
 

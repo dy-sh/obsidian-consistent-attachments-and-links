@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- Test mocks require empty constructors. */
 import type { TFile } from 'obsidian';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -13,15 +12,6 @@ import {
 
 import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
 
-vi.mock('obsidian-dev-utils/obsidian/command-handlers/file-command-handler', () => ({
-  FileCommandHandler: class {
-    public constructor(_params: unknown) {
-      // Base no-op.
-    }
-  }
-}));
-
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler } from './convert-all-link-paths-to-relative-current-note-command-handler.ts';
 
 interface CommandHandlerPrivate {
@@ -54,4 +44,3 @@ describe('ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler', () => {
     expect(convertAllLinkPathsToRelativeCurrentNote).toHaveBeenCalledExactlyOnceWith(file);
   });
 });
-/* eslint-enable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- End of test file. */

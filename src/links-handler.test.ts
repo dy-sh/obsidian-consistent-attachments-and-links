@@ -66,22 +66,15 @@ vi.mock('obsidian-dev-utils/obsidian/file-change', () => ({
   applyFileChanges: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
-  getFileOrNull: vi.fn(),
-  MARKDOWN_FILE_EXTENSION: 'md'
+vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
+  getFileOrNull: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/link', () => ({
+vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/link')>(),
   extractLinkFile: vi.fn(),
   generateMarkdownLink: vi.fn(),
-  LinkPathStyle: {
-    ObsidianSettingsDefault: 'ObsidianSettingsDefault',
-    RelativePathToTheSource: 'RelativePathToTheSource'
-  },
-  LinkStyle: {
-    Markdown: 'Markdown',
-    Wikilink: 'Wikilink'
-  },
   splitSubpath: vi.fn(),
   testWikilink: vi.fn(),
   updateLinksInFile: vi.fn()
@@ -95,14 +88,6 @@ vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
 
 vi.mock('obsidian-dev-utils/obsidian/reference', () => ({
   referenceToFileChange: vi.fn()
-}));
-
-vi.mock('obsidian-dev-utils/path', () => ({
-  dirname: vi.fn((p: string) => {
-    const idx = p.lastIndexOf('/');
-    return idx === -1 ? '' : p.slice(0, idx);
-  }),
-  join: vi.fn((...parts: string[]) => parts.filter((p) => p !== '').join('/'))
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.

@@ -14,6 +14,7 @@ import {
   isFile,
   isFolder
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   editLinks,
   updateLink
@@ -23,8 +24,8 @@ import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-ca
 import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
 import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
-import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import {
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -35,47 +36,19 @@ import {
 import type { AttachmentCollector } from '../attachment-collector.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
+import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
-
-vi.mock('obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- Test mock requires an empty class.
-  AbstractFileCommandHandler: class {
-    // eslint-disable-next-line @typescript-eslint/no-useless-constructor -- Test mock requires an empty constructor.
-    public constructor(_params: unknown) {
-      // Base no-op.
-    }
-  }
-}));
+import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to-proper-folder-command-handler.ts';
 
 vi.mock('obsidian-dev-utils/abort-controller', () => ({
   abortSignalAny: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/object-utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('obsidian-dev-utils/object-utils')>();
-  return {
-    ...actual,
-    toJson: (value: unknown): string => ensureNonNullable(JSON.stringify(value))
-  };
-});
-
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   isFile: vi.fn(),
   isFolder: vi.fn()
 }));
-
-vi.mock('obsidian-dev-utils/obsidian/i18n/i18n', () => {
-  const deepProxy: unknown = new Proxy(() => 'translated', {
-    get: (): unknown => deepProxy
-  });
-  return {
-    t: vi.fn((selector: (translations: unknown) => unknown) => {
-      selector(deepProxy);
-      return 'translated';
-    })
-  };
-});
 
 vi.mock('obsidian-dev-utils/obsidian/link', () => ({
   editLinks: vi.fn(),
@@ -101,9 +74,6 @@ vi.mock('obsidian-dev-utils/obsidian/vault-delete', () => ({
 vi.mock('../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts', () => ({
   selectMode: vi.fn()
 }));
-
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to-proper-folder-command-handler.ts';
 
 interface CommandHandlerPrivate {
   canExecuteAbstractFile(abstractFile: TAbstractFile): boolean;
@@ -175,6 +145,10 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   let handler: MoveAttachmentToProperFolderCommandHandler;
   let isNoteEx: ReturnType<typeof vi.fn<(pathOrFile: unknown) => boolean>>;
   let settings: PluginSettingsLike;
+
+  beforeAll(async () => {
+    await initI18N(translationsMap);
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -302,8 +276,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       const params = castTo<LoopParams>(mockLoop.mock.calls[0]?.[0]);
       expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
-      expect(params.buildNoticeMessage(attachmentA, '1/3')).toBe('translated');
-      expect(params.progressBarTitle).toBe('My Plugin: translated');
+      expect(params.buildNoticeMessage(attachmentA, '1/3')).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
+      expect(params.progressBarTitle).toBe('My Plugin: Moving attachment to proper folder...');
     });
 
     it('should warn and skip processing when the attachment path is ignored', async () => {
@@ -333,8 +307,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
-          ['note1.md', [createReference('[[attachment]]')]],
-          ['note2.md', [createReference('[[attachment]]')]]
+          ['note1.md', [createReference('![[attachment]]')]],
+          ['note2.md', [createReference('![[attachment]]')]]
         ])
       ));
       mockSelectMode.mockResolvedValue({
@@ -379,7 +353,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
     it('should not copy for a single backlink (handleMode not invoked)', async () => {
       const attachment = createFile('attachment.png');
-      const reference = createReference('[[attachment]]');
+      const reference = createReference('![[attachment]]');
       const backlinkFile = createFile('note1.md');
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(new Map([['note1.md', [reference]]])))
@@ -398,14 +372,14 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
     it('should copy attachment, update matching links, and delete when no backlinks remain (CopyAll)', async () => {
       const attachment = createFile('attachment.png');
-      const reference = createReference('[[attachment]]');
+      const reference = createReference('![[attachment]]');
       const backlinkFile = createFile('note1.md');
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(
           new Map([
             ['note1.md', [reference]],
-            ['note2.md', [createReference('[[attachment]]2')]]
+            ['note2.md', [createReference('![[attachment]]2')]]
           ])
         ))
         .mockResolvedValueOnce(createBacklinks(new Map()));
@@ -430,11 +404,11 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(
           new Map([
-            ['missing.md', [createReference('[[attachment]]')]],
-            ['other.md', [createReference('[[attachment]]')]]
+            ['missing.md', [createReference('![[attachment]]')]],
+            ['other.md', [createReference('![[attachment]]')]]
           ])
         ))
-        .mockResolvedValueOnce(createBacklinks(new Map([['other.md', [createReference('[[attachment]]')]]])));
+        .mockResolvedValueOnce(createBacklinks(new Map([['other.md', [createReference('![[attachment]]')]]])));
       getFileByPath.mockReturnValue(null);
 
       await runProcessItem(attachment);
@@ -451,10 +425,10 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(
           new Map([
             ['note1.md', []],
-            ['note2.md', [createReference('[[attachment]]')]]
+            ['note2.md', [createReference('![[attachment]]')]]
           ])
         ))
-        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[attachment]]')]]])));
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('![[attachment]]')]]])));
       getFileByPath.mockReturnValue(backlinkFile);
 
       await runProcessItem(attachment);
@@ -469,11 +443,11 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(
           new Map([
-            ['note1.md', [createReference('[[attachment]]')]],
-            ['note2.md', [createReference('[[attachment]]')]]
+            ['note1.md', [createReference('![[attachment]]')]],
+            ['note2.md', [createReference('![[attachment]]')]]
           ])
         ))
-        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[attachment]]')]]])));
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('![[attachment]]')]]])));
       getFileByPath.mockReturnValue(backlinkFile);
       getProperAttachmentPath.mockResolvedValue(null);
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -495,8 +469,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = mode;
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
-          ['note1.md', [createReference('[[a]]')]],
-          ['note2.md', [createReference('[[a]]')]]
+          ['note1.md', [createReference('![[a]]')]],
+          ['note2.md', [createReference('![[a]]')]]
         ])
       ));
       getFileByPath.mockReturnValue(null);
@@ -520,8 +494,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
-          ['note1.md', [createReference('[[a]]')]],
-          ['note2.md', [createReference('[[a]]')]]
+          ['note1.md', [createReference('![[a]]')]],
+          ['note2.md', [createReference('![[a]]')]]
         ])
       ));
       mockSelectMode.mockResolvedValue({
@@ -547,15 +521,15 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       mockIsFolder.mockReturnValue(false);
       isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
-      const reference = createReference('[[a]]');
+      const reference = createReference('![[a]]');
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(
           new Map([
             ['note1.md', [reference]],
-            ['note2.md', [createReference('[[a]]2')]]
+            ['note2.md', [createReference('![[a]]2')]]
           ])
         ))
-        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[a]]2')]]])));
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('![[a]]2')]]])));
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
       getProperAttachmentPath.mockResolvedValue('new/attachment.png');
       mockEditLinks.mockResolvedValue();
@@ -575,15 +549,15 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       mockIsFolder.mockReturnValue(false);
       isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
-      const reference = createReference('[[a]]');
+      const reference = createReference('![[a]]');
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(
           new Map([
             ['note1.md', [reference]],
-            ['note2.md', [createReference('[[a]]2')]]
+            ['note2.md', [createReference('![[a]]2')]]
           ])
         ))
-        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[a]]2')]]])));
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('![[a]]2')]]])));
       mockSelectMode.mockResolvedValue({
         backlinksToCopy: ['note1.md'],
         mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt,
@@ -609,15 +583,15 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       mockIsFolder.mockReturnValue(false);
       isNoteEx.mockReturnValue(false);
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
-      const reference = createReference('[[a]]');
+      const reference = createReference('![[a]]');
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(
           new Map([
             ['note1.md', [reference]],
-            ['note2.md', [createReference('[[a]]2')]]
+            ['note2.md', [createReference('![[a]]2')]]
           ])
         ))
-        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[a]]2')]]])));
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('![[a]]2')]]])));
       mockSelectMode.mockResolvedValue({
         backlinksToCopy: [],
         mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll,
@@ -648,8 +622,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = castTo<MoveAttachmentToProperFolderUsedByMultipleNotesMode>('UnknownMode');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
         new Map([
-          ['note1.md', [createReference('[[a]]')]],
-          ['note2.md', [createReference('[[a]]')]]
+          ['note1.md', [createReference('![[a]]')]],
+          ['note2.md', [createReference('![[a]]')]]
         ])
       ));
       const throwIfAbortedSpy = vi.spyOn(combinedAbortSignal, 'throwIfAborted').mockImplementation(() => undefined);

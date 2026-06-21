@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- Test mocks require empty constructors. */
 import type {
   App,
   TAbstractFile
@@ -19,14 +18,6 @@ import {
 } from 'vitest';
 
 import type { AttachmentCollector } from '../attachment-collector.ts';
-
-vi.mock('obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler', () => ({
-  AbstractFileCommandHandler: class {
-    public constructor(_params: unknown) {
-      // Base no-op.
-    }
-  }
-}));
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   isFile: vi.fn(),
@@ -144,4 +135,3 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
     expect(asPrivate(handler).shouldAddToAbstractFilesMenu()).toBe(true);
   });
 });
-/* eslint-enable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- End of test file. */
