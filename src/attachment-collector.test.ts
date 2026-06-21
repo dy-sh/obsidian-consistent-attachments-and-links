@@ -16,7 +16,7 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
+import { waitForAllAsyncOperations } from 'obsidian-dev-utils/async';
 import {
   noop,
   noopAsync
@@ -86,10 +86,6 @@ vi.mock('obsidian', async (importOriginal) => {
 
 vi.mock('obsidian-dev-utils/abort-controller', () => ({
   abortSignalAny: vi.fn()
-}));
-
-vi.mock('obsidian-dev-utils/async', () => ({
-  invokeAsyncSafely: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/html-element', () => ({
@@ -189,7 +185,6 @@ interface SettingsLike {
 }
 
 const mockAbortSignalAny = vi.mocked(abortSignalAny);
-const mockInvokeAsyncSafely = vi.mocked(invokeAsyncSafely);
 const mockGetAttachmentFilePath = vi.mocked(getAttachmentFilePath);
 const mockGetPath = vi.mocked(getPath);
 const mockIsCanvasFile = vi.mocked(isCanvasFile);
@@ -275,7 +270,6 @@ describe('AttachmentCollector', () => {
     privateCollector = castTo<PrivateAttachmentCollector>(collector);
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    mockInvokeAsyncSafely.mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -630,23 +624,21 @@ describe('AttachmentCollector', () => {
     it('should show the notice while running and hide it on the finally block', async () => {
       const noticeInstances = castTo<NoticeStaticLike>(Notice).instances;
       noticeInstances.length = 0;
-      let showNoticeFn: () => unknown = noop;
       let resolveCache: (value: Awaited<ReturnType<typeof getCacheSafe>>) => void = noop;
       const sleepSpy = vi.spyOn(window, 'sleep').mockResolvedValue(undefined);
       try {
-        mockInvokeAsyncSafely.mockImplementation((fn) => {
-          showNoticeFn = fn;
-        });
         mockGetAllLinks.mockReturnValue([]);
         mockGetCacheSafe.mockReturnValue(
           new Promise((resolve) => {
             resolveCache = resolve;
           })
         );
+        // Start collecting; the main flow suspends on the pending getCacheSafe while the real fire-and-forget showNotice operation is scheduled via invokeAsyncSafely.
         const promise = collectAttachments({}, abortSignal);
-        // Drive showNotice to completion while the main flow is suspended on getCacheSafe.
-        await showNoticeFn();
+        // Settle the scheduled showNotice while the main flow is still suspended, so it creates the notice.
+        await waitForAllAsyncOperations();
         expect(noticeInstances).toHaveLength(1);
+        // Resume the main flow; its finally block hides the notice.
         resolveCache(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
         await promise;
       } finally {
@@ -658,16 +650,20 @@ describe('AttachmentCollector', () => {
     it('should not create the notice when the operation already finished', async () => {
       const noticeInstances = castTo<NoticeStaticLike>(Notice).instances;
       noticeInstances.length = 0;
-      let showNoticeFn: () => unknown = noop;
-      const sleepSpy = vi.spyOn(window, 'sleep').mockResolvedValue(undefined);
+      // Hold showNotice on its delay until the main flow has finished, mirroring the real 500ms delay that elapses only after a fast operation has already completed.
+      let resolveSleep: () => void = noop;
+      const sleepSpy = vi.spyOn(window, 'sleep').mockReturnValue(
+        new Promise<void>((resolve) => {
+          resolveSleep = resolve;
+        })
+      );
       try {
-        mockInvokeAsyncSafely.mockImplementation((fn) => {
-          showNoticeFn = fn;
-        });
         mockGetCacheSafe.mockResolvedValue(null);
+        // The main flow runs to completion (isDone === true) while showNotice is still on its delay.
         await collectAttachments({}, abortSignal);
-        // The operation already finished (isDone === true), so showNotice creates no Notice.
-        await showNoticeFn();
+        // Release showNotice's delay and settle it; since the operation already finished, it creates no notice.
+        resolveSleep();
+        await waitForAllAsyncOperations();
       } finally {
         sleepSpy.mockRestore();
       }
