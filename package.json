@@ -33,6 +33,7 @@
     "test:integration:android": "jiti scripts/test-integration-android.ts",
     "test:integration:desktop": "jiti scripts/test-integration-desktop.ts",
     "test:integration:no-app": "jiti scripts/test-integration-no-app.ts",
+    "test:integration:performance": "jiti scripts/test-integration-performance.ts",
     "test:watch": "jiti scripts/test-watch.ts",
     "version": "jiti scripts/version.ts"
   },
