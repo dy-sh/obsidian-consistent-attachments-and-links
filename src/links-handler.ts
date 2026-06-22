@@ -59,17 +59,17 @@ export interface ReferenceChangeInfo {
   old: ReferenceCache;
 }
 
-interface ConvertLinkParams {
+interface LinksHandlerConstructorParams {
+  readonly app: App;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+
+interface LinksHandlerConvertLinkParams {
   readonly forceRelativePath?: boolean | undefined;
   readonly link: Reference;
   readonly note: TFile;
   readonly oldNotePath: string;
   readonly pathChangeMap?: Map<string, string> | undefined;
-}
-
-interface LinksHandlerConstructorParams {
-  readonly app: App;
-  readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 export class ConsistencyCheckResult extends Map<string, Reference[]> {
@@ -291,7 +291,7 @@ export class LinksHandler {
     note,
     oldNotePath,
     pathChangeMap
-  }: ConvertLinkParams): string {
+  }: LinksHandlerConvertLinkParams): string {
     const { linkPath, subpath } = splitSubpath(link.link);
     const oldLinkPath = extractLinkFile(this.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
     const newLinkPath = pathChangeMap
