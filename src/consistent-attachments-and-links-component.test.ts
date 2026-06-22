@@ -10,6 +10,7 @@ import {
   MarkdownView,
   Notice
 } from 'obsidian';
+import { sleep } from 'obsidian-dev-utils/async';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -184,9 +185,7 @@ async function flushAsync(): Promise<void> {
 async function loadAndFireLayoutReady(component: ConsistentAttachmentsAndLinksComponent): Promise<void> {
   component.load();
   castTo<LayoutReadyWorkspace>(app.workspace).setLayoutReady__();
-  await new Promise<void>((resolve) => {
-    window.setTimeout(resolve, 0);
-  });
+  await sleep(0);
   await flushAsync();
 }
 
