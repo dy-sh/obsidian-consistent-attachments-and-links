@@ -39,14 +39,14 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { LinksHandler } from './links-handler.ts';
 
-export interface MovedAttachmentResult {
-  readonly movedAttachments: PathChangeInfo[];
-}
-
 interface FilesHandlerConstructorParams {
   readonly app: App;
   readonly linksHandler: LinksHandler;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+
+interface MovedAttachmentResult {
+  readonly movedAttachments: PathChangeInfo[];
 }
 
 export class FilesHandler {
@@ -152,7 +152,7 @@ export class FilesHandler {
   }
 
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
-    if (!pathOrFile || !isNote(this.app, pathOrFile)) {
+    if (!pathOrFile || !isNote(pathOrFile)) {
       return false;
     }
 

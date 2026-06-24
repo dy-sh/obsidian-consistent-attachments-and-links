@@ -1,7 +1,4 @@
-import type {
-  App,
-  TAbstractFile
-} from 'obsidian';
+import type { TAbstractFile } from 'obsidian';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import {
@@ -48,16 +45,13 @@ function createAbstractFile(path: string): TAbstractFile {
 }
 
 describe('CollectAttachmentsInFileCommandHandler', () => {
-  let app: App;
   let collectAttachmentsInAbstractFiles: ReturnType<typeof vi.fn<(abstractFiles: TAbstractFile[]) => void>>;
   let handler: CollectAttachmentsInFileCommandHandler;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    app = strictProxy<App>({});
     collectAttachmentsInAbstractFiles = vi.fn<(abstractFiles: TAbstractFile[]) => void>();
     handler = new CollectAttachmentsInFileCommandHandler({
-      app,
       attachmentCollector: strictProxy<AttachmentCollector>({
         collectAttachmentsInAbstractFiles
       })

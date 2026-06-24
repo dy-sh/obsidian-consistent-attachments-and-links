@@ -318,7 +318,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
     if (
       !this.pluginSettingsComponent.settings.shouldDeleteAttachmentsWithNote || this.pluginSettingsComponent.settings.isPathIgnored(file.path)
-      || !isMarkdownFile(this.app, file)
+      || !isMarkdownFile(file)
     ) {
       return;
     }

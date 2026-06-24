@@ -128,7 +128,7 @@ export class AttachmentCollector {
   }
 
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
-    if (!pathOrFile || !isNote(this.app, pathOrFile)) {
+    if (!pathOrFile || !isNote(pathOrFile)) {
       return false;
     }
 
@@ -151,7 +151,7 @@ export class AttachmentCollector {
     invokeAsyncSafely(showNotice);
 
     try {
-      const isCanvas = isCanvasFile(this.app, params.note);
+      const isCanvas = isCanvasFile(params.note);
 
       const oldAttachmentPaths = new Set<string>();
 
@@ -355,13 +355,13 @@ export class AttachmentCollector {
     const noteFilesSet = new Set<TFile>();
 
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && isNote(this.app, abstractFile)) {
+      if (isFile(abstractFile) && isNote(abstractFile)) {
         noteFilesSet.add(abstractFile);
       }
 
       if (isFolder(abstractFile)) {
         Vault.recurseChildren(abstractFile, (child) => {
-          if (isFile(child) && isNote(this.app, child)) {
+          if (isFile(child) && isNote(child)) {
             noteFilesSet.add(child);
           }
         });
