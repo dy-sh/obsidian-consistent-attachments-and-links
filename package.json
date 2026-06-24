@@ -50,7 +50,7 @@
     "@obsidian-typings/obsidian-public-latest": "^6.18.0",
     "@total-typescript/ts-reset": "^0.6.1",
     "@tsconfig/strictest": "^2.0.8",
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.1.9",
     "better-typescript-lib": "^2.12.0",
     "czg": "^1.13.1",
@@ -60,7 +60,7 @@
     "jsdom": "^29.1.1",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
-    "obsidian-dev-utils": "^78.0.0",
+    "obsidian-dev-utils": "^79.0.0",
     "obsidian-integration-testing": "^4.4.0",
     "obsidian-test-mocks": "^3.3.0",
     "vitest": "^4.1.9"
