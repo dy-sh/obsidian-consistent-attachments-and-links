@@ -42,10 +42,10 @@
     "typescript": "^6.0.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.0.2",
-    "@commitlint/config-conventional": "^21.0.2",
-    "@commitlint/types": "^21.0.1",
-    "@obsidian-typings/obsidian-public-latest": "^6.16.0",
+    "@commitlint/cli": "^21.1.0",
+    "@commitlint/config-conventional": "^21.1.0",
+    "@commitlint/types": "^21.1.0",
+    "@obsidian-typings/obsidian-public-latest": "^6.18.0",
     "@total-typescript/ts-reset": "^0.6.1",
     "@tsconfig/strictest": "^2.0.8",
     "@types/node": "^26.0.0",
@@ -58,7 +58,7 @@
     "jsdom": "^29.1.1",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
-    "obsidian-dev-utils": "^76.1.0",
+    "obsidian-dev-utils": "^78.0.0",
     "obsidian-integration-testing": "^4.4.0",
     "obsidian-test-mocks": "^3.3.0",
     "vitest": "^4.1.9"

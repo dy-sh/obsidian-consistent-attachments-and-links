@@ -44,11 +44,6 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
-export interface LinksAndEmbedsChangedInfo {
-  embeds: ReferenceChangeInfo[];
-  links: ReferenceChangeInfo[];
-}
-
 export interface PathChangeInfo {
   newPath: string;
   oldPath: string;

@@ -44,7 +44,7 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
     invokeAsyncSafely(() => this.onOpenAsync());
   }
 
-  public async onOpenAsync(): Promise<void> {
+  private async onOpenAsync(): Promise<void> {
     super.onOpen();
     new Setting(this.contentEl)
       .setName(t(($) => $.collectAttachmentUsedByMultipleNotesModal.heading))

@@ -43,7 +43,7 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
     invokeAsyncSafely(() => this.onOpenAsync());
   }
 
-  public async onOpenAsync(): Promise<void> {
+  private async onOpenAsync(): Promise<void> {
     new Setting(this.contentEl)
       .setName(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.heading))
       .setHeading();
