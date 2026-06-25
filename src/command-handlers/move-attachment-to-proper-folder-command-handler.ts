@@ -4,11 +4,9 @@ import type {
   TFile
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 
-import {
-  Notice,
-  Vault
-} from 'obsidian';
+import { Vault } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { toJson } from 'obsidian-dev-utils/object-utils';
 import { AbstractFileCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler';
@@ -37,6 +35,7 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly app: App;
   readonly attachmentCollector: AttachmentCollector;
   readonly pluginName: string;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -49,6 +48,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly app: App;
   private readonly attachmentCollector: AttachmentCollector;
   private readonly pluginName2: string;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: MoveAttachmentToProperFolderCommandHandlerConstructorParams) {
@@ -61,6 +61,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     this.app = params.app;
     this.attachmentCollector = params.attachmentCollector;
     this.abortSignalComponent = params.abortSignalComponent;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.pluginName2 = params.pluginName;
   }
@@ -142,7 +143,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   ): Promise<boolean> {
     let backlinks = await getBacklinksForFileSafe(this.app, attachmentFile);
     if (backlinks.keys().length === 0) {
-      new Notice(t(($) => $.moveAttachmentToProperFolder.unusedAttachment, { attachmentPath: attachmentFile.path }));
+      this.pluginNoticeComponent.showNotice(t(($) => $.moveAttachmentToProperFolder.unusedAttachment, { attachmentPath: attachmentFile.path }));
       return true;
     }
 

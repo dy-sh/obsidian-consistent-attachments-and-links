@@ -1,18 +1,17 @@
 import type {
   App as AppOriginal,
   CachedMetadata,
+  Notice,
   TFile,
   WorkspaceLeaf
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 
-import {
-  MarkdownView,
-  Notice
-} from 'obsidian';
+import { MarkdownView } from 'obsidian';
 import { sleep } from 'obsidian-dev-utils/async';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
@@ -29,6 +28,8 @@ import type { FilesHandler } from './files-handler.ts';
 import type { LinksHandler } from './links-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
+
+import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 
 interface ComponentPrivate {
   handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void;
@@ -49,11 +50,6 @@ interface LayoutReadyWorkspace {
   setLayoutReady__(): void;
 }
 
-interface MockNoticeInstance {
-  hide(): void;
-  setMessage(): void;
-}
-
 interface ObsidianDevUtilsStateHolder {
   obsidianDevUtilsState: Record<string, unknown>;
 }
@@ -70,17 +66,6 @@ const hoisted = vi.hoisted(() => ({
   mockGetMarkdownFilesSorted: vi.fn((): TFile[] => []),
   mockGetOrCreateFile: vi.fn((..._args: unknown[]): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path: 'report.md' })))
 }));
-
-vi.mock('obsidian', async (importOriginal) => {
-  const original = await importOriginal<typeof import('obsidian')>();
-  return {
-    ...original,
-    Notice: vi.fn(function MockNotice(this: MockNoticeInstance): void {
-      this.hide = vi.fn();
-      this.setMessage = vi.fn();
-    })
-  };
-});
 
 vi.mock('./links-handler.ts', () => ({
   ConsistencyCheckResult: class {
@@ -112,9 +97,6 @@ vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
   createFolderSafe: (...args: unknown[]): Promise<void> => hoisted.mockCreateFolderSafe(...args),
   getMarkdownFilesSorted: (): TFile[] => hoisted.mockGetMarkdownFilesSorted()
 }));
-
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 
 const mockAlert = hoisted.mockAlert;
 
@@ -151,6 +133,10 @@ const mockLinksHandler = strictProxy<LinksHandler>({
   replaceAllNoteWikilinksWithMarkdownLinks: vi.fn((): Promise<number> => Promise.resolve(0))
 });
 
+const mockPluginNoticeComponent = strictProxy<PluginNoticeComponent>({
+  showNotice: vi.fn((_message: DocumentFragment | string): Notice => castTo<Notice>({}))
+});
+
 const mockPluginSettingsComponent = strictProxy<PluginSettingsComponent>({
   editAndSave: vi.fn((editor: (settings: PluginSettings) => void): Promise<void> => {
     editor(castTo<PluginSettings>(mockSettings));
@@ -170,6 +156,7 @@ function createComponent(): ConsistentAttachmentsAndLinksComponent {
     attachmentCollector: mockAttachmentCollector,
     filesHandler: mockFilesHandler,
     linksHandler: mockLinksHandler,
+    pluginNoticeComponent: mockPluginNoticeComponent,
     pluginSettingsComponent: mockPluginSettingsComponent
   });
 }
@@ -262,7 +249,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
       await component.convertAllEmbedsPathsToRelative();
-      expect(Notice).toHaveBeenCalledWith('No embeds found that need to be converted');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No embeds found that need to be converted');
     });
 
     it('should skip ignored notes', async () => {
@@ -281,7 +268,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       ]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).mockResolvedValue(['x', 'y']);
       await component.convertAllEmbedsPathsToRelative();
-      expect(Notice).toHaveBeenCalledWith('Converted 4 embeds from 2 notes');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 4 embeds from 2 notes');
     });
 
     it('should report a single converted embed (singular)', async () => {
@@ -289,7 +276,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).mockResolvedValue(['x']);
       await component.convertAllEmbedsPathsToRelative();
-      expect(Notice).toHaveBeenCalledWith('Converted 1 embed from 1 note');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 1 embed from 1 note');
     });
   });
 
@@ -308,7 +295,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
       await component.convertAllLinkPathsToRelative(new AbortController().signal);
-      expect(Notice).toHaveBeenCalledWith('No links found that need to be converted');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No links found that need to be converted');
     });
 
     it('should skip ignored notes', async () => {
@@ -327,7 +314,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       ]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteLinksPathsToRelative).mockResolvedValue(['x', 'y']);
       await component.convertAllLinkPathsToRelative(new AbortController().signal);
-      expect(Notice).toHaveBeenCalledWith('Converted 4 links from 2 notes');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 4 links from 2 notes');
     });
 
     it('should report a single converted link (singular)', async () => {
@@ -335,7 +322,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteLinksPathsToRelative).mockResolvedValue(['x']);
       await component.convertAllLinkPathsToRelative(new AbortController().signal);
-      expect(Notice).toHaveBeenCalledWith('Converted 1 link from 1 note');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 1 link from 1 note');
     });
 
     it('should throw when the abort signal is already aborted', async () => {
@@ -370,7 +357,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       await component.reorganizeVault();
       expect(mockAttachmentCollector.collectAttachmentsEntireVault).toHaveBeenCalled();
       expect(mockFilesHandler.deleteEmptyFolders).toHaveBeenCalled();
-      expect(Notice).toHaveBeenCalledWith('Reorganization of the vault completed');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Reorganization of the vault completed');
     });
   });
 
@@ -379,7 +366,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
       await component.replaceAllWikiEmbedsWithMarkdownEmbeds();
-      expect(Notice).toHaveBeenCalledWith('No wiki embeds found that need to be replaced');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No wiki embeds found that need to be replaced');
     });
 
     it('should skip ignored notes', async () => {
@@ -398,7 +385,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       ]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(2);
       await component.replaceAllWikiEmbedsWithMarkdownEmbeds();
-      expect(Notice).toHaveBeenCalledWith('Replaced 4 wiki embeds from 2 notes');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 4 wiki embeds from 2 notes');
     });
 
     it('should report a single replaced wiki embed (singular)', async () => {
@@ -406,7 +393,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(1);
       await component.replaceAllWikiEmbedsWithMarkdownEmbeds();
-      expect(Notice).toHaveBeenCalledWith('Replaced 1 wiki embed from 1 note');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 1 wiki embed from 1 note');
     });
   });
 
@@ -425,7 +412,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
       await component.replaceAllWikilinksWithMarkdownLinks();
-      expect(Notice).toHaveBeenCalledWith('No wiki links found that need to be replaced');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No wiki links found that need to be replaced');
     });
 
     it('should skip ignored notes', async () => {
@@ -444,7 +431,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       ]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(2);
       await component.replaceAllWikilinksWithMarkdownLinks();
-      expect(Notice).toHaveBeenCalledWith('Replaced 4 wikilinks from 2 notes');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 4 wikilinks from 2 notes');
     });
 
     it('should report a single replaced wikilink (singular)', async () => {
@@ -452,7 +439,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
       castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(1);
       await component.replaceAllWikilinksWithMarkdownLinks();
-      expect(Notice).toHaveBeenCalledWith('Replaced 1 wikilink from 1 note');
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 1 wikilink from 1 note');
     });
   });
 

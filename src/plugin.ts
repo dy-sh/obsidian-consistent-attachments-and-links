@@ -99,6 +99,7 @@ export class Plugin extends PluginBase {
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
       pluginName: this.manifest.name,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent
     });
 
@@ -109,6 +110,7 @@ export class Plugin extends PluginBase {
         attachmentCollector,
         filesHandler,
         linksHandler,
+        pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent
       })
     );
@@ -127,6 +129,7 @@ export class Plugin extends PluginBase {
             app: this.app,
             attachmentCollector,
             pluginName: this.manifest.name,
+            pluginNoticeComponent: this.pluginNoticeComponent,
             pluginSettingsComponent
           }),
           new DeleteEmptyFoldersCommandHandler(consistentAttachmentsAndLinksComponent),

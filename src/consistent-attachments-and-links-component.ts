@@ -3,10 +3,10 @@ import type {
   CachedMetadata
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 
 import {
   MarkdownView,
-  Notice,
   setIcon,
   TFile
 } from 'obsidian';
@@ -41,6 +41,7 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly attachmentCollector: AttachmentCollector;
   readonly filesHandler: FilesHandler;
   readonly linksHandler: LinksHandler;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -50,17 +51,17 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
   private readonly filesHandler: FilesHandler;
   private readonly linksHandler: LinksHandler;
-
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: ConsistentAttachmentsAndLinksComponentConstructorParams) {
     super(params.app);
-
+    this.abortSignalComponent = params.abortSignalComponent;
+    this.attachmentCollector = params.attachmentCollector;
     this.filesHandler = params.filesHandler;
     this.linksHandler = params.linksHandler;
-    this.abortSignalComponent = params.abortSignalComponent;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
-    this.attachmentCollector = params.attachmentCollector;
   }
 
   public async checkConsistency(): Promise<void> {
@@ -133,9 +134,9 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     });
 
     if (changedEmbedCount === 0) {
-      new Notice('No embeds found that need to be converted');
+      this.pluginNoticeComponent.showNotice('No embeds found that need to be converted');
     } else {
-      new Notice(
+      this.pluginNoticeComponent.showNotice(
         `Converted ${String(changedEmbedCount)} embed${changedEmbedCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
       );
     }
@@ -179,11 +180,9 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     });
 
     if (changedLinksCount === 0) {
-      new Notice('No links found that need to be converted');
+      this.pluginNoticeComponent.showNotice('No links found that need to be converted');
     } else {
-      new Notice(
-        `Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
-      );
+      this.pluginNoticeComponent.showNotice(`Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`);
     }
   }
 
@@ -208,7 +207,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     await this.convertAllLinkPathsToRelative(this.abortSignalComponent.abortSignal);
     this.attachmentCollector.collectAttachmentsEntireVault();
     await this.deleteEmptyFolders();
-    new Notice('Reorganization of the vault completed');
+    this.pluginNoticeComponent.showNotice('Reorganization of the vault completed');
   }
 
   public async replaceAllWikiEmbedsWithMarkdownEmbeds(): Promise<void> {
@@ -236,9 +235,9 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     });
 
     if (changedLinksCount === 0) {
-      new Notice('No wiki embeds found that need to be replaced');
+      this.pluginNoticeComponent.showNotice('No wiki embeds found that need to be replaced');
     } else {
-      new Notice(
+      this.pluginNoticeComponent.showNotice(
         `Replaced ${String(changedLinksCount)} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
       );
     }
@@ -277,9 +276,9 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     });
 
     if (changedLinksCount === 0) {
-      new Notice('No wiki links found that need to be replaced');
+      this.pluginNoticeComponent.showNotice('No wiki links found that need to be replaced');
     } else {
-      new Notice(
+      this.pluginNoticeComponent.showNotice(
         `Replaced ${String(changedLinksCount)} wikilink${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
       );
     }
