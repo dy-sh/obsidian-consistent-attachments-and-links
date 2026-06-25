@@ -23,6 +23,7 @@ import {
 } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/attachment-path';
+import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import {
   getPath,
   isCanvasFile,
@@ -261,6 +262,7 @@ describe('AttachmentCollector', () => {
       abortSignalComponent,
       app,
       pluginName: 'Plugin',
+      pluginNoticeComponent: new PluginNoticeComponent('Plugin'),
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
         settings: castTo<PluginSettingsComponent['settings']>(settings)
       })
