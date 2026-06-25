@@ -54,11 +54,6 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
-export interface AttachmentCollectorGetProperAttachmentPathParams {
-  readonly attachmentFile: TFile;
-  readonly noteFilePath: string;
-}
-
 interface AttachmentCollectorCollectAttachmentsParams {
   readonly abortSignal: AbortSignal;
   readonly ctx: CollectAttachmentContext;
@@ -70,6 +65,11 @@ interface AttachmentCollectorConstructorParams {
   readonly app: App;
   readonly pluginName: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+
+interface AttachmentCollectorGetProperAttachmentPathParams {
+  readonly attachmentFile: TFile;
+  readonly noteFilePath: string;
 }
 
 interface AttachmentMoveResult {

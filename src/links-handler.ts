@@ -49,11 +49,6 @@ export interface PathChangeInfo {
   oldPath: string;
 }
 
-export interface ReferenceChangeInfo {
-  newLink: string;
-  old: ReferenceCache;
-}
-
 interface LinksHandlerConstructorParams {
   readonly app: App;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -65,6 +60,11 @@ interface LinksHandlerConvertLinkParams {
   readonly note: TFile;
   readonly oldNotePath: string;
   readonly pathChangeMap?: Map<string, string> | undefined;
+}
+
+interface ReferenceChangeInfo {
+  newLink: string;
+  old: ReferenceCache;
 }
 
 export class ConsistencyCheckResult extends Map<string, Reference[]> {
