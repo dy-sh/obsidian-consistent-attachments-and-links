@@ -59,7 +59,6 @@ import {
   vi
 } from 'vitest';
 
-import type { AttachmentCollectorGetProperAttachmentPathParams } from './attachment-collector.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { AttachmentCollector } from './attachment-collector.ts';
@@ -302,7 +301,7 @@ describe('AttachmentCollector', () => {
   });
 
   describe('getProperAttachmentPath', () => {
-    function buildParams(attachmentFile: TFile): AttachmentCollectorGetProperAttachmentPathParams {
+    function buildParams(attachmentFile: TFile): Parameters<AttachmentCollector['getProperAttachmentPath']>[0] {
       return {
         attachmentFile,
         noteFilePath: 'note.md'

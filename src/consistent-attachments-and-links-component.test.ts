@@ -26,10 +26,7 @@ import {
 
 import type { AttachmentCollector } from './attachment-collector.ts';
 import type { FilesHandler } from './files-handler.ts';
-import type {
-  LinksHandler,
-  ReferenceChangeInfo
-} from './links-handler.ts';
+import type { LinksHandler } from './links-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -149,8 +146,8 @@ const mockFilesHandler = strictProxy<FilesHandler>({
 
 const mockLinksHandler = strictProxy<LinksHandler>({
   checkConsistency: vi.fn((): Promise<void> => noopAsync()),
-  convertAllNoteEmbedsPathsToRelative: vi.fn((): Promise<ReferenceChangeInfo[]> => Promise.resolve([])),
-  convertAllNoteLinksPathsToRelative: vi.fn((): Promise<ReferenceChangeInfo[]> => Promise.resolve([])),
+  convertAllNoteEmbedsPathsToRelative: vi.fn((): ReturnType<LinksHandler['convertAllNoteEmbedsPathsToRelative']> => Promise.resolve([])),
+  convertAllNoteLinksPathsToRelative: vi.fn((): ReturnType<LinksHandler['convertAllNoteLinksPathsToRelative']> => Promise.resolve([])),
   replaceAllNoteWikilinksWithMarkdownLinks: vi.fn((): Promise<number> => Promise.resolve(0))
 });
 
