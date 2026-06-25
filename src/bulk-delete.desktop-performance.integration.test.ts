@@ -1,3 +1,5 @@
+import type { GetAvailablePathForAttachmentsExtendedFnParams } from 'obsidian-dev-utils/obsidian/attachment-path';
+
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup';
 import {
@@ -179,5 +181,101 @@ describe('bulk-deletion delete-handler bottleneck', () => {
     expect(result.enabledMs).toBeGreaterThanOrEqual(
       PERFORMANCE_VAULT_NOTE_COUNT * SIMULATED_ATTACHMENT_PATH_COST_IN_MS * MIN_LINEAR_COST_FRACTION
     );
+  }, SCENARIO_TIMEOUT_IN_MS);
+
+  /*
+   * End-to-end confirmation of the freeze FIX (dev-utils >= 80.1.0). The freeze was driven by
+   * INDEX-ONLY removals: hiding a folder removes each descendant from Obsidian's index (firing
+   * one `vault.on('delete')` per note) while the file stays on disk. The fix makes the
+   * dev-utils delete handler skip any "delete" whose path still exists on disk, so those
+   * synthetic removals resolve zero attachment paths — no per-note resolver storm, no freeze.
+   *
+   * The O(N) test above uses REAL `trashFile` deletions (file leaves disk), which the guard
+   * does NOT — and should not — skip, so it never exercises the fix. This case fires a
+   * synthetic `vault.on('delete')` per note WITHOUT removing it from disk and asserts the
+   * handler resolves nothing.
+   *
+   * To prove the synthetic handlers actually RAN (rather than asserting zero against work that
+   * never started), it enqueues a single REAL deletion LAST as a drain marker. The dev-utils
+   * operation queue is strictly serial/FIFO, so once the marker's resolution is observed every
+   * prior synthetic handler has already drained. The resolver stub buckets calls by note path,
+   * so the marker's one resolution is distinguishable from any (regression-only) synthetic one.
+   */
+  it('skips the delete handler for index-only removals, resolving no attachment paths', async () => {
+    const result = await evalInObsidian({
+      args: {
+        DRAIN_POLL_IN_MS: QUEUE_DRAIN_POLL_IN_MS,
+        DRAIN_WAIT_IN_MS: QUEUE_DRAIN_WAIT_IN_MS,
+        INDEX_ONLY_DELETE_COUNT: PERFORMANCE_VAULT_NOTE_COUNT,
+        SIMULATED_ATTACHMENT_PATH_COST_IN_MS
+      },
+      async fn({
+        app,
+        DRAIN_POLL_IN_MS: drainPollMs,
+        DRAIN_WAIT_IN_MS: drainWaitMs,
+        INDEX_ONLY_DELETE_COUNT: indexOnlyDeleteCount,
+        SIMULATED_ATTACHMENT_PATH_COST_IN_MS: simulatedCostMs
+      }) {
+        const SYNTHETIC_FOLDER = '__perf_index_only_delete__';
+        const MARKER_PATH = `${SYNTHETIC_FOLDER}/__drain_marker__.md`;
+        const NONEXISTENT_ATTACHMENT_PATH = '__perf_nonexistent_attachment_folder__/dummy.png';
+
+        // Bucket each resolution by the note being resolved: the marker (a real deletion), a synthetic index-only note, or anything unexpected.
+        const resolverCalls = {
+          marker: 0,
+          other: 0,
+          synthetic: 0
+        };
+        Object.assign(app.vault.getAvailablePathForAttachments, {
+          extended: async (params: GetAvailablePathForAttachmentsExtendedFnParams): Promise<string> => {
+            await sleep(simulatedCostMs);
+            const notePath = typeof params.notePathOrFile === 'string' ? params.notePathOrFile : params.notePathOrFile?.path ?? '';
+            if (notePath === MARKER_PATH) {
+              resolverCalls.marker++;
+            } else if (notePath.startsWith(`${SYNTHETIC_FOLDER}/`)) {
+              resolverCalls.synthetic++;
+            } else {
+              resolverCalls.other++;
+            }
+            return NONEXISTENT_ATTACHMENT_PATH;
+          }
+        });
+
+        // Create N notes that REMAIN on disk. Firing `vault.on('delete')` for each is an index-only removal (what hiding a folder does), so the handler's disk-existence guard must skip every one.
+        await app.vault.createFolder(SYNTHETIC_FOLDER);
+        const syntheticFiles: Awaited<ReturnType<typeof app.vault.create>>[] = [];
+        for (let noteIndex = 0; noteIndex < indexOnlyDeleteCount; noteIndex++) {
+          syntheticFiles.push(await app.vault.create(`${SYNTHETIC_FOLDER}/note-${String(noteIndex)}.md`, `# Note ${String(noteIndex)}\n`));
+        }
+
+        for (const file of syntheticFiles) {
+          app.vault.trigger('delete', file);
+        }
+
+        // FIFO drain marker: a single REAL deletion enqueued after every synthetic op. Its resolution can only happen once all prior synthetic ops have drained.
+        const markerFile = await app.vault.create(MARKER_PATH, '# Marker\n');
+        await app.fileManager.trashFile(markerFile);
+
+        const drainDeadline = performance.now() + drainWaitMs;
+        while (resolverCalls.marker === 0 && performance.now() < drainDeadline) {
+          await sleep(drainPollMs);
+        }
+
+        return {
+          indexOnlyDeleteCount,
+          markerResolverCalls: resolverCalls.marker,
+          otherResolverCalls: resolverCalls.other,
+          syntheticResolverCalls: resolverCalls.synthetic
+        };
+      },
+      vaultPath: getTempVault().path
+    });
+
+    // The marker (a real deletion) drained the serial queue, proving the synthetic handlers actually ran rather than never starting.
+    expect(result.markerResolverCalls).toBe(1);
+    // The fix: every index-only removal (file still on disk) is skipped, so none of them resolve an attachment path.
+    expect(result.syntheticResolverCalls).toBe(0);
+    // Sanity: nothing other than the marker was ever resolved.
+    expect(result.otherResolverCalls).toBe(0);
   }, SCENARIO_TIMEOUT_IN_MS);
 });
