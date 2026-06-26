@@ -76,6 +76,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
         await this.linksHandler.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks);
       },
@@ -116,6 +117,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
         if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
           return;
@@ -162,6 +164,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
         if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
           return;
@@ -220,6 +223,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
         if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
           return;
@@ -261,6 +265,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
       items: getMarkdownFilesSorted(this.app),
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
         if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
           return;

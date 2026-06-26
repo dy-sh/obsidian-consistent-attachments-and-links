@@ -470,7 +470,7 @@ describe('AttachmentCollector', () => {
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       mockRenameSafe.mockResolvedValue('attachments/img.png');
       await collectAttachments({}, abortSignal);
-      expect(mockRenameSafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
+      expect(mockRenameSafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrAbstractFile: 'img.png' });
     });
 
     it('should not rename when the new attachment path is null (single-ref)', async () => {
@@ -515,17 +515,17 @@ describe('AttachmentCollector', () => {
         mockCopySafe.mockResolvedValue('attachments/img.png');
         let matchingResult: unknown;
         let nonMatchingResult: unknown;
-        mockEditLinks.mockImplementation(async (_app, _note, linkHandler) => {
-          matchingResult = linkHandler(createReference({ link: 'img.png' }));
-          nonMatchingResult = linkHandler(createReference({ link: 'other.png' }));
+        mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+          matchingResult = linkConverter(createReference({ link: 'img.png' }));
+          nonMatchingResult = linkConverter(createReference({ link: 'other.png' }));
           await noopAsync();
         });
-        mockExtractLinkFile.mockImplementation((_app, ref) => {
-          return ref.link === 'other.png' ? createFile('other.png') : createFile('img.png');
+        mockExtractLinkFile.mockImplementation(({ link }) => {
+          return link.link === 'other.png' ? createFile('other.png') : createFile('img.png');
         });
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
         await collectAttachments({}, abortSignal);
-        expect(mockCopySafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
+        expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrFile: 'img.png' });
         expect(matchingResult).toBe('![](attachments/img.png)');
         expect(nonMatchingResult).toBeUndefined();
       });
@@ -542,8 +542,8 @@ describe('AttachmentCollector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
         mockCopySafe.mockResolvedValue('');
         let handlerResult: unknown;
-        mockEditLinks.mockImplementation(async (_app, _note, linkHandler) => {
-          handlerResult = linkHandler(createReference({ link: 'img.png' }));
+        mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+          handlerResult = linkConverter(createReference({ link: 'img.png' }));
           await noopAsync();
         });
         mockExtractLinkFile.mockReturnValue(createFile('img.png'));
@@ -557,7 +557,7 @@ describe('AttachmentCollector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
         mockRenameSafe.mockResolvedValue('attachments/img.png');
         await collectAttachments({}, abortSignal);
-        expect(mockRenameSafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
+        expect(mockRenameSafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrAbstractFile: 'img.png' });
       });
 
       it('should skip Move mode when the new attachment path is null', async () => {

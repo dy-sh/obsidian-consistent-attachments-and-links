@@ -169,7 +169,7 @@ async function flushAsync(): Promise<void> {
 async function loadAndFireLayoutReady(component: ConsistentAttachmentsAndLinksComponent): Promise<void> {
   component.load();
   castTo<LayoutReadyWorkspace>(app.workspace).setLayoutReady__();
-  await sleep(0);
+  await sleep({ milliseconds: 0 });
   await flushAsync();
 }
 

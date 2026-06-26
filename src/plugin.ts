@@ -79,6 +79,7 @@ export class Plugin extends PluginBase {
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
         pluginId: this.manifest.id,
+        pluginNoticeComponent: this.pluginNoticeComponent,
         settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => {
           const settings = pluginSettingsComponent.settings;
           return {

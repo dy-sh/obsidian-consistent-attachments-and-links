@@ -479,7 +479,10 @@ describe('LinksHandler', () => {
       mockGetFileOrNull.mockReturnValue(note);
       mockApplyFileChanges.mockResolvedValue(undefined);
       await handler.updateChangedPathsInNote('note.md', [{ newPath: 'new.png', oldPath: 'old.png' }]);
-      expect(mockApplyFileChanges).toHaveBeenCalledWith(app, note, expect.any(Function));
+      const applyParams = mockApplyFileChanges.mock.calls[0]?.[0];
+      expect(applyParams?.app).toBe(app);
+      expect(applyParams?.pathOrFile).toBe(note);
+      expect(applyParams?.changesProvider).toEqual(expect.any(Function));
     });
   });
 
@@ -525,8 +528,8 @@ describe('LinksHandler', () => {
       mockReferenceToFileChange.mockReturnValue(castTo<FileChange>({ newContent: '![](img.png)' }));
       cachedRead.mockResolvedValue('content');
 
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
 
       const result = await asPrivate(handler).convertAllNoteRefPathsToRelative('note.md', true, abortSignal);
@@ -543,8 +546,8 @@ describe('LinksHandler', () => {
       mockGenerateMarkdownLink.mockReturnValue('[a](a.md)');
       mockReferenceToFileChange.mockReturnValue(castTo<FileChange>({ newContent: '[a](a.md)' }));
       cachedRead.mockResolvedValue('content');
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
       const result = await asPrivate(handler).convertAllNoteRefPathsToRelative('note.md', false, abortSignal);
       expect(result).toEqual([{ newLink: '[a](a.md)', old: ref }]);
@@ -555,8 +558,8 @@ describe('LinksHandler', () => {
       mockGetFileOrNull.mockReturnValue(note);
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       cachedRead.mockResolvedValue('content');
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
       const result = await asPrivate(handler).convertAllNoteRefPathsToRelative('note.md', true, abortSignal);
       expect(result).toEqual([]);
@@ -568,8 +571,8 @@ describe('LinksHandler', () => {
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({ embeds: [], links: [] }));
       cachedRead.mockResolvedValue('different');
       let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        handlerResult = await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
       const result = await asPrivate(handler).convertAllNoteRefPathsToRelative('note.md', true, abortSignal);
       expect(handlerResult).toBeNull();
@@ -582,8 +585,8 @@ describe('LinksHandler', () => {
       mockGetCacheSafe.mockResolvedValue(null);
       cachedRead.mockResolvedValue('content');
       let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        handlerResult = await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
       const result = await asPrivate(handler).convertAllNoteRefPathsToRelative('note.md', false, abortSignal);
       expect(handlerResult).toEqual([]);
@@ -597,8 +600,8 @@ describe('LinksHandler', () => {
       mockGetFileOrNull.mockReturnValue(note);
       const link = createReferenceCache({ link: 'old.png', original: '[[old.png]]' });
       const abortSignal = new AbortController().signal;
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       mockGetAllLinks.mockReturnValue([link]);
@@ -617,8 +620,8 @@ describe('LinksHandler', () => {
       mockGetFileOrNull.mockReturnValue(note);
       const abortSignal = new AbortController().signal;
       let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        handlerResult = await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
       cachedRead.mockResolvedValue('different');
       await handler.updateChangedPathsInNote('note.md', []);
@@ -630,8 +633,8 @@ describe('LinksHandler', () => {
       mockGetFileOrNull.mockReturnValue(note);
       const abortSignal = new AbortController().signal;
       let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async (_app, _note, handlerFn) => {
-        handlerResult = await resolveValue(handlerFn, { abortSignal, content: 'content' });
+      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
+        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
       });
       mockGetCacheSafe.mockResolvedValue(null);
       cachedRead.mockResolvedValue('content');

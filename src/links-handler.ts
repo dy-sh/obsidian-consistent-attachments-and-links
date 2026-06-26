@@ -84,7 +84,7 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
     if (this.size > 0) {
       let str = `# ${this.title} (${String(this.size)} files)\n`;
       for (const notePath of this.keys()) {
-        const note = getFileOrNull(app, notePath);
+        const note = getFileOrNull({ app, pathOrFile: notePath });
         if (!note) {
           continue;
         }
@@ -174,12 +174,12 @@ export class LinksHandler {
   }
 
   public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
-    const file = getFileOrNull(this.app, filePath);
+    const file = getFileOrNull({ app: this.app, pathOrFile: filePath });
     if (!file) {
       return [];
     }
 
-    const backlinks = await getBacklinksForFileSafe(this.app, file);
+    const backlinks = await getBacklinksForFileSafe({ app: this.app, pathOrFile: file });
     return backlinks.keys();
   }
 
@@ -195,7 +195,7 @@ export class LinksHandler {
       return 0;
     }
 
-    const noteFile = getFileOrNull(this.app, notePath);
+    const noteFile = getFileOrNull({ app: this.app, pathOrFile: notePath });
     if (!noteFile) {
       console.warn(`can't update wikilinks in note, file not found: ${notePath}`);
       return 0;
@@ -223,7 +223,7 @@ export class LinksHandler {
       return;
     }
 
-    const note = getFileOrNull(this.app, notePath);
+    const note = getFileOrNull({ app: this.app, pathOrFile: notePath });
     if (!note) {
       console.warn(`can't update links in note, file not found: ${notePath}`);
       return;
@@ -242,40 +242,45 @@ export class LinksHandler {
       return [];
     }
 
-    const note = getFileOrNull(this.app, notePath);
+    const note = getFileOrNull({ app: this.app, pathOrFile: notePath });
     if (!note) {
       return [];
     }
 
     const changedRefs: ReferenceChangeInfo[] = [];
 
-    await applyFileChanges(this.app, note, async ({ abortSignal: abortSignal2, content }) => {
-      const cache = await getCacheSafe(this.app, note);
-      abortSignal2.throwIfAborted();
-      const cachedContent = await this.app.vault.cachedRead(note);
-      abortSignal2.throwIfAborted();
-      if (content !== cachedContent) {
-        return null;
-      }
-      if (!cache) {
-        return [];
-      }
-      const refs = (isEmbed ? cache.embeds : cache.links) ?? [];
-      const changes: FileChange[] = [];
+    await applyFileChanges({
+      abortSignal,
+      app: this.app,
+      changesProvider: async ({ content }) => {
+        const cache = await getCacheSafe(this.app, note);
+        abortSignal.throwIfAborted();
+        const cachedContent = await this.app.vault.cachedRead(note);
+        abortSignal.throwIfAborted();
+        if (content !== cachedContent) {
+          return null;
+        }
+        if (!cache) {
+          return [];
+        }
+        const refs = (isEmbed ? cache.embeds : cache.links) ?? [];
+        const changes: FileChange[] = [];
 
-      for (const ref of refs) {
-        const newContent = this.convertLink({
-          forceRelativePath: true,
-          link: ref,
-          note,
-          oldNotePath: notePath
-        });
-        changes.push(referenceToFileChange(ref, newContent));
-        changedRefs.push({ newLink: newContent, old: ref });
-      }
+        for (const ref of refs) {
+          const newContent = this.convertLink({
+            forceRelativePath: true,
+            link: ref,
+            note,
+            oldNotePath: notePath
+          });
+          changes.push(referenceToFileChange(ref, newContent));
+          changedRefs.push({ newLink: newContent, old: ref });
+        }
 
-      return changes;
-    }, { abortSignal });
+        return changes;
+      },
+      pathOrFile: note
+    });
 
     return changedRefs;
   }
@@ -288,15 +293,15 @@ export class LinksHandler {
     pathChangeMap
   }: LinksHandlerConvertLinkParams): string {
     const { linkPath, subpath } = splitSubpath(link.link);
-    const oldLinkPath = extractLinkFile(this.app, link, oldNotePath)?.path ?? join(dirname(oldNotePath), linkPath);
+    const oldLinkPath = extractLinkFile({ app: this.app, link, sourcePathOrFile: oldNotePath })?.path ?? join(dirname(oldNotePath), linkPath);
     const newLinkPath = pathChangeMap
       ? pathChangeMap.get(oldLinkPath)
-      : extractLinkFile(this.app, link, note.path)?.path ?? join(dirname(note.path), linkPath);
+      : extractLinkFile({ app: this.app, link, sourcePathOrFile: note.path })?.path ?? join(dirname(note.path), linkPath);
     if (!newLinkPath) {
       return link.original;
     }
 
-    const targetPathOrFile = getFileOrNull(this.app, newLinkPath) ?? getFileOrNull(this.app, oldLinkPath);
+    const targetPathOrFile = getFileOrNull({ app: this.app, pathOrFile: newLinkPath }) ?? getFileOrNull({ app: this.app, pathOrFile: oldLinkPath });
 
     if (!targetPathOrFile) {
       return link.original;
@@ -328,7 +333,7 @@ export class LinksHandler {
       fullLinkPath = join(dirname(notePath), linkPath);
     }
 
-    const file = getFileOrNull(this.app, fullLinkPath);
+    const file = getFileOrNull({ app: this.app, pathOrFile: fullLinkPath });
 
     if (!file) {
       return false;
@@ -358,30 +363,31 @@ export class LinksHandler {
   }
 
   private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
-    await applyFileChanges(this.app, note, async ({ abortSignal, content }) => {
-      abortSignal.throwIfAborted();
-      const cache = await getCacheSafe(this.app, note);
-      abortSignal.throwIfAborted();
-      const cachedContent = await this.app.vault.cachedRead(note);
-      abortSignal.throwIfAborted();
-      if (content !== cachedContent) {
-        return null;
-      }
-      if (!cache) {
-        return [];
-      }
-      const links = getAllLinks(cache);
-      return links.map((link) =>
-        referenceToFileChange(
-          link,
-          this.convertLink({
+    await applyFileChanges({
+      app: this.app,
+      changesProvider: async ({ content }) => {
+        const cache = await getCacheSafe(this.app, note);
+        const cachedContent = await this.app.vault.cachedRead(note);
+        if (content !== cachedContent) {
+          return null;
+        }
+        if (!cache) {
+          return [];
+        }
+        const links = getAllLinks(cache);
+        return links.map((link) =>
+          referenceToFileChange(
             link,
-            note,
-            oldNotePath,
-            pathChangeMap
-          })
-        )
-      );
+            this.convertLink({
+              link,
+              note,
+              oldNotePath,
+              pathChangeMap
+            })
+          )
+        );
+      },
+      pathOrFile: note
     });
   }
 }
