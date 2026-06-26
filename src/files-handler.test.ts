@@ -387,7 +387,7 @@ describe('FilesHandler', () => {
       mockRenameSafe.mockResolvedValue('attachments/img.png');
       const result = await handler.collectAttachmentsForCachedNote('note.md');
       expect(result.movedAttachments).toEqual([{ newPath: 'attachments/img.png', oldPath: 'dir/img.png' }]);
-      expect(mockRenameSafe).toHaveBeenCalledWith(app, file, 'attachments/img.png');
+      expect(mockRenameSafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrAbstractFile: file });
     });
   });
 
@@ -411,7 +411,7 @@ describe('FilesHandler', () => {
       const parent = { path: 'dir' };
       const file = createFile('dir/img.png', parent);
       await asPrivate(handler).deleteFile(file);
-      expect(mockDeleteIfNotUsed).toHaveBeenCalledWith(app, file.parent, undefined, undefined, true);
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledWith({ app, pathOrFile: file.parent, shouldDeleteEmptyFolders: true });
     });
 
     it('should call deleteEmptyFolderHierarchy when behavior is DeleteWithEmptyParents', async () => {
@@ -461,7 +461,7 @@ describe('FilesHandler', () => {
       mockGetFileOrNull.mockReturnValue(null);
       mockRenameSafe.mockResolvedValue('attachments/img.png');
       const result = await asPrivate(handler).moveAttachment(file, 'attachments/img.png', []);
-      expect(mockRenameSafe).toHaveBeenCalledWith(app, file, 'attachments/img.png');
+      expect(mockRenameSafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrAbstractFile: file });
       expect(result.movedAttachments).toEqual([{ newPath: 'attachments/img.png', oldPath: 'dir/img.png' }]);
     });
 
@@ -471,7 +471,7 @@ describe('FilesHandler', () => {
       getCachedNotesThatHaveLinkToFile.mockResolvedValue(['other.md']);
       mockGetFileOrNull.mockReturnValue(null);
       const result = await asPrivate(handler).moveAttachment(file, 'attachments/img.png', []);
-      expect(mockCopySafe).toHaveBeenCalledWith(app, file, 'attachments/img.png');
+      expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrFile: file });
       expect(result.movedAttachments).toHaveLength(1);
     });
 
@@ -517,7 +517,7 @@ describe('FilesHandler', () => {
       mockGetFileOrNull.mockReturnValue(null);
       mockRenameSafe.mockResolvedValue('attachments/img.png');
       await asPrivate(handler).moveAttachment(file, 'attachments/img.png', []);
-      expect(mockDeleteIfNotUsed).toHaveBeenCalledWith(app, file.parent, undefined, undefined, true);
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledWith({ app, pathOrFile: file.parent, shouldDeleteEmptyFolders: true });
     });
 
     it('should delete the old folder hierarchy when behavior is DeleteWithEmptyParents', async () => {

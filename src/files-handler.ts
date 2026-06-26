@@ -87,7 +87,7 @@ export class FilesHandler {
         continue;
       }
 
-      const file = extractLinkFile(this.app, link, notePath);
+      const file = extractLinkFile({ app: this.app, link, sourcePathOrFile: notePath });
       if (!file) {
         const type = testEmbed(link.original) ? 'embed' : 'link';
         console.warn(`${notePath} has bad ${type} (file does not exist): ${linkPath}`);
@@ -130,7 +130,7 @@ export class FilesHandler {
       return;
     }
 
-    dirName = trimStart(dirName, './');
+    dirName = trimStart({ prefix: './', str: dirName });
 
     let list = await listSafe(this.app, dirName);
     for (const folder of list.folders) {
@@ -171,7 +171,7 @@ export class FilesHandler {
     }
     switch (this.pluginSettingsComponent.settings.emptyFolderBehavior) {
       case EmptyFolderBehavior.Delete:
-        await deleteIfNotUsed(this.app, file.parent, undefined, undefined, true);
+        await deleteIfNotUsed({ app: this.app, pathOrFile: file.parent, shouldDeleteEmptyFolders: true });
         break;
       case EmptyFolderBehavior.DeleteWithEmptyParents:
         await deleteEmptyFolderHierarchy(this.app, file.parent);
@@ -219,7 +219,7 @@ export class FilesHandler {
 
     const oldFolder = file.parent;
     const isMove = linkedNotes.length === 0;
-    const newLinkFile = getFileOrNull(this.app, newLinkPath);
+    const newLinkFile = getFileOrNull({ app: this.app, pathOrFile: newLinkPath });
     if (newLinkFile) {
       if (this.pluginSettingsComponent.settings.shouldDeleteExistingFilesWhenMovingNote) {
         await this.deleteFile(newLinkFile);
@@ -230,15 +230,15 @@ export class FilesHandler {
 
     result.movedAttachments.push({ newPath: newLinkPath, oldPath: path });
     if (isMove) {
-      await renameSafe(this.app, file, newLinkPath);
+      await renameSafe({ app: this.app, newPath: newLinkPath, oldPathOrAbstractFile: file });
     } else {
-      await copySafe(this.app, file, newLinkPath);
+      await copySafe({ app: this.app, newPath: newLinkPath, oldPathOrFile: file });
     }
 
     if (oldFolder) {
       switch (this.pluginSettingsComponent.settings.emptyFolderBehavior) {
         case EmptyFolderBehavior.Delete:
-          await deleteIfNotUsed(this.app, oldFolder, undefined, undefined, true);
+          await deleteIfNotUsed({ app: this.app, pathOrFile: oldFolder, shouldDeleteEmptyFolders: true });
           break;
         case EmptyFolderBehavior.DeleteWithEmptyParents:
           await deleteEmptyFolderHierarchy(this.app, oldFolder);

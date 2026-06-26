@@ -52,7 +52,7 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
       await createFragmentAsync(async (f) => {
         f.appendText(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content.part1));
         f.appendText(' ');
-        f.appendChild(await renderInternalLink(this.app, this.attachmentPath));
+        f.appendChild(await renderInternalLink({ app: this.app, pathOrAbstractFile: this.attachmentPath }));
         f.appendText(' ');
         f.appendText(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content.part2));
         f.createEl('br');
@@ -62,7 +62,7 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
           this.selectedBacklinks.add(backlink);
           f.createEl('br');
           f.createEl('input', { attr: { checked: true }, type: 'checkbox' });
-          f.appendChild(await renderInternalLink(this.app, backlink));
+          f.appendChild(await renderInternalLink({ app: this.app, pathOrAbstractFile: backlink }));
         }
         f.createEl('br');
         f.createEl('br');

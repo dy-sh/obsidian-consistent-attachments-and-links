@@ -192,7 +192,7 @@ export class AttachmentCollector {
           continue;
         }
 
-        const backlinks = await getBacklinksForFileSafe(this.app, attachmentMoveResult.oldAttachmentPath);
+        const backlinks = await getBacklinksForFileSafe({ app: this.app, pathOrFile: attachmentMoveResult.oldAttachmentPath });
         params.abortSignal.throwIfAborted();
         if (backlinks.keys().length > 1) {
           const backlinksSorted = backlinks.keys().sort((a, b) => a.localeCompare(b));
@@ -223,25 +223,29 @@ export class AttachmentCollector {
                 // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
                 definedAttachmentMoveResult = {
                   ...definedAttachmentMoveResult,
-                  newAttachmentPath: await copySafe(
+                  newAttachmentPath: await copySafe({
                     app,
-                    definedAttachmentMoveResult.oldAttachmentPath,
-                    definedAttachmentMoveResult.newAttachmentPath
-                  )
+                    newPath: definedAttachmentMoveResult.newAttachmentPath,
+                    oldPathOrFile: definedAttachmentMoveResult.oldAttachmentPath
+                  })
                 };
-                await editLinks(app, params.note, (link2): MaybeReturn<string> => {
-                  const linkFile = extractLinkFile(app, link2, params.note);
-                  if (linkFile?.path !== definedAttachmentMoveResult.oldAttachmentPath) {
-                    return;
-                  }
-                  return updateLink({
-                    app,
-                    link: link2,
-                    newSourcePathOrFile: params.note,
-                    newTargetPathOrFile: ensureNonNullable(definedAttachmentMoveResult.newAttachmentPath),
-                    oldSourcePathOrFile: params.note,
-                    oldTargetPathOrFile: definedAttachmentMoveResult.oldAttachmentPath
-                  });
+                await editLinks({
+                  app,
+                  linkConverter: (link2): MaybeReturn<string> => {
+                    const linkFile = extractLinkFile({ app, link: link2, sourcePathOrFile: params.note });
+                    if (linkFile?.path !== definedAttachmentMoveResult.oldAttachmentPath) {
+                      return;
+                    }
+                    return updateLink({
+                      app,
+                      link: link2,
+                      newSourcePathOrFile: params.note,
+                      newTargetPathOrFile: ensureNonNullable(definedAttachmentMoveResult.newAttachmentPath),
+                      oldSourcePathOrFile: params.note,
+                      oldTargetPathOrFile: definedAttachmentMoveResult.oldAttachmentPath
+                    });
+                  },
+                  pathOrFile: params.note
                 });
                 break;
               case CollectAttachmentUsedByMultipleNotesMode.Move:
@@ -301,7 +305,7 @@ export class AttachmentCollector {
           // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
           attachmentMoveResult = {
             ...attachmentMoveResult,
-            newAttachmentPath: await renameSafe(app, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath)
+            newAttachmentPath: await renameSafe({ app, newPath: attachmentMoveResult.newAttachmentPath, oldPathOrAbstractFile: attachmentMoveResult.oldAttachmentPath })
           };
         }
       }
@@ -387,6 +391,7 @@ export class AttachmentCollector {
       abortSignal: combinedAbortSignal,
       buildNoticeMessage: (noteFile, iterationStr) => t(($) => $.attachmentCollector.progressBar.message, { iterationStr, noteFilePath: noteFile.path }),
       items: noteFiles,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (noteFile) => {
         combinedAbortSignal.throwIfAborted();
         if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
@@ -415,7 +420,7 @@ export class AttachmentCollector {
     oldNotePath: string,
     oldAttachmentPaths: Set<string>
   ): Promise<AttachmentMoveResult | null> {
-    const oldAttachmentFile = extractLinkFile(this.app, reference, oldNotePath, true);
+    const oldAttachmentFile = extractLinkFile({ app: this.app, link: reference, shouldAllowNonExistingFile: true, sourcePathOrFile: oldNotePath });
 
     if (!oldAttachmentFile) {
       return null;

@@ -30,10 +30,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .setName(moveAttachmentsWithNoteSettingName)
       .setDesc('Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.')
       .addToggle((toggle) =>
-        this.bind(toggle, 'shouldMoveAttachmentsWithNote', {
+        this.bind({
           onChanged: async () => {
             await this.checkDangerousSetting('shouldMoveAttachmentsWithNote', moveAttachmentsWithNoteSettingName);
-          }
+          },
+          propertyName: 'shouldMoveAttachmentsWithNote',
+          valueComponent: toggle
         })
       );
 
@@ -42,17 +44,19 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .setName(deleteAttachmentsWithNoteSettingName)
       .setDesc('Automatically remove attachments that are no longer referenced in other notes when the note is deleted.')
       .addToggle((toggle) =>
-        this.bind(toggle, 'shouldDeleteAttachmentsWithNote', {
+        this.bind({
           onChanged: async () => {
             await this.checkDangerousSetting('shouldDeleteAttachmentsWithNote', deleteAttachmentsWithNoteSettingName);
-          }
+          },
+          propertyName: 'shouldDeleteAttachmentsWithNote',
+          valueComponent: toggle
         })
       );
 
     new SettingEx(this.containerEl)
       .setName('Update links')
       .setDesc('Automatically update links to attachments and other notes when moving notes or attachments.')
-      .addToggle((toggle) => this.bind(toggle, 'shouldUpdateLinks'));
+      .addToggle((toggle) => this.bind({ propertyName: 'shouldUpdateLinks', valueComponent: toggle }));
 
     new SettingEx(this.containerEl)
       .setName('Empty folder behavior')
@@ -76,7 +80,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           [EmptyFolderBehavior.DeleteWithEmptyParents]: 'Delete with empty parents'
           /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
-        this.bind(dropdown, 'emptyFolderBehavior');
+        this.bind({ propertyName: 'emptyFolderBehavior', valueComponent: dropdown });
       });
 
     const deleteExistFilesWhenMoveNoteSettingName = 'Delete Duplicate Attachments on Note Move';
@@ -86,10 +90,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         'Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.'
       )
       .addToggle((toggle) =>
-        this.bind(toggle, 'shouldDeleteExistingFilesWhenMovingNote', {
+        this.bind({
           onChanged: async () => {
             await this.checkDangerousSetting('shouldDeleteExistingFilesWhenMovingNote', deleteExistFilesWhenMoveNoteSettingName);
-          }
+          },
+          propertyName: 'shouldDeleteExistingFilesWhenMovingNote',
+          valueComponent: toggle
         })
       );
 
@@ -98,13 +104,13 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .setDesc(
         'When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.'
       )
-      .addToggle((toggle) => this.bind(toggle, 'shouldChangeNoteBacklinksDisplayText'));
+      .addToggle((toggle) => this.bind({ propertyName: 'shouldChangeNoteBacklinksDisplayText', valueComponent: toggle }));
 
     new SettingEx(this.containerEl)
       .setName('Consistency report filename')
       .setDesc('Specify the name of the file for the consistency report.')
       .addText((text) => {
-        this.bind(text, 'consistencyReportFile');
+        this.bind({ propertyName: 'consistencyReportFile', valueComponent: text });
       });
 
     const autoCollectAttachmentsSettingName = 'Auto Collect Attachments';
@@ -112,10 +118,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .setName(autoCollectAttachmentsSettingName)
       .setDesc('Automatically collect attachments when the note is edited.')
       .addToggle((toggle) =>
-        this.bind(toggle, 'shouldCollectAttachmentsAutomatically', {
+        this.bind({
           onChanged: async () => {
             await this.checkDangerousSetting('shouldCollectAttachmentsAutomatically', autoCollectAttachmentsSettingName);
-          }
+          },
+          propertyName: 'shouldCollectAttachmentsAutomatically',
+          valueComponent: toggle
         })
       );
 
@@ -132,7 +140,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText('If the setting is empty, all notes are included');
       }))
       .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'includePaths');
+        this.bind({ propertyName: 'includePaths', valueComponent: multipleText });
       });
 
     new SettingEx(this.containerEl)
@@ -148,7 +156,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText('If the setting is empty, no notes are excluded');
       }))
       .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'excludePaths');
+        this.bind({ propertyName: 'excludePaths', valueComponent: multipleText });
       });
 
     new SettingEx(this.containerEl)
@@ -166,7 +174,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText('If the setting is empty, no paths are excluded from attachment collecting.');
       }))
       .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'excludePathsFromAttachmentCollecting');
+        this.bind({ propertyName: 'excludePathsFromAttachmentCollecting', valueComponent: multipleText });
       });
 
     new SettingEx(this.containerEl)
@@ -189,7 +197,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText('Insert each extension on a new line.');
       }))
       .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'treatAsAttachmentExtensions');
+        this.bind({ propertyName: 'treatAsAttachmentExtensions', valueComponent: multipleText });
       });
 
     new SettingEx(this.containerEl)
@@ -227,7 +235,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           [CollectAttachmentUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText)
           /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
-        this.bind(dropdown, 'collectAttachmentUsedByMultipleNotesMode');
+        this.bind({ propertyName: 'collectAttachmentUsedByMultipleNotesMode', valueComponent: dropdown });
       });
 
     new SettingEx(this.containerEl)
@@ -268,7 +276,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           )
           /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
-        this.bind(dropdown, 'moveAttachmentToProperFolderUsedByMultipleNotesMode');
+        this.bind({ propertyName: 'moveAttachmentToProperFolderUsedByMultipleNotesMode', valueComponent: dropdown });
       });
   }
 
