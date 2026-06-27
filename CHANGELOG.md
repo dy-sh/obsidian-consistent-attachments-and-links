@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.33.11
+
+- refactor: new template
+
 ## 3.33.10
 
 - test: fix
