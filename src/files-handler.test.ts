@@ -7,6 +7,7 @@ import {
   getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { listSafe } from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   afterEach,
@@ -69,6 +70,7 @@ interface SettingsLike {
 
 const mockGetPath = vi.mocked(getPath);
 const mockIsNote = vi.mocked(isNote);
+const mockListSafe = vi.mocked(listSafe);
 
 describe('FilesHandler', () => {
   let app: App;
@@ -144,6 +146,56 @@ describe('FilesHandler', () => {
       mockGetPath.mockReturnValue('drawing.excalidraw.md');
       settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
       expect(handler.isNoteEx('drawing.excalidraw.md')).toBe(false);
+    });
+  });
+
+  describe('deleteEmptyFolders', () => {
+    it('should return early when the path is ignored', async () => {
+      castTo<ReturnType<typeof vi.fn>>(settings.isPathIgnored).mockReturnValue(true);
+      await handler.deleteEmptyFolders('ignored');
+      expect(mockListSafe).not.toHaveBeenCalled();
+    });
+
+    it('should recurse into subfolders and remove empty folder', async () => {
+      mockListSafe
+        .mockResolvedValueOnce({ files: [], folders: ['parent/child'] })
+        .mockResolvedValueOnce({ files: [], folders: [] })
+        .mockResolvedValueOnce({ files: [], folders: [] })
+        .mockResolvedValueOnce({ files: [], folders: [] });
+      await handler.deleteEmptyFolders('./parent');
+      expect(rmdir).toHaveBeenCalledWith('parent', false);
+      expect(rmdir).toHaveBeenCalledWith('parent/child', false);
+    });
+
+    it('should not rmdir when folder still has files', async () => {
+      mockListSafe
+        .mockResolvedValueOnce({ files: ['parent/file.md'], folders: [] })
+        .mockResolvedValueOnce({ files: ['parent/file.md'], folders: [] });
+      await handler.deleteEmptyFolders('parent');
+      expect(rmdir).not.toHaveBeenCalled();
+    });
+
+    it('should not rmdir when the folder does not exist', async () => {
+      mockListSafe.mockResolvedValue({ files: [], folders: [] });
+      exists.mockResolvedValue(false);
+      await handler.deleteEmptyFolders('parent');
+      expect(rmdir).not.toHaveBeenCalled();
+    });
+
+    it('should swallow rmdir error when folder no longer exists', async () => {
+      mockListSafe.mockResolvedValue({ files: [], folders: [] });
+      rmdir.mockRejectedValue(new Error('boom'));
+      adapterExists.mockResolvedValue(false);
+      await expect(handler.deleteEmptyFolders('parent')).resolves.toBeUndefined();
+      expect(adapterExists).toHaveBeenCalledWith('parent');
+    });
+
+    it('should rethrow rmdir error when folder still exists', async () => {
+      mockListSafe.mockResolvedValue({ files: [], folders: [] });
+      const error = new Error('boom');
+      rmdir.mockRejectedValue(error);
+      adapterExists.mockResolvedValue(true);
+      await expect(handler.deleteEmptyFolders('parent')).rejects.toBe(error);
     });
   });
 });
