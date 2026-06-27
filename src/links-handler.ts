@@ -30,11 +30,7 @@ import {
   testWikilink,
   updateLinksInFile
 } from 'obsidian-dev-utils/obsidian/link';
-import {
-  getAllLinks,
-  getBacklinksForFileSafe,
-  getCacheSafe
-} from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/reference';
 import {
   dirname,
@@ -43,11 +39,6 @@ import {
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-
-export interface PathChangeInfo {
-  newPath: string;
-  oldPath: string;
-}
 
 interface LinksHandlerConstructorParams {
   readonly app: App;
@@ -173,23 +164,6 @@ export class LinksHandler {
     return await this.convertAllNoteRefPathsToRelative(notePath, false, abortSignal);
   }
 
-  public async getCachedNotesThatHaveLinkToFile(filePath: string): Promise<string[]> {
-    const file = getFileOrNull({ app: this.app, pathOrFile: filePath });
-    if (!file) {
-      return [];
-    }
-
-    const backlinks = await getBacklinksForFileSafe({ app: this.app, pathOrFile: file });
-    return backlinks.keys();
-  }
-
-  public getFullPathForLink(link: string, owningNotePath: string): string {
-    ({ linkPath: link } = splitSubpath(link));
-    const parentFolder = dirname(owningNotePath);
-    const fullPath = join(parentFolder, link);
-    return fullPath;
-  }
-
   public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean, abortSignal: AbortSignal): Promise<number> {
     if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return 0;
@@ -216,25 +190,6 @@ export class LinksHandler {
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
     });
     return result;
-  }
-
-  public async updateChangedPathsInNote(notePath: string, changedLinks: PathChangeInfo[]): Promise<void> {
-    if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
-      return;
-    }
-
-    const note = getFileOrNull({ app: this.app, pathOrFile: notePath });
-    if (!note) {
-      console.warn(`can't update links in note, file not found: ${notePath}`);
-      return;
-    }
-
-    const pathChangeMap = new Map<string, string>();
-    for (const change of changedLinks) {
-      pathChangeMap.set(change.oldPath, change.newPath);
-    }
-
-    await this.updateLinks(note, note.path, pathChangeMap);
   }
 
   private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
@@ -360,34 +315,5 @@ export class LinksHandler {
     }
 
     return !!resolveSubpath(cache, subpath);
-  }
-
-  private async updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void> {
-    await applyFileChanges({
-      app: this.app,
-      changesProvider: async ({ content }) => {
-        const cache = await getCacheSafe(this.app, note);
-        const cachedContent = await this.app.vault.cachedRead(note);
-        if (content !== cachedContent) {
-          return null;
-        }
-        if (!cache) {
-          return [];
-        }
-        const links = getAllLinks(cache);
-        return links.map((link) =>
-          referenceToFileChange(
-            link,
-            this.convertLink({
-              link,
-              note,
-              oldNotePath,
-              pathChangeMap
-            })
-          )
-        );
-      },
-      pathOrFile: note
-    });
   }
 }

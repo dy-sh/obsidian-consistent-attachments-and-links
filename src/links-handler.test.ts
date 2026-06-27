@@ -29,11 +29,7 @@ import {
   testWikilink,
   updateLinksInFile
 } from 'obsidian-dev-utils/obsidian/link';
-import {
-  getAllLinks,
-  getBacklinksForFileSafe,
-  getCacheSafe
-} from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/reference';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import { resolveValue } from 'obsidian-dev-utils/value-provider';
@@ -130,8 +126,6 @@ const mockGenerateMarkdownLink = vi.mocked(generateMarkdownLink);
 const mockSplitSubpath = vi.mocked(splitSubpath);
 const mockTestWikilink = vi.mocked(testWikilink);
 const mockUpdateLinksInFile = vi.mocked(updateLinksInFile);
-const mockGetAllLinks = vi.mocked(getAllLinks);
-const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockReferenceToFileChange = vi.mocked(referenceToFileChange);
 
@@ -201,33 +195,6 @@ describe('LinksHandler', () => {
 
   afterEach(() => {
     warnSpy.mockRestore();
-  });
-
-  describe('getFullPathForLink', () => {
-    it('should join the parent folder with the link path', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      expect(handler.getFullPathForLink('img.png', 'folder/note.md')).toBe('folder/img.png');
-    });
-
-    it('should handle a note at the vault root', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      expect(handler.getFullPathForLink('img.png', 'note.md')).toBe('img.png');
-    });
-  });
-
-  describe('getCachedNotesThatHaveLinkToFile', () => {
-    it('should return an empty array when the file is not found', async () => {
-      mockGetFileOrNull.mockReturnValue(null);
-      expect(await handler.getCachedNotesThatHaveLinkToFile('missing.png')).toEqual([]);
-    });
-
-    it('should return the backlink keys', async () => {
-      mockGetFileOrNull.mockReturnValue(createFile('img.png'));
-      mockGetBacklinksForFileSafe.mockResolvedValue(strictProxy<Awaited<ReturnType<typeof getBacklinksForFileSafe>>>({
-        keys: () => ['a.md', 'b.md']
-      }));
-      expect(await handler.getCachedNotesThatHaveLinkToFile('img.png')).toEqual(['a.md', 'b.md']);
-    });
   });
 
   describe('checkConsistency', () => {
@@ -461,31 +428,6 @@ describe('LinksHandler', () => {
     });
   });
 
-  describe('updateChangedPathsInNote', () => {
-    it('should return early when the note path is ignored', async () => {
-      castTo<ReturnType<typeof vi.fn>>(settings.isPathIgnored).mockReturnValue(true);
-      await handler.updateChangedPathsInNote('ignored.md', []);
-      expect(mockApplyFileChanges).not.toHaveBeenCalled();
-    });
-
-    it('should warn and return when the note is not found', async () => {
-      mockGetFileOrNull.mockReturnValue(null);
-      await handler.updateChangedPathsInNote('missing.md', []);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('file not found'));
-    });
-
-    it('should build the path change map and apply changes', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      mockApplyFileChanges.mockResolvedValue(undefined);
-      await handler.updateChangedPathsInNote('note.md', [{ newPath: 'new.png', oldPath: 'old.png' }]);
-      const applyParams = mockApplyFileChanges.mock.calls[0]?.[0];
-      expect(applyParams?.app).toBe(app);
-      expect(applyParams?.pathOrFile).toBe(note);
-      expect(applyParams?.changesProvider).toEqual(expect.any(Function));
-    });
-  });
-
   describe('convertAllNoteEmbedsPathsToRelative / convertAllNoteLinksPathsToRelative', () => {
     let abortSignal: AbortSignal;
 
@@ -591,55 +533,6 @@ describe('LinksHandler', () => {
       const result = await asPrivate(handler).convertAllNoteRefPathsToRelative('note.md', false, abortSignal);
       expect(handlerResult).toEqual([]);
       expect(result).toEqual([]);
-    });
-  });
-
-  describe('updateLinks (via updateChangedPathsInNote)', () => {
-    it('should map all links to file changes', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      const link = createReferenceCache({ link: 'old.png', original: '[[old.png]]' });
-      const abortSignal = new AbortController().signal;
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
-      mockGetAllLinks.mockReturnValue([link]);
-      mockSplitSubpath.mockReturnValue({ linkPath: 'old.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('old.png'));
-      mockGenerateMarkdownLink.mockReturnValue('[[new.png]]');
-      mockReferenceToFileChange.mockReturnValue(castTo<FileChange>({ newContent: '[[new.png]]' }));
-      cachedRead.mockResolvedValue('content');
-
-      await handler.updateChangedPathsInNote('note.md', [{ newPath: 'new.png', oldPath: 'old.png' }]);
-      expect(mockReferenceToFileChange).toHaveBeenCalled();
-    });
-
-    it('should return null when content changed', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      const abortSignal = new AbortController().signal;
-      let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-      cachedRead.mockResolvedValue('different');
-      await handler.updateChangedPathsInNote('note.md', []);
-      expect(handlerResult).toBeNull();
-    });
-
-    it('should return empty changes when there is no cache', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      const abortSignal = new AbortController().signal;
-      let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-      mockGetCacheSafe.mockResolvedValue(null);
-      cachedRead.mockResolvedValue('content');
-      await handler.updateChangedPathsInNote('note.md', []);
-      expect(handlerResult).toEqual([]);
     });
   });
 
