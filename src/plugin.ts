@@ -58,7 +58,6 @@ export class Plugin extends PluginBase {
 
     const filesHandler = new FilesHandler({
       app: this.app,
-      linksHandler,
       pluginSettingsComponent
     });
 
