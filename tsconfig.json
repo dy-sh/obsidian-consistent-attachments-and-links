@@ -21,9 +21,9 @@
     "skipLibCheck": true,
     "target": "es2022",
     "types": [
+      "@obsidian-typings/obsidian-public-latest",
       "@total-typescript/ts-reset",
-      "node",
-      "@obsidian-typings/obsidian-public-latest"
+      "node"
     ],
     "verbatimModuleSyntax": true
   },
