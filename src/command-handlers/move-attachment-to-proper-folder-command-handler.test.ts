@@ -9,6 +9,7 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -186,6 +187,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         getProperAttachmentPath: (params: unknown) => getProperAttachmentPath(params),
         isNoteEx: (pathOrFile: unknown) => isNoteEx(pathOrFile)
       }),
+      editorLockComponent: strictProxy<EditorLockComponent>({}),
       pluginName: 'My Plugin',
       pluginNoticeComponent: strictProxy<PluginNoticeComponent>({
         showNotice: vi.fn((): Notice => castTo<Notice>({}))

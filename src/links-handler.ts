@@ -2,6 +2,7 @@ import type {
   Reference,
   ReferenceCache
 } from 'obsidian';
+import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
 import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/link';
 
@@ -42,6 +43,7 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 interface LinksHandlerConstructorParams {
   readonly app: App;
+  readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -102,10 +104,12 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 
 export class LinksHandler {
   private readonly app: App;
+  private readonly editorLockComponent: EditorLockComponent | null;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: LinksHandlerConstructorParams) {
     this.app = params.app;
+    this.editorLockComponent = params.editorLockComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -185,6 +189,7 @@ export class LinksHandler {
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
       app: this.app,
+      editorLockComponent: this.editorLockComponent,
       linkStyle: LinkStyle.Markdown,
       newSourcePathOrFile: noteFile,
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
@@ -234,6 +239,7 @@ export class LinksHandler {
 
         return changes;
       },
+      editorLockComponent: this.editorLockComponent,
       pathOrFile: note
     });
 

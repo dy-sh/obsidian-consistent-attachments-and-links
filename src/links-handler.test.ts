@@ -5,6 +5,7 @@ import type {
   ReferenceCache,
   TFile
 } from 'obsidian';
+import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
 import type {
   Mock,
@@ -187,6 +188,7 @@ describe('LinksHandler', () => {
     });
     handler = new LinksHandler({
       app,
+      editorLockComponent: strictProxy<EditorLockComponent>({}),
       pluginSettingsComponent
     });
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);

@@ -53,6 +53,7 @@ export class Plugin extends PluginBase {
 
     const linksHandler = new LinksHandler({
       app: this.app,
+      editorLockComponent: this.editorLockComponent,
       pluginSettingsComponent
     });
 
@@ -77,6 +78,7 @@ export class Plugin extends PluginBase {
       new RenameDeleteHandlerComponent({
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
+        editorLockComponent: this.editorLockComponent,
         pluginId: this.manifest.id,
         pluginNoticeComponent: this.pluginNoticeComponent,
         settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => {
@@ -98,6 +100,7 @@ export class Plugin extends PluginBase {
     const attachmentCollector = new AttachmentCollector({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
+      editorLockComponent: this.editorLockComponent,
       pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent
@@ -128,6 +131,7 @@ export class Plugin extends PluginBase {
             abortSignalComponent: this.abortSignalComponent,
             app: this.app,
             attachmentCollector,
+            editorLockComponent: this.editorLockComponent,
             pluginName: this.manifest.name,
             pluginNoticeComponent: this.pluginNoticeComponent,
             pluginSettingsComponent

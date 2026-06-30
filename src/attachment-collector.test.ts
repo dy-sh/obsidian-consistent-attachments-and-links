@@ -6,6 +6,7 @@ import type {
   TFolder
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type {
   Mock,
   MockInstance
@@ -88,10 +89,6 @@ vi.mock('obsidian-dev-utils/abort-controller', () => ({
   abortSignalAny: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/html-element', () => ({
-  appendCodeBlock: vi.fn()
-}));
-
 vi.mock('obsidian-dev-utils/obsidian/attachment-path', async (importOriginal) => {
   const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/attachment-path')>();
   return {
@@ -106,6 +103,10 @@ vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   isFile: vi.fn(),
   isFolder: vi.fn(),
   isNote: vi.fn()
+}));
+
+vi.mock('obsidian-dev-utils/obsidian/html-element', () => ({
+  appendCodeBlock: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/link', () => ({
@@ -261,6 +262,7 @@ describe('AttachmentCollector', () => {
     collector = new AttachmentCollector({
       abortSignalComponent,
       app,
+      editorLockComponent: strictProxy<EditorLockComponent>({}),
       pluginName: 'Plugin',
       pluginNoticeComponent: new PluginNoticeComponent('Plugin'),
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({

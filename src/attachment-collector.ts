@@ -5,6 +5,7 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 import type { CanvasData } from 'obsidian/canvas.d.ts';
@@ -18,7 +19,6 @@ import {
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   AttachmentPathContext,
   getAttachmentFilePath
@@ -30,6 +30,7 @@ import {
   isFolder,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   editLinks,
@@ -64,6 +65,7 @@ interface AttachmentCollectorCollectAttachmentsParams {
 interface AttachmentCollectorConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
+  readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -87,6 +89,7 @@ interface CollectAttachmentContext {
 export class AttachmentCollector {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
+  private readonly editorLockComponent: EditorLockComponent | null;
   private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -94,6 +97,7 @@ export class AttachmentCollector {
   public constructor(params: AttachmentCollectorConstructorParams) {
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
+    this.editorLockComponent = params.editorLockComponent;
     this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -143,6 +147,7 @@ export class AttachmentCollector {
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     params.abortSignal.throwIfAborted();
     const app = this.app;
+    const editorLockComponent = this.editorLockComponent;
     const pluginSettingsComponent = this.pluginSettingsComponent;
     const pluginNoticeComponent = this.pluginNoticeComponent;
 
@@ -231,6 +236,7 @@ export class AttachmentCollector {
                 };
                 await editLinks({
                   app,
+                  editorLockComponent,
                   linkConverter: (link2): MaybeReturn<string> => {
                     const linkFile = extractLinkFile({ app, link: link2, sourcePathOrFile: params.note });
                     if (linkFile?.path !== definedAttachmentMoveResult.oldAttachmentPath) {
