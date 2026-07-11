@@ -76,6 +76,13 @@ interface AttachmentCollectorGetProperAttachmentPathParams {
   readonly noteFilePath: string;
 }
 
+interface AttachmentCollectorPrepareAttachmentToMoveParams {
+  readonly newNotePath: string;
+  readonly oldAttachmentPaths: Set<string>;
+  readonly oldNotePath: string;
+  readonly reference: Reference;
+}
+
 interface AttachmentMoveResult {
   readonly newAttachmentPath: null | string;
   readonly oldAttachmentPath: string;
@@ -186,7 +193,12 @@ export class AttachmentCollector {
           return;
         }
 
-        let attachmentMoveResult = await this.prepareAttachmentToMove(link, params.note.path, params.note.path, oldAttachmentPaths);
+        let attachmentMoveResult = await this.prepareAttachmentToMove({
+          newNotePath: params.note.path,
+          oldAttachmentPaths,
+          oldNotePath: params.note.path,
+          reference: link
+        });
         params.abortSignal.throwIfAborted();
         if (!attachmentMoveResult) {
           continue;
@@ -215,7 +227,7 @@ export class AttachmentCollector {
                   `Cancelling collecting attachments, as attachment ${definedAttachmentMoveResult.oldAttachmentPath} is referenced by multiple notes.\n${backlinksStr}`
                 );
                 if (pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode === CollectAttachmentUsedByMultipleNotesMode.Cancel) {
-                  await selectMode(app, definedAttachmentMoveResult.oldAttachmentPath, backlinksSorted, true);
+                  await selectMode({ app, attachmentPath: definedAttachmentMoveResult.oldAttachmentPath, backlinks: backlinksSorted, isCancelMode: true });
                 }
                 // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
                 params.ctx.isAborted = true;
@@ -263,11 +275,11 @@ export class AttachmentCollector {
                 params.abortSignal.throwIfAborted();
                 break;
               case CollectAttachmentUsedByMultipleNotesMode.Prompt: {
-                const { mode, shouldUseSameActionForOtherProblematicAttachments } = await selectMode(
+                const { mode, shouldUseSameActionForOtherProblematicAttachments } = await selectMode({
                   app,
-                  definedAttachmentMoveResult.oldAttachmentPath,
-                  backlinksSorted
-                );
+                  attachmentPath: definedAttachmentMoveResult.oldAttachmentPath,
+                  backlinks: backlinksSorted
+                });
                 if (shouldUseSameActionForOtherProblematicAttachments) {
                   // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
                   params.ctx.collectAttachmentUsedByMultipleNotesMode = mode;
@@ -420,12 +432,8 @@ export class AttachmentCollector {
     });
   }
 
-  private async prepareAttachmentToMove(
-    reference: Reference,
-    newNotePath: string,
-    oldNotePath: string,
-    oldAttachmentPaths: Set<string>
-  ): Promise<AttachmentMoveResult | null> {
+  private async prepareAttachmentToMove(params: AttachmentCollectorPrepareAttachmentToMoveParams): Promise<AttachmentMoveResult | null> {
+    const { newNotePath, oldAttachmentPaths, oldNotePath, reference } = params;
     const oldAttachmentFile = extractLinkFile({ app: this.app, link: reference, shouldAllowNonExistingFile: true, sourcePathOrFile: oldNotePath });
 
     if (!oldAttachmentFile) {

@@ -12,24 +12,41 @@ import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
+interface MoveAttachmentToProperFolderUsedByMultipleNotesModalConstructorParams {
+  readonly app: App;
+  readonly attachmentPath: string;
+  readonly backlinks: string[];
+  readonly isCancelMode: boolean;
+  readonly resolve: PromiseResolve<MoveAttachmentToProperFolderUsedByMultipleNotesModalResult>;
+}
+
 interface MoveAttachmentToProperFolderUsedByMultipleNotesModalResult {
   readonly backlinksToCopy: string[];
   readonly mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
   readonly shouldUseSameActionForOtherProblematicAttachments: boolean;
 }
 
+interface SelectModeParams {
+  readonly app: App;
+  readonly attachmentPath: string;
+  readonly backlinks: string[];
+  readonly isCancelMode?: boolean;
+}
+
 class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
+  private readonly attachmentPath: string;
+  private readonly backlinks: string[];
+  private readonly isCancelMode: boolean;
   private isSelected = false;
+  private readonly resolve: PromiseResolve<MoveAttachmentToProperFolderUsedByMultipleNotesModalResult>;
   private readonly selectedBacklinks = new Set<string>();
 
-  public constructor(
-    app: App,
-    private readonly attachmentPath: string,
-    private readonly backlinks: string[],
-    private readonly resolve: PromiseResolve<MoveAttachmentToProperFolderUsedByMultipleNotesModalResult>,
-    private readonly isCancelMode: boolean
-  ) {
-    super(app);
+  public constructor(params: MoveAttachmentToProperFolderUsedByMultipleNotesModalConstructorParams) {
+    super(params.app);
+    this.attachmentPath = params.attachmentPath;
+    this.backlinks = params.backlinks;
+    this.resolve = params.resolve;
+    this.isCancelMode = params.isCancelMode;
   }
 
   public override onClose(): void {
@@ -125,14 +142,16 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
   }
 }
 
-export function selectMode(
-  app: App,
-  attachmentPath: string,
-  backlinks: string[],
-  isCancelMode?: boolean
-): Promise<MoveAttachmentToProperFolderUsedByMultipleNotesModalResult> {
+export function selectMode(params: SelectModeParams): Promise<MoveAttachmentToProperFolderUsedByMultipleNotesModalResult> {
+  const { app, attachmentPath, backlinks, isCancelMode } = params;
   return new Promise((resolve) => {
-    const modal = new MoveAttachmentToProperFolderUsedByMultipleNotesModal(app, attachmentPath, backlinks, resolve, isCancelMode ?? false);
+    const modal = new MoveAttachmentToProperFolderUsedByMultipleNotesModal({
+      app,
+      attachmentPath,
+      backlinks,
+      isCancelMode: isCancelMode ?? false,
+      resolve
+    });
     modal.open();
   });
 }

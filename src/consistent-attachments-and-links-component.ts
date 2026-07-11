@@ -78,7 +78,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
-        await this.linksHandler.checkConsistency(note, badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks);
+        await this.linksHandler.checkConsistency({ badEmbeds, badFrontmatterLinks, badLinks, note, wikiEmbeds, wikiLinks });
       },
       progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
       shouldContinueOnError: true,
@@ -229,7 +229,11 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
           return;
         }
 
-        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, this.abortSignalComponent.abortSignal);
+        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({
+          abortSignal: this.abortSignalComponent.abortSignal,
+          embedOnlyLinks: true,
+          notePath: note.path
+        });
         changedLinksCount += result;
         processedNotesCount++;
       },
@@ -250,7 +254,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(note: TFile): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, true, abortSignal)),
+      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: true, notePath: note.path })),
       operationName: 'Replace all wiki embeds with markdown embeds in current note'
     });
   }
@@ -271,7 +275,11 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
           return;
         }
 
-        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, this.abortSignalComponent.abortSignal);
+        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({
+          abortSignal: this.abortSignalComponent.abortSignal,
+          embedOnlyLinks: false,
+          notePath: note.path
+        });
         changedLinksCount += result;
         processedNotesCount++;
       },
@@ -292,7 +300,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public replaceAllWikilinksWithMarkdownLinksCurrentNote(note: TFile): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks(note.path, false, abortSignal)),
+      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: note.path })),
       operationName: 'Replace all wiki embeds with markdown embeds in current note'
     });
   }

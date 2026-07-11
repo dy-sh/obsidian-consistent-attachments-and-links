@@ -500,7 +500,7 @@ describe('AttachmentCollector', () => {
         const ctx = {};
         await collectAttachments(ctx, abortSignal);
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
-        expect(mockSelectMode).toHaveBeenCalledWith(app, 'img.png', ['note.md', 'other.md'], true);
+        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'], isCancelMode: true });
         expect(castTo<CollectAttachmentContextLike>(ctx).isAborted).toBe(true);
       });
 
@@ -582,7 +582,7 @@ describe('AttachmentCollector', () => {
         mockSelectMode.mockResolvedValue({ mode: CollectAttachmentUsedByMultipleNotesMode.Move, shouldUseSameActionForOtherProblematicAttachments: false });
         mockRenameSafe.mockResolvedValue('attachments/img.png');
         await collectAttachments({}, abortSignal);
-        expect(mockSelectMode).toHaveBeenCalledWith(app, 'img.png', ['note.md', 'other.md']);
+        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'] });
         expect(mockRenameSafe).toHaveBeenCalled();
       });
 

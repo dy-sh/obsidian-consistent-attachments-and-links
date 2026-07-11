@@ -41,10 +41,25 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+interface LinksHandlerCheckConsistencyParams {
+  readonly badEmbeds: ConsistencyCheckResult;
+  readonly badFrontmatterLinks: ConsistencyCheckResult;
+  readonly badLinks: ConsistencyCheckResult;
+  readonly note: TFile;
+  readonly wikiEmbeds: ConsistencyCheckResult;
+  readonly wikiLinks: ConsistencyCheckResult;
+}
+
 interface LinksHandlerConstructorParams {
   readonly app: App;
   readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+
+interface LinksHandlerConvertAllNoteRefPathsToRelativeParams {
+  readonly abortSignal: AbortSignal;
+  readonly isEmbed: boolean;
+  readonly notePath: string;
 }
 
 interface LinksHandlerConvertLinkParams {
@@ -53,6 +68,12 @@ interface LinksHandlerConvertLinkParams {
   readonly note: TFile;
   readonly oldNotePath: string;
   readonly pathChangeMap?: Map<string, string> | undefined;
+}
+
+interface LinksHandlerReplaceAllNoteWikilinksWithMarkdownLinksParams {
+  readonly abortSignal: AbortSignal;
+  readonly embedOnlyLinks: boolean;
+  readonly notePath: string;
 }
 
 interface ReferenceChangeInfo {
@@ -113,14 +134,8 @@ export class LinksHandler {
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
-  public async checkConsistency(
-    note: TFile,
-    badLinks: ConsistencyCheckResult,
-    badEmbeds: ConsistencyCheckResult,
-    wikiLinks: ConsistencyCheckResult,
-    wikiEmbeds: ConsistencyCheckResult,
-    badFrontmatterLinks: ConsistencyCheckResult
-  ): Promise<void> {
+  public async checkConsistency(params: LinksHandlerCheckConsistencyParams): Promise<void> {
+    const { badEmbeds, badFrontmatterLinks, badLinks, note, wikiEmbeds, wikiLinks } = params;
     if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
       return;
     }
@@ -161,14 +176,15 @@ export class LinksHandler {
   }
 
   public async convertAllNoteEmbedsPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative(notePath, true, abortSignal);
+    return await this.convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: true, notePath });
   }
 
   public async convertAllNoteLinksPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative(notePath, false, abortSignal);
+    return await this.convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: false, notePath });
   }
 
-  public async replaceAllNoteWikilinksWithMarkdownLinks(notePath: string, embedOnlyLinks: boolean, abortSignal: AbortSignal): Promise<number> {
+  public async replaceAllNoteWikilinksWithMarkdownLinks(params: LinksHandlerReplaceAllNoteWikilinksWithMarkdownLinksParams): Promise<number> {
+    const { abortSignal, embedOnlyLinks, notePath } = params;
     if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return 0;
     }
@@ -197,7 +213,8 @@ export class LinksHandler {
     return result;
   }
 
-  private async convertAllNoteRefPathsToRelative(notePath: string, isEmbed: boolean, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
+  private async convertAllNoteRefPathsToRelative(params: LinksHandlerConvertAllNoteRefPathsToRelativeParams): Promise<ReferenceChangeInfo[]> {
+    const { abortSignal, isEmbed, notePath } = params;
     if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
       return [];
     }

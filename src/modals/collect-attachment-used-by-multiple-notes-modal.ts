@@ -15,22 +15,39 @@ import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
 import { CollectAttachmentUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
+interface CollectAttachmentUsedByMultipleNotesModalConstructorParams {
+  readonly app: App;
+  readonly attachmentPath: string;
+  readonly backlinks: string[];
+  readonly isCancelMode: boolean;
+  readonly resolve: PromiseResolve<CollectAttachmentUsedByMultipleNotesModalResult>;
+}
+
 interface CollectAttachmentUsedByMultipleNotesModalResult {
   readonly mode: CollectAttachmentUsedByMultipleNotesMode;
   readonly shouldUseSameActionForOtherProblematicAttachments: boolean;
 }
 
-class CollectAttachmentUsedByMultipleNotesModal extends Modal {
-  private isSelected = false;
+interface SelectModeParams {
+  readonly app: App;
+  readonly attachmentPath: string;
+  readonly backlinks: string[];
+  readonly isCancelMode?: boolean;
+}
 
-  public constructor(
-    app: App,
-    private readonly attachmentPath: string,
-    private readonly backlinks: string[],
-    private readonly resolve: PromiseResolve<CollectAttachmentUsedByMultipleNotesModalResult>,
-    private readonly isCancelMode: boolean
-  ) {
-    super(app);
+class CollectAttachmentUsedByMultipleNotesModal extends Modal {
+  private readonly attachmentPath: string;
+  private readonly backlinks: string[];
+  private readonly isCancelMode: boolean;
+  private isSelected = false;
+  private readonly resolve: PromiseResolve<CollectAttachmentUsedByMultipleNotesModalResult>;
+
+  public constructor(params: CollectAttachmentUsedByMultipleNotesModalConstructorParams) {
+    super(params.app);
+    this.attachmentPath = params.attachmentPath;
+    this.backlinks = params.backlinks;
+    this.resolve = params.resolve;
+    this.isCancelMode = params.isCancelMode;
   }
 
   public override onClose(): void {
@@ -123,14 +140,10 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
   }
 }
 
-export function selectMode(
-  app: App,
-  attachmentPath: string,
-  backlinks: string[],
-  isCancelMode?: boolean
-): Promise<CollectAttachmentUsedByMultipleNotesModalResult> {
+export function selectMode(params: SelectModeParams): Promise<CollectAttachmentUsedByMultipleNotesModalResult> {
+  const { app, attachmentPath, backlinks, isCancelMode } = params;
   return new Promise((resolve) => {
-    const modal = new CollectAttachmentUsedByMultipleNotesModal(app, attachmentPath, backlinks, resolve, isCancelMode ?? false);
+    const modal = new CollectAttachmentUsedByMultipleNotesModal({ app, attachmentPath, backlinks, isCancelMode: isCancelMode ?? false, resolve });
     modal.open();
   });
 }

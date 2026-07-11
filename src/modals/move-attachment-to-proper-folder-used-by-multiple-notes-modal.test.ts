@@ -97,7 +97,7 @@ describe('selectMode', () => {
   });
 
   it('should resolve with Cancel and empty backlinksToCopy when closed without a selection', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['b.md', 'a.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['b.md', 'a.md'] });
     await flushOnOpen();
     await vi.advanceTimersByTimeAsync(0);
     const result = await promise;
@@ -106,7 +106,7 @@ describe('selectMode', () => {
   });
 
   it('should render Skip, Copy all, Select and Cancel buttons in non-cancel mode', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['a.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'] });
     await flushOnOpen();
     expect(captured.buttons.map(getButtonText)).toStrictEqual(['Skip', 'Copy all', 'Select', 'Cancel']);
     await vi.advanceTimersByTimeAsync(0);
@@ -114,7 +114,7 @@ describe('selectMode', () => {
   });
 
   it('should resolve with Skip when the Skip button is clicked', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['a.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'] });
     await flushOnOpen();
     clickButton(captured.buttons[0]);
     const result = await promise;
@@ -122,7 +122,7 @@ describe('selectMode', () => {
   });
 
   it('should resolve with CopyAll when the Copy all button is clicked', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['a.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'] });
     await flushOnOpen();
     clickButton(captured.buttons[1]);
     const result = await promise;
@@ -130,7 +130,7 @@ describe('selectMode', () => {
   });
 
   it('should resolve with Prompt when the Select button is clicked', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['a.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'] });
     await flushOnOpen();
     clickButton(captured.buttons[2]);
     const result = await promise;
@@ -138,7 +138,7 @@ describe('selectMode', () => {
   });
 
   it('should resolve with Cancel when the Cancel button is clicked', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['a.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'] });
     await flushOnOpen();
     clickButton(captured.buttons[3]);
     const result = await promise;
@@ -146,7 +146,7 @@ describe('selectMode', () => {
   });
 
   it('should return all backlinks sorted in backlinksToCopy', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['c.md', 'a.md', 'b.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['c.md', 'a.md', 'b.md'] });
     await flushOnOpen();
     clickButton(captured.buttons[1]);
     const result = await promise;
@@ -154,7 +154,7 @@ describe('selectMode', () => {
   });
 
   it('should reflect the toggle value in the resolved result', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['a.md']);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'] });
     await flushOnOpen();
     captured.toggles[0]?.setValue(true);
     clickButton(captured.buttons[0]);
@@ -163,7 +163,7 @@ describe('selectMode', () => {
   });
 
   it('should only render the Cancel button in cancel mode', async () => {
-    const promise = selectMode(createApp(), 'attachment.png', ['a.md'], true);
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'], isCancelMode: true });
     await flushOnOpen();
     expect(captured.buttons.map(getButtonText)).toStrictEqual(['Cancel']);
     expect(captured.toggles).toHaveLength(0);

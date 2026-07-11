@@ -401,7 +401,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       component.replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
       await vi.waitFor(() => {
-        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith('note.md', true, expect.anything());
+        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.anything() is an asymmetric matcher typed `any`.
+          abortSignal: expect.anything(),
+          embedOnlyLinks: true,
+          notePath: 'note.md'
+        });
       });
     });
   });
@@ -447,7 +452,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       component.replaceAllWikilinksWithMarkdownLinksCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
       await vi.waitFor(() => {
-        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith('note.md', false, expect.anything());
+        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.anything() is an asymmetric matcher typed `any`.
+          abortSignal: expect.anything(),
+          embedOnlyLinks: false,
+          notePath: 'note.md'
+        });
       });
     });
   });

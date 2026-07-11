@@ -331,7 +331,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       await asPrivate(handler).executeAbstractFiles([attachment]);
 
-      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith(app, 'attachment.png', ['note1.md', 'note2.md'], true);
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'], isCancelMode: true });
       throwIfAbortedSpy.mockRestore();
     });
   });
@@ -490,7 +490,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
     it('should select cancel mode when settings default is Cancel', async () => {
       await runWithMode(MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel);
-      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith(app, 'attachment.png', ['note1.md', 'note2.md'], true);
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'], isCancelMode: true });
     });
 
     it('should not re-prompt for Cancel mode when settings default is not Cancel', async () => {
@@ -517,7 +517,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       await asPrivate(handler).executeAbstractFiles([attachment]);
 
       // Prompt resolves to Cancel; handleMode(Cancel) runs but settings is Prompt, so no extra selectMode(...true).
-      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith(app, 'attachment.png', ['note1.md', 'note2.md']);
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'] });
       expect(mockCopySafe).not.toHaveBeenCalled();
     });
 
@@ -579,7 +579,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       await asPrivate(handler).executeAbstractFiles([attachment]);
 
-      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith(app, 'attachment.png', ['note1.md', 'note2.md']);
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'] });
       expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'new/attachment.png', oldPathOrFile: attachment });
     });
 
