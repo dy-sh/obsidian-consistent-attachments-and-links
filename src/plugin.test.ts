@@ -24,7 +24,7 @@ interface AppGlobal {
 }
 
 interface CommandsHolder {
-  commands: Map<string, Command>;
+  commands__: Map<string, Command>;
 }
 
 interface EventRef {
@@ -282,7 +282,7 @@ describe('Plugin', () => {
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
       // The plugin wires 15 command handlers through the real CommandHandlerComponent.
-      expect(castTo<CommandsHolder>(plugin).commands.size).toBe(15);
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(15);
     });
 
     it('should add the settings tab to the plugin', async () => {
