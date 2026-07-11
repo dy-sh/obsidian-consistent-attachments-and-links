@@ -38,8 +38,8 @@ vi.mock('obsidian-dev-utils/obsidian/link', () => ({
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
-  getAllLinks: vi.fn(),
-  getCacheSafe: vi.fn()
+  getCacheSafe: vi.fn(),
+  getLinks: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/vault', () => ({

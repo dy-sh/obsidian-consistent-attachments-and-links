@@ -53,8 +53,8 @@ export class Plugin extends PluginBase {
 
     const linksHandler = new LinksHandler({
       app: this.app,
-      editorLockComponent: this.editorLockComponent,
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      resourceLockComponent: this.resourceLockComponent
     });
 
     const filesHandler = new FilesHandler({
@@ -78,9 +78,9 @@ export class Plugin extends PluginBase {
       new RenameDeleteHandlerComponent({
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
-        editorLockComponent: this.editorLockComponent,
         pluginId: this.manifest.id,
         pluginNoticeComponent: this.pluginNoticeComponent,
+        resourceLockComponent: this.resourceLockComponent,
         settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => {
           const settings = pluginSettingsComponent.settings;
           return {
@@ -100,10 +100,10 @@ export class Plugin extends PluginBase {
     const attachmentCollector = new AttachmentCollector({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
-      editorLockComponent: this.editorLockComponent,
       pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      resourceLockComponent: this.resourceLockComponent
     });
 
     const consistentAttachmentsAndLinksComponent = this.addChild(
@@ -131,10 +131,10 @@ export class Plugin extends PluginBase {
             abortSignalComponent: this.abortSignalComponent,
             app: this.app,
             attachmentCollector,
-            editorLockComponent: this.editorLockComponent,
             pluginName: this.manifest.name,
             pluginNoticeComponent: this.pluginNoticeComponent,
-            pluginSettingsComponent
+            pluginSettingsComponent,
+            resourceLockComponent: this.resourceLockComponent
           }),
           new DeleteEmptyFoldersCommandHandler(consistentAttachmentsAndLinksComponent),
           new ConvertAllLinkPathsToRelativeCommandHandler({

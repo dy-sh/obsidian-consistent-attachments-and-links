@@ -527,7 +527,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     it('should skip collecting when a suggestion container is shown', () => {
       const component = createComponent();
       mockSettings.shouldCollectAttachmentsAutomatically = true;
-      const container = activeDocument.createElement('div');
+      const container = activeWindow.createDiv();
       container.addClass('suggestion-container');
       activeDocument.body.appendChild(container);
       vi.spyOn(container, 'isShown').mockReturnValue(true);

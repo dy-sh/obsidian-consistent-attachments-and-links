@@ -2,9 +2,9 @@ import type {
   Reference,
   ReferenceCache
 } from 'obsidian';
-import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
 import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/link';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 
 import {
   isFrontmatterLinkCache,
@@ -52,8 +52,8 @@ interface LinksHandlerCheckConsistencyParams {
 
 interface LinksHandlerConstructorParams {
   readonly app: App;
-  readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly resourceLockComponent: null | ResourceLockComponent;
 }
 
 interface LinksHandlerConvertAllNoteRefPathsToRelativeParams {
@@ -125,12 +125,12 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 
 export class LinksHandler {
   private readonly app: App;
-  private readonly editorLockComponent: EditorLockComponent | null;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly resourceLockComponent: null | ResourceLockComponent;
 
   public constructor(params: LinksHandlerConstructorParams) {
     this.app = params.app;
-    this.editorLockComponent = params.editorLockComponent;
+    this.resourceLockComponent = params.resourceLockComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -205,9 +205,9 @@ export class LinksHandler {
     const result = links.filter((link) => testWikilink(link.original)).length;
     await updateLinksInFile({
       app: this.app,
-      editorLockComponent: this.editorLockComponent,
       linkStyle: LinkStyle.Markdown,
       newSourcePathOrFile: noteFile,
+      resourceLockComponent: this.resourceLockComponent,
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
     });
     return result;
@@ -256,8 +256,8 @@ export class LinksHandler {
 
         return changes;
       },
-      editorLockComponent: this.editorLockComponent,
-      pathOrFile: note
+      pathOrFile: note,
+      resourceLockComponent: this.resourceLockComponent
     });
 
     return changedRefs;

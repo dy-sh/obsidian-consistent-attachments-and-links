@@ -5,8 +5,8 @@ import type {
   ReferenceCache,
   TFile
 } from 'obsidian';
-import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import type {
   Mock,
   MockInstance
@@ -78,9 +78,9 @@ vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
-  getAllLinks: vi.fn(),
   getBacklinksForFileSafe: vi.fn(),
-  getCacheSafe: vi.fn()
+  getCacheSafe: vi.fn(),
+  getLinks: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/reference', () => ({
@@ -194,8 +194,8 @@ describe('LinksHandler', () => {
     });
     handler = new LinksHandler({
       app,
-      editorLockComponent: strictProxy<EditorLockComponent>({}),
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      resourceLockComponent: strictProxy<ResourceLockComponent>({})
     });
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     mockNormalizePath.mockImplementation((p: string) => p.replace(/^\//, ''));

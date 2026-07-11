@@ -74,7 +74,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Checking note ${iterationStr} - ${note.path}`,
+      buildNoticeMessage: ({ item, iterationStr }) => `Checking note ${iterationStr} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -115,7 +115,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Converting embed paths to relative ${iterationStr} - ${note.path}`,
+      buildNoticeMessage: ({ item, iterationStr }) => `Converting embed paths to relative ${iterationStr} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -162,7 +162,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Converting link paths to relative ${iterationStr} - ${note.path}`,
+      buildNoticeMessage: ({ item, iterationStr }) => `Converting link paths to relative ${iterationStr} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -221,7 +221,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${note.path}`,
+      buildNoticeMessage: ({ item, iterationStr }) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -267,7 +267,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: (note, iterationStr) => `Replacing wikilinks with markdown links ${iterationStr} - ${note.path}`,
+      buildNoticeMessage: ({ item, iterationStr }) => `Replacing wikilinks with markdown links ${iterationStr} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {

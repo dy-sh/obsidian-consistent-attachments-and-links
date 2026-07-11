@@ -5,7 +5,7 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 
 import { Vault } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
@@ -35,10 +35,10 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentCollector: AttachmentCollector;
-  readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly resourceLockComponent: null | ResourceLockComponent;
 }
 
 interface MoveAttachmentToProperFolderCommandHandlerMoveAttachmentToProperFolderParams {
@@ -55,10 +55,10 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentCollector: AttachmentCollector;
-  private readonly editorLockComponent: EditorLockComponent | null;
   private readonly pluginName2: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly resourceLockComponent: null | ResourceLockComponent;
 
   public constructor(params: MoveAttachmentToProperFolderCommandHandlerConstructorParams) {
     super({
@@ -69,7 +69,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     this.app = params.app;
     this.attachmentCollector = params.attachmentCollector;
-    this.editorLockComponent = params.editorLockComponent;
+    this.resourceLockComponent = params.resourceLockComponent;
     this.abortSignalComponent = params.abortSignalComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -119,7 +119,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     await loop({
       abortSignal: combinedAbortSignal,
-      buildNoticeMessage: (attachmentFile, iterationStr) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: attachmentFile.path, iterationStr }),
+      buildNoticeMessage: ({ item, iterationStr }) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: item.path, iterationStr }),
       items: attachmentFiles,
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (attachmentFile) => {
@@ -192,7 +192,6 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       await copySafe({ app: this.app, newPath: newAttachmentPath, oldPathOrFile: attachmentFile });
       await editLinks({
         app: this.app,
-        editorLockComponent: this.editorLockComponent,
         linkConverter: (link2) => {
           const linkJson = toJson(link2);
           if (!linkJsons.has(linkJson)) {
@@ -207,7 +206,8 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
             oldTargetPathOrFile: attachmentFile
           });
         },
-        pathOrFile: backlinkFile
+        pathOrFile: backlinkFile,
+        resourceLockComponent: this.resourceLockComponent
       });
     }
 

@@ -61,7 +61,7 @@
     "jsdom": "^29.1.1",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
-    "obsidian-dev-utils": "^83.0.0",
+    "obsidian-dev-utils": "^85.0.0",
     "obsidian-integration-testing": "^5.1.1",
     "obsidian-test-mocks": "^3.4.0",
     "vitest": "^4.1.9"

@@ -5,8 +5,8 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 import type { CanvasData } from 'obsidian/canvas.d.ts';
 
@@ -39,9 +39,9 @@ import {
 } from 'obsidian-dev-utils/obsidian/link';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import {
-  getAllLinks,
   getBacklinksForFileSafe,
-  getCacheSafe
+  getCacheSafe,
+  getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
@@ -65,10 +65,10 @@ interface AttachmentCollectorCollectAttachmentsParams {
 interface AttachmentCollectorConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
-  readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly resourceLockComponent: null | ResourceLockComponent;
 }
 
 interface AttachmentCollectorGetProperAttachmentPathParams {
@@ -96,15 +96,15 @@ interface CollectAttachmentContext {
 export class AttachmentCollector {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
-  private readonly editorLockComponent: EditorLockComponent | null;
   private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly resourceLockComponent: null | ResourceLockComponent;
 
   public constructor(params: AttachmentCollectorConstructorParams) {
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
-    this.editorLockComponent = params.editorLockComponent;
+    this.resourceLockComponent = params.resourceLockComponent;
     this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -154,7 +154,7 @@ export class AttachmentCollector {
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     params.abortSignal.throwIfAborted();
     const app = this.app;
-    const editorLockComponent = this.editorLockComponent;
+    const resourceLockComponent = this.resourceLockComponent;
     const pluginSettingsComponent = this.pluginSettingsComponent;
     const pluginNoticeComponent = this.pluginNoticeComponent;
 
@@ -184,7 +184,7 @@ export class AttachmentCollector {
         return;
       }
 
-      const links = isCanvas ? await getCanvasLinks(this.app, params.note) : getAllLinks(cache);
+      const links = isCanvas ? await getCanvasLinks(this.app, params.note) : getLinks({ cache });
       params.abortSignal.throwIfAborted();
 
       for (const link of links) {
@@ -248,7 +248,6 @@ export class AttachmentCollector {
                 };
                 await editLinks({
                   app,
-                  editorLockComponent,
                   linkConverter: (link2): MaybeReturn<string> => {
                     const linkFile = extractLinkFile({ app, link: link2, sourcePathOrFile: params.note });
                     if (linkFile?.path !== definedAttachmentMoveResult.oldAttachmentPath) {
@@ -263,7 +262,8 @@ export class AttachmentCollector {
                       oldTargetPathOrFile: definedAttachmentMoveResult.oldAttachmentPath
                     });
                   },
-                  pathOrFile: params.note
+                  pathOrFile: params.note,
+                  resourceLockComponent
                 });
                 break;
               case CollectAttachmentUsedByMultipleNotesMode.Move:
@@ -407,7 +407,7 @@ export class AttachmentCollector {
 
     await loop({
       abortSignal: combinedAbortSignal,
-      buildNoticeMessage: (noteFile, iterationStr) => t(($) => $.attachmentCollector.progressBar.message, { iterationStr, noteFilePath: noteFile.path }),
+      buildNoticeMessage: ({ item, iterationStr }) => t(($) => $.attachmentCollector.progressBar.message, { iterationStr, noteFilePath: item.path }),
       items: noteFiles,
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (noteFile) => {

@@ -9,7 +9,8 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
+import type { LoopBuildNoticeMessageParams } from 'obsidian-dev-utils/obsidian/loop';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -89,7 +90,7 @@ interface CommandHandlerPrivate {
 
 interface LoopParams {
   readonly abortSignal: AbortSignal;
-  buildNoticeMessage(item: TFile, iterationStr: string): string;
+  buildNoticeMessage(params: LoopBuildNoticeMessageParams<TFile>): string;
   readonly items: TFile[];
   processItem(item: TFile): Promise<void>;
   readonly progressBarTitle: string;
@@ -187,14 +188,14 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         getProperAttachmentPath: (params: unknown) => getProperAttachmentPath(params),
         isNoteEx: (pathOrFile: unknown) => isNoteEx(pathOrFile)
       }),
-      editorLockComponent: strictProxy<EditorLockComponent>({}),
       pluginName: 'My Plugin',
       pluginNoticeComponent: strictProxy<PluginNoticeComponent>({
         showNotice: vi.fn((): Notice => castTo<Notice>({}))
       }),
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
         settings: castTo<PluginSettingsComponent['settings']>(settings)
-      })
+      }),
+      resourceLockComponent: strictProxy<ResourceLockComponent>({})
     });
   });
 
@@ -283,7 +284,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       const params = castTo<LoopParams>(mockLoop.mock.calls[0]?.[0]);
       expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
-      expect(params.buildNoticeMessage(attachmentA, '1/3')).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
+      expect(params.buildNoticeMessage({ item: attachmentA, iterationStr: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
       expect(params.progressBarTitle).toBe('My Plugin: Moving attachment to proper folder...');
     });
 
