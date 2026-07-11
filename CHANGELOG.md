@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 3.33.12
+
+- chore: update libs
+- chore: update obsidian-dev-utils to 85.0.0
+- refactor: pass params objects to attachment/link handlers and modals
+- test: use commands__ accessor after obsidian-test-mocks bridge rename
+- build: lock typescript to 6.0.3
+- test: wire integration-testing vitest-setup into integration projects
+- chore: update libs
+- chore: sort tsconfig types
+
 ## 3.33.11
 
 - refactor: new template
