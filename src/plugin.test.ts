@@ -281,8 +281,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires 15 command handlers through the real CommandHandlerComponent.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(15);
+      // The plugin wires 15 command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 16 total.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(16);
     });
 
     it('should add the settings tab to the plugin', async () => {

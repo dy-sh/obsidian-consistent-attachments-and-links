@@ -1,10 +1,6 @@
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
-import { AppActiveFileProvider } from 'obsidian-dev-utils/obsidian/active-file-provider';
-import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
-import { PluginCommandRegistrar } from 'obsidian-dev-utils/obsidian/command-registrar';
-import { MenuEventRegistrarComponent } from 'obsidian-dev-utils/obsidian/components/menu-event-registrar-component';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
 import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
@@ -40,10 +36,6 @@ export class Plugin extends PluginBase {
   }
 
   protected override onloadImpl(): void {
-    const activeFileProvider = new AppActiveFileProvider(this.app);
-    const commandRegistrar = new PluginCommandRegistrar(this);
-    const menuEventRegistrar = this.addChild(new MenuEventRegistrarComponent(this.app));
-
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
         dataHandler: new PluginDataHandler(this),
@@ -118,43 +110,35 @@ export class Plugin extends PluginBase {
       })
     );
 
-    this.addChild(
-      new CommandHandlerComponent({
-        activeFileProvider,
-        commandHandlers: [
-          new CollectAttachmentsInFileCommandHandler({
-            attachmentCollector
-          }),
-          new CollectAttachmentsInCurrentFolderCommandHandler(attachmentCollector),
-          new CollectAttachmentsEntireVaultCommandHandler(attachmentCollector),
-          new MoveAttachmentToProperFolderCommandHandler({
-            abortSignalComponent: this.abortSignalComponent,
-            app: this.app,
-            attachmentCollector,
-            pluginName: this.manifest.name,
-            pluginNoticeComponent: this.pluginNoticeComponent,
-            pluginSettingsComponent,
-            resourceLockComponent: this.resourceLockComponent
-          }),
-          new DeleteEmptyFoldersCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ConvertAllLinkPathsToRelativeCommandHandler({
-            abortSignalComponent: this.abortSignalComponent,
-            consistentAttachmentsAndLinksComponent
-          }),
-          new ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ConvertAllEmbedsPathsToRelativeCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ReplaceAllWikilinksWithMarkdownLinksCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
-          new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
-          new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent)
-        ],
-        commandRegistrar,
-        menuEventRegistrar,
-        pluginName: this.manifest.name
-      })
-    );
+    this.commandHandlerComponent.registerCommandHandlers([
+      new CollectAttachmentsInFileCommandHandler({
+        attachmentCollector
+      }),
+      new CollectAttachmentsInCurrentFolderCommandHandler(attachmentCollector),
+      new CollectAttachmentsEntireVaultCommandHandler(attachmentCollector),
+      new MoveAttachmentToProperFolderCommandHandler({
+        abortSignalComponent: this.abortSignalComponent,
+        app: this.app,
+        attachmentCollector,
+        pluginName: this.manifest.name,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent,
+        resourceLockComponent: this.resourceLockComponent
+      }),
+      new DeleteEmptyFoldersCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ConvertAllLinkPathsToRelativeCommandHandler({
+        abortSignalComponent: this.abortSignalComponent,
+        consistentAttachmentsAndLinksComponent
+      }),
+      new ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ConvertAllEmbedsPathsToRelativeCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ReplaceAllWikilinksWithMarkdownLinksCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
+      new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
+      new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent)
+    ]);
   }
 }

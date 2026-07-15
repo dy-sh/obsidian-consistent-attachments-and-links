@@ -264,7 +264,7 @@ describe('AttachmentCollector', () => {
       abortSignalComponent,
       app,
       pluginName: 'Plugin',
-      pluginNoticeComponent: new PluginNoticeComponent('Plugin'),
+      pluginNoticeComponent: new PluginNoticeComponent({ app, pluginName: 'Plugin' }),
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
         settings: castTo<PluginSettingsComponent['settings']>(settings)
       }),
