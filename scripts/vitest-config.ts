@@ -77,6 +77,12 @@ export const config = defineConfig({
       {
         test: {
           environment: 'node',
+          environmentOptions: {
+            obsidianTransport: {
+              commandTimeoutInMilliseconds: PERFORMANCE_TIMEOUT_IN_MILLISECONDS,
+              type: 'obsidian-cdp'
+            }
+          },
           fileParallelism: false,
           globalSetup: ['./scripts/vitest-global-setup-performance.ts'],
           hookTimeout: PERFORMANCE_TIMEOUT_IN_MILLISECONDS,
