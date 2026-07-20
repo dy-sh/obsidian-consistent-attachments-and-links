@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 3.33.13
+
+- docs: standardize demo-vault README
+- docs: drop per-plugin demo-vault setup notes (bootstrap covered by ODU harness)
+- Merge branch 'T101': create the Consistent Attachments and Links demo vault (S2)
+- chore: update libs
+- docs: update
+- docs: migrate to AGENTS.md
+
 ## 3.33.12
 
 - chore: update libs
