@@ -74,6 +74,8 @@ vi.mock('obsidian', async (importOriginal) => {
   const noticeHide = vi.fn();
   class MockNotice {
     public static instances: MockNotice[] = [];
+    // The real PluginNoticeComponent installs a click tracker on the notice's containerEl, so the stub exposes one.
+    public containerEl = { addEventListener: vi.fn() };
     public hide = noticeHide;
 
     public constructor(_message: unknown, _timeout?: number) {
