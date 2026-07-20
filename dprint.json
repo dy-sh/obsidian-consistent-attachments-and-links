@@ -1,0 +1,10 @@
+{
+  "extends": "./node_modules/obsidian-dev-utils/dist/templates/dprint.json",
+  "excludes": [
+    "dist",
+    "**/node_modules",
+    "**/*-lock.json",
+    "**/*.md",
+    "demo-vault"
+  ]
+}

@@ -11,6 +11,14 @@ The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your va
 >
 > As the plugin might change your vault layout, it is crucial that you backup your vault before making any massive changes with this plugin!
 
+## Demo vault
+
+A demo vault with usage examples ships with every release. You can access it via any of the following:
+
+1. Running the **Consistent Attachments and Links: Open demo vault** command.
+2. Downloading `consistent-attachments-and-links.demo-vault.zip` from the [Releases](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases).
+3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
+
 ## What's the idea
 
 The idea is to have all links between notes and attachments in strict accordance with the markdown format and support their relative paths. This is useful when you want to open a note in another program that does not know where your vault folder is, or for example you want to publish and read your notes on GitHub or another site that allows you to upload markdown files and you need compatibility.

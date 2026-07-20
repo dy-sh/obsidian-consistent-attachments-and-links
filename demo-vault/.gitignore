@@ -1,0 +1,13 @@
+# Churny / runtime-generated Obsidian state.
+.obsidian/workspace.json
+.obsidian/hotkeys.json
+
+# Built plugins are release-injected by archivePluginDemoVault at release time —
+# both the plugin under test AND the obsidian-dev-utils-owned Demo Vault Helper
+# bootstrap plugin (which installs, configures, and enables CodeScript Toolkit at
+# runtime). Nothing helper-related is committed; commit only the baked settings
+# file for the plugin under test.
+.obsidian/plugins/*
+!.obsidian/plugins/consistent-attachments-and-links/
+.obsidian/plugins/consistent-attachments-and-links/*
+!.obsidian/plugins/consistent-attachments-and-links/data.json
