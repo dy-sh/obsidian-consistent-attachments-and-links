@@ -6,10 +6,6 @@ Welcome to the [Consistent Attachments and Links](https://github.com/mnaoumov/ob
 
 Start with [[01 Attachments move with their note]] and work down the list.
 
-> [!TIP] Interactive buttons
->
-> The two setup notes have **Run** buttons, powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you automatically on first open (see [[07 CodeScript Toolkit prerequisite]]). The feature itself is driven by ordinary file operations and the plugin's own commands, so the feature notes have no buttons.
-
 ## Features
 
 - [[01 Attachments move with their note]]
@@ -17,8 +13,3 @@ Start with [[01 Attachments move with their note]] and work down the list.
 - [[03 Check vault consistency]]
 - [[04 Reorganize and convert links]]
 - [[05 Settings]]
-
-## Setup
-
-- [[06 Code buttons check]]
-- [[07 CodeScript Toolkit prerequisite]]
