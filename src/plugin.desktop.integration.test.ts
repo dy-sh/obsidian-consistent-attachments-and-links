@@ -1,4 +1,4 @@
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup';
+import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,

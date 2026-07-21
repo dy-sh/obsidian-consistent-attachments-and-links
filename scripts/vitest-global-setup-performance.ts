@@ -1,4 +1,4 @@
-import { createSetup } from 'obsidian-integration-testing/vitest-global-setup';
+import { createSetup } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 
 import { generatePerformanceVault } from './helpers/generate-performance-vault.ts';
 

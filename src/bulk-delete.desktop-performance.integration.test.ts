@@ -1,7 +1,7 @@
 import type { GetAvailablePathForAttachmentsExtendedFnParams } from 'obsidian-dev-utils/obsidian/attachment-path';
 
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup';
+import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
