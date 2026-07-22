@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 3.33.16
+
+- fix: re #154
+- chore: update libs
+- chore: update libs
+
 ## 3.33.15
 
 - chore: update libs
