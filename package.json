@@ -62,7 +62,7 @@
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
     "obsidian-dev-utils": "^87.3.0",
-    "obsidian-integration-testing": "^9.0.0",
+    "obsidian-integration-testing": "^9.1.0",
     "obsidian-test-mocks": "^3.6.0",
     "vitest": "^4.1.10"
   }
