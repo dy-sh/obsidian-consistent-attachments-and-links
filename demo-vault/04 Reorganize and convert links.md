@@ -30,3 +30,24 @@ Each of these also has a **current note** variant that acts only on the active n
 - **Collect All Attachments** honours the **Exclude paths from attachment collecting** setting (`excludePathsFromAttachmentCollecting`) and skips duplicates according to the **Attachment used by multiple notes** mode (`collectAttachmentUsedByMultipleNotesMode`).
 - **Move Attachment to Proper Folder** moves a single attachment to the folder of the note that uses it, resolving shared attachments per `moveAttachmentToProperFolderUsedByMultipleNotesMode`.
 - Which parts of the vault are eligible is bounded by the include/exclude path settings covered in [[05 Settings]].
+
+## Attachment-like Markdown files (such as Excalidraw) are left untouched
+
+Some plugins store data in files that are Markdown on disk but are really attachments. Excalidraw, for example, saves each drawing as a `.excalidraw.md` file and references its embedded images with wikilinks. Rewriting those wikilinks into Markdown links would stop the drawing from rendering, so the link-rewriting commands skip any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [[05 Settings]]).
+
+### Try it
+
+1. Open [[Diagram.excalidraw]] - it references [[Shared target]] with a wikilink, exactly as Excalidraw stores its embeds.
+2. Run **Replace All Wiki Links with Markdown Links** (or **Reorganize Vault**).
+3. Open [[Source note]] - its `[[Shared target]]` wikilink became a Markdown link.
+4. Re-open [[Diagram.excalidraw]] - its wikilink is **unchanged**, because the file is treated as an attachment.
+
+## The file and folder context menu commands
+
+Right-click a note, an attachment, or a folder in the File Explorer and the plugin adds **Collect attachments in file** (and, for an attachment, **Move attachment to proper folder**) to the context menu - the same commands available in the command palette.
+
+### Try it
+
+1. Right-click any note in the File Explorer - the **Collect attachments in file** command appears under the plugin's section.
+2. Open **Settings -> Community plugins -> Consistent Attachments and Links** and turn **Add commands to file menu** (`shouldAddCommandsToFileMenu`) off.
+3. Right-click the same note again - the plugin's commands are gone from the context menu (useful when another plugin, such as **Custom Attachment Location**, already offers them), while they stay available in the command palette. Turn the setting back on to restore them.
