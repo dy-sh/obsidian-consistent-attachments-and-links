@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 3.34.0
+
+- docs: demonstrate context-menu toggle and Excalidraw link-skip in the demo vault
+- test: add integration tests for context-menu toggle and excalidraw skip (re #153, #151)
+- chore: update libs
+- fix: re #151
+- fix: re #153
+
 ## 3.33.16
 
 - fix: re #154
