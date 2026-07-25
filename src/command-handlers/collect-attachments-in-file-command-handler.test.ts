@@ -15,6 +15,7 @@ import {
 } from 'vitest';
 
 import type { AttachmentCollector } from '../attachment-collector.ts';
+import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   isFile: vi.fn(),
@@ -33,6 +34,10 @@ interface CommandHandlerPrivate {
   shouldAddToAbstractFilesMenu(): boolean;
 }
 
+interface PluginSettingsLike {
+  shouldAddCommandsToFileMenu: boolean;
+}
+
 const mockIsFile = vi.mocked(isFile);
 const mockIsNote = vi.mocked(isNote);
 
@@ -47,13 +52,18 @@ function createAbstractFile(path: string): TAbstractFile {
 describe('CollectAttachmentsInFileCommandHandler', () => {
   let collectAttachmentsInAbstractFiles: ReturnType<typeof vi.fn<(abstractFiles: TAbstractFile[]) => void>>;
   let handler: CollectAttachmentsInFileCommandHandler;
+  let settings: PluginSettingsLike;
 
   beforeEach(() => {
     vi.clearAllMocks();
     collectAttachmentsInAbstractFiles = vi.fn<(abstractFiles: TAbstractFile[]) => void>();
+    settings = { shouldAddCommandsToFileMenu: true };
     handler = new CollectAttachmentsInFileCommandHandler({
       attachmentCollector: strictProxy<AttachmentCollector>({
         collectAttachmentsInAbstractFiles
+      }),
+      pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
+        settings: castTo<PluginSettingsComponent['settings']>(settings)
       })
     });
   });
@@ -121,11 +131,23 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
     });
   });
 
-  it('should add to the abstract file menu', () => {
+  it('should add to the abstract file menu when the setting is enabled', () => {
+    settings.shouldAddCommandsToFileMenu = true;
     expect(asPrivate(handler).shouldAddToAbstractFileMenu()).toBe(true);
   });
 
-  it('should add to the abstract files menu', () => {
+  it('should add to the abstract files menu when the setting is enabled', () => {
+    settings.shouldAddCommandsToFileMenu = true;
     expect(asPrivate(handler).shouldAddToAbstractFilesMenu()).toBe(true);
+  });
+
+  it('should not add to the abstract file menu when the setting is disabled', () => {
+    settings.shouldAddCommandsToFileMenu = false;
+    expect(asPrivate(handler).shouldAddToAbstractFileMenu()).toBe(false);
+  });
+
+  it('should not add to the abstract files menu when the setting is disabled', () => {
+    settings.shouldAddCommandsToFileMenu = false;
+    expect(asPrivate(handler).shouldAddToAbstractFilesMenu()).toBe(false);
   });
 });

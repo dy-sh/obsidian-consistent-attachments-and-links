@@ -119,7 +119,8 @@ export class Plugin extends PluginBase {
         pluginVersion: this.manifest.version
       }),
       new CollectAttachmentsInFileCommandHandler({
-        attachmentCollector
+        attachmentCollector,
+        pluginSettingsComponent
       }),
       new CollectAttachmentsInCurrentFolderCommandHandler(attachmentCollector),
       new CollectAttachmentsEntireVaultCommandHandler(attachmentCollector),

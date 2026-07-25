@@ -129,6 +129,7 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Move Attachments with Note');
     expect(names).toContain('Update links');
     expect(names).toContain('Empty folder behavior');
+    expect(names).toContain('Add commands to file menu');
     expect(names).toContain('Consistency report filename');
     expect(names).toContain('Include paths');
     expect(names).toContain('Exclude paths');

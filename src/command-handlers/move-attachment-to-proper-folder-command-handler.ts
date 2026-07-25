@@ -140,11 +140,11 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   }
 
   protected override shouldAddToAbstractFileMenu(): boolean {
-    return true;
+    return this.pluginSettingsComponent.settings.shouldAddCommandsToFileMenu;
   }
 
   protected override shouldAddToAbstractFilesMenu(): boolean {
-    return true;
+    return this.pluginSettingsComponent.settings.shouldAddCommandsToFileMenu;
   }
 
   private async moveAttachmentToProperFolder(params: MoveAttachmentToProperFolderCommandHandlerMoveAttachmentToProperFolderParams): Promise<boolean> {

@@ -23,6 +23,8 @@ export class PluginSettings {
 
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
 
+  public shouldAddCommandsToFileMenu = true;
+
   public shouldChangeNoteBacklinksDisplayText = true;
 
   public shouldCollectAttachmentsAutomatically = false;
