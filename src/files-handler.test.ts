@@ -64,6 +64,7 @@ interface SettingsLike {
   emptyFolderBehavior: string;
   isExcludedFromAttachmentCollecting(path: string): boolean;
   isPathIgnored(path: string): boolean;
+  isTreatedAsAttachment(path: string): boolean;
   shouldDeleteExistingFilesWhenMovingNote: boolean;
   treatAsAttachmentExtensions: string[];
 }
@@ -89,6 +90,9 @@ describe('FilesHandler', () => {
       emptyFolderBehavior: EmptyFolderBehavior.Keep,
       isExcludedFromAttachmentCollecting: vi.fn().mockReturnValue(false),
       isPathIgnored: vi.fn().mockReturnValue(false),
+      isTreatedAsAttachment(path: string): boolean {
+        return this.treatAsAttachmentExtensions.some((extension) => path.endsWith(extension));
+      },
       shouldDeleteExistingFilesWhenMovingNote: false,
       treatAsAttachmentExtensions: []
     };
