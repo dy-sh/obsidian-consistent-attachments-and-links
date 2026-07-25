@@ -120,6 +120,7 @@ interface ParentLike {
 
 interface SettingsLike {
   isPathIgnored(path: string): boolean;
+  isTreatedAsAttachment(path: string): boolean;
 }
 
 const mockIsFrontmatterLinkCache = vi.mocked(isFrontmatterLinkCache);
@@ -181,7 +182,8 @@ describe('LinksHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     settings = {
-      isPathIgnored: vi.fn().mockReturnValue(false)
+      isPathIgnored: vi.fn().mockReturnValue(false),
+      isTreatedAsAttachment: vi.fn().mockReturnValue(false)
     };
     cachedRead = vi.fn<(file: TFile) => Promise<string>>().mockResolvedValue('content');
     app = strictProxy<App>({
@@ -426,6 +428,13 @@ describe('LinksHandler', () => {
       expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'ignored.md' })).toBe(0);
     });
 
+    it('should return 0 when the note is treated as an attachment (e.g. Excalidraw)', async () => {
+      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
+      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'drawing.excalidraw.md' })).toBe(0);
+      expect(mockGetFileOrNull).not.toHaveBeenCalled();
+      expect(mockUpdateLinksInFile).not.toHaveBeenCalled();
+    });
+
     it('should warn and return 0 when the note file is not found', async () => {
       mockGetFileOrNull.mockReturnValue(null);
       expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'missing.md' })).toBe(0);
@@ -502,6 +511,13 @@ describe('LinksHandler', () => {
 
     beforeEach(() => {
       abortSignal = new AbortController().signal;
+    });
+
+    it('should return empty when the note is treated as an attachment (e.g. Excalidraw)', async () => {
+      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
+      expect(await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: true, notePath: 'drawing.excalidraw.md' })).toEqual([]);
+      expect(mockGetFileOrNull).not.toHaveBeenCalled();
+      expect(mockApplyFileChanges).not.toHaveBeenCalled();
     });
 
     it('should return empty when the note is not found', async () => {

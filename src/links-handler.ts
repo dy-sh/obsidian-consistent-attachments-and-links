@@ -189,6 +189,10 @@ export class LinksHandler {
       return 0;
     }
 
+    if (this.pluginSettingsComponent.settings.isTreatedAsAttachment(notePath)) {
+      return 0;
+    }
+
     const noteFile = getFileOrNull({ app: this.app, pathOrFile: notePath });
     if (!noteFile) {
       console.warn(`can't update wikilinks in note, file not found: ${notePath}`);
@@ -216,6 +220,10 @@ export class LinksHandler {
   private async convertAllNoteRefPathsToRelative(params: LinksHandlerConvertAllNoteRefPathsToRelativeParams): Promise<ReferenceChangeInfo[]> {
     const { abortSignal, isEmbed, notePath } = params;
     if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
+      return [];
+    }
+
+    if (this.pluginSettingsComponent.settings.isTreatedAsAttachment(notePath)) {
       return [];
     }
 

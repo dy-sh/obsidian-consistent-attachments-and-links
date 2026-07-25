@@ -79,6 +79,10 @@ export class PluginSettings {
     return this._pathSettings.isPathIgnored(path);
   }
 
+  public isTreatedAsAttachment(path: string): boolean {
+    return this.treatAsAttachmentExtensions.some((extension) => path.endsWith(extension));
+  }
+
   public revertDangerousSettings(): void {
     if (!this.shouldShowBackupWarning) {
       return;

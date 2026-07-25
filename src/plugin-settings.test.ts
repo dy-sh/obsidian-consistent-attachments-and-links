@@ -62,6 +62,14 @@ describe('PluginSettings', () => {
     });
   });
 
+  describe('isTreatedAsAttachment', () => {
+    it('should treat files with a configured attachment extension as attachments', () => {
+      const settings = new PluginSettings();
+      expect(settings.isTreatedAsAttachment('drawing.excalidraw.md')).toBe(true);
+      expect(settings.isTreatedAsAttachment('note.md')).toBe(false);
+    });
+  });
+
   describe('isExcludedFromAttachmentCollecting', () => {
     it('should exclude paths matching the attachment-collecting exclude paths', () => {
       const settings = new PluginSettings();

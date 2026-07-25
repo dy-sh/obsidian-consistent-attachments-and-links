@@ -148,7 +148,7 @@ export class AttachmentCollector {
     }
 
     const path = getPath(this.app, pathOrFile);
-    return this.pluginSettingsComponent.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
+    return !this.pluginSettingsComponent.settings.isTreatedAsAttachment(path);
   }
 
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
