@@ -17,6 +17,7 @@ describe('PluginSettings', () => {
       expect(settings.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Skip);
       expect(settings.moveAttachmentToProperFolderUsedByMultipleNotesMode).toBe(MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll);
       expect(settings.consistencyReportFile).toBe('consistency-report.md');
+      expect(settings.shouldAddCommandsToFileMenu).toBe(true);
       expect(settings.shouldChangeNoteBacklinksDisplayText).toBe(true);
       expect(settings.shouldShowBackupWarning).toBe(true);
       expect(settings.shouldUpdateLinks).toBe(true);

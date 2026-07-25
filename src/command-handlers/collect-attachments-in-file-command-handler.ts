@@ -7,13 +7,16 @@ import {
 } from 'obsidian-dev-utils/obsidian/file-system';
 
 import type { AttachmentCollector } from '../attachment-collector.ts';
+import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 interface CollectAttachmentsInFileCommandHandlerConstructorParams {
   readonly attachmentCollector: AttachmentCollector;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandHandler {
   private readonly attachmentCollector: AttachmentCollector;
+  private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: CollectAttachmentsInFileCommandHandlerConstructorParams) {
     super({
@@ -25,6 +28,7 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
     });
 
     this.attachmentCollector = params.attachmentCollector;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
   protected override canExecuteAbstractFile(abstractFile: TAbstractFile): boolean {
@@ -49,10 +53,10 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
   }
 
   protected override shouldAddToAbstractFileMenu(): boolean {
-    return true;
+    return this.pluginSettingsComponent.settings.shouldAddCommandsToFileMenu;
   }
 
   protected override shouldAddToAbstractFilesMenu(): boolean {
-    return true;
+    return this.pluginSettingsComponent.settings.shouldAddCommandsToFileMenu;
   }
 }

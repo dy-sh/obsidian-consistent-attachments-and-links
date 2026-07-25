@@ -107,6 +107,21 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .addToggle((toggle) => this.bind({ propertyName: 'shouldChangeNoteBacklinksDisplayText', valueComponent: toggle }));
 
     new SettingEx(this.containerEl)
+      .setName('Add commands to file menu')
+      .setDesc(createFragment((f) => {
+        f.appendText('Add the plugin\'s commands (');
+        appendCodeBlock(f, 'Collect attachments');
+        f.appendText(', ');
+        appendCodeBlock(f, 'Move attachment to proper folder');
+        f.appendText(') to the file and folder context menu.');
+        f.createEl('br');
+        f.appendText('Disable this to avoid duplicate menu items when another plugin (e.g. ');
+        appendCodeBlock(f, 'Custom Attachment Location');
+        f.appendText(') provides the same commands. The commands remain available in the command palette.');
+      }))
+      .addToggle((toggle) => this.bind({ propertyName: 'shouldAddCommandsToFileMenu', valueComponent: toggle }));
+
+    new SettingEx(this.containerEl)
       .setName('Consistency report filename')
       .setDesc('Specify the name of the file for the consistency report.')
       .addText((text) => {

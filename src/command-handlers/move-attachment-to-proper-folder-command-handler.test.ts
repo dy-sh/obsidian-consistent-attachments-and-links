@@ -101,6 +101,7 @@ interface LoopParams {
 interface PluginSettingsLike {
   isPathIgnored(path: string): boolean;
   moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
+  shouldAddCommandsToFileMenu: boolean;
 }
 
 const mockAbortSignalAny = vi.mocked(abortSignalAny);
@@ -172,7 +173,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     isNoteEx = vi.fn<(pathOrFile: unknown) => boolean>();
     settings = {
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false),
-      moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll
+      moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll,
+      shouldAddCommandsToFileMenu: true
     };
     app = strictProxy<App>({
       vault: strictProxy<App['vault']>({
@@ -246,12 +248,24 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     });
   });
 
-  it('should add to the abstract file menu', () => {
+  it('should add to the abstract file menu when the setting is enabled', () => {
+    settings.shouldAddCommandsToFileMenu = true;
     expect(asPrivate(handler).shouldAddToAbstractFileMenu()).toBe(true);
   });
 
-  it('should add to the abstract files menu', () => {
+  it('should add to the abstract files menu when the setting is enabled', () => {
+    settings.shouldAddCommandsToFileMenu = true;
     expect(asPrivate(handler).shouldAddToAbstractFilesMenu()).toBe(true);
+  });
+
+  it('should not add to the abstract file menu when the setting is disabled', () => {
+    settings.shouldAddCommandsToFileMenu = false;
+    expect(asPrivate(handler).shouldAddToAbstractFileMenu()).toBe(false);
+  });
+
+  it('should not add to the abstract files menu when the setting is disabled', () => {
+    settings.shouldAddCommandsToFileMenu = false;
+    expect(asPrivate(handler).shouldAddToAbstractFilesMenu()).toBe(false);
   });
 
   describe('executeAbstractFile', () => {

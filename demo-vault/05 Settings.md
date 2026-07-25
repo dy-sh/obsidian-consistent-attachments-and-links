@@ -22,6 +22,7 @@ Open **Settings -> Community plugins -> Consistent Attachments and Links** to co
 - `collectAttachmentUsedByMultipleNotesMode` - what to do when a collected attachment is used by several notes: `Skip`, `Copy`, `Move`, `Cancel`, or `Prompt`.
 - `moveAttachmentToProperFolderUsedByMultipleNotesMode` - the same choice for the **Move Attachment to Proper Folder** command: `Skip`, `CopyAll`, `Cancel`, or `Prompt`.
 - `excludePathsFromAttachmentCollecting` - vault paths that attachment-collecting commands must leave untouched.
+- `shouldAddCommandsToFileMenu` - add the **Collect attachments** and **Move attachment to proper folder** commands to the file and folder context menu (default on). Turn it off to avoid duplicate menu items when another plugin (such as **Custom Attachment Location**) offers the same commands; the commands stay available in the command palette.
 
 ## Scope: which paths the plugin acts on
 
