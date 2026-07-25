@@ -42,7 +42,8 @@ vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
   getLinks: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
+vi.mock('obsidian-dev-utils/obsidian/vault', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/vault')>(),
   copySafe: vi.fn(),
   createFolderSafe: vi.fn(),
   deleteEmptyFolderHierarchy: vi.fn(),

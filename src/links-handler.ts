@@ -2,6 +2,7 @@ import type {
   Reference,
   ReferenceCache
 } from 'obsidian';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
 import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/link';
 import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
@@ -52,6 +53,7 @@ interface LinksHandlerCheckConsistencyParams {
 
 interface LinksHandlerConstructorParams {
   readonly app: App;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resourceLockComponent: null | ResourceLockComponent;
 }
@@ -125,12 +127,14 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 
 export class LinksHandler {
   private readonly app: App;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly resourceLockComponent: null | ResourceLockComponent;
 
   public constructor(params: LinksHandlerConstructorParams) {
     this.app = params.app;
     this.resourceLockComponent = params.resourceLockComponent;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -211,6 +215,7 @@ export class LinksHandler {
       app: this.app,
       linkStyle: LinkStyle.Markdown,
       newSourcePathOrFile: noteFile,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       resourceLockComponent: this.resourceLockComponent,
       shouldUpdateEmbedOnlyLinks: embedOnlyLinks
     });
@@ -265,6 +270,7 @@ export class LinksHandler {
         return changes;
       },
       pathOrFile: note,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       resourceLockComponent: this.resourceLockComponent
     });
 

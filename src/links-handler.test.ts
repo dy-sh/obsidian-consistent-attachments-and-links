@@ -5,6 +5,7 @@ import type {
   ReferenceCache,
   TFile
 } from 'obsidian';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
 import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import type {
@@ -196,6 +197,7 @@ describe('LinksHandler', () => {
     });
     handler = new LinksHandler({
       app,
+      pluginNoticeComponent: strictProxy<PluginNoticeComponent>({}),
       pluginSettingsComponent,
       resourceLockComponent: strictProxy<ResourceLockComponent>({})
     });

@@ -263,6 +263,7 @@ export class AttachmentCollector {
                     });
                   },
                   pathOrFile: params.note,
+                  pluginNoticeComponent,
                   resourceLockComponent
                 });
                 break;

@@ -46,6 +46,7 @@ export class Plugin extends PluginBase {
 
     const linksHandler = new LinksHandler({
       app: this.app,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent,
       resourceLockComponent: this.resourceLockComponent
     });
