@@ -24,7 +24,10 @@ import {
   noopAsync
 } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
-import { getAttachmentFilePath } from 'obsidian-dev-utils/obsidian/attachment-path';
+import {
+  getAttachmentFilePath,
+  isAtProperAttachmentPath
+} from 'obsidian-dev-utils/obsidian/attachment-path';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import {
   getPath,
@@ -96,7 +99,8 @@ vi.mock('obsidian-dev-utils/obsidian/attachment-path', async (importOriginal) =>
   const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/attachment-path')>();
   return {
     ...actual,
-    getAttachmentFilePath: vi.fn()
+    getAttachmentFilePath: vi.fn(),
+    isAtProperAttachmentPath: vi.fn()
   };
 });
 
@@ -190,6 +194,7 @@ interface SettingsLike {
 
 const mockAbortSignalAny = vi.mocked(abortSignalAny);
 const mockGetAttachmentFilePath = vi.mocked(getAttachmentFilePath);
+const mockIsAtProperAttachmentPath = vi.mocked(isAtProperAttachmentPath);
 const mockGetPath = vi.mocked(getPath);
 const mockIsCanvasFile = vi.mocked(isCanvasFile);
 const mockIsFile = vi.mocked(isFile);
@@ -246,6 +251,7 @@ describe('AttachmentCollector', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsAtProperAttachmentPath.mockResolvedValue(false);
     settings = {
       collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Move,
       isExcludedFromAttachmentCollecting: vi.fn().mockReturnValue(false),
@@ -319,15 +325,19 @@ describe('AttachmentCollector', () => {
       };
     }
 
-    it('should return null when the new path equals the current path', async () => {
-      const attachmentFile = createFile('img.png');
-      mockGetAttachmentFilePath.mockResolvedValue('img.png');
+    it('should return null when the attachment is already at its proper path', async () => {
+      const attachmentFile = createFile('attachments/img 1.png');
+      // A deduplication-parked attachment (`img 1.png`) is recognized as already proper by the ODU helper,
+      // So no move is scheduled — this is what makes auto-collect converge (issue #152).
+      mockIsAtProperAttachmentPath.mockResolvedValue(true);
       const result = await collector.getProperAttachmentPath(buildParams(attachmentFile));
       expect(result).toBeNull();
+      expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
     });
 
-    it('should return the new path when it differs', async () => {
+    it('should return the proper path when the attachment is misplaced', async () => {
       const attachmentFile = createFile('img.png');
+      mockIsAtProperAttachmentPath.mockResolvedValue(false);
       mockGetAttachmentFilePath.mockResolvedValue('attachments/img.png');
       const result = await collector.getProperAttachmentPath(buildParams(attachmentFile));
       expect(result).toBe('attachments/img.png');
@@ -482,14 +492,20 @@ describe('AttachmentCollector', () => {
       expect(mockRenameSafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrAbstractFile: 'img.png' });
     });
 
-    it('should not rename when the new attachment path is null (single-ref)', async () => {
+    it('should not rename a deduplication-parked attachment already at its proper path (single-ref, issue #152)', async () => {
+      // Regression guard for the endless auto-collect loop: the attachment sits at `attachments/img 1.png`
+      // (parked with an Obsidian deduplication suffix because a different file occupies the deduplication-free
+      // Slot). The deduplication-free proper path from getAttachmentFilePath still DIFFERS, but the ODU helper
+      // Recognizes the parked file as already proper, so no move is scheduled and the loop converges.
       mockGetLinks.mockReturnValue([createReference()]);
-      mockExtractLinkFile.mockReturnValue(createFile('img.png'));
+      mockExtractLinkFile.mockReturnValue(createFile('attachments/img 1.png'));
       mockIsNote.mockReturnValue(false);
-      mockGetAttachmentFilePath.mockResolvedValue('img.png');
+      mockIsAtProperAttachmentPath.mockResolvedValue(true);
+      mockGetAttachmentFilePath.mockResolvedValue('attachments/img.png');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       await collectAttachments({}, abortSignal);
       expect(mockRenameSafe).not.toHaveBeenCalled();
+      expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
     });
 
     describe('multiple backlinks', () => {
@@ -539,9 +555,9 @@ describe('AttachmentCollector', () => {
         expect(nonMatchingResult).toBeUndefined();
       });
 
-      it('should skip Copy mode when the new attachment path is null', async () => {
+      it('should skip Copy mode when the attachment is already at its proper path', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
-        mockGetAttachmentFilePath.mockResolvedValue('img.png');
+        mockIsAtProperAttachmentPath.mockResolvedValue(true);
         await collectAttachments({}, abortSignal);
         expect(mockCopySafe).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('already in the destination folder'));
@@ -569,9 +585,9 @@ describe('AttachmentCollector', () => {
         expect(mockRenameSafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png', oldPathOrAbstractFile: 'img.png' });
       });
 
-      it('should skip Move mode when the new attachment path is null', async () => {
+      it('should skip Move mode when the attachment is already at its proper path', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
-        mockGetAttachmentFilePath.mockResolvedValue('img.png');
+        mockIsAtProperAttachmentPath.mockResolvedValue(true);
         await collectAttachments({}, abortSignal);
         expect(mockRenameSafe).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('already in the destination folder'));

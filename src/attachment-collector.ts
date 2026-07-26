@@ -21,7 +21,8 @@ import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import {
   AttachmentPathContext,
-  getAttachmentFilePath
+  getAttachmentFilePath,
+  isAtProperAttachmentPath
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 import {
   getPath,
@@ -127,19 +128,30 @@ export class AttachmentCollector {
   }
 
   public async getProperAttachmentPath(params: AttachmentCollectorGetProperAttachmentPathParams): Promise<null | string> {
-    const newAttachmentPath = await getAttachmentFilePath({
+    // When the attachment already sits at its proper path — the proper base name OR the proper base name
+    // Plus an Obsidian deduplication suffix (` 1`, ` 2`, ...) parked there because a different file occupies
+    // The deduplication-free slot — there is nothing to move. Returning `null` here makes auto-collect
+    // Converge: without it, `getAttachmentFilePath({ shouldSkipDuplicateCheck: true })` yields the
+    // Deduplication-free target, which permanently disagrees with the deduplication-parked destination, so
+    // The note change fired by the preceding move re-triggers auto-collect and renames it forever (issue #152).
+    if (
+      await isAtProperAttachmentPath({
+        app: this.app,
+        attachmentPathOrFile: params.attachmentFile,
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: params.noteFilePath
+      })
+    ) {
+      return null;
+    }
+
+    return await getAttachmentFilePath({
       app: this.app,
       context: AttachmentPathContext.Unknown,
       notePathOrFile: params.noteFilePath,
       oldAttachmentPathOrFile: params.attachmentFile,
       shouldSkipDuplicateCheck: true
     });
-
-    if (params.attachmentFile.path === newAttachmentPath) {
-      return null;
-    }
-
-    return newAttachmentPath;
   }
 
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
