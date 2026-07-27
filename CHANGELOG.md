@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.34.1
+
+- fix: stop endless auto-collect rename loop for already-proper attachments (re #152)
+
 ## 3.34.0
 
 - docs: demonstrate context-menu toggle and Excalidraw link-skip in the demo vault
