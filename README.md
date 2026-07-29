@@ -16,7 +16,7 @@ The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your va
 A demo vault with usage examples ships with every release. You can access it via any of the following:
 
 1. Running the **Consistent Attachments and Links: Open demo vault** command.
-2. Downloading `consistent-attachments-and-links.demo-vault.zip` from the [Releases](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases).
+2. Downloading `consistent-attachments-and-links-demo-vault-<version>.zip` (`<version>` is the release version) from the [Releases](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases).
 3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
 
 ## What's the idea
