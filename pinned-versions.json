@@ -1,0 +1,21 @@
+{
+  "comment": [
+    "Release conditions for every exact-pinned version in package.json (dependencies, devDependencies and overrides).",
+    "An exact pin is invisible to update-npm-deps.ps1 — that script upgrades caret ranges and skips exact versions — so",
+    "nothing would ever remind you a pin is stale. This file is what makes that check happen: run each `check` and compare",
+    "its trimmed stdout to `expect`. Equal means the pin is still required; different means the condition that justified",
+    "the pin has changed and the pin should be re-examined. `check: null` means no mechanical test exists — review it",
+    "manually instead of letting it go quiet. Every exact pin must have an entry here, and every entry must correspond to",
+    "a real pin. Same format as obsidian-dev-utils/pinned-versions.json; prose rationale lives in AGENTS.md.",
+    "Caret-ranged security overrides are NOT listed here — update-npm-deps.ps1 sweeps those on its own; see the",
+    "'Security overrides' section of AGENTS.md for when they can be dropped."
+  ],
+  "pins": {
+    "typescript": {
+      "section": "overrides",
+      "why": "@typescript-eslint peer-requires >=4.8.4 <6.1.0, and its parser crashes on the TypeScript 7 (tsgo) native API, so type-aware ESLint cannot run on 7. 6.0.3 is also the newest stable 6.x. Exact so a dependency sweep cannot drift it forward.",
+      "check": "node -e \"process.stdout.write(require('typescript-eslint/package.json').peerDependencies.typescript)\"",
+      "expect": ">=4.8.4 <6.1.0"
+    }
+  }
+}
