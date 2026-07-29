@@ -67,7 +67,6 @@ interface SettingsLike {
   isPathIgnored(path: string): boolean;
   isTreatedAsAttachment(path: string): boolean;
   shouldDeleteExistingFilesWhenMovingNote: boolean;
-  treatAsAttachmentExtensions: string[];
 }
 
 const mockGetPath = vi.mocked(getPath);
@@ -91,11 +90,8 @@ describe('FilesHandler', () => {
       emptyFolderBehavior: EmptyFolderBehavior.Keep,
       isExcludedFromAttachmentCollecting: vi.fn().mockReturnValue(false),
       isPathIgnored: vi.fn().mockReturnValue(false),
-      isTreatedAsAttachment(path: string): boolean {
-        return this.treatAsAttachmentExtensions.some((extension) => path.endsWith(extension));
-      },
-      shouldDeleteExistingFilesWhenMovingNote: false,
-      treatAsAttachmentExtensions: []
+      isTreatedAsAttachment: vi.fn().mockReturnValue(false),
+      shouldDeleteExistingFilesWhenMovingNote: false
     };
 
     exists = vi.fn<(path: string, isCaseSensitive?: boolean) => Promise<boolean>>().mockResolvedValue(true);
@@ -142,14 +138,13 @@ describe('FilesHandler', () => {
     it('should return true when a note and extension is not treated as attachment', () => {
       mockIsNote.mockReturnValue(true);
       mockGetPath.mockReturnValue('note.md');
-      settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
       expect(handler.isNoteEx('note.md')).toBe(true);
     });
 
     it('should return false when path ends with a treated-as-attachment extension', () => {
       mockIsNote.mockReturnValue(true);
       mockGetPath.mockReturnValue('drawing.excalidraw.md');
-      settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
+      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
       expect(handler.isNoteEx('drawing.excalidraw.md')).toBe(false);
     });
   });

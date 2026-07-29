@@ -68,6 +68,29 @@ describe('PluginSettings', () => {
       expect(settings.isTreatedAsAttachment('drawing.excalidraw.md')).toBe(true);
       expect(settings.isTreatedAsAttachment('note.md')).toBe(false);
     });
+
+    it('should match files inside folders', () => {
+      const settings = new PluginSettings();
+      expect(settings.isTreatedAsAttachment('folder/drawing.excalidraw.md')).toBe(true);
+      expect(settings.isTreatedAsAttachment('folder/note.md')).toBe(false);
+    });
+
+    it('should match case-insensitively', () => {
+      const settings = new PluginSettings();
+      expect(settings.isTreatedAsAttachment('Drawing.ExCaLiDraw.MD')).toBe(true);
+    });
+
+    it('should normalize sloppily typed extensions', () => {
+      const settings = new PluginSettings();
+      settings.treatAsAttachmentExtensions = [' .Excalidraw.MD ', ''];
+      expect(settings.isTreatedAsAttachment('drawing.excalidraw.md')).toBe(true);
+      expect(settings.isTreatedAsAttachment('note.md')).toBe(false);
+    });
+
+    it('should not match an extension appearing mid-name', () => {
+      const settings = new PluginSettings();
+      expect(settings.isTreatedAsAttachment('drawing.excalidraw.md.backup')).toBe(false);
+    });
   });
 
   describe('isExcludedFromAttachmentCollecting', () => {
