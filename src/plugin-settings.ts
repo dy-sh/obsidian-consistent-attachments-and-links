@@ -1,4 +1,5 @@
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { isTreatedAsAttachment } from 'obsidian-dev-utils/obsidian/file-system';
 import { PathSettings } from 'obsidian-dev-utils/obsidian/path-settings';
 
 export enum CollectAttachmentUsedByMultipleNotesMode {
@@ -80,7 +81,10 @@ export class PluginSettings {
   }
 
   public isTreatedAsAttachment(path: string): boolean {
-    return this.treatAsAttachmentExtensions.some((extension) => path.endsWith(extension));
+    return isTreatedAsAttachment({
+      attachmentExtensions: this.treatAsAttachmentExtensions,
+      pathOrFile: path
+    });
   }
 
   public revertDangerousSettings(): void {

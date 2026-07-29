@@ -189,7 +189,6 @@ interface SettingsLike {
   isExcludedFromAttachmentCollecting(path: string): boolean;
   isPathIgnored(path: string): boolean;
   isTreatedAsAttachment(path: string): boolean;
-  treatAsAttachmentExtensions: string[];
 }
 
 const mockAbortSignalAny = vi.mocked(abortSignalAny);
@@ -256,10 +255,7 @@ describe('AttachmentCollector', () => {
       collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Move,
       isExcludedFromAttachmentCollecting: vi.fn().mockReturnValue(false),
       isPathIgnored: vi.fn().mockReturnValue(false),
-      isTreatedAsAttachment(path: string): boolean {
-        return this.treatAsAttachmentExtensions.some((extension) => path.endsWith(extension));
-      },
-      treatAsAttachmentExtensions: []
+      isTreatedAsAttachment: vi.fn().mockReturnValue(false)
     };
     readJson = vi.fn<(path: string) => Promise<null | object>>();
     getRoot = vi.fn<() => TFolder>().mockReturnValue(strictProxy<TFolder>({ path: '/' }));
@@ -305,14 +301,13 @@ describe('AttachmentCollector', () => {
     it('should return true when a note and not treated as attachment', () => {
       mockIsNote.mockReturnValue(true);
       mockGetPath.mockReturnValue('note.md');
-      settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
       expect(collector.isNoteEx('note.md')).toBe(true);
     });
 
     it('should return false when path ends with a treated-as-attachment extension', () => {
       mockIsNote.mockReturnValue(true);
       mockGetPath.mockReturnValue('a.excalidraw.md');
-      settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
+      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
       expect(collector.isNoteEx('a.excalidraw.md')).toBe(false);
     });
   });
