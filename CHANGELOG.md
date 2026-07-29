@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 3.34.2
+
+- refactor(plugin-settings): delegate isTreatedAsAttachment to dev-utils
+- chore(deps): override the brace-expansion advisory chain to zero
+- chore: update libs
+- docs: fix the demo vault download instructions
+
 ## 3.34.1
 
 - fix: stop endless auto-collect rename loop for already-proper attachments (re #152)
