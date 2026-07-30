@@ -1,21 +1,27 @@
 {
   "comment": [
-    "Release conditions for every exact-pinned version in package.json (dependencies, devDependencies and overrides).",
-    "An exact pin is invisible to update-npm-deps.ps1 — that script upgrades caret ranges and skips exact versions — so",
-    "nothing would ever remind you a pin is stale. This file is what makes that check happen: run each `check` and compare",
-    "its trimmed stdout to `expect`. Equal means the pin is still required; different means the condition that justified",
-    "the pin has changed and the pin should be re-examined. `check: null` means no mechanical test exists — review it",
-    "manually instead of letting it go quiet. Every exact pin must have an entry here, and every entry must correspond to",
-    "a real pin. Same format as obsidian-dev-utils/pinned-versions.json; prose rationale lives in AGENTS.md.",
-    "Caret-ranged security overrides are NOT listed here — update-npm-deps.ps1 sweeps those on its own; see the",
-    "'Security overrides' section of AGENTS.md for when they can be dropped."
+    "Release conditions for every exact-pinned version in package.json (dependencies, devDependencies and overrides),",
+    "plus any override added to clear an npm audit advisory. An exact pin is invisible to update-npm-deps.ps1 - that",
+    "script upgrades caret ranges and skips exact versions - so nothing would ever remind you a pin is stale. This file",
+    "is what makes that check happen: on every run the script executes each `check` and compares its trimmed stdout to",
+    "`expect`. Equal means the pin is still required; different means the condition that justified the pin has changed",
+    "and the pin should be re-examined. `check: null` means no mechanical test exists - it is reported for manual review",
+    "on every run instead of going quiet. Every exact pin must have an entry here, and every entry must name a package",
+    "that is actually present in the declared section; the script reports either mismatch. See rule G100."
   ],
   "pins": {
     "typescript": {
       "section": "overrides",
-      "why": "@typescript-eslint peer-requires >=4.8.4 <6.1.0, and its parser crashes on the TypeScript 7 (tsgo) native API, so type-aware ESLint cannot run on 7. 6.0.3 is also the newest stable 6.x. Exact so a dependency sweep cannot drift it forward.",
+      "why": "TypeScript 7 (tsgo) breaks this toolchain: @typescript-eslint's parser crashes on the native API, so type-aware ESLint cannot run on 7. @typescript-eslint peer-requires the range below, so 6.x is the last usable major. Hold until obsidian-dev-utils migrates.",
       "check": "node -e \"process.stdout.write(require('typescript-eslint/package.json').peerDependencies.typescript)\"",
       "expect": ">=4.8.4 <6.1.0"
+    },
+    "brace-expansion": {
+      "section": "overrides",
+      "why": "GHSA-mh99-v99m-4gvg (high, DoS via unbounded expansion) is declared with the single flat range <=5.0.7, which in plain semver also matches the newest 1.x and 2.x releases - so no release on those lines can ever satisfy it and `npm audit fix` can only offer a downgrade. Every copy must therefore be forced onto >=5.0.8. A bare caret override cannot do that: 5.x exports a namespace (exports.expand), while minimatch 3/5 require the module itself and minimatch 8/9 default-import it, so they break with `expand is not a function`. The override points at patches/brace-expansion-callable, a wrapper re-exporting the patched 5.x implementation in BOTH shapes (callable default, and named .expand for minimatch 10). The patched implementation installs under the brace-expansion-upstream alias because the override takes over the real name.",
+      "check": "node -e \"process.stdout.write(typeof require('brace-expansion-upstream'))\"",
+      "expect": "object",
+      "manualCheck": "The check tests the condition that makes the wrapper necessary: the patched upstream exporting a namespace rather than a callable. `object` means old consumers still need the wrapper; `function` would mean upstream restored a callable default and the wrapper can go. The wrapper is also unnecessary once no tree copy of minimatch below 10 remains - verify by grepping node_modules/**/minimatch for `require(\"brace-expansion\")` and `__importDefault` before dropping it."
     }
   }
 }

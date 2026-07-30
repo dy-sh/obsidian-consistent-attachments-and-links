@@ -1,0 +1,32 @@
+{
+  "comment": [
+    "Read automatically by depcheck, which update-npm-deps.ps1 runs at the end of every sweep to report declared",
+    "dependencies nothing appears to use. depcheck cannot see a package that is only invoked as a CLI from a script,",
+    "named as a string in a config, or pulled in by a compiler option, so each name below is a verified false positive",
+    "with the reference that proves it. Because this file exists, anything depcheck still reports fails the sweep -",
+    "so a genuinely unused dependency cannot be waved through, and a new entry here needs its reason recorded.",
+    "The key is `ignores`, depcheck's CLI-style rc name; `ignoreMatches` is the API-only spelling and is silently",
+    "ignored in this file.",
+    "",
+    "@commitlint/cli - .husky/commit-msg runs it as the `commitlint` binary.",
+    "@commitlint/config-conventional - extended by name at runtime by obsidian-dev-utils' script-utils/commitlint-config, which does not declare it itself.",
+    "@commitlint/types - obsidian-dev-utils' commitlint-config.d.cts does `import type { UserConfig } from '@commitlint/types'` without declaring the package, so the consumer must supply it for tsc to resolve.",
+    "better-typescript-lib - has no import anywhere by design: it supplies the @typescript/lib-* aliases that tsconfig.json's `libReplacement: true` resolves.",
+    "brace-expansion-upstream - the alias that installs the patched brace-expansion 5.x. Its only consumer is patches/brace-expansion-callable/index.js, which depcheck does not scan as project source. See pinned-versions.json's brace-expansion entry.",
+    "czg - run as a CLI by scripts/commit.ts.",
+    "eslint - configured by eslint.config.mts and run as a CLI by scripts/lint.ts.",
+    "husky - installed by scripts/prepare.ts; the hooks in .husky/ are its output.",
+    "nano-staged - .husky/pre-commit runs it; configured by scripts/nano-staged-config.ts."
+  ],
+  "ignores": [
+    "@commitlint/cli",
+    "@commitlint/config-conventional",
+    "@commitlint/types",
+    "better-typescript-lib",
+    "brace-expansion-upstream",
+    "czg",
+    "eslint",
+    "husky",
+    "nano-staged"
+  ]
+}
