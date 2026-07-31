@@ -1,9 +1,13 @@
-import type { ToggleComponent } from 'obsidian';
+import type {
+  SettingGroup,
+  ToggleComponent
+} from 'obsidian';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { AsyncEvents } from 'obsidian-dev-utils/async-events';
 import { noopAsync } from 'obsidian-dev-utils/function';
+import { castTo } from 'obsidian-dev-utils/object-utils';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
@@ -76,7 +80,7 @@ async function createTab(): Promise<CreatedTab> {
     pluginSettingsComponent
   });
 
-  tab.displayLegacy();
+  renderRows(tab);
   addToggleSpy.mockRestore();
   return { pluginSettingsComponent, tab, toggles };
 }
@@ -88,15 +92,21 @@ async function flushMicrotasks(): Promise<void> {
 }
 
 function getSettingNames(tab: PluginSettingsTab): string[] {
-  const names: string[] = [];
-  for (const settingEl of Array.from(tab.containerEl.children)) {
-    const infoEl = settingEl.children[1];
-    const nameEl = infoEl?.children[0];
-    if (nameEl?.textContent) {
-      names.push(nameEl.textContent);
+  return tab.getSettingDefinitions().map((definition) => 'name' in definition ? definition.name : '');
+}
+
+/**
+ * Invokes every declared row's `render` callback the way Obsidian does when the tab is opened, so the
+ * bindings are still exercised now that the rows are declarative.
+ *
+ * @param tab - The settings tab.
+ */
+function renderRows(tab: PluginSettingsTab): void {
+  for (const definition of tab.getSettingDefinitions()) {
+    if ('render' in definition) {
+      definition.render(new SettingEx(tab.containerEl), castTo<SettingGroup>(null));
     }
   }
-  return names;
 }
 
 beforeAll(async () => {
