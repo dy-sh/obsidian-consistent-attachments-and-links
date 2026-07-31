@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.35.0
+
+- refactor(settings): move the settings tab onto the declarative settings API
+- chore: update libs and clear the npm audit
+
 ## 3.34.2
 
 - refactor(plugin-settings): delegate isTreatedAsAttachment to dev-utils
