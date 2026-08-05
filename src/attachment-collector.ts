@@ -59,7 +59,7 @@ import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
 interface AttachmentCollectorCollectAttachmentsParams {
   readonly abortSignal: AbortSignal;
-  readonly ctx: CollectAttachmentContext;
+  readonly context: CollectAttachmentContext;
   readonly note: TFile;
 }
 
@@ -114,7 +114,7 @@ export class AttachmentCollector {
   public collectAttachmentsEntireVault(): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl([this.app.vault.getRoot()], abortSignal),
+      operationFunction: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl([this.app.vault.getRoot()], abortSignal),
       operationName: t(($) => $.commands.collectAttachmentsEntireVault)
     });
   }
@@ -122,7 +122,7 @@ export class AttachmentCollector {
   public collectAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
+      operationFunction: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
       operationName: t(($) => $.menuItems.collectAttachmentsInFile)
     });
   }
@@ -170,7 +170,7 @@ export class AttachmentCollector {
     const pluginSettingsComponent = this.pluginSettingsComponent;
     const pluginNoticeComponent = this.pluginNoticeComponent;
 
-    if (params.ctx.isAborted) {
+    if (params.context.isAborted) {
       return;
     }
 
@@ -188,7 +188,7 @@ export class AttachmentCollector {
       params.abortSignal.throwIfAborted();
 
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Could be changed in await call.
-      if (params.ctx.isAborted) {
+      if (params.context.isAborted) {
         return;
       }
 
@@ -201,7 +201,7 @@ export class AttachmentCollector {
 
       for (const link of links) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Could be changed in await call.
-        if (params.ctx.isAborted) {
+        if (params.context.isAborted) {
           return;
         }
 
@@ -225,26 +225,27 @@ export class AttachmentCollector {
         params.abortSignal.throwIfAborted();
         if (backlinks.keys().length > 1) {
           const backlinksSorted = backlinks.keys().sort((a, b) => a.localeCompare(b));
-          const backlinksStr = backlinksSorted.map((backlink) => `- ${backlink}`).join('\n');
+          const backlinksString = backlinksSorted.map((backlink) => `- ${backlink}`).join('\n');
 
-          async function applyCollectAttachmentUsedByMultipleNotesMode(
+          async function shouldCollectWithMode(
             collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode
           ): Promise<boolean> {
             params.abortSignal.throwIfAborted();
             let definedAttachmentMoveResult = ensureNonNullable(attachmentMoveResult);
 
             switch (collectAttachmentUsedByMultipleNotesMode) {
-              case CollectAttachmentUsedByMultipleNotesMode.Cancel:
+              case CollectAttachmentUsedByMultipleNotesMode.Cancel: {
                 console.error(
-                  `Cancelling collecting attachments, as attachment ${definedAttachmentMoveResult.oldAttachmentPath} is referenced by multiple notes.\n${backlinksStr}`
+                  `Cancelling collecting attachments, as attachment ${definedAttachmentMoveResult.oldAttachmentPath} is referenced by multiple notes.\n${backlinksString}`
                 );
                 if (pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode === CollectAttachmentUsedByMultipleNotesMode.Cancel) {
                   await selectMode({ app, attachmentPath: definedAttachmentMoveResult.oldAttachmentPath, backlinks: backlinksSorted, isCancelMode: true });
                 }
                 // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
-                params.ctx.isAborted = true;
+                params.context.isAborted = true;
                 return false;
-              case CollectAttachmentUsedByMultipleNotesMode.Copy:
+              }
+              case CollectAttachmentUsedByMultipleNotesMode.Copy: {
                 if (!definedAttachmentMoveResult.newAttachmentPath) {
                   console.warn(`Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is already in the destination folder.`);
                   return false;
@@ -279,7 +280,8 @@ export class AttachmentCollector {
                   resourceLockComponent
                 });
                 break;
-              case CollectAttachmentUsedByMultipleNotesMode.Move:
+              }
+              case CollectAttachmentUsedByMultipleNotesMode.Move: {
                 if (!definedAttachmentMoveResult.newAttachmentPath) {
                   console.warn(`Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is already in the destination folder.`);
                   return false;
@@ -287,6 +289,7 @@ export class AttachmentCollector {
                 await registerMoveAttachment();
                 params.abortSignal.throwIfAborted();
                 break;
+              }
               case CollectAttachmentUsedByMultipleNotesMode.Prompt: {
                 const { mode, shouldUseSameActionForOtherProblematicAttachments } = await selectMode({
                   app,
@@ -295,27 +298,30 @@ export class AttachmentCollector {
                 });
                 if (shouldUseSameActionForOtherProblematicAttachments) {
                   // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
-                  params.ctx.collectAttachmentUsedByMultipleNotesMode = mode;
+                  params.context.collectAttachmentUsedByMultipleNotesMode = mode;
                 }
-                return applyCollectAttachmentUsedByMultipleNotesMode(mode);
+                // eslint-disable-next-line unicorn/no-useless-recursion -- A single re-dispatch after the user picks a mode in the modal; a loop would obscure the switch.
+                return shouldCollectWithMode(mode);
               }
-              case CollectAttachmentUsedByMultipleNotesMode.Skip:
+              case CollectAttachmentUsedByMultipleNotesMode.Skip: {
                 console.warn(
-                  `Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is referenced by multiple notes.\n${backlinksStr}`
+                  `Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is referenced by multiple notes.\n${backlinksString}`
                 );
                 return false;
-              default:
+              }
+              default: {
                 throw new Error(
                   `Unknown collect attachment used by multiple notes mode: ${pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode}`
                 );
+              }
             }
 
             return true;
           }
 
           if (
-            !await applyCollectAttachmentUsedByMultipleNotesMode(
-              params.ctx.collectAttachmentUsedByMultipleNotesMode ?? pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode
+            !await shouldCollectWithMode(
+              params.context.collectAttachmentUsedByMultipleNotesMode ?? pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode
             )
           ) {
             params.abortSignal.throwIfAborted();
@@ -410,17 +416,17 @@ export class AttachmentCollector {
       }
     }
 
-    const noteFiles = Array.from(noteFilesSet);
+    const noteFiles = [...noteFilesSet];
     noteFiles.sort((a, b) => a.path.localeCompare(b.path));
 
-    const ctx: CollectAttachmentContext = {};
+    const context: CollectAttachmentContext = {};
     const abortController = new AbortController();
 
     const combinedAbortSignal = abortSignalAny(abortController.signal, this.abortSignalComponent.abortSignal);
 
     await loop({
       abortSignal: combinedAbortSignal,
-      buildNoticeMessage: ({ item, iterationStr }) => t(($) => $.attachmentCollector.progressBar.message, { iterationStr, noteFilePath: item.path }),
+      buildNoticeMessage: ({ item, iterationString }) => t(($) => $.attachmentCollector.progressBar.message, { iterationString, noteFilePath: item.path }),
       items: noteFiles,
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (noteFile) => {
@@ -431,11 +437,11 @@ export class AttachmentCollector {
         }
         await this.collectAttachments({
           abortSignal: combinedAbortSignal,
-          ctx,
+          context,
           note: noteFile
         });
         combinedAbortSignal.throwIfAborted();
-        if (ctx.isAborted) {
+        if (context.isAborted) {
           abortController.abort();
         }
       },

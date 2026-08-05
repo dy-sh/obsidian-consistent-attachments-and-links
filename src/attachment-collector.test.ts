@@ -157,7 +157,7 @@ interface CollectAttachmentContextLike {
 interface CollectAttachmentsParamsLike {
   abortSignal: AbortSignal;
   abortSignalComponent: AbortSignalComponent;
-  ctx: CollectAttachmentContextLike;
+  context: CollectAttachmentContextLike;
   note: TFile;
 }
 
@@ -180,7 +180,7 @@ interface PrivateAttachmentCollector {
 }
 
 interface QueueParamsLike {
-  operationFn(abortSignal: AbortSignal): Promise<void>;
+  operationFunction(abortSignal: AbortSignal): Promise<void>;
   operationName: string;
 }
 
@@ -218,9 +218,9 @@ function createBacklinks(keys: string[]): Awaited<ReturnType<typeof getBacklinks
   });
 }
 
-function createFile(path: string, deleted = false): TFile {
+function createFile(path: string, isDeleted = false): TFile {
   return strictProxy<TFile>({
-    deleted,
+    deleted: isDeleted,
     path
   });
 }
@@ -354,7 +354,7 @@ describe('AttachmentCollector', () => {
       mockIsFolder.mockReturnValue(false);
       collector.collectAttachmentsEntireVault();
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
-      await params.operationFn(new AbortController().signal);
+      await params.operationFunction(new AbortController().signal);
       expect(getRoot).toHaveBeenCalled();
       expect(mockLoop).toHaveBeenCalled();
     });
@@ -373,11 +373,11 @@ describe('AttachmentCollector', () => {
     let abortSignal: AbortSignal;
     let note: TFile;
 
-    function collectAttachments(ctx: CollectAttachmentContextLike, signal: AbortSignal): Promise<void> {
+    function collectAttachments(context: CollectAttachmentContextLike, signal: AbortSignal): Promise<void> {
       return privateCollector.collectAttachments({
         abortSignal: signal,
         abortSignalComponent,
-        ctx,
+        context,
         note
       });
     }
@@ -396,18 +396,18 @@ describe('AttachmentCollector', () => {
       await expect(collectAttachments({}, controller.signal)).rejects.toThrow();
     });
 
-    it('should return early when ctx.isAborted is true', async () => {
+    it('should return early when context.isAborted is true', async () => {
       await collectAttachments({ isAborted: true }, abortSignal);
       expect(mockGetCacheSafe).not.toHaveBeenCalled();
     });
 
-    it('should return when ctx becomes aborted after reading the cache', async () => {
-      const ctx = { isAborted: false };
-      mockGetCacheSafe.mockImplementation(async () => {
-        ctx.isAborted = true;
+    it('should return when context becomes aborted after reading the cache', async () => {
+      const context = { isAborted: false };
+      mockGetCacheSafe.mockImplementation(() => {
+        context.isAborted = true;
         return Promise.resolve(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       });
-      await collectAttachments(ctx, abortSignal);
+      await collectAttachments(context, abortSignal);
       expect(mockGetLinks).not.toHaveBeenCalled();
     });
 
@@ -515,17 +515,17 @@ describe('AttachmentCollector', () => {
       it('should cancel and abort in Cancel mode', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockSelectMode.mockResolvedValue({ mode: CollectAttachmentUsedByMultipleNotesMode.Cancel, shouldUseSameActionForOtherProblematicAttachments: false });
-        const ctx = {};
-        await collectAttachments(ctx, abortSignal);
+        const context = {};
+        await collectAttachments(context, abortSignal);
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
         expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'], isCancelMode: true });
-        expect(castTo<CollectAttachmentContextLike>(ctx).isAborted).toBe(true);
+        expect(castTo<CollectAttachmentContextLike>(context).isAborted).toBe(true);
       });
 
       it('should not invoke selectMode in Cancel mode when the setting differs', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
-        const ctx = { collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Cancel };
-        await collectAttachments(ctx, abortSignal);
+        const context = { collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Cancel };
+        await collectAttachments(context, abortSignal);
         expect(mockSelectMode).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalled();
       });
@@ -541,7 +541,7 @@ describe('AttachmentCollector', () => {
           await noopAsync();
         });
         mockExtractLinkFile.mockImplementation(({ link }) => {
-          return link.link === 'other.png' ? createFile('other.png') : createFile('img.png');
+          return createFile(link.link === 'other.png' ? 'other.png' : 'img.png');
         });
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
         await collectAttachments({}, abortSignal);
@@ -607,9 +607,9 @@ describe('AttachmentCollector', () => {
       it('should remember the chosen mode for other attachments when requested', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Prompt;
         mockSelectMode.mockResolvedValue({ mode: CollectAttachmentUsedByMultipleNotesMode.Skip, shouldUseSameActionForOtherProblematicAttachments: true });
-        const ctx: CollectAttachmentContextLike = {};
-        await collectAttachments(ctx, abortSignal);
-        expect(ctx.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Skip);
+        const context: CollectAttachmentContextLike = {};
+        await collectAttachments(context, abortSignal);
+        expect(context.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Skip);
       });
 
       it('should throw for an unknown mode', async () => {
@@ -617,27 +617,27 @@ describe('AttachmentCollector', () => {
         await expect(collectAttachments({}, abortSignal)).rejects.toThrow('Unknown collect attachment used by multiple notes mode');
       });
 
-      it('should use the ctx mode when present', async () => {
+      it('should use the context mode when present', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
-        const ctx = { collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Skip };
-        await collectAttachments(ctx, abortSignal);
+        const context = { collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Skip };
+        await collectAttachments(context, abortSignal);
         expect(mockRenameSafe).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
       });
     });
 
-    it('should return early on a subsequent link iteration once ctx becomes aborted', async () => {
+    it('should return early on a subsequent link iteration once context becomes aborted', async () => {
       mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
       mockExtractLinkFile.mockReturnValue(createFile('a.png'));
       mockIsNote.mockReturnValue(false);
       mockGetAttachmentFilePath.mockResolvedValue('attachments/a.png');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
       settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
-      const ctx = {};
-      await collectAttachments(ctx, abortSignal);
-      // The first link sets ctx.isAborted; the second iteration returns early.
+      const context = {};
+      await collectAttachments(context, abortSignal);
+      // The first link sets context.isAborted; the second iteration returns early.
       expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
-      expect(castTo<CollectAttachmentContextLike>(ctx).isAborted).toBe(true);
+      expect(castTo<CollectAttachmentContextLike>(context).isAborted).toBe(true);
     });
 
     it('should show the notice while running and hide it on the finally block', async () => {
@@ -690,12 +690,12 @@ describe('AttachmentCollector', () => {
     });
   });
 
-  describe('collectAttachmentsInAbstractFilesImpl (via queue operationFn)', () => {
+  describe('collectAttachmentsInAbstractFilesImpl (via queue operationFunction)', () => {
     async function runOperation(abstractFiles: TAbstractFile[]): Promise<void> {
       collector.collectAttachmentsInAbstractFiles(abstractFiles);
       const params = mockAddToQueue.mock.calls[0]?.[0];
-      const operationFn = castTo<QueueParamsLike>(params).operationFn;
-      await operationFn(new AbortController().signal);
+      const operationFunction = castTo<QueueParamsLike>(params).operationFunction;
+      await operationFunction(new AbortController().signal);
     }
 
     beforeEach(() => {
@@ -706,10 +706,10 @@ describe('AttachmentCollector', () => {
     it('should throw when the signal is already aborted', async () => {
       collector.collectAttachmentsInAbstractFiles([]);
       const params = mockAddToQueue.mock.calls[0]?.[0];
-      const operationFn = castTo<QueueParamsLike>(params).operationFn;
+      const operationFunction = castTo<QueueParamsLike>(params).operationFunction;
       const controller = new AbortController();
       controller.abort();
-      await expect(operationFn(controller.signal)).rejects.toThrow();
+      await expect(operationFunction(controller.signal)).rejects.toThrow();
     });
 
     it('should notice and return when the single file path is ignored', async () => {
@@ -735,8 +735,8 @@ describe('AttachmentCollector', () => {
       mockIsFolder.mockImplementation((f) => f === folder);
       mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(childNote);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childNote);
       });
       try {
         await runOperation([noteFile, folder]);
@@ -754,8 +754,8 @@ describe('AttachmentCollector', () => {
       mockIsFolder.mockImplementation((f) => f === folder);
       mockIsNote.mockReturnValue(false);
       mockConfirm.mockResolvedValue(true);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(childNonNote);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childNonNote);
       });
       try {
         await runOperation([folder]);
@@ -822,7 +822,7 @@ describe('AttachmentCollector', () => {
       mockAbortSignalAny.mockReturnValue(new AbortController().signal);
       mockLoop.mockImplementation(async (options) => {
         const typed = castTo<LoopOptionsLike>(options);
-        expect(typed.buildNoticeMessage({ item: noteFile, iterationStr: '1/1' })).toBe('Collecting attachments 1/1 - \'a.md\'.');
+        expect(typed.buildNoticeMessage({ item: noteFile, iterationString: '1/1' })).toBe('Collecting attachments 1/1 - \'a.md\'.');
         await noopAsync();
       });
       await runOperation([noteFile]);

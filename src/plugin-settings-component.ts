@@ -16,8 +16,11 @@ interface PluginSettingsComponentConstructorParams {
 class LegacySettings {
   public autoCollectAttachments = false;
   public changeNoteBacklinksAlt = false;
+  // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing data.json.
   public deleteAttachmentsWithNote = false;
+  // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing data.json.
   public deleteEmptyFolders = false;
+  // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing data.json.
   public deleteExistFilesWhenMoveNote = false;
   public emptyAttachmentFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
   public ignoreFiles: string[] = [];
@@ -40,8 +43,8 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       const excludePaths = legacySettings.excludePaths ?? [];
 
       if (legacySettings.ignoreFiles) {
-        for (const ignoreFileRegExpStr of legacySettings.ignoreFiles) {
-          excludePaths.push(`/${ignoreFileRegExpStr}$/`);
+        for (const ignoreFileRegExpString of legacySettings.ignoreFiles) {
+          excludePaths.push(`/${ignoreFileRegExpString}$/`);
         }
       }
 
@@ -104,11 +107,13 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
 function pathsValidator(paths: string[]): MaybeReturn<string> {
   for (const path of paths) {
-    if (path.startsWith('/') && path.endsWith('/')) {
-      const regExp = path.slice(1, -1);
-      if (!isValidRegExp(regExp)) {
-        return `Invalid regular expression ${path}`;
-      }
+    if (!(path.startsWith('/') && path.endsWith('/'))) {
+      continue;
+    }
+
+    const regExp = path.slice(1, -1);
+    if (!isValidRegExp(regExp)) {
+      return `Invalid regular expression ${path}`;
     }
   }
 }

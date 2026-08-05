@@ -27,8 +27,8 @@ import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
 import {
   extractLinkFile,
   generateMarkdownLink,
+  hasWikilinkSyntax,
   splitSubpath,
-  testWikilink,
   updateLinksInFile
 } from 'obsidian-dev-utils/obsidian/link';
 import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
@@ -73,8 +73,8 @@ vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/link')>(),
   extractLinkFile: vi.fn(),
   generateMarkdownLink: vi.fn(),
+  hasWikilinkSyntax: vi.fn(),
   splitSubpath: vi.fn(),
-  testWikilink: vi.fn(),
   updateLinksInFile: vi.fn()
 }));
 
@@ -133,7 +133,7 @@ const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockExtractLinkFile = vi.mocked(extractLinkFile);
 const mockGenerateMarkdownLink = vi.mocked(generateMarkdownLink);
 const mockSplitSubpath = vi.mocked(splitSubpath);
-const mockTestWikilink = vi.mocked(testWikilink);
+const mockTestWikilink = vi.mocked(hasWikilinkSyntax);
 const mockUpdateLinksInFile = vi.mocked(updateLinksInFile);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockReferenceToFileChange = vi.mocked(referenceToFileChange);
@@ -142,10 +142,10 @@ function asPrivate(handler: LinksHandler): LinksHandlerPrivate {
   return castTo<LinksHandlerPrivate>(handler);
 }
 
-function createFile(path: string, extension = 'md', parent: null | ParentLike = { path: '' }): TFile {
+function createFile(path: string, extension = 'md', parent?: null | ParentLike): TFile {
   return strictProxy<TFile>({
     extension,
-    parent: parent === null ? null : strictProxy<TFile['parent']>(parent),
+    parent: parent === null ? null : strictProxy<TFile['parent']>(parent ?? { path: '' }),
     path
   });
 }
@@ -481,7 +481,7 @@ describe('LinksHandler', () => {
     it('should throw when aborted after reading the cache', async () => {
       const controller = new AbortController();
       mockGetFileOrNull.mockReturnValue(createFile('note.md'));
-      mockGetCacheSafe.mockImplementation(async () => {
+      mockGetCacheSafe.mockImplementation(() => {
         controller.abort();
         return Promise.resolve(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       });
@@ -722,9 +722,9 @@ describe('ConsistencyCheckResult', () => {
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
     mockIsReferenceCache.mockImplementation((link: Reference) => link === refLink);
     mockIsFrontmatterLinkCache.mockImplementation((link: Reference) => link === fmLink);
-    const str = result.toString(castTo<App>(app), 'report.md');
-    expect(str).toContain('(line 1): `a`');
-    expect(str).toContain('(key prop): `b`');
+    const $string = result.toString(castTo<App>(app), 'report.md');
+    expect($string).toContain('(line 1): `a`');
+    expect($string).toContain('(key prop): `b`');
   });
 
   it('should ignore entries that are neither reference nor frontmatter caches', () => {
@@ -735,8 +735,8 @@ describe('ConsistencyCheckResult', () => {
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
     mockIsReferenceCache.mockReturnValue(false);
     mockIsFrontmatterLinkCache.mockReturnValue(false);
-    const str = result.toString(castTo<App>(app), 'report.md');
-    expect(str).toContain('[[note]]:');
+    const $string = result.toString(castTo<App>(app), 'report.md');
+    expect($string).toContain('[[note]]:');
   });
 
   it('should not push when the array is missing in add', () => {
@@ -750,7 +750,7 @@ describe('ConsistencyCheckResult', () => {
     result.set('note.md', []);
     mockGetFileOrNull.mockReturnValue(createFile('note.md'));
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
-    const str = result.toString(castTo<App>(app), 'report.md');
-    expect(str).toContain('[[note]]:');
+    const $string = result.toString(castTo<App>(app), 'report.md');
+    expect($string).toContain('[[note]]:');
   });
 });

@@ -1,3 +1,1 @@
-import { defaultTranslations } from './default.ts';
-
-export const en = defaultTranslations;
+export { defaultTranslations as en } from './default.ts';

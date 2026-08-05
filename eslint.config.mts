@@ -1,3 +1,1 @@
-import { configs } from './scripts/eslint-config.ts';
-
-export default configs;
+export { configs as default } from './scripts/eslint-config.ts';

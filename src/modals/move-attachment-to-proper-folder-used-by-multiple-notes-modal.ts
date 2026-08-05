@@ -65,11 +65,11 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
       .setName(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.heading))
       .setHeading();
 
-    this.contentEl.appendChild(
+    this.contentEl.append(
       await createFragmentAsync(async (f) => {
         f.appendText(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content.part1));
         f.appendText(' ');
-        f.appendChild(await renderInternalLink({ app: this.app, pathOrAbstractFile: this.attachmentPath }));
+        f.append(await renderInternalLink({ app: this.app, pathOrAbstractFile: this.attachmentPath }));
         f.appendText(' ');
         f.appendText(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content.part2));
         f.createEl('br');
@@ -79,7 +79,7 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
           this.selectedBacklinks.add(backlink);
           f.createEl('br');
           f.createEl('input', { attr: { checked: true }, type: 'checkbox' });
-          f.appendChild(await renderInternalLink({ app: this.app, pathOrAbstractFile: backlink }));
+          f.append(await renderInternalLink({ app: this.app, pathOrAbstractFile: backlink }));
         }
         f.createEl('br');
         f.createEl('br');
@@ -134,7 +134,7 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
   private select(mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode, shouldUseSameActionForOtherProblematicAttachments: boolean): void {
     this.isSelected = true;
     this.resolve({
-      backlinksToCopy: Array.from(this.selectedBacklinks).sort((a, b) => a.localeCompare(b)),
+      backlinksToCopy: [...this.selectedBacklinks].sort((a, b) => a.localeCompare(b)),
       mode,
       shouldUseSameActionForOtherProblematicAttachments
     });

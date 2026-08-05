@@ -67,19 +67,19 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
       .setName(t(($) => $.collectAttachmentUsedByMultipleNotesModal.heading))
       .setHeading();
 
-    this.contentEl.appendChild(
+    this.contentEl.append(
       await createFragmentAsync(async (f) => {
         f.appendText(t(($) => $.collectAttachmentUsedByMultipleNotesModal.content.part1));
         f.appendText(' ');
-        f.appendChild(await renderInternalLink({ app: this.app, pathOrAbstractFile: this.attachmentPath }));
+        f.append(await renderInternalLink({ app: this.app, pathOrAbstractFile: this.attachmentPath }));
         f.appendText(' ');
         f.appendText(t(($) => $.collectAttachmentUsedByMultipleNotesModal.content.part2));
-        f.appendChild(
+        f.append(
           await createElAsync('ul', {}, async (ul) => {
             for (const backlink of this.backlinks) {
-              ul.appendChild(
+              ul.append(
                 await createElAsync('li', {}, async (li) => {
-                  li.appendChild(await renderInternalLink({ app: this.app, pathOrAbstractFile: backlink }));
+                  li.append(await renderInternalLink({ app: this.app, pathOrAbstractFile: backlink }));
                 })
               );
             }

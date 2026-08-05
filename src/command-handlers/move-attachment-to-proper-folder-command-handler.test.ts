@@ -26,7 +26,10 @@ import {
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
-import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
+import {
+  deleteIfNotUsed,
+  DeleteIfNotUsedResult
+} from 'obsidian-dev-utils/obsidian/vault-delete';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeAll,
@@ -71,7 +74,8 @@ vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
   copySafe: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/vault-delete', () => ({
+vi.mock('obsidian-dev-utils/obsidian/vault-delete', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/vault-delete')>(),
   deleteIfNotUsed: vi.fn()
 }));
 
@@ -125,7 +129,7 @@ function createBacklinks(map: Map<string, Reference[]>): CustomArrayDict<Referen
       return map.get(key) ?? null;
     },
     keys(): string[] {
-      return Array.from(map.keys());
+      return [...map.keys()];
     }
   });
 }
@@ -298,7 +302,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       const params = castTo<LoopParams>(mockLoop.mock.calls[0]?.[0]);
       expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
-      expect(params.buildNoticeMessage({ item: attachmentA, iterationStr: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
+      expect(params.buildNoticeMessage({ item: attachmentA, iterationString: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
       expect(params.progressBarTitle).toBe('My Plugin: Moving attachment to proper folder...');
     });
 
@@ -411,7 +415,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         await linkConverter(reference);
         await linkConverter(createReference('non-matching'));
       });
-      mockDeleteIfNotUsed.mockResolvedValue(true);
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
       await runProcessItem(attachment);
 

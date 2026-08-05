@@ -43,11 +43,13 @@ export function registerContextMenuToggleSuite(platform: string): void {
   describe(`Context-menu command toggle (issue #153) [${platform}]`, () => {
     it('adds the file/folder menu commands only while shouldAddCommandsToFileMenu is on', async () => {
       const result = await evalInObsidian({
+        // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
         args: {
           collectItemTitle: COLLECT_ITEM_TITLE,
           moveItemTitle: MOVE_ITEM_TITLE,
           pluginId: PLUGIN_ID
         },
+        // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
         async fn({
           app,
           collectItemTitle,
@@ -85,11 +87,11 @@ export function registerContextMenuToggleSuite(platform: string): void {
               if (Array.isArray(current)) {
                 values = current;
               } else if (current instanceof Map) {
-                values = Array.from(current.values());
+                values = [...current.values()];
               } else {
-                for (const key of Object.keys(record)) {
+                for (const [key, value] of Object.entries(record)) {
                   if (!block.has(key)) {
-                    values.push(record[key]);
+                    values.push(value);
                   }
                 }
               }

@@ -24,27 +24,25 @@ export class FilesHandler {
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
-  public async deleteEmptyFolders(dirName: string): Promise<void> {
-    if (this.pluginSettingsComponent.settings.isPathIgnored(dirName)) {
+  public async deleteEmptyFolders(directoryName: string): Promise<void> {
+    if (this.pluginSettingsComponent.settings.isPathIgnored(directoryName)) {
       return;
     }
 
-    dirName = trimStart({ prefix: './', str: dirName });
+    directoryName = trimStart({ $string: directoryName, prefix: './' });
 
-    let list = await listSafe(this.app, dirName);
+    let list = await listSafe(this.app, directoryName);
     for (const folder of list.folders) {
       await this.deleteEmptyFolders(folder);
     }
 
-    list = await listSafe(this.app, dirName);
-    if (list.files.length === 0 && list.folders.length === 0) {
-      if (await this.app.vault.exists(dirName)) {
-        try {
-          await this.app.vault.adapter.rmdir(dirName, false);
-        } catch (e) {
-          if (await this.app.vault.adapter.exists(dirName)) {
-            throw e;
-          }
+    list = await listSafe(this.app, directoryName);
+    if (list.files.length === 0 && list.folders.length === 0 && await this.app.vault.exists(directoryName)) {
+      try {
+        await this.app.vault.adapter.rmdir(directoryName, false);
+      } catch (error) {
+        if (await this.app.vault.adapter.exists(directoryName)) {
+          throw error;
         }
       }
     }

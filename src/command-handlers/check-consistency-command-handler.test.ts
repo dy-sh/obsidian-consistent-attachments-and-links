@@ -21,14 +21,14 @@ function asPrivate(handler: CheckConsistencyCommandHandler): CommandHandlerPriva
 }
 
 describe('CheckConsistencyCommandHandler', () => {
-  let checkConsistency: ReturnType<typeof vi.fn<() => Promise<void>>>;
+  let runConsistencyCheck: ReturnType<typeof vi.fn<() => Promise<void>>>;
   let handler: CheckConsistencyCommandHandler;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    checkConsistency = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    runConsistencyCheck = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     handler = new CheckConsistencyCommandHandler(strictProxy<ConsistentAttachmentsAndLinksComponent>({
-      checkConsistency
+      checkConsistency: runConsistencyCheck
     }));
   });
 
@@ -36,8 +36,8 @@ describe('CheckConsistencyCommandHandler', () => {
     expect(handler).toBeInstanceOf(CheckConsistencyCommandHandler);
   });
 
-  it('should call checkConsistency on execute', async () => {
+  it('should call runConsistencyCheck on execute', async () => {
     await asPrivate(handler).execute();
-    expect(checkConsistency).toHaveBeenCalledOnce();
+    expect(runConsistencyCheck).toHaveBeenCalledOnce();
   });
 });

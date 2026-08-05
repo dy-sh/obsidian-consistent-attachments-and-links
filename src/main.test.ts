@@ -5,7 +5,6 @@ import {
   vi
 } from 'vitest';
 
-// eslint-disable-next-line import-x/no-rename-default -- The default export is the re-exported Plugin class.
 import MainPlugin from './main.ts';
 import { Plugin } from './plugin.ts';
 

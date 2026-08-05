@@ -26,10 +26,10 @@ import {
 import {
   extractLinkFile,
   generateMarkdownLink,
+  hasWikilinkSyntax,
   LinkPathStyle,
   LinkStyle,
   splitSubpath,
-  testWikilink,
   updateLinksInFile
 } from 'obsidian-dev-utils/obsidian/link';
 import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
@@ -92,34 +92,34 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
     if (!this.has(notePath)) {
       this.set(notePath, []);
     }
-    const arr = ensureNonNullable(this.get(notePath));
-    arr.push(link);
+    const array = ensureNonNullable(this.get(notePath));
+    array.push(link);
   }
 
   public override toString(app: App, reportPath: string): string {
     if (this.size > 0) {
-      let str = `# ${this.title} (${String(this.size)} files)\n`;
+      let $string = `# ${this.title} (${String(this.size)} files)\n`;
       for (const notePath of this.keys()) {
         const note = getFileOrNull({ app, pathOrFile: notePath });
         if (!note) {
           continue;
         }
-        const linkStr = generateMarkdownLink({
+        const linkString = generateMarkdownLink({
           app,
           sourcePathOrFile: reportPath,
           targetPathOrFile: note
         });
-        str += `${linkStr}:\n`;
+        $string += `${linkString}:\n`;
         for (const link of ensureNonNullable(this.get(notePath))) {
           if (isReferenceCache(link)) {
-            str += `- (line ${String(link.position.start.line + 1)}): \`${link.link}\`\n`;
+            $string += `- (line ${String(link.position.start.line + 1)}): \`${link.link}\`\n`;
           } else if (isFrontmatterLinkCache(link)) {
-            str += `- (key ${link.key}): \`${link.link}\`\n`;
+            $string += `- (key ${link.key}): \`${link.link}\`\n`;
           }
         }
-        str += '\n\n';
+        $string += '\n\n';
       }
-      return str;
+      return $string;
     }
     return `# ${this.title}\nNo problems found\n\n`;
   }
@@ -157,7 +157,7 @@ export class LinksHandler {
         badLinks.add(note.path, link);
       }
 
-      if (testWikilink(link.original)) {
+      if (hasWikilinkSyntax(link.original)) {
         wikiLinks.add(note.path, link);
       }
     }
@@ -167,7 +167,7 @@ export class LinksHandler {
         badEmbeds.add(note.path, embed);
       }
 
-      if (testWikilink(embed.original)) {
+      if (hasWikilinkSyntax(embed.original)) {
         wikiEmbeds.add(note.path, embed);
       }
     }
@@ -210,7 +210,7 @@ export class LinksHandler {
     }
 
     const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
-    const result = links.filter((link) => testWikilink(link.original)).length;
+    const result = links.filter((link) => hasWikilinkSyntax(link.original)).length;
     await updateLinksInFile({
       app: this.app,
       linkStyle: LinkStyle.Markdown,
@@ -335,13 +335,13 @@ export class LinksHandler {
       return true;
     }
 
-    const ext = file.extension.toLocaleLowerCase();
+    const extension = file.extension.toLocaleLowerCase();
 
-    if (ext === 'pdf') {
+    if (extension === 'pdf') {
       return subpath.startsWith('#page=');
     }
 
-    if (ext !== MARKDOWN_FILE_EXTENSION) {
+    if (extension !== MARKDOWN_FILE_EXTENSION) {
       return false;
     }
 

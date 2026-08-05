@@ -31,7 +31,7 @@ import type { PluginSettings } from './plugin-settings.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 
 interface ComponentPrivate {
-  handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void;
+  handleDeletedMetadata(file: TFile, previousCache: CachedMetadata): void;
   handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void;
   saveAllOpenNotes(): Promise<void>;
   showBackupWarning(): Promise<void>;
@@ -60,10 +60,10 @@ interface SavableView {
 // --- Hoisted shared state ---
 
 const hoisted = vi.hoisted(() => ({
-  mockAlert: vi.fn((..._args: unknown[]): Promise<void> => noopAsync()),
-  mockCreateFolderSafe: vi.fn((..._args: unknown[]): Promise<void> => noopAsync()),
+  mockAlert: vi.fn((..._arguments: unknown[]): Promise<void> => noopAsync()),
+  mockCreateFolderSafe: vi.fn((..._arguments: unknown[]): Promise<void> => noopAsync()),
   mockGetMarkdownFilesSorted: vi.fn((): TFile[] => []),
-  mockGetOrCreateFile: vi.fn((..._args: unknown[]): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path: 'report.md' })))
+  mockGetOrCreateFile: vi.fn((..._arguments: unknown[]): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path: 'report.md' })))
 }));
 
 vi.mock('./links-handler.ts', () => ({
@@ -84,16 +84,16 @@ vi.mock('./files-handler.ts', () => ({
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
-  getOrCreateFile: (...args: unknown[]): Promise<TFile> => hoisted.mockGetOrCreateFile(...args),
+  getOrCreateFile: (...$arguments: unknown[]): Promise<TFile> => hoisted.mockGetOrCreateFile(...$arguments),
   isMarkdownFile: vi.fn(() => true)
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/modals/alert', () => ({
-  alert: (...args: unknown[]): Promise<void> => hoisted.mockAlert(...args)
+  alert: (...$arguments: unknown[]): Promise<void> => hoisted.mockAlert(...$arguments)
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
-  createFolderSafe: (...args: unknown[]): Promise<void> => hoisted.mockCreateFolderSafe(...args),
+  createFolderSafe: (...$arguments: unknown[]): Promise<void> => hoisted.mockCreateFolderSafe(...$arguments),
   getMarkdownFilesSorted: (): TFile[] => hoisted.mockGetMarkdownFilesSorted()
 }));
 
@@ -223,8 +223,8 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     it('should not reopen the report when it is already open', async () => {
       const component = createComponent();
       vi.spyOn(app.vault, 'modify').mockResolvedValue();
-      vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((cb: (leaf: WorkspaceLeaf) => void) => {
-        cb(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => 'report.md' })));
+      vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((callback: (leaf: WorkspaceLeaf) => void) => {
+        callback(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => 'report.md' })));
       });
       const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();
@@ -234,8 +234,8 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     it('should ignore leaves with an empty display text', async () => {
       const component = createComponent();
       vi.spyOn(app.vault, 'modify').mockResolvedValue();
-      vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((cb: (leaf: WorkspaceLeaf) => void) => {
-        cb(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => '' })));
+      vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((callback: (leaf: WorkspaceLeaf) => void) => {
+        callback(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => '' })));
       });
       const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();
@@ -529,7 +529,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       mockSettings.shouldCollectAttachmentsAutomatically = true;
       const container = activeWindow.createDiv();
       container.addClass('suggestion-container');
-      activeDocument.body.appendChild(container);
+      activeDocument.body.append(container);
       vi.spyOn(container, 'isShown').mockReturnValue(true);
       asPrivate(component).handleMetadataCacheChanged(strictProxy<TFile>({ path: 'note.md' }), new AbortController().signal);
       container.remove();
@@ -554,9 +554,9 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const handleDeletedMetadataSpy = vi.spyOn(asPrivate(component), 'handleDeletedMetadata');
       await loadAndFireLayoutReady(component);
       const file = strictProxy<TFile>({ path: 'note.md' });
-      const prevCache = castTo<CachedMetadata>({});
-      app.metadataCache.trigger('deleted', file, prevCache);
-      expect(handleDeletedMetadataSpy).toHaveBeenCalledWith(file, prevCache);
+      const previousCache = castTo<CachedMetadata>({});
+      app.metadataCache.trigger('deleted', file, previousCache);
+      expect(handleDeletedMetadataSpy).toHaveBeenCalledWith(file, previousCache);
     });
 
     it('should ignore the deleted event with no previous cache', async () => {
