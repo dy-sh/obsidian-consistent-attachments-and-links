@@ -36,10 +36,12 @@ export function registerExcalidrawLinkSkipSuite(platform: string): void {
   describe(`Link rewriting skips .excalidraw.md attachments (issue #151) [${platform}]`, () => {
     it('converts a normal note wiki embed but leaves the .excalidraw.md wiki embed untouched', async () => {
       const result = await evalInObsidian({
+        // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
         args: {
           commandId: REPLACE_WIKI_EMBEDS_COMMAND_ID,
           waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
         },
+        // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
         async fn({
           app,
           commandId,

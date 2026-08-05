@@ -1,4 +1,4 @@
-import type { GetAvailablePathForAttachmentsExtendedFnParams } from 'obsidian-dev-utils/obsidian/attachment-path';
+import type { GetAvailablePathForAttachmentsExtendedFunctionParams } from 'obsidian-dev-utils/obsidian/attachment-path';
 
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -46,7 +46,7 @@ const QUEUE_DRAIN_WAIT_IN_MS = 180_000;
 const QUEUE_DRAIN_POLL_IN_MS = 100;
 
 // After deleting with the plugin disabled, the test lets any stray queued work settle and then asserts the resolver was never called.
-const BASELINE_SETTLE_IN_MS = 5_000;
+const BASELINE_SETTLE_IN_MS = 5000;
 
 // Models custom-attachment-location's expensive resolver: each per-note resolution costs this much, so a bulk delete of N notes costs about N times this cost. Chosen large enough that the handler's serial cost dominates real trash-I/O jitter.
 const SIMULATED_ATTACHMENT_PATH_COST_IN_MS = 25;
@@ -57,6 +57,7 @@ const MIN_LINEAR_COST_FRACTION = 0.5;
 describe('bulk-deletion delete-handler bottleneck', () => {
   it('resolves the attachment path once per deleted note (O(N) freeze), and not at all without the handler', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {
         BASELINE_FOLDER: PERFORMANCE_VAULT_BASELINE_FOLDER,
         BASELINE_SETTLE_IN_MS,
@@ -69,6 +70,7 @@ describe('bulk-deletion delete-handler bottleneck', () => {
         QUEUE_DRAIN_WAIT_IN_MS,
         SIMULATED_ATTACHMENT_PATH_COST_IN_MS
       },
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({
         app,
         BASELINE_FOLDER: baselineFolder,
@@ -203,12 +205,14 @@ describe('bulk-deletion delete-handler bottleneck', () => {
    */
   it('skips the delete handler for index-only removals, resolving no attachment paths', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {
         DRAIN_POLL_IN_MS: QUEUE_DRAIN_POLL_IN_MS,
         DRAIN_WAIT_IN_MS: QUEUE_DRAIN_WAIT_IN_MS,
         INDEX_ONLY_DELETE_COUNT: PERFORMANCE_VAULT_NOTE_COUNT,
         SIMULATED_ATTACHMENT_PATH_COST_IN_MS
       },
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({
         app,
         DRAIN_POLL_IN_MS: drainPollMs,
@@ -227,7 +231,7 @@ describe('bulk-deletion delete-handler bottleneck', () => {
           synthetic: 0
         };
         Object.assign(app.vault.getAvailablePathForAttachments, {
-          extended: async (params: GetAvailablePathForAttachmentsExtendedFnParams): Promise<string> => {
+          extended: async (params: GetAvailablePathForAttachmentsExtendedFunctionParams): Promise<string> => {
             await sleep(simulatedCostMs);
             const notePath = typeof params.notePathOrFile === 'string' ? params.notePathOrFile : params.notePathOrFile?.path ?? '';
             if (notePath === MARKER_PATH) {

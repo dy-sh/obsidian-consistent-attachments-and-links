@@ -1,4 +1,3 @@
 import './styles/main.scss';
-import { Plugin } from './plugin.ts';
 
-export default Plugin;
+export { Plugin as default } from './plugin.ts';

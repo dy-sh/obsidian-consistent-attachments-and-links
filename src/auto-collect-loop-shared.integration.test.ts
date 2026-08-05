@@ -31,7 +31,7 @@ import {
 const PLUGIN_ID = 'consistent-attachments-and-links';
 const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
 // A generous window in which a still-looping (unfixed) auto-collect would escalate the deduplication suffix.
-const SETTLE_IN_MILLISECONDS = 6_000;
+const SETTLE_IN_MILLISECONDS = 6000;
 
 interface AutoCollectLoopResult {
   readonly collectedMisplaced: boolean;
@@ -49,11 +49,13 @@ export function registerAutoCollectLoopSuite(platform: string): void {
   describe(`Auto-collect does not loop on already-proper attachments (issue #152) [${platform}]`, () => {
     it('collects a misplaced attachment into its proper folder and does not re-collect the deduplication-parked one', async () => {
       const result = await evalInObsidian({
+        // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
         args: {
           pluginId: PLUGIN_ID,
           settleInMilliseconds: SETTLE_IN_MILLISECONDS,
           waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
         },
+        // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
         async fn({
           app,
           lib: { waitUntil },
@@ -98,11 +100,11 @@ export function registerAutoCollectLoopSuite(platform: string): void {
               if (Array.isArray(current)) {
                 values = current;
               } else if (current instanceof Map) {
-                values = Array.from(current.values());
+                values = [...current.values()];
               } else {
-                for (const key of Object.keys(record)) {
+                for (const [key, value] of Object.entries(record)) {
                   if (!block.has(key)) {
-                    values.push(record[key]);
+                    values.push(value);
                   }
                 }
               }
@@ -128,7 +130,7 @@ export function registerAutoCollectLoopSuite(platform: string): void {
           const vaultUnknown: unknown = app.vault;
           const vaultConfig = vaultUnknown as VaultConfigAccess;
           const priorAttachmentFolder = vaultConfig.getConfig('attachmentFolderPath');
-          const priorAutoCollect = settings.shouldCollectAttachmentsAutomatically;
+          const isPriorAutoCollect = settings.shouldCollectAttachmentsAutomatically;
 
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
           const properFolder = `ac152-proper-${stamp}`;
@@ -210,19 +212,19 @@ export function registerAutoCollectLoopSuite(platform: string): void {
             // Give any still-looping (unfixed) auto-collect ample time to escalate the deduplication suffix.
             await sleep(settleInMilliseconds);
 
-            const collectedMisplaced = Boolean(app.vault.getAbstractFileByPath(expectedPlainProperPath))
+            const isCollectedMisplaced = Boolean(app.vault.getAbstractFileByPath(expectedPlainProperPath))
               && !app.vault.getAbstractFileByPath(plainSrcPath);
-            const parkedStillExists = Boolean(app.vault.getAbstractFileByPath(expectedParkedPath));
-            const escalatedSuffixExists = Boolean(app.vault.getAbstractFileByPath(escalatedPath));
+            const isParkedStillExists = Boolean(app.vault.getAbstractFileByPath(expectedParkedPath));
+            const isEscalatedSuffixExists = Boolean(app.vault.getAbstractFileByPath(escalatedPath));
 
             return {
-              collectedMisplaced,
-              escalatedSuffixExists,
-              parkedStillExists,
+              collectedMisplaced: isCollectedMisplaced,
+              escalatedSuffixExists: isEscalatedSuffixExists,
+              parkedStillExists: isParkedStillExists,
               settingsFound: true
             };
           } finally {
-            settings.shouldCollectAttachmentsAutomatically = priorAutoCollect;
+            settings.shouldCollectAttachmentsAutomatically = isPriorAutoCollect;
             for (const path of createdPaths) {
               await trashIfExists(path);
             }

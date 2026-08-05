@@ -324,7 +324,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   }
 
   private async checkDangerousSetting(settingKey: keyof PluginSettings, settingName: string): Promise<void> {
-    if (!this.pluginSettingsComponent.settings[settingKey]) {
+    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- `settingKey` is a `keyof PluginSettings`, so the lookup is statically known to exist.
+    if (!(this.pluginSettingsComponent.settings[settingKey] as unknown)) {
       return;
     }
 

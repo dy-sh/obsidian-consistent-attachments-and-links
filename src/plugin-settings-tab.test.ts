@@ -69,10 +69,10 @@ async function createTab(): Promise<CreatedTab> {
   const plugin = strictProxy<Plugin>({ app: app.asOriginalType__() });
   const toggles: ToggleComponent[] = [];
   const addToggleSpy = vi.spyOn(SettingEx.prototype, 'addToggle');
-  addToggleSpy.mockImplementation(function capturingAddToggle(this: SettingEx, cb: (toggle: ToggleComponent) => unknown): SettingEx {
+  addToggleSpy.mockImplementation(function capturingAddToggle(this: SettingEx, callback: (toggle: ToggleComponent) => unknown): SettingEx {
     return originalAddToggle.call(this, (toggle: ToggleComponent) => {
       toggles.push(toggle);
-      cb(toggle);
+      callback(toggle);
     });
   });
   const tab = new PluginSettingsTab({
@@ -86,7 +86,7 @@ async function createTab(): Promise<CreatedTab> {
 }
 
 async function flushMicrotasks(): Promise<void> {
-  for (let i = 0; i < 20; i++) {
+  for (let index = 0; index < 20; index++) {
     await noopAsync();
   }
 }
@@ -112,9 +112,9 @@ function renderRows(tab: PluginSettingsTab): void {
 beforeAll(async () => {
   await initI18N(translationsMap);
   // Obsidian-dev-utils' bind() probes setPlaceholderValue to detect text-based components.
-  for (const proto of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
-    if (!('setPlaceholderValue' in proto)) {
-      Object.defineProperty(proto, 'setPlaceholderValue', { value: undefined });
+  for (const prototype of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
+    if (!('setPlaceholderValue' in prototype)) {
+      Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });
     }
   }
 });

@@ -74,7 +74,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationStr }) => `Checking note ${iterationStr} - ${item.path}`,
+      buildNoticeMessage: ({ item, iterationString }) => `Checking note ${iterationString} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -94,15 +94,15 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const note = await getOrCreateFile(this.app, notePath);
     await this.app.vault.modify(note, text);
 
-    let fileOpened = false;
+    let isFileOpened = false;
     this.app.workspace.iterateAllLeaves((leaf) => {
       if (leaf.getDisplayText() !== '' && notePath.startsWith(leaf.getDisplayText())) {
-        fileOpened = true;
+        isFileOpened = true;
       }
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Can change in await calls.
-    if (!fileOpened) {
+    if (!isFileOpened) {
       await this.app.workspace.openLinkText(notePath, '/', false);
     }
   }
@@ -115,7 +115,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationStr }) => `Converting embed paths to relative ${iterationStr} - ${item.path}`,
+      buildNoticeMessage: ({ item, iterationString }) => `Converting embed paths to relative ${iterationString} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -147,7 +147,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public convertAllEmbedsPathsToRelativeCurrentNote(note: TFile): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
+      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
       operationName: 'Convert all embed paths to relative in current note'
     });
   }
@@ -162,7 +162,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal,
-      buildNoticeMessage: ({ item, iterationStr }) => `Converting link paths to relative ${iterationStr} - ${item.path}`,
+      buildNoticeMessage: ({ item, iterationString }) => `Converting link paths to relative ${iterationString} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -192,7 +192,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public convertAllLinkPathsToRelativeCurrentNote(note: TFile): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
+      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
       operationName: 'Convert all link paths to relative in current note'
     });
   }
@@ -221,7 +221,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationStr }) => `Replacing wiki embeds with markdown embeds ${iterationStr} - ${item.path}`,
+      buildNoticeMessage: ({ item, iterationString }) => `Replacing wiki embeds with markdown embeds ${iterationString} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -254,7 +254,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(note: TFile): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: true, notePath: note.path })),
+      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: true, notePath: note.path })),
       operationName: 'Replace all wiki embeds with markdown embeds in current note'
     });
   }
@@ -267,7 +267,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationStr }) => `Replacing wikilinks with markdown links ${iterationStr} - ${item.path}`,
+      buildNoticeMessage: ({ item, iterationString }) => `Replacing wikilinks with markdown links ${iterationString} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
@@ -300,7 +300,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public replaceAllWikilinksWithMarkdownLinksCurrentNote(note: TFile): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: note.path })),
+      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: note.path })),
       operationName: 'Replace all wiki embeds with markdown embeds in current note'
     });
   }
@@ -309,9 +309,9 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     invokeAsyncSafely(() => this.showBackupWarning());
 
     this.registerEvent(
-      this.app.metadataCache.on('deleted', (file, prevCache) => {
-        if (prevCache) {
-          this.handleDeletedMetadata(file, prevCache);
+      this.app.metadataCache.on('deleted', (file, previousCache) => {
+        if (previousCache) {
+          this.handleDeletedMetadata(file, previousCache);
         }
       })
     );
@@ -319,7 +319,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     this.registerEvent(this.app.metadataCache.on('changed', (file) => {
       addToQueue({
         abortSignal: this.abortSignalComponent.abortSignal,
-        operationFn: (abortSignal) => {
+        operationFunction: (abortSignal) => {
           this.handleMetadataCacheChanged(file, abortSignal);
         },
         operationName: 'handleMetadataCacheChanged'
@@ -327,7 +327,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     }));
   }
 
-  private handleDeletedMetadata(file: TFile, prevCache: CachedMetadata): void {
+  private handleDeletedMetadata(file: TFile, previousCache: CachedMetadata): void {
     if (
       !this.pluginSettingsComponent.settings.shouldDeleteAttachmentsWithNote || this.pluginSettingsComponent.settings.isPathIgnored(file.path)
       || !isMarkdownFile(file)
@@ -335,7 +335,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       return;
     }
 
-    this.deletedNoteCache.set(file.path, prevCache);
+    this.deletedNoteCache.set(file.path, previousCache);
   }
 
   private handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void {

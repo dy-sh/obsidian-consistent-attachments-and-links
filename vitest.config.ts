@@ -1,3 +1,1 @@
-import { config } from './scripts/vitest-config.ts';
-
-export default config;
+export { config as default } from './scripts/vitest-config.ts';

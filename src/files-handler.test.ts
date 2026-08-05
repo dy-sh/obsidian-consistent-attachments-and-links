@@ -76,7 +76,9 @@ const mockListSafe = vi.mocked(listSafe);
 describe('FilesHandler', () => {
   let app: App;
   let exists: ReturnType<typeof vi.fn<(path: string, isCaseSensitive?: boolean) => Promise<boolean>>>;
+  // eslint-disable-next-line unicorn/consistent-boolean-name -- `sensitive` is an Obsidian `DataAdapter.exists` parameter name.
   let adapterExists: ReturnType<typeof vi.fn<(normalizedPath: string, sensitive?: boolean) => Promise<boolean>>>;
+  // eslint-disable-next-line unicorn/consistent-boolean-name -- `recursive` is an Obsidian `DataAdapter.rmdir` parameter name.
   let rmdir: ReturnType<typeof vi.fn<(normalizedPath: string, recursive: boolean) => Promise<void>>>;
   let handler: FilesHandler;
   let pluginSettingsComponent: PluginSettingsComponent;
@@ -95,7 +97,9 @@ describe('FilesHandler', () => {
     };
 
     exists = vi.fn<(path: string, isCaseSensitive?: boolean) => Promise<boolean>>().mockResolvedValue(true);
+    // eslint-disable-next-line unicorn/consistent-boolean-name -- `sensitive` is an Obsidian `DataAdapter.exists` parameter name.
     adapterExists = vi.fn<(normalizedPath: string, sensitive?: boolean) => Promise<boolean>>().mockResolvedValue(false);
+    // eslint-disable-next-line unicorn/consistent-boolean-name -- `recursive` is an Obsidian `DataAdapter.rmdir` parameter name.
     rmdir = vi.fn<(normalizedPath: string, recursive: boolean) => Promise<void>>().mockResolvedValue(undefined);
 
     app = strictProxy<App>({

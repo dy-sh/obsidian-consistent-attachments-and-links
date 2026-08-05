@@ -49,7 +49,7 @@ function createApp(): App {
 
 async function flushOnOpen(): Promise<void> {
   // Let the async onOpenAsync register all buttons/toggles before the auto-close timer fires.
-  for (let i = 0; i < 10; i++) {
+  for (let index = 0; index < 10; index++) {
     await noopAsync();
   }
 }
@@ -71,20 +71,20 @@ describe('selectMode', () => {
     // REAL Setting so interactions can be driven through their real DOM/handlers.
     vi.spyOn(SettingClass.prototype, 'addButton').mockImplementation(function capturingAddButton(
       this: SettingClass,
-      cb: (button: ButtonComponent) => unknown
+      callback: (button: ButtonComponent) => unknown
     ): SettingClass {
       return originalAddButton.call(this, (button: ButtonComponent) => {
         captured.buttons.push(button);
-        cb(button);
+        callback(button);
       });
     });
     vi.spyOn(SettingClass.prototype, 'addToggle').mockImplementation(function capturingAddToggle(
       this: SettingClass,
-      cb: (toggle: ToggleComponent) => unknown
+      callback: (toggle: ToggleComponent) => unknown
     ): SettingClass {
       return originalAddToggle.call(this, (toggle: ToggleComponent) => {
         captured.toggles.push(toggle);
-        cb(toggle);
+        callback(toggle);
       });
     });
 
@@ -108,7 +108,7 @@ describe('selectMode', () => {
   it('should render Skip, Copy all, Select and Cancel buttons in non-cancel mode', async () => {
     const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'] });
     await flushOnOpen();
-    expect(captured.buttons.map(getButtonText)).toStrictEqual(['Skip', 'Copy all', 'Select', 'Cancel']);
+    expect(captured.buttons.map((button) => getButtonText(button))).toStrictEqual(['Skip', 'Copy all', 'Select', 'Cancel']);
     await vi.advanceTimersByTimeAsync(0);
     await promise;
   });
@@ -165,7 +165,7 @@ describe('selectMode', () => {
   it('should only render the Cancel button in cancel mode', async () => {
     const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md'], isCancelMode: true });
     await flushOnOpen();
-    expect(captured.buttons.map(getButtonText)).toStrictEqual(['Cancel']);
+    expect(captured.buttons.map((button) => getButtonText(button))).toStrictEqual(['Cancel']);
     expect(captured.toggles).toHaveLength(0);
     clickButton(captured.buttons[0]);
     const result = await promise;

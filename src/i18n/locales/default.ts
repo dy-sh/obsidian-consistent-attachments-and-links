@@ -10,7 +10,7 @@ export const defaultTranslations = {
       part2: 'This operation cannot be undone.'
     },
     progressBar: {
-      message: 'Collecting attachments {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Collecting attachments {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Collecting attachments...'
     }
   },
@@ -42,7 +42,7 @@ export const defaultTranslations = {
   },
   moveAttachmentToProperFolder: {
     progressBar: {
-      message: 'Moving attachment to proper folder {{iterationStr}} - \'{{attachmentFilePath}}\'.',
+      message: 'Moving attachment to proper folder {{iterationString}} - \'{{attachmentFilePath}}\'.',
       title: 'Moving attachment to proper folder...'
     },
     unusedAttachment: 'Attachment {{attachmentPath}} is not used by any note. It will not be moved.'
