@@ -17,7 +17,7 @@
  */
 
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -30,13 +30,7 @@ const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
 describe('Link rewriting skips .excalidraw.md attachments (issue #151)', () => {
   it('converts a normal note wiki embed but leaves the .excalidraw.md wiki embed untouched', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {
-        commandId: REPLACE_WIKI_EMBEDS_COMMAND_ID,
-        waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
-      },
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({
+      async callback({
         app,
         commandId,
         lib: { waitUntil },
@@ -96,7 +90,11 @@ describe('Link rewriting skips .excalidraw.md attachments (issue #151)', () => {
           originalEmbed: embed
         };
       },
-      vaultPath: getTempVault().path
+      input: {
+        commandId: REPLACE_WIKI_EMBEDS_COMMAND_ID,
+        waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
+      },
+      vaultPath: getTemporaryVault().path
     });
 
     // The normal note's wiki embed was rewritten to a Markdown embed.

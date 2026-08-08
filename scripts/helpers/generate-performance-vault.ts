@@ -43,7 +43,7 @@ const SEEDED_PLUGIN_DATA = {
 
 /**
  * Builds the file map for the performance vault, written to disk by
- * `TempVault.populate()` after the plugin is copied in but before Obsidian opens it. The
+ * `TemporaryVault.populate()` after the plugin is copied in but before Obsidian opens it. The
  * vault holds two folders of plain notes (one deleted with the plugin enabled, one with
  * it disabled) plus the seeded plugin `data.json`.
  *

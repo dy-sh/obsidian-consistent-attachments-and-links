@@ -23,7 +23,7 @@ import type {
 } from 'obsidian';
 
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -36,14 +36,7 @@ const MOVE_ITEM_TITLE = 'Move attachment to proper folder';
 describe('Context-menu command toggle (issue #153)', () => {
   it('adds the file/folder menu commands only while shouldAddCommandsToFileMenu is on', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {
-        collectItemTitle: COLLECT_ITEM_TITLE,
-        moveItemTitle: MOVE_ITEM_TITLE,
-        pluginId: PLUGIN_ID
-      },
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({
+      async callback({
         app,
         collectItemTitle,
         moveItemTitle,
@@ -144,7 +137,12 @@ describe('Context-menu command toggle (issue #153)', () => {
           settingsFound: true
         };
       },
-      vaultPath: getTempVault().path
+      input: {
+        collectItemTitle: COLLECT_ITEM_TITLE,
+        moveItemTitle: MOVE_ITEM_TITLE,
+        pluginId: PLUGIN_ID
+      },
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

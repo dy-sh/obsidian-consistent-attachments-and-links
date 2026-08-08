@@ -22,7 +22,7 @@
  */
 
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -43,14 +43,7 @@ interface AutoCollectLoopResult {
 describe('Auto-collect does not loop on already-proper attachments (issue #152)', () => {
   it('collects a misplaced attachment into its proper folder and does not re-collect the deduplication-parked one', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {
-        pluginId: PLUGIN_ID,
-        settleInMilliseconds: SETTLE_IN_MILLISECONDS,
-        waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
-      },
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({
+      async callback({
         app,
         lib: { waitUntil },
         pluginId,
@@ -227,7 +220,12 @@ describe('Auto-collect does not loop on already-proper attachments (issue #152)'
           vaultConfig.setConfig('attachmentFolderPath', priorAttachmentFolder);
         }
       },
-      vaultPath: getTempVault().path
+      input: {
+        pluginId: PLUGIN_ID,
+        settleInMilliseconds: SETTLE_IN_MILLISECONDS,
+        waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
+      },
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);
