@@ -5,7 +5,14 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/dy-sh/obsidian-consistent-attachments-and-links/total)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases)
 [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links)
 
-The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your vault to make it more consistent. Next, the plugin will automatically maintain the consistency of your library.
+[Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault
+can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else —
+in another editor, published to GitHub, or exported as a folder. Move a note and its attachments stay
+behind; delete one and you either strand files or take someone else's with you.
+
+This plugin makes a vault consistent in the plainest sense: every link a real relative path in standard
+Markdown, every attachment in its note's own folder. Then it keeps it that way — moving attachments
+with their note, updating links on rename, and cleaning up what is left behind.
 
 > [!WARNING]
 >
@@ -13,145 +20,48 @@ The plugin for [Obsidian](https://obsidian.md/) allows you to reorganize your va
 
 ## Demo vault
 
-A demo vault with usage examples ships with every release. You can access it via any of the following:
+**The documentation is a demo vault.** Every feature has a note that explains what it does and why you
+would want it, with example notes to run it against.
+
+**[Start reading here](<./demo-vault/00 Start.md>)** — it is plain markdown, so it works on GitHub with
+nothing installed.
+
+A copy of the vault ships with every release. You can access it via any of the following:
 
 1. Running the **Consistent Attachments and Links: Open demo vault** command.
 2. Downloading `consistent-attachments-and-links-demo-vault-<version>.zip` (`<version>` is the release version) from the [Releases](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases).
 3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
 
-## What's the idea
+## What it does
 
-The idea is to have all links between notes and attachments in strict accordance with the markdown format and support their relative paths. This is useful when you want to open a note in another program that does not know where your vault folder is, or for example you want to publish and read your notes on GitHub or another site that allows you to upload markdown files and you need compatibility.
-
-Ideally, all attachments should be located in the note folder or its subfolders. It is not necessary, but in this case, you can easily export a note to a separate folder outside of your vault, knowing that all its attachments are with it. By deleting a note, you will know for sure that you will not delete the attachments you need or leave unnecessary garbage in your library.
-
-If you store attachments in a folder with a note or its subfolders, the plugin will automatically move\delete attachments when you move or delete a note.
-
-Obsidian has a very clever file link search, but this can be a problem for you if you want your notes to be compatible with other programs. This is the main point of the plugin.
-
-## Recommended Obsidian settings
-
-The following Obsidian settings are not mandatory but can improve performance and interoperability of your vault.
-
-- To improve performance of certain plugin operations, consider installing [`Backlink Cache`](https://obsidian.md/plugins?id=backlink-cache) plugin.
-- Disabling `[[Wikilinks]]` in favor of `[Markdown Links](Markdown%20Links.md)` makes your vault more compatible with other markdown editors.
-
-![Wikilinks](./images/wikilinks.png)
-
-- Setting `New link format` to `Relative path to file` makes your vault more compatible with other markdown editors.
-
-![New link format](./images/new-link-format.png)
-
-- If you want to use `[Markdown Links](Markdown%20Links.md)` but find those `%20` parts unreadable, consider installing [`Better Markdown Links`](https://obsidian.md/plugins?id=better-markdown-links) plugin.
+- **Attachments follow their note.** Move or delete a note and its attachments go with it — safely,
+  never taking a file another note still references.
+  [01 Attachments move with their note](<./demo-vault/01 Attachments move with their note.md>)
+- **Links stay valid.** Renaming and moving rewrite the links that point at what you touched.
+  [02 Links stay valid on rename and move](<./demo-vault/02 Links stay valid on rename and move.md>)
+- **Audit the whole vault** and get a report of bad links, bad embed paths, wikilinks and wiki-embeds,
+  changing nothing.
+  [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
+- **Convert an existing vault** — wikilinks to Markdown links, paths to relative, attachments collected
+  into place, empty folders swept — in one command or step by step.
+  [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) ·
+  [07 Commands](<./demo-vault/07 Commands.md>)
+- **Settings**, including which of the destructive operations are unlocked.
+  [05 Settings](<./demo-vault/05 Settings.md>)
+- **Obsidian's own settings matter too** — link format, attachment location — and the vault explains
+  which ones to change and why.
+  [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
 
 <!-- markdownlint-disable MD033 -->
 ## `Attachment Subfolder` setting <span id="attachment-subfolder-setting"></span>
-<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-enable MD033 -->
 
-Starting from [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) `Attachment Subfolder` setting is no longer managed by the plugin.
+Moved to [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>).
 
-Currently the plugin relies on built-in Obsidian's [`Default location for new attachment`](https://help.obsidian.md/Editing+and+formatting/Attachments#Change+default+attachment+location) setting.
-
-If you need better control over the attachment folder, consider installing [`Obsidian Custom Attachment location`](https://obsidian.md/plugins?id=obsidian-custom-attachment-location) plugin.
-
-## How to check the consistency of the vault
-
-Run `Check Vault Consistency` command and see the report.
-
-## How to achieve consistency of an existing vault
-
-> It is very important to make a backup of the entire vault folder before these steps.
-
-Configure [`Attachment Subfolder` setting](#attachment-subfolder-setting).
-
-Run the commands in the following order to reorganize vault:
-
-- `Replace All Wiki Links with Markdown Links`
-- `Replace All Wiki Embeds with Markdown Embeds`
-- `Convert All Embed Paths to Relative`
-- `Convert All Link Paths to Relative`
-- `Rename All Attachments` (using [`Unique attachments` plugin][Unique attachments], optional)
-- `Collect All Attachments`
-- `Delete Empty Folders`
-
-Or just run `Reorganize Vault` command, then rename all attachments using [`Unique attachments` plugin][Unique attachments] (optional)
-
-You can look at the console log to make sure everything worked out without errors. Errors can point to broken links (paths to files that no longer exist).
-
-## How this plugin helps maintain consistency
-
-When you move a note in Obsidian, the plugin checks if attachments need to be moved and links updated. If attachments are in a folder with a note or subfolders, then the plugin moves the attachments along with the note.
-
-It does this safely, making sure not to move attachments that are referenced by other notes. If you move a note with attachments that are used in other notes, the plugin automatically creates a copy of this files and redirects the moved note to them.
-
-If you move a note to a folder where there are already attachments with the same names, the plugin can work in two modes, depending on `Delete Duplicate Attachments on Note Move` setting:
-
-- **Disabled**: Duplicate files will be renamed (new names are generated), and then moved to a new folder with a note.
-- **Enabled**: It will remove the duplicate files that you move, leaving the ones that are already in the target folder. This is useful if you have unique names for all attachments. You can use [`Unique attachments` plugin][Unique attachments] plugin which renames attachments by generating file names based on hashing of file content (it's great to use both of these plugins in conjunction with this option enabled).
-
-When deleting a note, the plugin can delete all attachments that are no longer in use. This option can be disabled.
-
-The plugin is also able to automatically delete empty folders that result from moving files, as well as update the text of links when renaming notes (optionally).
-
-## Commands
-
-The plugin has the following commands that you can call:
-
-### Check Vault Consistency
-
-Check if there are vault consistency problems and print the report. The report will contain:
-
-- Bad links
-- Bad embed paths
-- Wiki-links
-- Wiki-embeds
-
-### Reorganize Vault
-
-Runs the following commands one by one:
-
-- `Replace All Wiki Links with Markdown Links`
-- `Replace All Wiki Embeds with Markdown Embeds`
-- `Convert All Embed Paths to Relative`
-- `Convert All Link Paths to Relative`
-- `Collect All Attachments`
-- `Delete Empty Folders`
-
-This is the fastest way to clean up your vault.
-
-### Replace All Wiki Links with Markdown Links
-
-Searches for all wiki links in notes and converts them into regular markdown links.
-
-Example: `[[readme]]` will turn into `[readme](readme.md)`
-
-### Replace All Wiki Embeds with Markdown Embeds
-
-Searches for all wiki embeds in notes and converts them into regular markdown embeds.
-
-Example: `![[readme]]` will turn into `![readme](readme.md)`
-
-### Convert All Embed Paths to Relative
-
-Searches for all embeds in notes and converts their paths to relative format.
-
-Example: `![](title.png)` will turn into `![](../attachments/title.png)`
-
-This is one of the most important steps on the road to consistency, ensuring that all embed links now point to the correct files accurately.
-
-### Convert All Link Paths to Relative
-
-Does the same as "Convert all embed paths to relative" for links.
-
-Example: `[](readme.md)` will turn into `[](../readme.md)`
-
-### Collect All Attachments
-
-The plugin finds all the notes and moves all attachments in the note folder. This is useful if you are not sure if all attachments are in your notes folders and you want to clean up your library. It relies on [`Attachment Subfolder` setting](#attachment-subfolder-setting).
-
-### Delete Empty Folders
-
-Removes all empty folders in your library.
+Since [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0)
+this setting is no longer managed by the plugin; it follows Obsidian's built-in
+[`Default location for new attachments`](https://help.obsidian.md/Editing+and+formatting/Attachments#Change+default+attachment+location).
+This heading stays so links already pointing at it keep resolving.
 
 ## Installation
 
@@ -177,6 +87,14 @@ window.DEBUG.enable('consistent-attachments-and-links');
 
 For more details, refer to the [documentation](https://mnaoumov.dev/obsidian-dev-utils/guides/debugging/).
 
+## Changelog
+
+All notable changes to this project will be documented in the [CHANGELOG](./CHANGELOG.md).
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING](./CONTRIBUTING.md) to get set up.
+
 ## Support
 
 <!-- markdownlint-disable MD033 -->
@@ -194,5 +112,3 @@ For more details, refer to the [documentation](https://mnaoumov.dev/obsidian-dev
 © [dy-sh](https://github.com/dy-sh/)
 
 Maintainer: [Michael Naumov](https://github.com/mnaoumov/)
-
-[Unique attachments]: https://obsidian.md/plugins?id=unique-attachments

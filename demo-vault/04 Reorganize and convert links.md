@@ -8,12 +8,18 @@ The plugin's headline bulk feature turns an inconsistent vault into a portable o
 
 ## The individual commands
 
-- **Replace All Wiki Links with Markdown Links** - `[[readme]]` becomes `[readme](readme.md)`.
-- **Replace All Wiki Embeds with Markdown Embeds** - `![[readme]]` becomes `![readme](readme.md)`.
-- **Convert All Embed Paths to Relative** - rewrites embed paths to be relative to the note.
-- **Convert All Link Paths to Relative** - the same, for links.
-- **Collect All Attachments** - moves every attachment into its note's folder.
-- **Delete Empty Folders** - removes folders left empty afterwards.
+- **Replace All Wiki Links with Markdown Links**
+  - `[[readme]]` becomes `[readme](readme.md)`.
+- **Replace All Wiki Embeds with Markdown Embeds**
+  - `![[readme]]` becomes `![readme](readme.md)`.
+- **Convert All Embed Paths to Relative**
+  - rewrites embed paths to be relative to the note.
+- **Convert All Link Paths to Relative**
+  - the same, for links.
+- **Collect All Attachments**
+  - moves every attachment into its note's folder.
+- **Delete Empty Folders**
+  - removes folders left empty afterwards.
 
 Each of these also has a **current note** variant that acts only on the active note.
 
@@ -35,10 +41,10 @@ Some plugins store data in files that are Markdown on disk but are really attach
 
 ### Try it
 
-1. Open [Diagram.excalidraw](<./Examples/Diagram.excalidraw.md>) - it references [Shared target](<./Examples/Shared target.md>) with a wikilink, exactly as Excalidraw stores its embeds.
+1. Open [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>) - it references [Shared target](<./Materials/02 Links stay valid on rename and move/Shared target.md>) with a wikilink, exactly as Excalidraw stores its embeds.
 2. Run **Replace All Wiki Links with Markdown Links** (or **Reorganize Vault**).
-3. Open [Source note](<./Examples/Source note.md>) - its `[[Shared target]]` wikilink became a Markdown link.
-4. Re-open [Diagram.excalidraw](<./Examples/Diagram.excalidraw.md>) - its wikilink is **unchanged**, because the file is treated as an attachment.
+3. Open [Source note](<./Materials/02 Links stay valid on rename and move/Source note.md>) - its `[[Shared target]]` wikilink became a Markdown link.
+4. Re-open [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>) - its wikilink is **unchanged**, because the file is treated as an attachment.
 
 ## The file and folder context menu commands
 
