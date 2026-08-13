@@ -1,5 +1,3 @@
-[Docs](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/)
-
 # Settings
 
 Open **Settings -> Community plugins -> Consistent Attachments and Links** to configure the plugin. Each option below lists the setting key stored in the plugin's `data.json`.
@@ -36,4 +34,4 @@ Open **Settings -> Community plugins -> Consistent Attachments and Links** to co
 - `treatAsAttachmentExtensions` - extensions that should be treated as attachments even though they are Markdown, such as `.excalidraw.md`. These files move with their note like any other attachment, and the link-rewriting commands (convert paths, replace wikilinks with Markdown links, reorganize vault) leave their internal links untouched - so, for example, the wikilinks Excalidraw stores for its embedded images keep working.
 - `shouldShowBackupWarning` - show the backup warning for destructive operations; while it is on, the plugin reverts the most dangerous settings on load as a safety net.
 
-Change any of these, then work through [[01 Attachments move with their note]], [[02 Links stay valid on rename and move]], [[03 Check vault consistency]], and [[04 Reorganize and convert links]] to watch them take effect.
+Change any of these, then work through [01 Attachments move with their note](<./01 Attachments move with their note.md>), [02 Links stay valid on rename and move](<./02 Links stay valid on rename and move.md>), [03 Check vault consistency](<./03 Check vault consistency.md>), and [04 Reorganize and convert links](<./04 Reorganize and convert links.md>) to watch them take effect.
