@@ -2,13 +2,13 @@
 
 Obsidian already updates links when you rename a file, but this plugin extends that guarantee to the plugin's own consistent, relative-Markdown model and keeps working across moves and deletions. When **Update Links** (`shouldUpdateLinks`) is on, renaming or moving a note rewrites every incoming and outgoing link so nothing breaks.
 
-This note has a small worked example in the [Examples/Source note](<./Examples/Source note.md>) / [Examples/Shared target](<./Examples/Shared target.md>) pair.
+This note has a small worked example in the [Examples/Source note](<./Materials/02 Links stay valid on rename and move/Source note.md>) / [Examples/Shared target](<./Materials/02 Links stay valid on rename and move/Shared target.md>) pair.
 
 ## Try it
 
-1. Open [Examples/Source note](<./Examples/Source note.md>). It links to [Examples/Shared target](<./Examples/Shared target.md>).
+1. Open [Examples/Source note](<./Materials/02 Links stay valid on rename and move/Source note.md>). It links to [Examples/Shared target](<./Materials/02 Links stay valid on rename and move/Shared target.md>).
 2. Rename `Shared target` (right-click -> **Rename**, or press F2) to something like `Renamed target`.
-3. Return to [Examples/Source note](<./Examples/Source note.md>) - the link now points at the renamed note and still resolves.
+3. Return to [Examples/Source note](<./Materials/02 Links stay valid on rename and move/Source note.md>) - the link now points at the renamed note and still resolves.
 4. Now move `Shared target` (or its renamed version) into a new folder. The link is rewritten again to the new path.
 
 ## What to notice
