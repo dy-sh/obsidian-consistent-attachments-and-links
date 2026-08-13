@@ -43,6 +43,7 @@ export class Plugin extends PluginBase {
         pluginEventSource: new PluginEventSourceImpl(this)
       })
     );
+    this.pluginSettingsComponent = pluginSettingsComponent;
 
     const linksHandler = new LinksHandler({
       app: this.app,

@@ -1,10 +1,8 @@
-[Docs](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/)
-
 # Attachments move with their note
 
 When an attachment lives in the same folder as the note that uses it (or a subfolder), this plugin moves the attachment along with the note whenever you move the note. It does this safely: an attachment that is also referenced by other notes is copied rather than stolen away, so no other note is left with a broken embed.
 
-This vault sets Obsidian's **Default location for new attachments** to `_assets/attachments` (see [[05 Settings]]), and the plugin's own **Move Attachments with Note** behavior (`shouldMoveAttachmentsWithNote`) governs the move.
+This vault sets Obsidian's **Default location for new attachments** to `_assets/attachments` (see [05 Settings](<./05 Settings.md>)), and the plugin's own **Move Attachments with Note** behavior (`shouldMoveAttachmentsWithNote`) governs the move.
 
 ## Try it
 
@@ -20,4 +18,4 @@ This vault sets Obsidian's **Default location for new attachments** to `_assets/
 - If the same image were embedded in another note too, the plugin would copy it instead of moving it, controlled by the **Attachment used by multiple notes** mode (`collectAttachmentUsedByMultipleNotesMode`).
 - Deleting the note can also delete its now-unused attachments when **Delete Attachments with Note** (`shouldDeleteAttachmentsWithNote`) is enabled.
 
-Next: see how links survive the same operations in [[02 Links stay valid on rename and move]].
+Next: see how links survive the same operations in [02 Links stay valid on rename and move](<./02 Links stay valid on rename and move.md>).

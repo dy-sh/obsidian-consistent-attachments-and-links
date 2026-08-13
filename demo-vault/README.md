@@ -1,3 +1,5 @@
+# Consistent Attachments and Links demo vault
+
 This is an [Obsidian](https://obsidian.md/) vault demonstrating features of the [Consistent Attachments and Links](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links) plugin.
 
 ## Opening this vault

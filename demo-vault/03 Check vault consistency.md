@@ -1,5 +1,3 @@
-[Docs](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/)
-
 # Check vault consistency
 
 Before reorganizing anything, you can audit the whole vault without changing a single file. The **Check Vault Consistency** command scans every note and writes a report listing what is not yet in the plugin's consistent form:
@@ -18,4 +16,4 @@ Before reorganizing anything, you can audit the whole vault without changing a s
 ## What to notice
 
 - Nothing is modified by this command - it is a safe, read-only audit you can run any time.
-- The report is the natural starting point before you run the conversion and reorganization commands in [[04 Reorganize and convert links]].
+- The report is the natural starting point before you run the conversion and reorganization commands in [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).

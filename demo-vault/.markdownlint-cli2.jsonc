@@ -1,12 +1,10 @@
 {
-  // Scoped markdownlint config for the demo vault. The notes are an Obsidian
-  // vault, so two default rules are inherently incompatible and disabled here;
-  // every other rule still applies so the notes stay clean.
+  // Scoped markdownlint config for the demo vault. Only one default rule is incompatible with what
+  // These notes do; every other rule applies, as it does to the rest of the documentation.
   "config": {
-    // Notes intentionally open with a `[Docs](...)` link, not a heading.
-    "MD041": false,
-    // `[[wikilinks]]` are Obsidian's native link syntax; markdownlint parses
-    // them as undefined shortcut reference links.
+    // A note here deliberately keeps an Obsidian `[[wikilink]]` -- see the
+    // `obsidian-dev-utils-disable` directives and the reasons they carry -- and markdownlint parses
+    // One as an undefined shortcut reference link.
     "MD052": false
   }
 }
