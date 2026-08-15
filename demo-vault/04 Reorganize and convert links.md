@@ -25,9 +25,67 @@ Each of these also has a **current note** variant that acts only on the active n
 
 ## Try it
 
-1. Run **Check Vault Consistency** first (see [03 Check vault consistency](<./03 Check vault consistency.md>)) to see what will change.
-2. Run **Reorganize Vault** to perform the whole sequence in one go, or run the individual commands above in order.
-3. Re-run **Check Vault Consistency** - the report should now be clean.
+The order matters more than any single command here, so each step is a button. Read the report between them:
+
+```code-button
+---
+caption: 1. Check Vault Consistency (read-only)
+---
+require('/demoSetup.ts').runCommand(app, 'check-consistency');
+```
+
+```code-button
+---
+caption: 2. Reorganize Vault (does the whole sequence)
+---
+require('/demoSetup.ts').runCommand(app, 'reorganize-vault');
+```
+
+```code-button
+---
+caption: 3. Check Vault Consistency again
+---
+require('/demoSetup.ts').runCommand(app, 'check-consistency');
+```
+
+Manual equivalent: run those commands from the Command Palette in that order.
+
+Or step through the individual commands instead of `Reorganize Vault`:
+
+```code-button
+---
+caption: Replace all wiki embeds with markdown embeds
+---
+require('/demoSetup.ts').runCommand(app, 'replace-all-wiki-embeds-with-markdown-embeds');
+```
+
+```code-button
+---
+caption: Convert all link paths to relative
+---
+require('/demoSetup.ts').runCommand(app, 'convert-all-link-paths-to-relative');
+```
+
+```code-button
+---
+caption: Collect all attachments
+---
+require('/demoSetup.ts').runCommand(app, 'collect-attachments-entire-vault');
+```
+
+```code-button
+---
+caption: Delete empty folders
+---
+require('/demoSetup.ts').runCommand(app, 'delete-empty-folders');
+```
+
+Manual equivalent: the Command Palette entries of the same names.
+
+> [!NOTE]
+>
+> These change files across the vault and there is no undo button here - this demo vault is safe to
+> experiment in, which is exactly why the walkthrough lives in one.
 
 ## What to notice
 

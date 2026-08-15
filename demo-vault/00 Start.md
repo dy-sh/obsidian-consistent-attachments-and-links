@@ -17,7 +17,18 @@ Welcome to the [Consistent Attachments and Links](https://github.com/mnaoumov/ob
 4. Now read [02 Links stay valid on rename and move](<./02 Links stay valid on rename and move.md>) for
    what just happened and which settings control it.
 
-Then work down the list below.
+Then work down the list below. The bulk commands all have buttons - most usefully the read-only
+**Check Vault Consistency**, which is worth pressing before and after anything else so you can see
+exactly what changed:
+
+```code-button
+---
+caption: Check Vault Consistency (read-only)
+---
+require('/demoSetup.ts').runCommand(app, 'check-consistency');
+```
+
+Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 
 ## Features
 
