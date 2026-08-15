@@ -6,11 +6,56 @@ This vault sets Obsidian's **Default location for new attachments** to `_assets/
 
 ## Try it
 
-1. Open **Settings -> Community plugins -> Consistent Attachments and Links** and enable **Move Attachments with Note** (this is off by default because it changes files on disk).
-2. Create a new note anywhere in the vault, for example `Trip.md`.
-3. Paste or drag an image into it so an attachment is created and embedded.
-4. Create a folder, for example `Archive`, and move `Trip.md` into it (drag it in the File Explorer, or use **Move file to another folder**).
-5. The plugin moves the image alongside the note and rewrites the embed so it still resolves.
+1. Turn the behavior on - it is off by default because it changes files on disk:
+
+   ```code-button
+   ---
+   caption: Enable Move Attachments with Note
+   ---
+   await require('/demoSetup.ts').changeSettings(app, { shouldMoveAttachmentsWithNote: true });
+   ```
+
+   Manual equivalent: enable **Move Attachments with Note** in **Settings -> Community plugins -> Consistent Attachments and Links**.
+
+2. Make a note that owns an attachment. Doing this by hand needs an image to hand, and lands the attachment wherever your own settings put it - so the button creates both, with the attachment already beside the note:
+
+   ```code-button
+   ---
+   caption: Create Trip.md with its own attachment
+   ---
+   await require('/demoSetup.ts').createTripNote(app);
+   ```
+
+   Manual equivalent: create `Trip.md` and paste or drag an image into it.
+
+3. Move the note:
+
+   ```code-button
+   ---
+   caption: Move Trip.md into an Archive folder
+   ---
+   await require('/demoSetup.ts').moveTripNoteToArchive(app);
+   ```
+
+   Manual equivalent: create an `Archive` folder and drag `Trip.md` into it.
+
+4. The plugin moves the image alongside the note and rewrites the embed so it still resolves. Open the moved note and check the embed still renders.
+
+Start over, or put the vault back:
+
+```code-button
+---
+caption: Reset the Trip demo
+---
+await require('/demoSetup.ts').resetTripDemo(app);
+```
+
+```code-button
+---
+caption: Restore the default (do not move attachments)
+---
+await require('/demoSetup.ts').changeSettings(app, { shouldMoveAttachmentsWithNote: false });
+```
 
 ## What to notice
 

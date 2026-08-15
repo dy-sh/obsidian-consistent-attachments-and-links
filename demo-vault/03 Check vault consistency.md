@@ -9,9 +9,17 @@ Before reorganizing anything, you can audit the whole vault without changing a s
 
 ## Try it
 
-1. Open the command palette (Ctrl/Cmd-P) and run **Check Vault Consistency**.
-2. The plugin generates a report note and opens it. Its path is configurable via the **Consistency report file** setting (`consistencyReportFile`, default `consistency-report.md`).
-3. Read the report to see which notes still contain wiki-links, wiki-embeds, or broken paths.
+```code-button
+---
+caption: Check Vault Consistency
+---
+require('/demoSetup.ts').runCommand(app, 'check-consistency');
+```
+
+Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ctrl/Cmd-P`).
+
+1. The plugin generates a report note and opens it. Its path is configurable via the **Consistency report file** setting (`consistencyReportFile`, default `consistency-report.md`).
+2. Read the report to see which notes still contain wiki-links, wiki-embeds, or broken paths.
 
 ## What to notice
 
