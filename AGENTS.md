@@ -68,3 +68,24 @@ Keep the `brace-expansion` override **top-level**: pointed at a nested (scoped) 
 plus the `brace-expansion-upstream` alias become dead weight. The `eslint-plugin-import` → `import-x` alias
 is separate and does **not** retire with it — that one lasts as long as `eslint-plugin-import` needs
 `minimatch@^3`.
+
+## Security overrides (`extract-zip` GHSA-jmr9-qjv8-65gv)
+
+`extract-zip` is vulnerable at **every** published version — the advisory range is `*` and `2.0.1` is the
+newest release — so there is nothing to override it *to*. It arrives here through
+
+```text
+obsidian-dev-utils → obsidian-integration-testing → webdriverio → @wdio/utils → @puppeteer/browsers@2.x → extract-zip
+```
+
+and no upgrade reaches it: even the newest `@wdio/utils` still declares `@puppeteer/browsers: ^2.2.0`. The
+fix therefore goes one level up — `overrides.@puppeteer/browsers` → `^3.2.0`, whose `3.x` line replaced
+`extract-zip` with `modern-tar`. That drops the vulnerable subtree entirely and **dedupes**: `puppeteer-core`
+already pulls `3.2.0` into this tree. The major bump is safe because `@wdio/utils` imports only `install`,
+`canDownload`, `resolveBuildId`, `detectBrowserPlatform`, `Browser`, `ChromeReleaseChannel` and
+`computeExecutablePath`, all still exported by `3.x`.
+
+**Never take `npm audit fix --force` here** — its remedy downgrades `obsidian-integration-testing` from
+`10.x` to `1.1.2` (G100). **Remove the override** when `@wdio/utils` moves to `@puppeteer/browsers@^3`
+itself; the `check` in [`pinned-versions.json`](pinned-versions.json) watches exactly that. Mirrors the same
+override in `obsidian-dev-utils`; keep the two in step.
