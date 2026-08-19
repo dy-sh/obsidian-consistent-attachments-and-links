@@ -6,6 +6,9 @@ await wrapCliTask(async () => {
     projects: ['integration-tests:no-app']
   });
   await test({
+    projects: ['integration-tests:demo-vault']
+  });
+  await test({
     projects: ['integration-tests:android']
   });
   await test({

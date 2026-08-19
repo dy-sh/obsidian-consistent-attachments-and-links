@@ -6,40 +6,40 @@ This vault sets Obsidian's **Default location for new attachments** to `_assets/
 
 ## Try it
 
-1. Turn the behavior on - it is off by default because it changes files on disk:
+**Step 1 — turn the behavior on.** It is off by default because it changes files on disk:
 
-   ```code-button
-   ---
-   caption: Enable Move Attachments with Note
-   ---
-   await require('/demoSetup.ts').changeSettings(app, { shouldMoveAttachmentsWithNote: true });
-   ```
+```code-button
+---
+caption: Enable Move Attachments with Note
+---
+await require('/demoSetup.ts').changeSettings(app, { shouldMoveAttachmentsWithNote: true });
+```
 
-   Manual equivalent: enable **Move Attachments with Note** in **Settings -> Community plugins -> Consistent Attachments and Links**.
+Manual equivalent: enable **Move Attachments with Note** in **Settings -> Community plugins -> Consistent Attachments and Links**.
 
-2. Make a note that owns an attachment. Doing this by hand needs an image to hand, and lands the attachment wherever your own settings put it - so the button creates both, with the attachment already beside the note:
+**Step 2 — make a note that owns an attachment.** Doing this by hand needs an image to hand, and lands the attachment wherever your own settings put it - so the button creates both, with the attachment already beside the note:
 
-   ```code-button
-   ---
-   caption: Create Trip.md with its own attachment
-   ---
-   await require('/demoSetup.ts').createTripNote(app);
-   ```
+```code-button
+---
+caption: Create Trip.md with its own attachment
+---
+await require('/demoSetup.ts').createTripNote(app);
+```
 
-   Manual equivalent: create `Trip.md` and paste or drag an image into it.
+Manual equivalent: create `Trip.md` and paste or drag an image into it.
 
-3. Move the note:
+**Step 3 — move the note.**
 
-   ```code-button
-   ---
-   caption: Move Trip.md into an Archive folder
-   ---
-   await require('/demoSetup.ts').moveTripNoteToArchive(app);
-   ```
+```code-button
+---
+caption: Move Trip.md into an Archive folder
+---
+await require('/demoSetup.ts').moveTripNoteToArchive(app);
+```
 
-   Manual equivalent: create an `Archive` folder and drag `Trip.md` into it.
+Manual equivalent: create an `Archive` folder and drag `Trip.md` into it.
 
-4. The plugin moves the image alongside the note and rewrites the embed so it still resolves. Open the moved note and check the embed still renders.
+**Step 4.** The plugin moves the image alongside the note and rewrites the embed so it still resolves. Open the moved note and check the embed still renders.
 
 Start over, or put the vault back:
 
