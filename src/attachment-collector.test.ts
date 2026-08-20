@@ -186,6 +186,7 @@ interface QueueParamsLike {
 
 interface SettingsLike {
   collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode;
+  isAttachmentUnitFolder(path: string): boolean;
   isExcludedFromAttachmentCollecting(path: string): boolean;
   isPathIgnored(path: string): boolean;
   isTreatedAsAttachment(path: string): boolean;
@@ -239,6 +240,7 @@ describe('AttachmentCollector', () => {
   let collector: AttachmentCollector;
   let privateCollector: PrivateAttachmentCollector;
   let readJson: Mock<(path: string) => Promise<null | object>>;
+  let getFolderByPath: Mock<(path: string) => null | TFolder>;
   let getRoot: Mock<() => TFolder>;
   let settings: SettingsLike;
   let warnSpy: MockInstance<typeof console.warn>;
@@ -253,14 +255,17 @@ describe('AttachmentCollector', () => {
     mockIsAtProperAttachmentPath.mockResolvedValue(false);
     settings = {
       collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Move,
+      isAttachmentUnitFolder: vi.fn().mockReturnValue(false),
       isExcludedFromAttachmentCollecting: vi.fn().mockReturnValue(false),
       isPathIgnored: vi.fn().mockReturnValue(false),
       isTreatedAsAttachment: vi.fn().mockReturnValue(false)
     };
     readJson = vi.fn<(path: string) => Promise<null | object>>();
     getRoot = vi.fn<() => TFolder>().mockReturnValue(strictProxy<TFolder>({ path: '/' }));
+    getFolderByPath = vi.fn<(path: string) => null | TFolder>().mockReturnValue(null);
     app = strictProxy<App>({
       vault: strictProxy<App['vault']>({
+        getFolderByPath: (path: string) => getFolderByPath(path),
         getRoot,
         readJson
       })
@@ -501,6 +506,105 @@ describe('AttachmentCollector', () => {
       await collectAttachments({}, abortSignal);
       expect(mockRenameSafe).not.toHaveBeenCalled();
       expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
+    });
+
+    describe('attachment unit folders', () => {
+      // Kept deliberately identical in behavior to obsidian-custom-attachment-location's, since both
+      // Plugins collect over the same vaults and a user with both installed must not watch one keep a
+      // Folder whole while the other tears it apart.
+      const UNIT_FOLDER_PATH = 'old-folder/page_files';
+
+      beforeEach(() => {
+        castTo<ReturnType<typeof vi.fn>>(settings.isAttachmentUnitFolder).mockImplementation((path: string) => path === UNIT_FOLDER_PATH);
+        mockIsNote.mockReturnValue(false);
+        mockGetAttachmentFilePath.mockResolvedValue('attachments/img.png');
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
+      });
+
+      it('should move the whole folder instead of the single linked file', async () => {
+        const unitFolder = strictProxy<TFolder>({ path: UNIT_FOLDER_PATH });
+        getFolderByPath.mockReturnValue(unitFolder);
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile(`${UNIT_FOLDER_PATH}/img/logo.png`));
+        mockRenameSafe.mockResolvedValue('attachments/page_files');
+
+        await collectAttachments({}, abortSignal);
+
+        expect(mockRenameSafe).toHaveBeenCalledWith({
+          app,
+          newPath: 'attachments/page_files',
+          oldPathOrAbstractFile: unitFolder
+        });
+      });
+
+      it('should skip a second link that the first link already carried away inside the folder', async () => {
+        getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
+        mockGetLinks.mockReturnValue([createReference(), createReference()]);
+        mockExtractLinkFile
+          .mockReturnValueOnce(createFile(`${UNIT_FOLDER_PATH}/first.png`))
+          .mockReturnValueOnce(createFile(`${UNIT_FOLDER_PATH}/second.png`));
+        mockRenameSafe.mockResolvedValue('attachments/page_files');
+
+        await collectAttachments({}, abortSignal);
+
+        expect(mockRenameSafe).toHaveBeenCalledTimes(1);
+      });
+
+      it('should still move a later attachment that sits outside the folder already carried away', async () => {
+        getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
+        mockGetLinks.mockReturnValue([createReference(), createReference()]);
+        mockExtractLinkFile
+          .mockReturnValueOnce(createFile(`${UNIT_FOLDER_PATH}/inside.png`))
+          .mockReturnValueOnce(createFile('elsewhere/outside.png'));
+        mockRenameSafe.mockResolvedValue('attachments/whatever');
+
+        await collectAttachments({}, abortSignal);
+
+        expect(mockRenameSafe).toHaveBeenCalledTimes(2);
+        expect(mockRenameSafe).toHaveBeenLastCalledWith({
+          app,
+          newPath: 'attachments/img.png',
+          oldPathOrAbstractFile: 'elsewhere/outside.png'
+        });
+      });
+
+      it('should warn and move nothing when the folder cannot be resolved', async () => {
+        getFolderByPath.mockReturnValue(null);
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile(`${UNIT_FOLDER_PATH}/img.png`));
+
+        await collectAttachments({}, abortSignal);
+
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`attachment unit folder ${UNIT_FOLDER_PATH}`));
+      });
+
+      it('should still move a single file that belongs to no unit folder', async () => {
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile('old-folder/img.png'));
+        mockRenameSafe.mockResolvedValue('attachments/img.png');
+
+        await collectAttachments({}, abortSignal);
+
+        expect(mockRenameSafe).toHaveBeenCalledWith({
+          app,
+          newPath: 'attachments/img.png',
+          oldPathOrAbstractFile: 'old-folder/img.png'
+        });
+      });
+
+      it('should skip rather than copy a unit-folder attachment referenced by multiple notes', async () => {
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
+        getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile(`${UNIT_FOLDER_PATH}/img.png`));
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
+
+        await collectAttachments({}, abortSignal);
+
+        expect(mockCopySafe).not.toHaveBeenCalled();
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+      });
     });
 
     describe('multiple backlinks', () => {

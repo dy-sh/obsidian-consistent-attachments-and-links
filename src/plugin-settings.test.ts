@@ -44,6 +44,37 @@ describe('PluginSettings', () => {
     });
   });
 
+  describe('attachmentUnitFolderPaths', () => {
+    it('should get and set the attachment unit folder paths', () => {
+      const settings = new PluginSettings();
+      expect(settings.attachmentUnitFolderPaths).toStrictEqual([]);
+      settings.attachmentUnitFolderPaths = ['assets/page_files'];
+      expect(settings.attachmentUnitFolderPaths).toStrictEqual(['assets/page_files']);
+    });
+  });
+
+  describe('isAttachmentUnitFolder', () => {
+    it('should designate nothing while the setting is empty', () => {
+      const settings = new PluginSettings();
+      expect(settings.isAttachmentUnitFolder('assets/page_files')).toBe(false);
+    });
+
+    it('should match a plain entry from the vault root', () => {
+      const settings = new PluginSettings();
+      settings.attachmentUnitFolderPaths = ['assets/page_files'];
+      expect(settings.isAttachmentUnitFolder('assets/page_files')).toBe(true);
+      expect(settings.isAttachmentUnitFolder('elsewhere/assets/page_files')).toBe(false);
+    });
+
+    it('should match a folder name anywhere via a regular expression', () => {
+      const settings = new PluginSettings();
+      settings.attachmentUnitFolderPaths = [String.raw`/(^|\/)[^/]+_files(\/|$)/`];
+      expect(settings.isAttachmentUnitFolder('assets/page_files')).toBe(true);
+      expect(settings.isAttachmentUnitFolder('deeply/nested/other_files')).toBe(true);
+      expect(settings.isAttachmentUnitFolder('assets/plain')).toBe(false);
+    });
+  });
+
   describe('excludePathsFromAttachmentCollecting', () => {
     it('should get and set the exclude paths from attachment collecting', () => {
       const settings = new PluginSettings();
