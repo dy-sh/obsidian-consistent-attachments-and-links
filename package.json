@@ -41,6 +41,7 @@
   "overrides": {
     "@puppeteer/browsers": "^3.2.0",
     "brace-expansion": "file:patches/brace-expansion-callable",
+    "deepmerge-ts": "^8.0.0",
     "eslint": "$eslint",
     "eslint-plugin-import": "npm:eslint-plugin-import-x@^4.17.1",
     "eslint-plugin-json-schema-validator": "^6.3.1",
