@@ -25,6 +25,10 @@ import {
   isAtProperAttachmentPath
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 import {
+  findAttachmentUnitFolderPath,
+  rebasePathOntoFolder
+} from 'obsidian-dev-utils/obsidian/attachment-unit-folder';
+import {
   getPath,
   isCanvasFile,
   isFile,
@@ -50,6 +54,11 @@ import {
   copySafe,
   renameSafe
 } from 'obsidian-dev-utils/obsidian/vault';
+import {
+  basename,
+  dirname,
+  join
+} from 'obsidian-dev-utils/path';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -78,6 +87,7 @@ interface AttachmentCollectorGetProperAttachmentPathParams {
 }
 
 interface AttachmentCollectorPrepareAttachmentToMoveParams {
+  readonly movedUnitFolderPaths: ReadonlyMap<string, string>;
   readonly newNotePath: string;
   readonly oldAttachmentPaths: Set<string>;
   readonly oldNotePath: string;
@@ -87,6 +97,11 @@ interface AttachmentCollectorPrepareAttachmentToMoveParams {
 interface AttachmentMoveResult {
   readonly newAttachmentPath: null | string;
   readonly oldAttachmentPath: string;
+  /**
+   * Set when the attachment sits inside a folder the user designated as a single unit, in which case
+   * the whole folder travels and this attachment simply comes along inside it.
+   */
+  readonly unitFolderPath: null | string;
 }
 
 interface CollectAttachmentContext {
@@ -199,6 +214,10 @@ export class AttachmentCollector {
       const links = isCanvas ? await getCanvasLinks(this.app, params.note) : getLinks({ cache });
       params.abortSignal.throwIfAborted();
 
+      // Attachment unit folders already carried away during this note's collection: old path -> new path.
+      // One folder holds many attachments, so the remaining links into it are already satisfied.
+      const movedUnitFolderPaths = new Map<string, string>();
+
       for (const link of links) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Could be changed in await call.
         if (params.context.isAborted) {
@@ -206,6 +225,7 @@ export class AttachmentCollector {
         }
 
         let attachmentMoveResult = await this.prepareAttachmentToMove({
+          movedUnitFolderPaths,
           newNotePath: params.note.path,
           oldAttachmentPaths,
           oldNotePath: params.note.path,
@@ -248,6 +268,20 @@ export class AttachmentCollector {
               case CollectAttachmentUsedByMultipleNotesMode.Copy: {
                 if (!definedAttachmentMoveResult.newAttachmentPath) {
                   console.warn(`Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it is already in the destination folder.`);
+                  return false;
+                }
+                if (definedAttachmentMoveResult.unitFolderPath) {
+                  // Copying the lone file out of a unit folder produces exactly the broken attachment
+                  // The unit designation exists to prevent, and copying the whole tree behind the
+                  // Other notes' backs is worse. Leave it where every note can still reach it.
+                  console.warn(
+                    `Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it belongs to the attachment unit folder`
+                      + ` ${definedAttachmentMoveResult.unitFolderPath} and is referenced by multiple notes.\n${backlinksString}`
+                  );
+                  pluginNoticeComponent.showNotice(t(($) => $.notice.attachmentUnitFolderUsedByMultipleNotes, {
+                    attachmentPath: definedAttachmentMoveResult.oldAttachmentPath,
+                    unitFolderPath: definedAttachmentMoveResult.unitFolderPath
+                  }));
                   return false;
                 }
                 // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
@@ -339,11 +373,46 @@ export class AttachmentCollector {
             return;
           }
 
-          // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
+          const newAttachmentPath = attachmentMoveResult.unitFolderPath
+            ? await moveUnitFolder(attachmentMoveResult.unitFolderPath, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath)
+            : await renameSafe({ app, newPath: attachmentMoveResult.newAttachmentPath, oldPathOrAbstractFile: attachmentMoveResult.oldAttachmentPath });
+
+          if (!newAttachmentPath) {
+            return;
+          }
+
           attachmentMoveResult = {
             ...attachmentMoveResult,
-            newAttachmentPath: await renameSafe({ app, newPath: attachmentMoveResult.newAttachmentPath, oldPathOrAbstractFile: attachmentMoveResult.oldAttachmentPath })
+            newAttachmentPath
           };
+        }
+
+        /**
+         * Moves the whole designated folder and reports where the linked attachment ended up inside
+         * it. The folder lands in the note's attachment folder — the same folder the lone file would
+         * have gone to — under its own name, so the tree's internal shape and the relative links
+         * inside it are untouched.
+         */
+        async function moveUnitFolder(unitFolderPath: string, oldAttachmentPath: string, plannedAttachmentPath: string): Promise<null | string> {
+          const unitFolder = app.vault.getFolderByPath(unitFolderPath);
+          if (!unitFolder) {
+            console.warn(`Skipping collecting attachment ${oldAttachmentPath} as its attachment unit folder ${unitFolderPath} could not be resolved.`);
+            return null;
+          }
+
+          const newUnitFolderPath = await renameSafe({
+            app,
+            newPath: join(dirname(plannedAttachmentPath), basename(unitFolderPath)),
+            oldPathOrAbstractFile: unitFolder
+          });
+          movedUnitFolderPaths.set(unitFolderPath, newUnitFolderPath);
+
+          // The whole tree moved, so the attachment is wherever it was inside it, only rebased.
+          return rebasePathOntoFolder({
+            newFolderPath: newUnitFolderPath,
+            oldFolderPath: unitFolderPath,
+            path: oldAttachmentPath
+          });
         }
       }
     } finally {
@@ -469,6 +538,15 @@ export class AttachmentCollector {
 
     oldAttachmentPaths.add(oldAttachmentFile.path);
 
+    // An earlier link in this same note may have already carried this attachment away inside its unit
+    // Folder. The link snapshot still names the old path, so without this the file reads as
+    // Unresolvable and would be reported as a broken link rather than as work already done.
+    for (const movedUnitFolderPath of params.movedUnitFolderPaths.keys()) {
+      if (oldAttachmentFile.path.startsWith(`${movedUnitFolderPath}/`)) {
+        return null;
+      }
+    }
+
     if (oldAttachmentFile.deleted) {
       console.warn(`Skipping collecting attachment ${reference.link} as it could not be resolved.`);
       return null;
@@ -481,7 +559,11 @@ export class AttachmentCollector {
 
     return {
       newAttachmentPath,
-      oldAttachmentPath: oldAttachmentFile.path
+      oldAttachmentPath: oldAttachmentFile.path,
+      unitFolderPath: findAttachmentUnitFolderPath({
+        attachmentPath: oldAttachmentFile.path,
+        checkIsAttachmentUnitFolder: (folderPath) => this.pluginSettingsComponent.settings.isAttachmentUnitFolder(folderPath)
+      })
     };
   }
 }

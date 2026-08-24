@@ -214,6 +214,30 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('Treat the following folders as a single attachment. When ');
+          appendCodeBlock(f, 'Collect attachments');
+          f.appendText(' moves an attachment from one of them, the whole folder moves along with it.');
+          f.createEl('br');
+          f.appendText('Use this for attachments that are really a folder: a saved page next to its files folder, a drawing next to the images it references.');
+          f.createEl('br');
+          f.appendText('Insert each path on a new line');
+          f.createEl('br');
+          f.appendText('You can use path string or ');
+          appendCodeBlock(f, '/regular expression/');
+          f.createEl('br');
+          f.appendText('A plain path is matched from the vault root. To match a folder name wherever it appears, use a regular expression.');
+          f.createEl('br');
+          f.appendText('If the setting is empty, every attachment is moved on its own, which is the behavior without this setting.');
+        }),
+        name: 'Attachment unit folders',
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({ propertyName: 'attachmentUnitFolderPaths', valueComponent: multipleText });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('Treat files with these extensions as attachments.');
           f.createEl('br');
           f.appendText('By default, ');

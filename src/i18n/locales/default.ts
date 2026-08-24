@@ -57,6 +57,7 @@ export const defaultTranslations = {
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Should use the same action for other problematic attachments'
   },
   notice: {
+    attachmentUnitFolderUsedByMultipleNotes: 'Skipping collecting attachment \'{{attachmentPath}}\' because its attachment unit folder \'{{unitFolderPath}}\' is referenced by multiple notes.',
     collectingAttachments: 'Collecting attachments for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Collecting attachments cancelled. See console for details.',
     generatedAttachmentFileNameIsInvalid: {
