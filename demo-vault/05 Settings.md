@@ -29,6 +29,8 @@ Open **Settings -> Community plugins -> Consistent Attachments and Links** to co
   - the same choice for the **Move Attachment to Proper Folder** command: `Skip`, `CopyAll`, `Cancel`, or `Prompt`.
 - `excludePathsFromAttachmentCollecting`
   - vault paths that attachment-collecting commands must leave untouched.
+- `attachmentUnitFolderPaths`
+  - folders whose whole hierarchy counts as **one** attachment, so collecting anything inside one moves the entire folder rather than tearing a single file out of it - the shape a saved web page or an Excalidraw export needs to keep working. The folder lands in the note's attachment folder under its own name, so the links inside it stay valid. Uses the same vocabulary as the include/exclude path settings: a plain entry is a path from the vault root, and an entry wrapped in `/` is a regular expression - so matching a folder *name* wherever it appears needs the regular-expression form, such as `/(^|\/)[^/]+_files(\/|$)/`. An attachment inside such a folder that several notes reference is skipped rather than copied, because copying the lone file back out would recreate exactly the breakage the designation prevents.
 - `shouldAddCommandsToFileMenu`
   - add the **Collect attachments** and **Move attachment to proper folder** commands to the file and folder context menu (default on). Turn it off to avoid duplicate menu items when another plugin (such as **Custom Attachment Location**) offers the same commands; the commands stay available in the command palette.
 
