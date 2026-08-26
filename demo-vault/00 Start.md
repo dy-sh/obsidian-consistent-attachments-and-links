@@ -8,18 +8,12 @@ Welcome to the [Consistent Attachments and Links](https://github.com/mnaoumov/ob
 
 ## Your first two minutes
 
-1. Open [Source note](<./Materials/02 Links stay valid on rename and move/Source note.md>). It links to
-   **Shared target**, a note sitting beside it.
+1. Open [Source note](<./Materials/02 Links stay valid on rename and move/Source note.md>). It links to **Shared target**, a note sitting beside it.
 2. Rename **Shared target** to anything else — right-click it in the File Explorer, `Rename`.
-3. Go back to **Source note**. The link now points at the new name and still resolves. Obsidian updates
-   links it wrote itself; this plugin is what keeps the rest consistent, including attachments and the
-   link styles Obsidian leaves alone.
-4. Now read [02 Links stay valid on rename and move](<./02 Links stay valid on rename and move.md>) for
-   what just happened and which settings control it.
+3. Go back to **Source note**. The link now points at the new name and still resolves. Obsidian updates links it wrote itself; this plugin is what keeps the rest consistent, including attachments and the link styles Obsidian leaves alone.
+4. Now read [02 Links stay valid on rename and move](<./02 Links stay valid on rename and move.md>) for what just happened and which settings control it.
 
-Then work down the list below. The bulk commands all have buttons - most usefully the read-only
-**Check Vault Consistency**, which is worth pressing before and after anything else so you can see
-exactly what changed:
+Then work down the list below. The bulk commands all have buttons - most usefully the read-only **Check Vault Consistency**, which is worth pressing before and after anything else so you can see exactly what changed:
 
 ```code-button
 ---
@@ -42,8 +36,4 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 
 ## Materials
 
-`Materials/` holds the notes and attachments the walkthroughs operate on, one folder per note that
-needs them — `Materials/02 Links stay valid on rename and move/` belongs to
-[02 Links stay valid on rename and move](<./02 Links stay valid on rename and move.md>). You never have
-to open it directly; each note links to what it needs. Since this plugin's whole subject is moving and
-renaming things, expect the contents to change as you follow the walkthroughs — that is the point.
+`Materials/` holds the notes and attachments the walkthroughs operate on, one folder per note that needs them — `Materials/02 Links stay valid on rename and move/` belongs to [02 Links stay valid on rename and move](<./02 Links stay valid on rename and move.md>). You never have to open it directly; each note links to what it needs. Since this plugin's whole subject is moving and renaming things, expect the contents to change as you follow the walkthroughs — that is the point.

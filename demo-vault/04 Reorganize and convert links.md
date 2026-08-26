@@ -84,8 +84,7 @@ Manual equivalent: the Command Palette entries of the same names.
 
 > [!NOTE]
 >
-> These change files across the vault and there is no undo button here - this demo vault is safe to
-> experiment in, which is exactly why the walkthrough lives in one.
+> These change files across the vault and there is no undo button here - this demo vault is safe to experiment in, which is exactly why the walkthrough lives in one.
 
 ## What to notice
 
