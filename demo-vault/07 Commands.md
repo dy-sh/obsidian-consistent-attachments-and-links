@@ -26,7 +26,7 @@ The fastest way to clean up a vault: runs the others in the order that works, on
 
 The order matters: links are converted to Markdown before their paths are made relative, and attachments are collected before empty folders are swept, so nothing is deleted while something still points into it.
 
-To also give attachments content-based names, run [`Unique attachments`](https://obsidian.md/plugins?id=unique-attachments) afterwards — optional, and a separate plugin.
+To also give attachments content-based names, run [`Unique attachments`](https://community.obsidian.md/plugins/unique-attachments) afterwards — optional, and a separate plugin.
 
 ## Replace All Wiki Links with Markdown Links
 
