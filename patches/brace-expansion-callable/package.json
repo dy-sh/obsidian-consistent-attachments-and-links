@@ -1,8 +1,0 @@
-{
-  "name": "brace-expansion",
-  "version": "5.0.8",
-  "description": "Patched brace-expansion re-exported in the legacy callable module shape (see AGENTS.md).",
-  "main": "index.js",
-  "type": "commonjs",
-  "license": "MIT"
-}
