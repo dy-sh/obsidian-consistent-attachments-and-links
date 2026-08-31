@@ -259,6 +259,10 @@ describe('Plugin', () => {
     // Seed the obsidianDevUtilsState holder on the raw target behind the strict-proxy App so the real getObsidianDevUtilsState can read/write it (the proxy throws on first access to an unassigned property, and the default proxy set-trap would not land the value on the target).
     seedOnRawTarget(app, 'obsidianDevUtilsState', {});
 
+    // Since obsidian-dev-utils 89.0.0 the base bridges its command handlers into Notebook Navigator's
+    // Menus, which looks the plugin up on layout-ready -- so `plugins` has to answer on the strict mock.
+    seedOnRawTarget(app, 'plugins', { getPlugin: vi.fn().mockReturnValue(null) });
+
     // The real RenameDeleteHandlerComponent monkey-patches FileManager.runAsyncLinkUpdate during its onload, so it is provided on the mock FileManager for the real patch to wrap the original.
     seedOnRawTarget(app.fileManager, 'runAsyncLinkUpdate', vi.fn((handler: (updates: unknown[]) => Promise<void>) => handler([])));
 
