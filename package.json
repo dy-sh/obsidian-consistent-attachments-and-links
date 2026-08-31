@@ -40,7 +40,6 @@
   },
   "overrides": {
     "@puppeteer/browsers": "^3.2.1",
-    "brace-expansion": "file:patches/brace-expansion-callable",
     "deepmerge-ts": "^8.0.2",
     "eslint": "$eslint",
     "eslint-plugin-import": "npm:eslint-plugin-import-x@^4.17.1",
@@ -63,7 +62,6 @@
     "@types/node": "^26.3.0",
     "@vitest/coverage-v8": "^4.1.11",
     "better-typescript-lib": "^2.12.0",
-    "brace-expansion-upstream": "npm:brace-expansion@^5.0.9",
     "czg": "^1.14.0",
     "eslint": "^10.9.1",
     "husky": "^9.1.7",
