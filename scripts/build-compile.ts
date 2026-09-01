@@ -1,4 +1,4 @@
-import { buildCompileTypeScript } from 'obsidian-dev-utils/script-utils/build';
+import { buildCompile } from 'obsidian-dev-utils/script-utils/build';
 import { wrapCliTask } from 'obsidian-dev-utils/script-utils/cli-utils';
 
-await wrapCliTask(() => buildCompileTypeScript());
+await wrapCliTask(() => buildCompile());
