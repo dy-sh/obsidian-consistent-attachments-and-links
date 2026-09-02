@@ -183,6 +183,13 @@ beforeAll(async () => {
       // To use, so the destination in shot 3 is this setting's doing.
       app.vault.setConfig('attachmentFolderPath', './assets');
 
+      // Shot 3 moves an attachment a note still embeds, and Obsidian asks "Update
+      // Links?" before it will. The prompt is a dialog, so it covers the frame AND
+      // Blocks everything after it. The CDP transport writes this into `app.json`
+      // Itself ("Enabled alwaysUpdateLinks — headless rename support"); the Appium
+      // Transport does not, so the mobile leg has to set it here.
+      app.vault.setConfig('alwaysUpdateLinks', true);
+
       // The two settings the plugin's own "Recommended Obsidian settings" note
       // Asks for. They decide what the plugin WRITES when it rewrites a link:
       // Left at Obsidian's defaults, collecting an attachment produces a bare
