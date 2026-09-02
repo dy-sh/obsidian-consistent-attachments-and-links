@@ -42,6 +42,29 @@ Upgrading from 3.x does not lose your answers: this plugin offers them to that p
 - `excludePaths`
   - paths the plugin ignores entirely.
 
+## Keeping paths valid on every platform
+
+Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>). Each platform is a separate toggle because their limits are not comparable - only Windows has a path budget a vault runs into, and only Linux and Android count a name in bytes.
+
+- `shouldEnsurePathCompatibilityOnEveryPlatform`
+  - enforce every platform's rules at once, whatever the individual toggles say.
+- `shouldEnsurePathCompatibilityOnWindows`
+  - paths of at most 259 characters for a file and 247 for a folder, no reserved name (`CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9`, `LPT1`-`LPT9`), no `<>:"|?*`, and no trailing dot or space. On by default when you are running on Windows.
+- `shouldEnsurePathCompatibilityOnAndroid`
+  - names of at most 255 **bytes**. On by default when you are running on Android.
+- `shouldEnsurePathCompatibilityOnLinux`
+  - names of at most 255 bytes.
+- `shouldEnsurePathCompatibilityOnMacOs`
+  - names of at most 255 bytes, and paths of at most 1024.
+- `shouldEnsurePathCompatibilityOnIos`
+  - names of at most 255 bytes, and paths of at most 1024.
+- `maxVaultRootPathLength`
+  - the length, in characters, of the longest vault root path this vault is expected to live under. `0` means this machine's real vault root, which makes the check exact here; set it to the length of the deepest place the vault is synced to when that is longer. A value below the real root's length is reported as a warning rather than quietly applied.
+- `sidecarNoteNamePattern`
+  - names the sidecar note that carries a renamed attachment's original name. Tokens: `{{fileName}}`, `{{basename}}`, `{{extension}}`. The default `{{fileName}}.md` makes `diagram.png` answer `diagram.png.md`, which cannot collide with a real note the way `{{basename}}.md` can.
+- `shouldCreateNoteToPreserveOriginalName`
+  - create a note to hold the original name when the renamed item has none - a folder with no folder note, an attachment with no sidecar. Off by default, in which case those are simply listed in the consistency report and nothing new appears on disk.
+
 ## Reports, folders, and safety
 
 - `consistencyReportFile`

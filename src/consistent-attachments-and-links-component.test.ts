@@ -24,6 +24,7 @@ import {
 import type { AttachmentCollector } from './attachment-collector.ts';
 import type { FilesHandler } from './files-handler.ts';
 import type { LinksHandler } from './links-handler.ts';
+import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -81,7 +82,10 @@ vi.mock('./files-handler.ts', () => ({
   FilesHandler: class {}
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
+// Spread the real module: the path-compatibility handler reaches `folder-note`, which imports members this
+// Suite does not stub, and a bare object mock makes those `undefined` at import time.
+vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
   getOrCreateFile: (...$arguments: unknown[]): Promise<TFile> => hoisted.mockGetOrCreateFile(...$arguments),
   isMarkdownFile: vi.fn(() => true)
 }));
@@ -129,6 +133,11 @@ const mockLinksHandler = strictProxy<LinksHandler>({
   replaceAllNoteWikilinksWithMarkdownLinks: vi.fn((): Promise<number> => Promise.resolve(0))
 });
 
+const mockPathCompatibilityHandler = strictProxy<PathCompatibilityHandler>({
+  check: vi.fn((): void => undefined),
+  fix: vi.fn((): Promise<void> => noopAsync())
+});
+
 const mockPluginNoticeComponent = strictProxy<PluginNoticeComponent>({
   showNotice: vi.fn((_message: DocumentFragment | string): Notice => castTo<Notice>({}))
 });
@@ -152,6 +161,7 @@ function createComponent(): ConsistentAttachmentsAndLinksComponent {
     attachmentCollector: mockAttachmentCollector,
     filesHandler: mockFilesHandler,
     linksHandler: mockLinksHandler,
+    pathCompatibilityHandler: mockPathCompatibilityHandler,
     pluginNoticeComponent: mockPluginNoticeComponent,
     pluginSettingsComponent: mockPluginSettingsComponent
   });

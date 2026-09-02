@@ -30,6 +30,42 @@ The `bulk-delete.desktop-performance.integration.test.ts` suite and its vault ge
 handler — they proved an O(N) cost that is no longer incurred here. The `integration-tests:desktop-performance`
 project stays (obsidian-dev-utils declares it fleet-wide with `passWithNoTests`).
 
+## Path compatibility (T698)
+
+`Fix incompatible paths` and the report's `Path compatibility` section repair names and paths that are
+invalid on a platform the vault is synced to. Two files, split on testability:
+
+- `src/path-compatibility.ts` — pure, no `App`. The platform table, violation detection, and `repairName`.
+  Every correctness question (byte counting, extension preservation, truncation order, profile composition)
+  is answerable here with no Obsidian instance.
+- `src/path-compatibility-handler.ts` — the vault pass, the report section, and the preservation writes.
+
+Things that are easy to get wrong here, and were:
+
+- **Rename through ODU's `renameSafe`, never `app.vault.rename`.** `renameSafe` goes via
+  `app.fileManager.renameFile`, so Obsidian rewrites every link and Advanced Rename and Delete Handler moves
+  attachments. The reference implementation this came from
+  (`F:\Obsidian\.scripts\src\Invocables\FixLongPaths.ts`) used `vault.rename` and silently broke links.
+- **`renameSafe` can undo the repair.** Its `getSafeRenamePath` appends a space and a number on a collision,
+  which can push the name back over the limit it was just brought under. `renameToName` re-checks the resolved path and
+  retries with a shorter basename; it terminates because the fed-back basename strictly shrinks.
+- **Trim trailing dots and spaces BEFORE the reserved-name test.** Windows strips them before deciding, so
+  a trailing-space `CON` is as reserved as a bare `CON`. Testing the raw name lets that spelling through, and trimming afterwards
+  turns an accepted name into a rejected one.
+- **255 is BYTES on ext4/APFS and UTF-16 units on NTFS.** They are different limits in different units, which
+  is why the settings are one toggle per platform rather than three numbers. Cut by code point, never by
+  UTF-16 unit, or a surrogate pair splits.
+- **The vault root is part of every path and is only knowable for the machine you are on.** Hence
+  `maxVaultRootPathLength` (`0` = the real root) and a warning — never a silent clamp — when the real root
+  exceeds it.
+- **The sidecar follows the rename.** Renaming an attachment orphans the sidecar note that describes it, and
+  that mismatch is ours to fix since the rename was ours. Keeping a bundle together in general is
+  File Bundles' job (P48), not this plugin's.
+
+Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) is plugin-local only because ODU does
+not own it yet; the character sets beside it (`WINDOWS_UNSAFE_PATH_CHARS` and friends) already do. T886-P1
+moves it there.
+
 ## Pinned versions
 
 An **exact** version (no `^`) is how a dependency is held back here, and it is also what makes it invisible

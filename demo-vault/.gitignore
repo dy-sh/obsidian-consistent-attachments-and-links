@@ -16,3 +16,8 @@
 Materials/01 Collect attachments into the note's folder/
 Materials/_shared-attachments/
 consistency-report.md
+
+# Created by the buttons in `08 Keep paths valid on every platform.md`. Deliberately not committed: the
+# Fixture's whole point is a 300-byte file name, which is the kind of name a checkout should not have to
+# Carry.
+Materials/08 Keep paths valid on every platform/

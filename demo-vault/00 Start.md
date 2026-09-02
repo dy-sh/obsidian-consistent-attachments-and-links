@@ -37,6 +37,7 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 - [05 Settings](<./05 Settings.md>)
 - [06 Recommended Obsidian settings](<./06 Recommended Obsidian settings.md>)
 - [07 Commands](<./07 Commands.md>)
+- [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>)
 
 The numbering has a gap where **02 Links stay valid on rename and move** used to be. Its subject went to Advanced Rename and Delete Handler with the rest of the rename handling; the remaining notes keep their numbers so links already pointing at them still resolve.
 

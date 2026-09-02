@@ -10,8 +10,9 @@ Reports what is inconsistent without changing anything — the one command that 
 - bad embed paths
 - wiki-links
 - wiki-embeds
+- paths and names that are invalid on a platform you sync to
 
-Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>).
+Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>), and for the last one in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
 ## Reorganize Vault
 
@@ -23,8 +24,9 @@ The fastest way to clean up a vault: runs the others in the order that works, on
 4. `Convert All Link Paths to Relative`
 5. `Collect All Attachments`
 6. `Delete Empty Folders`
+7. `Fix Incompatible Paths`
 
-The order matters: links are converted to Markdown before their paths are made relative, and attachments are collected before empty folders are swept, so nothing is deleted while something still points into it.
+The order matters: links are converted to Markdown before their paths are made relative, and attachments are collected before empty folders are swept, so nothing is deleted while something still points into it. Renaming comes last, because every step before it resolves links against the names the files still had.
 
 To also give attachments content-based names, run [`Unique attachments`](https://community.obsidian.md/plugins/unique-attachments) afterwards — optional, and a separate plugin.
 
@@ -63,3 +65,9 @@ An attachment referenced by more than one note is not simply moved — see [01 C
 ## Delete Empty Folders
 
 Removes every empty folder in the vault, which is usually the debris left by the commands above.
+
+## Fix Incompatible Paths
+
+Renames every file and folder whose path or name is invalid on a platform you have ticked in the settings - too long, containing a character that platform forbids, or named after an MS-DOS device. Links follow the rename, and the original name is kept in the note's `aliases` and `title`.
+
+Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).

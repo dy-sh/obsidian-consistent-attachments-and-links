@@ -21,6 +21,7 @@ import { ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler } from './comm
 import { ConvertAllLinkPathsToRelativeCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-command-handler.ts';
 import { ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-current-note-command-handler.ts';
 import { DeleteEmptyFoldersCommandHandler } from './command-handlers/delete-empty-folders-command-handler.ts';
+import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { ReorganizeVaultCommandHandler } from './command-handlers/reorganize-vault-command-handler.ts';
 import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler } from './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-command-handler.ts';
@@ -31,6 +32,7 @@ import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments
 import { FilesHandler } from './files-handler.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { LinksHandler } from './links-handler.ts';
+import { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
@@ -113,6 +115,14 @@ export class Plugin extends PluginBase {
       resourceLockComponent: this.resourceLockComponent
     });
 
+    const pathCompatibilityHandler = new PathCompatibilityHandler({
+      abortSignalComponent: this.abortSignalComponent,
+      app: this.app,
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      pluginSettingsComponent,
+      resourceLockComponent: this.resourceLockComponent
+    });
+
     const consistentAttachmentsAndLinksComponent = this.addChild(
       new ConsistentAttachmentsAndLinksComponent({
         abortSignalComponent: this.abortSignalComponent,
@@ -120,6 +130,7 @@ export class Plugin extends PluginBase {
         attachmentCollector,
         filesHandler,
         linksHandler,
+        pathCompatibilityHandler,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent
       })
@@ -160,7 +171,8 @@ export class Plugin extends PluginBase {
       new ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler(consistentAttachmentsAndLinksComponent),
       new ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
       new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
-      new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent)
+      new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
+      new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
     ]);
   }
 }

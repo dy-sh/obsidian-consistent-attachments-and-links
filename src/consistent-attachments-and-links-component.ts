@@ -21,6 +21,7 @@ import {
 import { dirname } from 'obsidian-dev-utils/path';
 
 import type { AttachmentCollector } from './attachment-collector.ts';
+import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { FilesHandler } from './files-handler.ts';
@@ -28,6 +29,7 @@ import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
+import { PathCompatibilityCheckResult } from './path-compatibility-handler.ts';
 
 interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
@@ -35,6 +37,7 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly attachmentCollector: AttachmentCollector;
   readonly filesHandler: FilesHandler;
   readonly linksHandler: LinksHandler;
+  readonly pathCompatibilityHandler: PathCompatibilityHandler;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -44,6 +47,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   private readonly attachmentCollector: AttachmentCollector;
   private readonly filesHandler: FilesHandler;
   private readonly linksHandler: LinksHandler;
+  private readonly pathCompatibilityHandler: PathCompatibilityHandler;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -53,6 +57,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     this.attachmentCollector = params.attachmentCollector;
     this.filesHandler = params.filesHandler;
     this.linksHandler = params.linksHandler;
+    this.pathCompatibilityHandler = params.pathCompatibilityHandler;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
@@ -80,7 +85,12 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     const notePath = this.pluginSettingsComponent.settings.consistencyReportFile;
 
-    const text = [badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks]
+    // Walks files and folders rather than notes, and reads no file content, so it is its own pass rather
+    // Than a sixth result filled by the loop above.
+    const pathCompatibility = new PathCompatibilityCheckResult();
+    this.pathCompatibilityHandler.check(pathCompatibility);
+
+    const text = [badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks, pathCompatibility]
       .map((result) => result.toString(this.app, notePath))
       .join('');
     await createFolderSafe(this.app, dirname(notePath));
@@ -194,6 +204,10 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     await this.filesHandler.deleteEmptyFolders('/');
   }
 
+  public async fixIncompatiblePaths(): Promise<void> {
+    await this.pathCompatibilityHandler.fix();
+  }
+
   public async reorganizeVault(): Promise<void> {
     await this.saveAllOpenNotes();
 
@@ -203,6 +217,8 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     await this.convertAllLinkPathsToRelative(this.abortSignalComponent.abortSignal);
     this.attachmentCollector.collectAttachmentsEntireVault();
     await this.deleteEmptyFolders();
+    // Last: it renames files, and every step above resolves links against the names they had.
+    await this.fixIncompatiblePaths();
     this.pluginNoticeComponent.showNotice('Reorganization of the vault completed');
   }
 

@@ -308,8 +308,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 15 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 17 total.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(17);
+      // The plugin wires the OpenDemoVault handler plus 16 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 18 total.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(18);
     });
 
     it('should register the open demo vault command', async () => {
