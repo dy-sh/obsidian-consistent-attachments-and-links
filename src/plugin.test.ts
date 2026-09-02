@@ -197,22 +197,6 @@ vi.mock(
 vi.mock('./command-handlers/delete-empty-folders-command-handler.ts', () => ({ DeleteEmptyFoldersCommandHandler: CommandHandlerMock }));
 vi.mock('./command-handlers/move-attachment-to-proper-folder-command-handler.ts', () => ({ MoveAttachmentToProperFolderCommandHandler: CommandHandlerMock }));
 vi.mock('./command-handlers/reorganize-vault-command-handler.ts', () => ({ ReorganizeVaultCommandHandler: CommandHandlerMock }));
-vi.mock(
-  './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-command-handler.ts',
-  () => ({ ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler: CommandHandlerMock })
-);
-vi.mock(
-  './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-current-note-command-handler.ts',
-  () => ({ ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler: CommandHandlerMock })
-);
-vi.mock(
-  './command-handlers/replace-all-wikilinks-with-markdown-links-command-handler.ts',
-  () => ({ ReplaceAllWikilinksWithMarkdownLinksCommandHandler: CommandHandlerMock })
-);
-vi.mock(
-  './command-handlers/replace-all-wikilinks-with-markdown-links-current-note-command-handler.ts',
-  () => ({ ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler: CommandHandlerMock })
-);
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { translationsMap } from './i18n/locales/translations-map.ts';
@@ -308,8 +292,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 16 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 18 total.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(18);
+      // The plugin wires the OpenDemoVault handler plus 12 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 14 total.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(14);
     });
 
     it('should register the open demo vault command', async () => {

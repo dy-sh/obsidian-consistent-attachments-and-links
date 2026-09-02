@@ -1,17 +1,19 @@
 # Reorganize and convert links
 
-The plugin's headline bulk feature turns an inconsistent vault into a portable one where every link is a relative Markdown link and every attachment sits next to the note that uses it. You can run the steps individually or all at once.
+The plugin's headline bulk feature turns an inconsistent vault into a portable one where every path resolves from the note that holds it and every attachment sits next to the note that uses it. You can run the steps individually or all at once.
 
 > [!WARNING]
 >
 > These commands change files across the vault. Back up a real vault first. This demo vault is safe to experiment in.
 
+<!-- Separates the two callouts; without it markdownlint reads them as one blockquote. -->
+
+> [!NOTE] Converting wikilinks is a different plugin's job
+>
+> This plugin used to have `Replace All Wiki Links with Markdown Links` and three siblings, because it was built to force a vault's migration to Markdown links. It no longer does that. [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns the conversion, over a wider surface — one file, one folder or the whole vault, plus converting as you type. Run it first if your vault still uses wikilinks, then come back here for the paths.
+
 ## The individual commands
 
-- **Replace All Wiki Links with Markdown Links**
-  - `[[readme]]` becomes `[readme](readme.md)`.
-- **Replace All Wiki Embeds with Markdown Embeds**
-  - `![[readme]]` becomes `![readme](readme.md)`.
 - **Convert All Embed Paths to Relative**
   - rewrites embed paths to be relative to the note.
 - **Convert All Link Paths to Relative**
@@ -54,9 +56,9 @@ Or step through the individual commands instead of `Reorganize Vault`:
 
 ```code-button
 ---
-caption: Replace all wiki embeds with markdown embeds
+caption: Convert all embed paths to relative
 ---
-require('/demoSetup.ts').runCommand(app, 'replace-all-wiki-embeds-with-markdown-embeds');
+require('/demoSetup.ts').runCommand(app, 'convert-all-embed-paths-to-relative');
 ```
 
 ```code-button
@@ -94,13 +96,13 @@ Manual equivalent: the Command Palette entries of the same names.
 
 ## Attachment-like Markdown files (such as Excalidraw) are left untouched
 
-Some plugins store data in files that are Markdown on disk but are really attachments. Excalidraw, for example, saves each drawing as a `.excalidraw.md` file and references its embedded images with wikilinks. Rewriting those wikilinks into Markdown links would stop the drawing from rendering, so the link-rewriting commands skip any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [05 Settings](<./05 Settings.md>)).
+Some plugins store data in files that are Markdown on disk but are really attachments. Excalidraw, for example, saves each drawing as a `.excalidraw.md` file and references its embedded images with wikilinks. Rewriting those references would stop the drawing from rendering, so the link-rewriting commands skip any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [05 Settings](<./05 Settings.md>)).
 
 ### Try it
 
 1. Open [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>) - it references [Shared target](<./Materials/04 Reorganize and convert links/Shared target.md>) with a wikilink, exactly as Excalidraw stores its embeds.
-2. Run **Replace All Wiki Links with Markdown Links** (or **Reorganize Vault**).
-3. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>) - its `[[Shared target]]` wikilink became a Markdown link.
+2. Run **Convert All Link Paths to Relative** (or **Reorganize Vault**).
+3. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>) - its long round-trip path to **Shared target** collapsed to the short one that resolves from the note itself.
 4. Re-open [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>) - its wikilink is **unchanged**, because the file is treated as an attachment.
 
 ## The file and folder context menu commands

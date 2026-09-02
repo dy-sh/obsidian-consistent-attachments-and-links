@@ -4,8 +4,8 @@ Before reorganizing anything, you can audit the whole vault without changing a s
 
 - Bad (broken) links
 - Bad (broken) embed paths
-- Wiki-links that are still `[[wikilink]]` style
-- Wiki-embeds that are still `![[wikilink]]` style
+- Bad (broken) frontmatter links
+- Paths and names that are invalid on a platform you sync to, covered in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>)
 
 ## Try it
 
@@ -19,7 +19,7 @@ require('/demoSetup.ts').runCommand(app, 'check-consistency');
 Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ctrl/Cmd-P`).
 
 1. The plugin generates a report note and opens it. Its path is configurable via the **Consistency report file** setting (`consistencyReportFile`, default `consistency-report.md`).
-2. Read the report to see which notes still contain wiki-links, wiki-embeds, or broken paths.
+2. Read the report to see which notes still contain broken links, broken embed paths, or paths that are invalid on a platform you sync to.
 
 ## What to notice
 

@@ -129,8 +129,7 @@ const mockFilesHandler = strictProxy<FilesHandler>({
 const mockLinksHandler = strictProxy<LinksHandler>({
   checkConsistency: vi.fn((): Promise<void> => noopAsync()),
   convertAllNoteEmbedsPathsToRelative: vi.fn((): ReturnType<LinksHandler['convertAllNoteEmbedsPathsToRelative']> => Promise.resolve([])),
-  convertAllNoteLinksPathsToRelative: vi.fn((): ReturnType<LinksHandler['convertAllNoteLinksPathsToRelative']> => Promise.resolve([])),
-  replaceAllNoteWikilinksWithMarkdownLinks: vi.fn((): Promise<number> => Promise.resolve(0))
+  convertAllNoteLinksPathsToRelative: vi.fn((): ReturnType<LinksHandler['convertAllNoteLinksPathsToRelative']> => Promise.resolve([]))
 });
 
 const mockPathCompatibilityHandler = strictProxy<PathCompatibilityHandler>({
@@ -196,7 +195,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     mockSettings.shouldShowBackupWarning = true;
     mockSettings.shouldCollectAttachmentsAutomatically = false;
     mockSettings.hadDangerousSettingsReverted = false;
-    castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(0);
     castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).mockResolvedValue([]);
     castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteLinksPathsToRelative).mockResolvedValue([]);
   });
@@ -363,108 +361,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(mockAttachmentCollector.collectAttachmentsEntireVault).toHaveBeenCalled();
       expect(mockFilesHandler.deleteEmptyFolders).toHaveBeenCalled();
       expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Reorganization of the vault completed');
-    });
-  });
-
-  describe('replaceAllWikiEmbedsWithMarkdownEmbeds', () => {
-    it('should show a "no wiki embeds" notice when nothing changed', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.replaceAllWikiEmbedsWithMarkdownEmbeds();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No wiki embeds found that need to be replaced');
-    });
-
-    it('should skip ignored notes', async () => {
-      const component = createComponent();
-      mockSettings.isPathIgnored.mockReturnValue(true);
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.replaceAllWikiEmbedsWithMarkdownEmbeds();
-      expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).not.toHaveBeenCalled();
-    });
-
-    it('should report replaced wiki embeds (plural)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([
-        strictProxy<TFile>({ path: 'a.md' }),
-        strictProxy<TFile>({ path: 'b.md' })
-      ]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(2);
-      await component.replaceAllWikiEmbedsWithMarkdownEmbeds();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 4 wiki embeds from 2 notes');
-    });
-
-    it('should report a single replaced wiki embed (singular)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(1);
-      await component.replaceAllWikiEmbedsWithMarkdownEmbeds();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 1 wiki embed from 1 note');
-    });
-  });
-
-  describe('replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote', () => {
-    it('should enqueue the replacement for the current note', async () => {
-      const component = createComponent();
-      component.replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      await vi.waitFor(() => {
-        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.anything() is an asymmetric matcher typed `any`.
-          abortSignal: expect.anything(),
-          embedOnlyLinks: true,
-          notePath: 'note.md'
-        });
-      });
-    });
-  });
-
-  describe('replaceAllWikilinksWithMarkdownLinks', () => {
-    it('should show a "no wiki links" notice when nothing changed', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.replaceAllWikilinksWithMarkdownLinks();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No wiki links found that need to be replaced');
-    });
-
-    it('should skip ignored notes', async () => {
-      const component = createComponent();
-      mockSettings.isPathIgnored.mockReturnValue(true);
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.replaceAllWikilinksWithMarkdownLinks();
-      expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).not.toHaveBeenCalled();
-    });
-
-    it('should report replaced wikilinks (plural)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([
-        strictProxy<TFile>({ path: 'a.md' }),
-        strictProxy<TFile>({ path: 'b.md' })
-      ]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(2);
-      await component.replaceAllWikilinksWithMarkdownLinks();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 4 wikilinks from 2 notes');
-    });
-
-    it('should report a single replaced wikilink (singular)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(1);
-      await component.replaceAllWikilinksWithMarkdownLinks();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Replaced 1 wikilink from 1 note');
-    });
-  });
-
-  describe('replaceAllWikilinksWithMarkdownLinksCurrentNote', () => {
-    it('should enqueue the replacement for the current note', async () => {
-      const component = createComponent();
-      component.replaceAllWikilinksWithMarkdownLinksCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      await vi.waitFor(() => {
-        expect(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).toHaveBeenCalledWith({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.anything() is an asymmetric matcher typed `any`.
-          abortSignal: expect.anything(),
-          embedOnlyLinks: false,
-          notePath: 'note.md'
-        });
-      });
     });
   });
 
