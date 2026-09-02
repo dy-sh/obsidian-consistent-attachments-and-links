@@ -1,7 +1,7 @@
 {
   "name": "consistent-attachments-and-links",
   "version": "4.0.0",
-  "description": "This plugin ensures the consistency of attachments and links",
+  "description": "Audits a vault for links and paths that break outside Obsidian, and repairs what it finds. Reports every broken link, repairs names that other platforms reject, and sweeps up the empty folders left behind.",
   "keywords": [],
   "homepage": "https://github.com/dy-sh/obsidian-consistent-attachments-and-links#readme",
   "bugs": "https://github.com/dy-sh/obsidian-consistent-attachments-and-links/issues",

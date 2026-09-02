@@ -10,7 +10,7 @@ Contributions are welcome! Here's how to get started.
 ## Setup
 
 ```bash
-git clone https://github.com/mnaoumov/obsidian-consistent-attachments-and-links.git
+git clone https://github.com/dy-sh/obsidian-consistent-attachments-and-links.git
 cd obsidian-consistent-attachments-and-links
 npm install
 ```

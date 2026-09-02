@@ -1,6 +1,6 @@
 # Start here
 
-Welcome to the [Consistent Attachments and Links](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/) demo vault. This plugin makes a vault consistent in the plainest sense: every link a real relative path in standard Markdown, every attachment in its own note's folder. It collects scattered attachments into place, converts an existing vault to that shape, and audits the whole vault for what is still broken.
+Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/) demo vault. This plugin makes a vault consistent in the plainest sense: every link a real relative path in standard Markdown, every attachment in its own note's folder. It collects scattered attachments into place, converts an existing vault to that shape, and audits the whole vault for what is still broken.
 
 > [!IMPORTANT] Renaming and deleting moved out
 >
