@@ -14,9 +14,9 @@ Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsid
 
 ## Your first two minutes
 
-1. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>). It links to **Shared target**, a note sitting right beside it — by a path that climbs out to the vault root and walks back down, which survives nothing being moved or renamed.
+1. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>). It references **Shared target**, an ordinary note, and **Diagram.excalidraw**, which is Markdown on disk but is really a drawing — and the plugin treats those two very differently.
 2. Press the **Check Vault Consistency** button below. It changes nothing; it just writes a report of what a reader outside Obsidian would trip over.
-3. Read that report, then go and fix it in one command with [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
+3. Read that report, then go and tidy the vault with [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
 
 Then work down the list below. The bulk commands all have buttons - most usefully the read-only **Check Vault Consistency**, which is worth pressing before and after anything else so you can see exactly what changed:
 

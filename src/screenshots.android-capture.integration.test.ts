@@ -5,21 +5,34 @@
  * driving a staged vault in Obsidian Mobile on a real Android emulator and
  * writing `images/screenshots/screenshot-mobile-N.png`.
  *
- * FOUR shots following the README's own argument: a vault whose PATHS only
- * Obsidian can resolve, then each thing the plugin does about it — every path
- * rewritten to resolve from the note that holds it, attachments collected into
+ * FOUR shots following the plugin's scope line — report strictly, repair
+ * narrowly, never rewrite: a name the platforms this vault syncs to would
+ * reject, that name repaired with the original kept, attachments collected into
  * the note's own folder, and a consistency report that names what is still
  * broken without touching anything.
  *
- * There used to be a fifth, showing an attachment following its note across a
- * move. Advanced Rename and Delete Handler owns that since 4.0.0, so this plugin
- * cannot show it any more.
+ * Shots 1 and 2 used to show a path rewritten to resolve from the note holding
+ * it. T912 removed the commands that did it — rewriting a link's style is not
+ * this plugin's job — so the pair moved onto the repair half of the scope line.
+ * There used to be a fifth shot too, showing an attachment following its note
+ * across a move; Advanced Rename and Delete Handler owns that since 4.0.0.
+ *
+ * THE OFFENDER IS THE INVERSE OF THE DESKTOP SUITE'S, AND IS STAGED DIFFERENTLY.
+ * The capture host has to be able to CREATE the offending file. This leg captures
+ * on the emulator's ext4, where the desktop suite's over-long name is exactly what
+ * cannot exist — so the offender here is a name Windows forbids and Linux does
+ * not, and the Windows rule is the one turned on. That also rules out
+ * `vault.populate`: the staging vault is assembled on the WINDOWS host before
+ * `syncToDevice`, which is the one machine that cannot write this name. So the
+ * note is created through `app.vault.create` on the device instead, after the
+ * sync. Do not move it back into `populate` — it will fail on the host, not here.
  *
  * Every command is the plugin's OWN command, run through the command palette's
  * id, and every claim is asserted against the vault afterwards: shot 2 asserts
- * the paths became relative, shot 3 asserts the attachment's path, shot 4 asserts
- * the report names the broken link. A command that silently did nothing cannot
- * be shipped as one that worked.
+ * the forbidden name is gone and the original survived in the note's frontmatter,
+ * shot 3 asserts the attachment's path, shot 4 asserts the report names the
+ * broken link. A command that silently did nothing cannot be shipped as one that
+ * worked.
  *
  * Worth taking on a phone because that is where a vault most often stops being
  * portable: attachments pile up and the file tree is a drawer nobody opens. The
@@ -93,14 +106,6 @@ const NOTES_FOLDER = 'Notes';
 const SUBJECT_NOTE_PATH = `${NOTES_FOLDER}/Meeting.md`;
 
 /**
- * Deliberately NOT beside the subject note. Obsidian's default link format is the
- * shortest path that resolves, so a link from `Notes/` to a note at the root is
- * written without any `../` — fine inside Obsidian, dead everywhere else. That gap
- * is what shots 1 and 2 are about, and a sibling target would not have one.
- */
-const TARGET_NOTE_PATH = 'Design notes.md';
-
-/**
  * Where the attachment starts: one shared folder at the vault root, which is
  * Obsidian's own default and the arrangement the plugin exists to undo.
  */
@@ -113,6 +118,21 @@ const COLLECTED_ATTACHMENT_PATH = `${NOTES_FOLDER}/assets/diagram.png`;
  * runs but not that it is worth running.
  */
 const MISSING_NOTE_NAME = 'Budget';
+
+/**
+ * A name ext4 accepts and Windows does not — an MS-DOS device name, which Windows
+ * still reserves and no Linux filesystem cares about. The repair de-reserves it by
+ * appending `_`, so the tab and the file tree both show the change.
+ *
+ * NOT a forbidden CHARACTER, which is the obvious choice and does not work:
+ * Obsidian's own `vault.create` rejects `\ / : * ? < > "` on every platform, and
+ * `|`, `#`, `^`, `[` and `]` on top of that, so a name carrying one cannot be
+ * staged here at all — measured, twice, before settling on this. Reserved names and
+ * trailing dots or spaces are the only two Windows rules Obsidian does not also
+ * enforce, and a trailing dot is invisible in a screenshot.
+ */
+const BAD_NAME = 'CON';
+const BAD_NAME_NOTE_PATH = `${NOTES_FOLDER}/${BAD_NAME}.md`;
 
 const REPORT_PATH = 'consistency-report.md';
 
@@ -132,13 +152,16 @@ beforeAll(async () => {
   vault.populate({
     [`.obsidian/plugins/${PLUGIN_ID}/data.json`]: JSON.stringify({
       consistencyReportFile: REPORT_PATH,
+      // Windows, not Android: the staged name is legal on the ext4 volume this
+      // Capture runs on and illegal on the desktop the vault would sync to, which
+      // Is the whole claim shots 1 and 2 make.
+      shouldEnsurePathCompatibilityOnWindows: true,
       // The warning modal would otherwise sit over every frame, and the command
       // That raised it would still be awaiting an answer.
       shouldShowBackupWarning: false
     }),
     [ORIGINAL_ATTACHMENT_PATH]: '',
-    [SUBJECT_NOTE_PATH]: buildSubjectNote(),
-    [TARGET_NOTE_PATH]: '# Design notes\n\nThe shape we agreed on.\n'
+    [SUBJECT_NOTE_PATH]: buildSubjectNote()
   });
 
   // Written as bytes rather than through `populate`, which takes text.
@@ -147,7 +170,7 @@ beforeAll(async () => {
   await vault.syncToDevice();
 
   await evalInObsidian({
-    async callback({ app, fontSizeInPixels, lib: { waitUntil }, subjectNotePath }) {
+    async callback({ app, badNameNotePath, fontSizeInPixels, lib: { waitUntil }, subjectNotePath }) {
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 20_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1000;
 
@@ -158,6 +181,12 @@ beforeAll(async () => {
         predicate: () => Boolean(app.vault.getFileByPath(subjectNotePath)),
         timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
       });
+
+      // Created HERE and not in `populate`: the staging vault is assembled on the
+      // Windows host, which is the one machine that cannot write this name.
+      if (!app.vault.getFileByPath(badNameNotePath)) {
+        await app.vault.create(badNameNotePath, '# A name no desktop will accept\n\nWindows has reserved this one for a serial port since MS-DOS.\n');
+      }
 
       // The drawer's foot carries the vault switcher, which in a capture run
       // Shows the harness's generated `temp-vault-XXXXXX` name — a private-looking
@@ -203,7 +232,7 @@ beforeAll(async () => {
 
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
     },
-    input: { fontSizeInPixels: MOBILE_FONT_SIZE_IN_PIXELS, subjectNotePath: SUBJECT_NOTE_PATH },
+    input: { badNameNotePath: BAD_NAME_NOTE_PATH, fontSizeInPixels: MOBILE_FONT_SIZE_IN_PIXELS, subjectNotePath: SUBJECT_NOTE_PATH },
     vaultPath: vaultPath()
   });
 
@@ -250,24 +279,28 @@ beforeAll(async () => {
 });
 
 describe('mobile store screenshots', () => {
-  it('1 - paths only Obsidian can resolve', async () => {
+  it('1 - a name the vault\'s other devices reject', async () => {
     const content = await openNote(SUBJECT_NOTE_PATH);
-    // Standard Markdown already, and still broken: both paths are written from the
-    // Vault root, which only Obsidian's own resolver reads that way.
-    expect(content).toContain('](Design%20notes.md)');
-    expect(content).toContain('](attachments/diagram.png)');
-    await shoot(1, 'Paths only Obsidian can resolve');
+    // The name is legal here and only here: the file exists on this ext4 volume,
+    // And the note links to it, so the frame shows both the offender and the link
+    // That will have to follow it.
+    expect(await listFiles()).toContain(BAD_NAME_NOTE_PATH);
+    expect(content).toContain(BAD_NAME);
+    await shoot(1, 'A name your other devices reject');
   });
 
-  it('2 - every path a real relative path', async () => {
-    // Two commands, one frame: the plugin splits links from embeds, and a reader
-    // Does not care which is which — they care that the path works outside Obsidian.
-    await runCommand('convert-all-link-paths-to-relative');
-    await runCommand('convert-all-embed-paths-to-relative');
-    const content = await openNote(SUBJECT_NOTE_PATH);
-    expect(content).toContain('../Design%20notes.md');
-    expect(content).toContain('../attachments/diagram.png');
-    await shoot(2, 'Every path a real relative path');
+  it('2 - repaired, with the original name kept', async () => {
+    await runCommand('fix-incompatible-paths');
+
+    const repairedPath = await waitForRepairedNote();
+    // De-reserving the name is only half of it. The name a user chose is not
+    // Disposable, so the repair puts it back into the note as `title` and an alias —
+    // Which is what this frame is actually of, so the drawer stays SHUT: opened, it
+    // Covers the left half of a 450dp screen and the frontmatter falls off the edge.
+    const content = await openNote(repairedPath);
+    expect(repairedPath).not.toBe(BAD_NAME_NOTE_PATH);
+    expect(content).toContain(`title: ${BAD_NAME}`);
+    await shoot(2, 'Repaired, with the original name kept');
   });
 
   it('3 - attachments collected into the note\'s own folder', async () => {
@@ -320,11 +353,12 @@ async function buildDiagram(): Promise<Uint8Array> {
 /**
  * Builds the note every shot is framed on.
  *
- * Standard Markdown throughout, written the way Obsidian writes it: the shortest
- * path that Obsidian itself can resolve. Three forms on purpose — a link and an
- * embed that both point OUT of `Notes/` without saying so, and a link to a note
- * that does not exist. The first two are what shot 2 repairs; the third is what
- * shot 4's report has to find.
+ * Standard Markdown throughout, written the way Obsidian writes it. Three forms
+ * on purpose — a link to the forbidden name, an embed of the attachment shot 3
+ * collects, and a link to a note that does not
+ * exist. The first is what shot 2 repairs, and it is here rather than only in the
+ * file tree so the frame can show the link following the rename; the third is
+ * what shot 4's report has to find.
  *
  * @returns The note's Markdown.
  */
@@ -332,7 +366,7 @@ function buildSubjectNote(): string {
   return [
     '# Meeting',
     '',
-    'Agreed to follow [Design notes](Design%20notes.md) for the layout.',
+    `Agreed to follow [the review note](<${BAD_NAME}.md>) for the layout.`,
     '',
     '![diagram](attachments/diagram.png)',
     '',
@@ -549,17 +583,6 @@ function vaultPath(): string {
   return getTemporaryVault().path;
 }
 
-/**
- * Waits, from the Node side, for a file to appear at a path.
- *
- * The plugin's commands hand their work to an internal queue and return
- * immediately, so "the command ran" and "the vault changed" are separate events.
- * Polled from here rather than inside one closure because a whole-vault walk can
- * outlast the transport's per-call cap.
- *
- * @param path - The path the file should end up at.
- * @returns Every file path in the vault once it does.
- */
 async function waitForFile(path: string): Promise<string[]> {
   const ATTEMPTS = 20;
   const INTERVAL_IN_MILLISECONDS = 1500;
@@ -575,4 +598,43 @@ async function waitForFile(path: string): Promise<string[]> {
   }
 
   return paths;
+}
+
+/**
+ * Waits, from the Node side, for a file to appear at a path.
+ *
+ * The plugin's commands hand their work to an internal queue and return
+ * immediately, so "the command ran" and "the vault changed" are separate events.
+ * Polled from here rather than inside one closure because a whole-vault walk can
+ * outlast the transport's per-call cap.
+ *
+ * @param path - The path the file should end up at.
+ * @returns Every file path in the vault once it does.
+ */
+/**
+ * Waits for the repair to rename the forbidden-name note, and reports where it landed.
+ *
+ * The repaired name cannot be predicted here: the replacement character is the
+ * plugin's to choose, and `renameSafe` may append a deduplication suffix on top.
+ * So the note is found by the prefix that survives either way rather than by a
+ * name this suite computes and would have to keep in step.
+ *
+ * @returns The repaired note's path, or the original one if the rename never happened.
+ */
+async function waitForRepairedNote(): Promise<string> {
+  const ATTEMPTS = 20;
+  const INTERVAL_IN_MILLISECONDS = 1500;
+
+  const prefix = `${NOTES_FOLDER}/${BAD_NAME}`;
+  for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+    const paths = await listFiles();
+    const repairedPath = paths.find((path) => path.startsWith(prefix) && path !== BAD_NAME_NOTE_PATH);
+    if (repairedPath) {
+      return repairedPath;
+    }
+
+    await sleepInNode({ milliseconds: INTERVAL_IN_MILLISECONDS });
+  }
+
+  return BAD_NAME_NOTE_PATH;
 }

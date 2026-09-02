@@ -82,18 +82,50 @@ links, path compatibility — are about links that do not resolve, which is a di
 
 What stays, and why it can look like a leftover:
 
-- `treatAsAttachmentExtensions` / `isTreatedAsAttachment` are still honoured, by
-  `convertAllNoteRefPathsToRelative`. Issue #151's guarantee is unchanged and
-  `excalidraw-link-skip.desktop.integration.test.ts` still proves it — it just drives
-  `convert-all-embed-paths-to-relative` now. Its staged vault puts the notes in a subfolder on purpose: with
-  everything at the vault root a relative-path conversion is a no-op, and the suite would pass without
-  testing anything.
+- `treatAsAttachmentExtensions` / `isTreatedAsAttachment` are still honoured, now only by
+  `AttachmentCollector.isNoteEx`. See the T912 section below for what that does and does not mean for
+  issue #151 — the answer changed, and the old one is still the intuitive one.
 - `wikilink` stays in `cspell.json`. `06 Recommended Obsidian settings.md` is about *Obsidian's* wikilink
   setting, and the Excalidraw demo material still needs the word.
 
 **Release ordering:** Better Markdown Links' force-Markdown mode was on its `main` but unreleased when this
 landed (its `5.0.0` predates it). Do not ship a release of this plugin carrying the removal until that
 plugin has published a version with the mode, or the capability is lost between releases rather than moved.
+
+## Link-path rewriting is NOT this plugin's either — and issue #151 no longer means what it says (T912)
+
+T912 removed the four `Convert all … paths to relative` commands, `LinksHandler`'s whole rewriting half
+(`convertAllNoteRefPathsToRelative`, `convertLink`, and with them the notice and resource-lock dependencies
+that only `applyFileChanges` needed), and two more steps of `reorganizeVault`. `LinksHandler` is now
+`checkConsistency` + `isValidLink` + `ConsistencyCheckResult` — a reporter, nothing else.
+
+This was a **scope removal, not a handover**: rewriting a link into a style is the "never rewrite" third of
+the scope line. Better Markdown Links is named in the README and demo vault as where link paths live, but
+nothing was waiting on it, so unlike T846 this carried no release gate of its own.
+
+**Issue #151 is the trap here.** It says the plugin's link-rewriting operations must SKIP a file listed in
+`treatAsAttachmentExtensions`, so the image references Excalidraw stores inside a `.excalidraw.md` are never
+rewritten. `convertAllNoteRefPathsToRelative` was the last thing that honoured it, and it is gone. The
+obvious assumption — that attachment collecting inherited the guarantee — is **false, and was measured**:
+
+- `AttachmentCollector.collectAttachmentsInAbstractFilesImpl` selects notes with obsidian-dev-utils' plain
+  `isNote` (`isMarkdownFile || isCanvasFile || isBaseFile`), which never consults the setting. So a
+  `.excalidraw.md` is scanned as an ordinary note and its references ARE rewritten. Tracked as **T919-P22**;
+  do not fix it here without reading that item, since collecting itself leaves under T901.
+- `isNoteEx` — the predicate that DOES consult the setting — is called in exactly one place,
+  `prepareAttachmentToMove`, where it decides whether a link's TARGET is a note. That is the opposite
+  direction, and it is what makes a referenced `.excalidraw.md` travel as an attachment.
+
+So `excalidraw-link-skip.desktop.integration.test.ts` was replaced by
+`excalidraw-attachment-collecting.desktop.integration.test.ts`, which covers the second bullet with a
+control phase, and says in its own header that it does not cover the first. The demo vault's Excalidraw
+walkthrough was reframed the same way. **Do not restore the "left untouched" wording anywhere** — it
+described a guarantee the code no longer makes.
+
+Screenshots 1 and 2 moved onto path repair, which forced a per-platform offender: the capture host must be
+able to CREATE the offending name, so desktop stages an over-long-in-bytes name (legal on NTFS) and Android
+stages a reserved `CON` (legal on ext4). Both suites' headers carry the full reasoning, including which
+candidate characters Obsidian's own `vault.create` refuses on every platform.
 
 ## Path compatibility (T698)
 

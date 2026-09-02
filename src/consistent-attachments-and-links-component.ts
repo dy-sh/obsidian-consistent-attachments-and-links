@@ -8,7 +8,6 @@ import {
   TFile
 } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
-import { omitAsyncReturnType } from 'obsidian-dev-utils/function';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
 import { getOrCreateFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
@@ -108,96 +107,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     }
   }
 
-  public async convertAllEmbedsPathsToRelative(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    let changedEmbedCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => `Converting embed paths to relative ${iterationString} - ${item.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (note) => {
-        if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, this.abortSignalComponent.abortSignal);
-
-        if (result.length > 0) {
-          changedEmbedCount += result.length;
-          processedNotesCount++;
-        }
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Converting embed paths to relative...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedEmbedCount === 0) {
-      this.pluginNoticeComponent.showNotice('No embeds found that need to be converted');
-    } else {
-      this.pluginNoticeComponent.showNotice(
-        `Converted ${String(changedEmbedCount)} embed${changedEmbedCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
-      );
-    }
-  }
-
-  public convertAllEmbedsPathsToRelativeCurrentNote(note: TFile): void {
-    addToQueue({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteEmbedsPathsToRelative(note.path, abortSignal)),
-      operationName: 'Convert all embed paths to relative in current note'
-    });
-  }
-
-  public async convertAllLinkPathsToRelative(abortSignal: AbortSignal): Promise<void> {
-    abortSignal.throwIfAborted();
-    await this.saveAllOpenNotes();
-    abortSignal.throwIfAborted();
-
-    let changedLinksCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => `Converting link paths to relative ${iterationString} - ${item.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (note) => {
-        if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal);
-
-        if (result.length > 0) {
-          changedLinksCount += result.length;
-          processedNotesCount++;
-        }
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Converting link paths to relative...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedLinksCount === 0) {
-      this.pluginNoticeComponent.showNotice('No links found that need to be converted');
-    } else {
-      this.pluginNoticeComponent.showNotice(`Converted ${String(changedLinksCount)} link${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`);
-    }
-  }
-
-  public convertAllLinkPathsToRelativeCurrentNote(note: TFile): void {
-    addToQueue({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.convertAllNoteLinksPathsToRelative(note.path, abortSignal)),
-      operationName: 'Convert all link paths to relative in current note'
-    });
-  }
-
   public async deleteEmptyFolders(): Promise<void> {
     await this.filesHandler.deleteEmptyFolders('/');
   }
@@ -209,8 +118,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public async reorganizeVault(): Promise<void> {
     await this.saveAllOpenNotes();
 
-    await this.convertAllEmbedsPathsToRelative();
-    await this.convertAllLinkPathsToRelative(this.abortSignalComponent.abortSignal);
     this.attachmentCollector.collectAttachmentsEntireVault();
     await this.deleteEmptyFolders();
     // Last: it renames files, and every step above resolves links against the names they had.

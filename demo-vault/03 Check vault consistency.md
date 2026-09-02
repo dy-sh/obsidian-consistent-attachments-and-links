@@ -24,4 +24,4 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ct
 ## What to notice
 
 - Nothing is modified by this command - it is a safe, read-only audit you can run any time.
-- The report is the natural starting point before you run the conversion and reorganization commands in [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
+- The report is the natural starting point before you run the reorganization commands in [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).

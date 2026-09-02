@@ -127,9 +127,7 @@ const mockFilesHandler = strictProxy<FilesHandler>({
 });
 
 const mockLinksHandler = strictProxy<LinksHandler>({
-  checkConsistency: vi.fn((): Promise<void> => noopAsync()),
-  convertAllNoteEmbedsPathsToRelative: vi.fn((): ReturnType<LinksHandler['convertAllNoteEmbedsPathsToRelative']> => Promise.resolve([])),
-  convertAllNoteLinksPathsToRelative: vi.fn((): ReturnType<LinksHandler['convertAllNoteLinksPathsToRelative']> => Promise.resolve([]))
+  checkConsistency: vi.fn((): Promise<void> => noopAsync())
 });
 
 const mockPathCompatibilityHandler = strictProxy<PathCompatibilityHandler>({
@@ -195,8 +193,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     mockSettings.shouldShowBackupWarning = true;
     mockSettings.shouldCollectAttachmentsAutomatically = false;
     mockSettings.hadDangerousSettingsReverted = false;
-    castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).mockResolvedValue([]);
-    castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteLinksPathsToRelative).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -244,105 +240,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();
       expect(openLinkTextSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe('convertAllEmbedsPathsToRelative', () => {
-    it('should show a "no embeds" notice when nothing changed', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.convertAllEmbedsPathsToRelative();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No embeds found that need to be converted');
-    });
-
-    it('should skip ignored notes', async () => {
-      const component = createComponent();
-      mockSettings.isPathIgnored.mockReturnValue(true);
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.convertAllEmbedsPathsToRelative();
-      expect(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).not.toHaveBeenCalled();
-    });
-
-    it('should report converted embeds across notes (plural)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([
-        strictProxy<TFile>({ path: 'a.md' }),
-        strictProxy<TFile>({ path: 'b.md' })
-      ]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).mockResolvedValue(['x', 'y']);
-      await component.convertAllEmbedsPathsToRelative();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 4 embeds from 2 notes');
-    });
-
-    it('should report a single converted embed (singular)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).mockResolvedValue(['x']);
-      await component.convertAllEmbedsPathsToRelative();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 1 embed from 1 note');
-    });
-  });
-
-  describe('convertAllEmbedsPathsToRelativeCurrentNote', () => {
-    it('should enqueue the conversion for the current note', async () => {
-      const component = createComponent();
-      component.convertAllEmbedsPathsToRelativeCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      await vi.waitFor(() => {
-        expect(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).toHaveBeenCalledWith('note.md', expect.anything());
-      });
-    });
-  });
-
-  describe('convertAllLinkPathsToRelative', () => {
-    it('should show a "no links" notice when nothing changed', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.convertAllLinkPathsToRelative(new AbortController().signal);
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('No links found that need to be converted');
-    });
-
-    it('should skip ignored notes', async () => {
-      const component = createComponent();
-      mockSettings.isPathIgnored.mockReturnValue(true);
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
-      await component.convertAllLinkPathsToRelative(new AbortController().signal);
-      expect(mockLinksHandler.convertAllNoteLinksPathsToRelative).not.toHaveBeenCalled();
-    });
-
-    it('should report converted links (plural)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([
-        strictProxy<TFile>({ path: 'a.md' }),
-        strictProxy<TFile>({ path: 'b.md' })
-      ]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteLinksPathsToRelative).mockResolvedValue(['x', 'y']);
-      await component.convertAllLinkPathsToRelative(new AbortController().signal);
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 4 links from 2 notes');
-    });
-
-    it('should report a single converted link (singular)', async () => {
-      const component = createComponent();
-      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'a.md' })]);
-      castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteLinksPathsToRelative).mockResolvedValue(['x']);
-      await component.convertAllLinkPathsToRelative(new AbortController().signal);
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Converted 1 link from 1 note');
-    });
-
-    it('should throw when the abort signal is already aborted', async () => {
-      const component = createComponent();
-      const controller = new AbortController();
-      controller.abort();
-      await expect(component.convertAllLinkPathsToRelative(controller.signal)).rejects.toThrow();
-    });
-  });
-
-  describe('convertAllLinkPathsToRelativeCurrentNote', () => {
-    it('should enqueue the conversion for the current note', async () => {
-      const component = createComponent();
-      component.convertAllLinkPathsToRelativeCurrentNote(strictProxy<TFile>({ path: 'note.md' }));
-      await vi.waitFor(() => {
-        expect(mockLinksHandler.convertAllNoteLinksPathsToRelative).toHaveBeenCalledWith('note.md', expect.anything());
-      });
     });
   });
 
