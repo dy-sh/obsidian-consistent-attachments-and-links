@@ -58,7 +58,7 @@ The same for links.
 
 Moves every attachment into the folder its note's settings say it belongs in, per [06 Recommended Obsidian settings](<./06 Recommended Obsidian settings.md>). Use it when you are not sure every attachment is where it should be.
 
-An attachment referenced by more than one note is not simply moved — see [01 Attachments move with their note](<./01 Attachments move with their note.md>) for what happens instead.
+An attachment referenced by more than one note is not simply moved — see [01 Collect attachments into the note's folder](<./01 Collect attachments into the note's folder.md>) for what happens instead.
 
 ## Delete Empty Folders
 

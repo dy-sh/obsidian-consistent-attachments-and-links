@@ -1,6 +1,5 @@
 import type {
   App as AppOriginal,
-  CachedMetadata,
   Notice,
   TFile,
   WorkspaceLeaf
@@ -31,7 +30,6 @@ import type { PluginSettings } from './plugin-settings.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 
 interface ComponentPrivate {
-  handleDeletedMetadata(file: TFile, previousCache: CachedMetadata): void;
   handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void;
   saveAllOpenNotes(): Promise<void>;
   showBackupWarning(): Promise<void>;
@@ -108,7 +106,6 @@ const mockSettings = {
   isPathIgnored: vi.fn((_path: string): boolean => false),
   revertDangerousSettings: vi.fn((): void => undefined),
   shouldCollectAttachmentsAutomatically: false,
-  shouldDeleteAttachmentsWithNote: false,
   shouldShowBackupWarning: true
 };
 
@@ -188,7 +185,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     mockSettings.isPathIgnored.mockReturnValue(false);
     mockSettings.shouldShowBackupWarning = true;
     mockSettings.shouldCollectAttachmentsAutomatically = false;
-    mockSettings.shouldDeleteAttachmentsWithNote = false;
     mockSettings.hadDangerousSettingsReverted = false;
     castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.replaceAllNoteWikilinksWithMarkdownLinks).mockResolvedValue(0);
     castTo<ReturnType<typeof vi.fn>>(mockLinksHandler.convertAllNoteEmbedsPathsToRelative).mockResolvedValue([]);
@@ -481,33 +477,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     });
   });
 
-  describe('handleDeletedMetadata', () => {
-    it('should cache the previous metadata for a markdown note', () => {
-      const component = createComponent();
-      mockSettings.shouldDeleteAttachmentsWithNote = true;
-      expect(() => {
-        asPrivate(component).handleDeletedMetadata(strictProxy<TFile>({ path: 'note.md' }), castTo<CachedMetadata>({}));
-      }).not.toThrow();
-    });
-
-    it('should ignore deletions when shouldDeleteAttachmentsWithNote is false', () => {
-      const component = createComponent();
-      mockSettings.shouldDeleteAttachmentsWithNote = false;
-      expect(() => {
-        asPrivate(component).handleDeletedMetadata(strictProxy<TFile>({ path: 'note.md' }), castTo<CachedMetadata>({}));
-      }).not.toThrow();
-    });
-
-    it('should ignore deletions for ignored paths', () => {
-      const component = createComponent();
-      mockSettings.shouldDeleteAttachmentsWithNote = true;
-      mockSettings.isPathIgnored.mockReturnValue(true);
-      expect(() => {
-        asPrivate(component).handleDeletedMetadata(strictProxy<TFile>({ path: 'note.md' }), castTo<CachedMetadata>({}));
-      }).not.toThrow();
-    });
-  });
-
   describe('handleMetadataCacheChanged', () => {
     it('should collect attachments when automatic collecting is enabled', () => {
       const component = createComponent();
@@ -547,27 +516,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   });
 
   describe('onLayoutReady', () => {
-    it('should register the deleted-metadata handler that caches the previous cache', async () => {
-      const component = createComponent();
-      mockSettings.shouldShowBackupWarning = false;
-      mockSettings.shouldDeleteAttachmentsWithNote = true;
-      const handleDeletedMetadataSpy = vi.spyOn(asPrivate(component), 'handleDeletedMetadata');
-      await loadAndFireLayoutReady(component);
-      const file = strictProxy<TFile>({ path: 'note.md' });
-      const previousCache = castTo<CachedMetadata>({});
-      app.metadataCache.trigger('deleted', file, previousCache);
-      expect(handleDeletedMetadataSpy).toHaveBeenCalledWith(file, previousCache);
-    });
-
-    it('should ignore the deleted event with no previous cache', async () => {
-      const component = createComponent();
-      mockSettings.shouldShowBackupWarning = false;
-      const handleDeletedMetadataSpy = vi.spyOn(asPrivate(component), 'handleDeletedMetadata');
-      await loadAndFireLayoutReady(component);
-      app.metadataCache.trigger('deleted', strictProxy<TFile>({ path: 'note.md' }), null);
-      expect(handleDeletedMetadataSpy).not.toHaveBeenCalled();
-    });
-
     it('should enqueue handling for the changed event', async () => {
       const component = createComponent();
       mockSettings.shouldShowBackupWarning = false;

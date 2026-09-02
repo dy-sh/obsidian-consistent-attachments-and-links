@@ -2,12 +2,14 @@ import type {
   SettingGroup,
   ToggleComponent
 } from 'obsidian';
+import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { AsyncEvents } from 'obsidian-dev-utils/async-events';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
@@ -57,6 +59,9 @@ class MockDataHandler implements DataHandler {
 
 const originalAddToggle = SettingEx.prototype.addToggle;
 
+// What the stubbed suggestion component reports, so a test can put the tab in either state.
+let suggestedPluginState: SuggestedPluginState = SuggestedPluginState.NotInstalled;
+
 async function createTab(): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const pluginSettingsComponent = new PluginSettingsComponent({
@@ -75,9 +80,17 @@ async function createTab(): Promise<CreatedTab> {
       callback(toggle);
     });
   });
+  // The banner row asks the suggestion component whether to render, then hands it an element. A stub keeps
+  // Both out of the community-plugin registry, which the real component reads.
   const tab = new PluginSettingsTab({
     plugin,
-    pluginSettingsComponent
+    pluginSettingsComponent,
+    pluginSuggestionComponent: strictProxy<PluginSuggestionComponent>({
+      getSuggestedPluginState: () => suggestedPluginState,
+      renderBanner: () => {
+        // The banner's contents are the suggestion component's business, not this tab's.
+      }
+    })
   });
 
   renderRows(tab);
@@ -93,6 +106,14 @@ async function flushMicrotasks(): Promise<void> {
 
 function getSettingNames(tab: PluginSettingsTab): string[] {
   return tab.getSettingDefinitions().map((definition) => 'name' in definition ? definition.name : '');
+}
+
+function isBannerVisible(tab: PluginSettingsTab): boolean {
+  const [firstDefinition] = tab.getSettingDefinitions();
+  if (!firstDefinition || !('visible' in firstDefinition) || typeof firstDefinition.visible !== 'function') {
+    throw new TypeError('The first row is not the suggestion banner.');
+  }
+  return firstDefinition.visible();
 }
 
 /**
@@ -122,6 +143,7 @@ beforeAll(async () => {
 describe('PluginSettingsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    suggestedPluginState = SuggestedPluginState.NotInstalled;
   });
 
   afterEach(() => {
@@ -136,14 +158,45 @@ describe('PluginSettingsTab', () => {
   it('should render all settings', async () => {
     const { tab } = await createTab();
     const names = getSettingNames(tab);
-    expect(names).toContain('Move Attachments with Note');
-    expect(names).toContain('Update links');
-    expect(names).toContain('Empty folder behavior');
     expect(names).toContain('Add commands to file menu');
     expect(names).toContain('Consistency report filename');
     expect(names).toContain('Include paths');
     expect(names).toContain('Exclude paths');
     expect(names).toContain('Treat as attachment extensions');
+  });
+
+  // Advanced Rename and Delete Handler owns these since 4.0.0, so offering them here would be offering to
+  // Configure a handler this plugin no longer runs.
+  it('should not render the rename and delete settings it no longer owns', async () => {
+    const { tab } = await createTab();
+    const names = getSettingNames(tab);
+    expect(names).not.toContain('Move Attachments with Note');
+    expect(names).not.toContain('Delete Unused Attachments with Note');
+    expect(names).not.toContain('Update links');
+    expect(names).not.toContain('Empty folder behavior');
+    expect(names).not.toContain('Delete Duplicate Attachments on Note Move');
+    expect(names).not.toContain('Update backlink text on note rename');
+  });
+
+  // The banner has to be a row: Obsidian never calls `display()` once the declarative definitions are
+  // Non-empty, so a row is the only place it can go.
+  it('should carry the suggestion banner as its first row', async () => {
+    const { tab } = await createTab();
+    const [firstDefinition] = tab.getSettingDefinitions();
+    expect(firstDefinition).toBeDefined();
+    expect(firstDefinition && 'name' in firstDefinition ? firstDefinition.name : undefined).toBe('');
+  });
+
+  it('should show the suggestion banner while the suggested plugin is not enabled', async () => {
+    const { tab } = await createTab();
+    expect(isBannerVisible(tab)).toBe(true);
+  });
+
+  // Nothing to suggest once it is installed and running, so the row takes no space.
+  it('should hide the suggestion banner once the suggested plugin is enabled', async () => {
+    suggestedPluginState = SuggestedPluginState.Enabled;
+    const { tab } = await createTab();
+    expect(isBannerVisible(tab)).toBe(false);
   });
 
   it('should capture toggles for the dangerous settings', async () => {
@@ -153,9 +206,9 @@ describe('PluginSettingsTab', () => {
 
   it('should show a warning when a dangerous setting is enabled', async () => {
     const { toggles } = await createTab();
-    const moveAttachmentsToggle = toggles[0];
-    expect(moveAttachmentsToggle).toBeDefined();
-    moveAttachmentsToggle?.setValue(true);
+    const autoCollectToggle = toggles[1];
+    expect(autoCollectToggle).toBeDefined();
+    autoCollectToggle?.setValue(true);
     await flushMicrotasks();
     expect(alert).toHaveBeenCalled();
   });
@@ -166,17 +219,17 @@ describe('PluginSettingsTab', () => {
       toggle.setValue(true);
       await flushMicrotasks();
     }
-    // Four dangerous toggles trigger checkDangerousSetting → alert (move, delete-attachments,
-    // Delete-existing-on-move, auto-collect). Non-dangerous toggles have no onChanged handler.
-    const DANGEROUS_TOGGLE_COUNT = 4;
+    // Auto-collect is the one dangerous toggle left — the other three moved to Advanced Rename and Delete
+    // Handler in 4.0.0. Non-dangerous toggles have no onChanged handler.
+    const DANGEROUS_TOGGLE_COUNT = 1;
     expect(alert).toHaveBeenCalledTimes(DANGEROUS_TOGGLE_COUNT);
   });
 
   it('should not show a warning when a dangerous setting is disabled', async () => {
     const { toggles } = await createTab();
-    const moveAttachmentsToggle = toggles[0];
-    expect(moveAttachmentsToggle).toBeDefined();
-    moveAttachmentsToggle?.setValue(false);
+    const autoCollectToggle = toggles[1];
+    expect(autoCollectToggle).toBeDefined();
+    autoCollectToggle?.setValue(false);
     await flushMicrotasks();
     expect(alert).not.toHaveBeenCalled();
   });

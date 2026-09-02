@@ -1,6 +1,7 @@
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { isTreatedAsAttachment } from 'obsidian-dev-utils/obsidian/file-system';
 import { PathSettings } from 'obsidian-dev-utils/obsidian/path-settings';
+
+import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
 
 export enum CollectAttachmentUsedByMultipleNotesMode {
   Cancel = 'Cancel',
@@ -20,22 +21,32 @@ export enum MoveAttachmentToProperFolderUsedByMultipleNotesMode {
 export class PluginSettings {
   public collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
   public consistencyReportFile = 'consistency-report.md';
-  public emptyFolderBehavior: EmptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
+
+  /**
+   * Whether the user has already declined the suggestion to install Advanced Rename and Delete Handler.
+   *
+   * Only the load-time notice honours it — the settings-tab banner is shown regardless, because a user
+   * looking at these settings right now is a fresher signal than an answer they gave earlier.
+   */
+  public isAdvancedRenameAndDeleteHandlerSuggestionDeclined = false;
 
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
 
-  public shouldAddCommandsToFileMenu = true;
+  /**
+   * The rename/delete values this plugin used to own, waiting to be offered to Advanced Rename and Delete
+   * Handler. Non-`null` means an offer is still pending; `null` means there is nothing to offer, which is
+   * also what a fresh install has.
+   *
+   * One nullable object rather than one pending property per setting, so a fresh install can never be told
+   * it has a migration waiting and an applied migration is retired with a single write.
+   */
+  public proposedRenameDeleteSettings: MigratableSettings | null = null;
 
-  public shouldChangeNoteBacklinksDisplayText = true;
+  public shouldAddCommandsToFileMenu = true;
 
   public shouldCollectAttachmentsAutomatically = false;
 
-  public shouldDeleteAttachmentsWithNote = false;
-
-  public shouldDeleteExistingFilesWhenMovingNote = false;
-  public shouldMoveAttachmentsWithNote = false;
   public shouldShowBackupWarning = true;
-  public shouldUpdateLinks = true;
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
 
   /**
@@ -114,12 +125,9 @@ export class PluginSettings {
     if (!this.shouldShowBackupWarning) {
       return;
     }
-    this._hadDangerousSettingsReverted = this.shouldDeleteAttachmentsWithNote || this.shouldDeleteExistingFilesWhenMovingNote
-      || this.shouldMoveAttachmentsWithNote
-      || this.shouldCollectAttachmentsAutomatically;
-    this.shouldDeleteAttachmentsWithNote = false;
-    this.shouldDeleteExistingFilesWhenMovingNote = false;
-    this.shouldMoveAttachmentsWithNote = false;
+    // Three of the four settings this used to revert moved to Advanced Rename and Delete Handler in 4.0.0,
+    // Which reverts its own. Auto-collecting is the one destructive setting still owned here.
+    this._hadDangerousSettingsReverted = this.shouldCollectAttachmentsAutomatically;
     this.shouldCollectAttachmentsAutomatically = false;
   }
 }
