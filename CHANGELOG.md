@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 4.0.0
+
+**Breaking: this plugin no longer handles renames and deletions.**
+
+[Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) now owns that for the whole vault. Install it to keep attachments traveling with their note and links rewritten when you move, rename or delete one. Declining leaves every other feature here working — collecting attachments, the consistency audit, and the link-conversion commands are unaffected.
+
+Why the change: five plugins each bundled their own copy of the same handler. Two handlers acting on one rename corrupt links and move attachments twice, and which copy actually ran depended on Obsidian's load order — so what your vault did depended on which versions you happened to have installed. One owner, for the whole vault, is the fix.
+
+**Your existing settings are not lost.** The first time both plugins are installed, this one offers your old rename and delete settings to the new one, shows you exactly what would change, and writes nothing unless you approve. Cancelling leaves the offer pending, so it comes back.
+
+- feat!: hand rename and delete handling to Advanced Rename and Delete Handler
+- feat: suggest Advanced Rename and Delete Handler, through a notice and a settings-tab banner
+- feat: offer the 3.x rename and delete settings to their new owner, once
+- test(integration): guard the settings hand-over against a real data.json
+- docs: rewrite the demo vault and README around what this plugin still does
+- chore: update libs
+
+The settings that moved: `shouldUpdateLinks`, `shouldMoveAttachmentsWithNote`, `shouldDeleteAttachmentsWithNote`, `shouldDeleteExistingFilesWhenMovingNote`, `shouldChangeNoteBacklinksDisplayText` and `emptyFolderBehavior`. The path and treat-as-attachment settings stay here — other features read them — and are offered to the new plugin as a starting point rather than handed over.
+
 ## 3.35.5
 
 - chore(deps): sweep caret-ranged dependencies to latest

@@ -1,7 +1,7 @@
 {
   "id": "consistent-attachments-and-links",
   "name": "Consistent Attachments and Links",
-  "version": "3.35.5",
+  "version": "4.0.0",
   "minAppVersion": "1.13.7",
   "description": "This plugin ensures the consistency of attachments and links.",
   "author": "Dmitry Savosh",
