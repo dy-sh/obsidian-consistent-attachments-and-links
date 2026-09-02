@@ -5,6 +5,10 @@ import {
 } from 'vitest';
 
 import {
+  PATH_COMPATIBILITY_PLATFORMS,
+  PathCompatibilityPlatform
+} from './path-compatibility.ts';
+import {
   CollectAttachmentUsedByMultipleNotesMode,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode,
   PluginSettings
@@ -159,6 +163,44 @@ describe('PluginSettings', () => {
       const settings = new PluginSettings();
       settings.revertDangerousSettings();
       expect(settings.hadDangerousSettingsReverted).toBe(false);
+    });
+  });
+
+  describe('getPathCompatibilityPlatforms', () => {
+    // `Platform` reports Windows in the unit-test mocks, so that is the platform a fresh install enables.
+    it('should enable the current platform only', () => {
+      expect(new PluginSettings().getPathCompatibilityPlatforms()).toStrictEqual([PathCompatibilityPlatform.Windows]);
+    });
+
+    it('should enable nothing when every toggle is off', () => {
+      const settings = new PluginSettings();
+      settings.shouldEnsurePathCompatibilityOnWindows = false;
+      expect(settings.getPathCompatibilityPlatforms()).toStrictEqual([]);
+    });
+
+    it('should enable each toggled platform, in report order', () => {
+      const settings = new PluginSettings();
+      settings.shouldEnsurePathCompatibilityOnAndroid = true;
+      settings.shouldEnsurePathCompatibilityOnIos = true;
+      expect(settings.getPathCompatibilityPlatforms()).toStrictEqual([
+        PathCompatibilityPlatform.Windows,
+        PathCompatibilityPlatform.Android,
+        PathCompatibilityPlatform.Ios
+      ]);
+    });
+
+    it('should enable every platform under the master toggle, whatever the individual ones say', () => {
+      const settings = new PluginSettings();
+      settings.shouldEnsurePathCompatibilityOnWindows = false;
+      settings.shouldEnsurePathCompatibilityOnEveryPlatform = true;
+      expect(settings.getPathCompatibilityPlatforms()).toStrictEqual([...PATH_COMPATIBILITY_PLATFORMS]);
+    });
+
+    it('should default the sidecar pattern to the full file name', () => {
+      const settings = new PluginSettings();
+      expect(settings.sidecarNoteNamePattern).toBe('{{fileName}}.md');
+      expect(settings.maxVaultRootPathLength).toBe(0);
+      expect(settings.shouldCreateNoteToPreserveOriginalName).toBe(false);
     });
   });
 });

@@ -53,6 +53,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 - **Collect attachments into the note's own folder**, on command or as you edit — safely, never stealing a file another note still references. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
 - **Audit the whole vault** and get a report of bad links, bad embed paths, wikilinks and wiki-embeds, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
+- **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
 - **Convert an existing vault** — wikilinks to Markdown links, paths to relative, attachments collected into place, empty folders swept — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which of the destructive operations are unlocked. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)

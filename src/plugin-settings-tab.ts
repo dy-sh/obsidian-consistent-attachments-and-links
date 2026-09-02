@@ -12,6 +12,11 @@ import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin
 import type { PluginSettings } from './plugin-settings.ts';
 
 import {
+  PATH_COMPATIBILITY_PLATFORM_LABELS,
+  PATH_COMPATIBILITY_PLATFORMS,
+  PathCompatibilityPlatform
+} from './path-compatibility.ts';
+import {
   CollectAttachmentUsedByMultipleNotesMode,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
 } from './plugin-settings.ts';
@@ -21,6 +26,26 @@ interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstr
 }
 
 const AUTO_COLLECT_ATTACHMENTS_SETTING_NAME = 'Auto Collect Attachments';
+
+/**
+ * What each platform's toggle actually enforces. They differ enough that one shared sentence would be wrong
+ * for four of the five: only Windows has a path budget a vault runs into, and only ext4 counts bytes.
+ */
+const PATH_COMPATIBILITY_PLATFORM_DESCRIPTIONS = {
+  [PathCompatibilityPlatform.Android]: 'Names of at most 255 bytes. A name of 128 CJK characters is 384 bytes, so this bites long before any character count does.',
+  [PathCompatibilityPlatform.Ios]: 'Names of at most 255 bytes, and paths of at most 1024.',
+  [PathCompatibilityPlatform.Linux]: 'Names of at most 255 bytes.',
+  [PathCompatibilityPlatform.MacOs]: 'Names of at most 255 bytes, and paths of at most 1024.',
+  [PathCompatibilityPlatform.Windows]: 'Paths of at most 259 characters for a file and 247 for a folder, no reserved name (CON, PRN, AUX, NUL, COM1-9, LPT1-9), no <>:"|?* and no trailing dot or space.'
+} as const satisfies Record<PathCompatibilityPlatform, string>;
+
+const PATH_COMPATIBILITY_PLATFORM_PROPERTY_NAMES = {
+  [PathCompatibilityPlatform.Android]: 'shouldEnsurePathCompatibilityOnAndroid',
+  [PathCompatibilityPlatform.Ios]: 'shouldEnsurePathCompatibilityOnIos',
+  [PathCompatibilityPlatform.Linux]: 'shouldEnsurePathCompatibilityOnLinux',
+  [PathCompatibilityPlatform.MacOs]: 'shouldEnsurePathCompatibilityOnMacOs',
+  [PathCompatibilityPlatform.Windows]: 'shouldEnsurePathCompatibilityOnWindows'
+} as const satisfies Record<PathCompatibilityPlatform, keyof PluginSettings>;
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   private readonly pluginSuggestionComponent: PluginSuggestionComponent;
@@ -271,6 +296,85 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             });
             this.bind({ propertyName: 'moveAttachmentToProperFolderUsedByMultipleNotesMode', valueComponent: dropdown });
           });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('Enforce every platform\'s naming rules at once, whatever the individual toggles below say.');
+          f.createEl('br');
+          f.appendText('Use this when you do not want to reason about which devices this vault reaches.');
+        }),
+        name: 'Ensure path compatibility on every platform',
+        render: (setting) => {
+          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldEnsurePathCompatibilityOnEveryPlatform', valueComponent: toggle }));
+        }
+      }),
+      ...PATH_COMPATIBILITY_PLATFORMS.map((platform) =>
+        this.settingEx({
+          desc: PATH_COMPATIBILITY_PLATFORM_DESCRIPTIONS[platform],
+          name: `Ensure path compatibility on ${PATH_COMPATIBILITY_PLATFORM_LABELS[platform]}`,
+          render: (setting) => {
+            setting.addToggle((toggle) => this.bind({ propertyName: PATH_COMPATIBILITY_PLATFORM_PROPERTY_NAMES[platform], valueComponent: toggle }));
+          }
+        })
+      ),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('The length, in characters, of the longest vault root path this vault is expected to live under.');
+          f.createEl('br');
+          f.appendText('Leave it at ');
+          appendCodeBlock(f, '0');
+          f.appendText(' to use this machine\'s real vault root, which makes the check exact here.');
+          f.createEl('br');
+          f.appendText(
+            'The root of a device you are not running on cannot be known, so state it: set this to the length of the deepest place this vault is synced to. A value below the real root\'s length is reported as a warning, because every path check is then stricter than this machine requires.'
+          );
+        }),
+        name: 'Maximum vault root path length',
+        render: (setting) => {
+          setting.addNumber((number) => {
+            this.bind({ propertyName: 'maxVaultRootPathLength', valueComponent: number });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('Names the sidecar note that carries an attachment\'s original name, once the attachment has been renamed.');
+          f.createEl('br');
+          f.appendText('Tokens: ');
+          appendCodeBlock(f, '{{fileName}}');
+          f.appendText(' (the whole name, extension included), ');
+          appendCodeBlock(f, '{{basename}}');
+          f.appendText(', ');
+          appendCodeBlock(f, '{{extension}}');
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText('The default makes ');
+          appendCodeBlock(f, 'diagram.png');
+          f.appendText(' answer ');
+          appendCodeBlock(f, 'diagram.png.md');
+          f.appendText(', which cannot collide with a real note the way ');
+          appendCodeBlock(f, '{{basename}}.md');
+          f.appendText(' can.');
+        }),
+        name: 'Sidecar note name',
+        render: (setting) => {
+          setting.addText((text) => {
+            this.bind({ propertyName: 'sidecarNoteNamePattern', valueComponent: text });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('When a renamed item has no note to record its original name in, create one.');
+          f.createEl('br');
+          f.appendText(
+            'Off by default: a folder with no folder note, and an attachment with no sidecar note, are listed in the consistency report instead, and nothing new appears on disk.'
+          );
+        }),
+        name: 'Create a note to preserve the original name',
+        render: (setting) => {
+          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldCreateNoteToPreserveOriginalName', valueComponent: toggle }));
         }
       })
     ];
