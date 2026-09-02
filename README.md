@@ -1,6 +1,6 @@
 # Consistent Attachments and Links
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov) [![GitHub release](https://img.shields.io/github/v/release/dy-sh/obsidian-consistent-attachments-and-links)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases) [![GitHub downloads](https://img.shields.io/github/downloads/dy-sh/obsidian-consistent-attachments-and-links/total)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases) [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov) [![GitHub release](https://img.shields.io/github/v/release/dy-sh/obsidian-consistent-attachments-and-links)](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases) [![GitHub downloads](https://img.shields.io/github/downloads/dy-sh/obsidian-consistent-attachments-and-links/total)](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases) [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/dy-sh/obsidian-consistent-attachments-and-links)
 
 [Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
 
@@ -46,7 +46,7 @@ This plugin makes a vault consistent in the plainest sense: every link a real re
 A copy of the vault ships with every release. You can access it via any of the following:
 
 1. Running the **Consistent Attachments and Links: Open demo vault** command.
-2. Downloading `consistent-attachments-and-links-demo-vault-<version>.zip` (`<version>` is the release version) from the [Releases](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases).
+2. Downloading `consistent-attachments-and-links-demo-vault-<version>.zip` (`<version>` is the release version) from the [Releases](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases).
 3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
 
 ## What it does
