@@ -3,6 +3,40 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code
 in this repository.
 
+## The scope line — read this before adding any command (T891)
+
+> Consistent Attachments and Links **reports** every link whose written path does not itself lead to its
+> target — Obsidian's own resolver is deliberately more forgiving than that — and **repairs** names and
+> paths that a platform the vault is synced to would reject. It does not rewrite links into a style, and it
+> does not place attachments or manage folders; where those matter, it reports and leaves the change to the
+> user.
+
+Operationally: **report strictly, repair narrowly, never rewrite.** The rule separating the first two
+(owner, 2026-09-02): **repair what damages the vault as data; report what merely limits who can read it.** A
+name Windows reserves means the file cannot exist on a machine the vault syncs to, so the vault itself is
+damaged. A shortest-path link damages nothing — the vault is intact and only a non-Obsidian reader cannot
+follow it.
+
+The three categories, and where the removed surfaces went:
+
+- **Report, strictly** — bad links, bad embeds, bad frontmatter links, path compatibility, and
+  attachments sitting outside their configured attachment folder.
+- **Repair, narrowly** — `fix-incompatible-paths` only.
+- **Never rewrite** — link style went to Better Markdown Links, attachment placement to Custom Attachment
+  Location, folder cleanup to Advanced Rename and Delete Handler.
+
+**Two paraphrases of this that are FALSE.** Both were proposed during the 2026-09-02 scope design and
+rejected against the code; do not re-derive them:
+
+1. *"It resolves in Obsidian → tolerated."* No. `LinksHandler.isValidLink` never calls Obsidian's resolver —
+   it builds the path literally and asks `getFileOrNull`, which does no extension inference, no vault-wide
+   name search and no fuzzy match. `[[note]]` **is** reported even though Obsidian finds it. The reporting
+   standard is deliberately *stricter* than Obsidian, not looser. Tolerating wikilinks and non-relative
+   links means the plugin does not **convert** them; it does not mean they go unreported.
+2. *"Repairs names that break Obsidian on some platform."* No. Obsidian runs fine; the platform's
+   **filesystem** rejects the name. `src/path-compatibility.ts`'s header has the frame: *"A vault is synced,
+   so the platform that matters is not necessarily the one running."*
+
 ## Rename and delete handling is NOT this plugin's — do not re-add a handler
 
 Since **4.0.0** this plugin registers no `RenameDeleteHandlerComponent`. Advanced Rename and Delete Handler
