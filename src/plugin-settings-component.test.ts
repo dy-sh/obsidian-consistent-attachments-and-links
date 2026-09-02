@@ -98,13 +98,13 @@ describe('PluginSettingsComponent', () => {
     it('should map deleteEmptyFolders true to DeleteWithEmptyParents', async () => {
       const component = createComponent({ deleteEmptyFolders: true });
       await component.loadWithPromises();
-      expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.DeleteWithEmptyParents);
+      expect(component.settings.proposedRenameDeleteSettings?.emptyFolderBehavior).toBe(EmptyFolderBehavior.DeleteWithEmptyParents);
     });
 
     it('should map deleteEmptyFolders false to Keep', async () => {
       const component = createComponent({ deleteEmptyFolders: false });
       await component.loadWithPromises();
-      expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.Keep);
+      expect(component.settings.proposedRenameDeleteSettings?.emptyFolderBehavior).toBe(EmptyFolderBehavior.Keep);
     });
 
     it('should prefer emptyAttachmentFolderBehavior over deleteEmptyFolders', async () => {
@@ -113,7 +113,7 @@ describe('PluginSettingsComponent', () => {
         emptyAttachmentFolderBehavior: EmptyFolderBehavior.Delete
       });
       await component.loadWithPromises();
-      expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.Delete);
+      expect(component.settings.proposedRenameDeleteSettings?.emptyFolderBehavior).toBe(EmptyFolderBehavior.Delete);
     });
 
     it('should map the remaining boolean legacy settings', async () => {
@@ -128,12 +128,56 @@ describe('PluginSettingsComponent', () => {
       });
       await component.loadWithPromises();
       expect(component.settings.shouldCollectAttachmentsAutomatically).toBe(true);
-      expect(component.settings.shouldChangeNoteBacklinksDisplayText).toBe(true);
-      expect(component.settings.shouldDeleteAttachmentsWithNote).toBe(true);
-      expect(component.settings.shouldDeleteExistingFilesWhenMovingNote).toBe(true);
-      expect(component.settings.shouldMoveAttachmentsWithNote).toBe(true);
       expect(component.settings.shouldShowBackupWarning).toBe(false);
-      expect(component.settings.shouldUpdateLinks).toBe(false);
+      // The ancient names are mapped onto the 3.x ones first, and only then parked for the new owner — so a
+      // Vault that never saw 3.x still hands its values over intact.
+      expect(component.settings.proposedRenameDeleteSettings).toStrictEqual({
+        shouldDeleteConflictingAttachments: true,
+        shouldHandleDeletions: true,
+        shouldHandleRenames: false,
+        shouldRenameAttachmentFolder: true,
+        shouldUpdateFileNameAliases: true
+      });
+    });
+
+    it('should park the 3.x rename and delete settings for the new owner', async () => {
+      const component = createComponent({
+        emptyFolderBehavior: EmptyFolderBehavior.Delete,
+        excludePaths: ['private'],
+        includePaths: ['notes'],
+        shouldChangeNoteBacklinksDisplayText: false,
+        shouldDeleteAttachmentsWithNote: true,
+        shouldDeleteExistingFilesWhenMovingNote: true,
+        shouldMoveAttachmentsWithNote: true,
+        shouldUpdateLinks: false,
+        treatAsAttachmentExtensions: ['.foo.md']
+      });
+      await component.loadWithPromises();
+      expect(component.settings.proposedRenameDeleteSettings).toStrictEqual({
+        emptyFolderBehavior: EmptyFolderBehavior.Delete,
+        excludePaths: ['private'],
+        includePaths: ['notes'],
+        shouldDeleteConflictingAttachments: true,
+        shouldHandleDeletions: true,
+        shouldHandleRenames: false,
+        shouldRenameAttachmentFolder: true,
+        shouldUpdateFileNameAliases: false,
+        treatAsAttachmentExtensions: ['.foo.md']
+      });
+    });
+
+    // The path and treat-as-attachment settings are proposed, not handed over: many other features here still
+    // Read them.
+    it('should keep the settings it proposes but does not own', async () => {
+      const component = createComponent({
+        excludePaths: ['private'],
+        includePaths: ['notes'],
+        treatAsAttachmentExtensions: ['.foo.md']
+      });
+      await component.loadWithPromises();
+      expect(component.settings.excludePaths).toStrictEqual(['private']);
+      expect(component.settings.includePaths).toStrictEqual(['notes']);
+      expect(component.settings.treatAsAttachmentExtensions).toStrictEqual(['.foo.md']);
     });
 
     it('should leave settings at defaults when no legacy keys are present', async () => {
@@ -141,6 +185,8 @@ describe('PluginSettingsComponent', () => {
       await component.loadWithPromises();
       expect(component.settings.excludePaths).toStrictEqual([]);
       expect(component.settings.shouldShowBackupWarning).toBe(true);
+      // Nothing was customized, so there is nothing of the user's to carry over and no migration is offered.
+      expect(component.settings.proposedRenameDeleteSettings).toBeNull();
     });
 
     it('should append legacy ignore paths to existing excludePaths', async () => {

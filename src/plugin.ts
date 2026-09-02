@@ -1,13 +1,16 @@
-import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
-import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
+import {
+  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
+} from './advanced-rename-and-delete-handler.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { CheckConsistencyCommandHandler } from './command-handlers/check-consistency-command-handler.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
@@ -30,6 +33,11 @@ import { translationsMap } from './i18n/locales/translations-map.ts';
 import { LinksHandler } from './links-handler.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
+
+const SUGGESTION_REASON = 'Consistent Attachments and Links no longer handles renames and deletions itself.'
+  + ' Without Advanced Rename and Delete Handler, moving or renaming a note leaves its attachments behind,'
+  + ' and deleting one no longer cleans up the attachments only it referenced.';
 
 export class Plugin extends PluginBase {
   protected override createTranslationsMap(): TranslationsMap {
@@ -45,6 +53,24 @@ export class Plugin extends PluginBase {
     );
     this.pluginSettingsComponent = pluginSettingsComponent;
 
+    const pluginSuggestionComponent = this.addChild(
+      new PluginSuggestionComponent({
+        app: this.app,
+        isSuggestionDeclined: (): boolean => pluginSettingsComponent.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        reason: SUGGESTION_REASON,
+        // `editAndSave`, not `setProperty`: a decline has to outlive a reload, and `setProperty` only edits
+        // The in-memory state.
+        setSuggestionDeclined: async (isDeclined): Promise<void> => {
+          await pluginSettingsComponent.editAndSave((settings) => {
+            settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = isDeclined;
+          });
+        },
+        suggestedPluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+        suggestedPluginName: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
+      })
+    );
+
     const linksHandler = new LinksHandler({
       app: this.app,
       pluginNoticeComponent: this.pluginNoticeComponent,
@@ -59,7 +85,8 @@ export class Plugin extends PluginBase {
 
     const pluginSettingsTab = new PluginSettingsTab({
       plugin: this,
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      pluginSuggestionComponent
     });
 
     this.addChild(
@@ -70,25 +97,10 @@ export class Plugin extends PluginBase {
     );
 
     this.addChild(
-      new RenameDeleteHandlerComponent({
-        abortSignalComponent: this.abortSignalComponent,
+      new RenameDeleteHandlerMigrationComponent({
         app: this.app,
-        pluginId: this.manifest.id,
-        pluginNoticeComponent: this.pluginNoticeComponent,
-        resourceLockComponent: this.resourceLockComponent,
-        settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => {
-          const settings = pluginSettingsComponent.settings;
-          return {
-            emptyFolderBehavior: settings.emptyFolderBehavior,
-            isNote: (path: string): boolean => filesHandler.isNoteEx(path),
-            isPathIgnored: (path: string): boolean => settings.isPathIgnored(path),
-            shouldDeleteConflictingAttachments: settings.shouldDeleteExistingFilesWhenMovingNote,
-            shouldHandleDeletions: settings.shouldDeleteAttachmentsWithNote,
-            shouldHandleRenames: settings.shouldUpdateLinks,
-            shouldRenameAttachmentFolder: settings.shouldMoveAttachmentsWithNote,
-            shouldUpdateFileNameAliases: settings.shouldChangeNoteBacklinksDisplayText
-          };
-        }
+        pluginSettingsComponent,
+        sourcePluginId: this.manifest.id
       })
     );
 

@@ -4,17 +4,16 @@ import { Notice } from 'obsidian';
 import { configureCommunityPlugin } from 'obsidian-dev-utils/obsidian/community-plugins';
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
-const TRIP_FOLDER_PATH = 'Materials/01 Attachments move with their note';
+const TRIP_FOLDER_PATH = 'Materials/01 Collect attachments into the note\'s folder';
 const TRIP_NOTE_PATH = `${TRIP_FOLDER_PATH}/Trip.md`;
-const TRIP_ATTACHMENT_PATH = `${TRIP_FOLDER_PATH}/trip-photo.svg`;
-const ARCHIVE_FOLDER_PATH = `${TRIP_FOLDER_PATH}/Archive`;
-const MOVED_TRIP_NOTE_PATH = `${ARCHIVE_FOLDER_PATH}/Trip.md`;
+
+// The attachment starts in one shared folder at the vault root — Obsidian's own default, and the
+// Arrangement collecting exists to undo.
+const SHARED_ATTACHMENTS_FOLDER_PATH = 'Materials/_shared-attachments';
+const TRIP_ATTACHMENT_PATH = `${SHARED_ATTACHMENTS_FOLDER_PATH}/trip-photo.svg`;
 
 interface DemoSettingsPatch {
   shouldCollectAttachmentsAutomatically?: boolean;
-  shouldDeleteAttachmentsWithNote?: boolean;
-  shouldMoveAttachmentsWithNote?: boolean;
-  shouldUpdateLinks?: boolean;
 }
 
 // A tiny SVG rather than a binary image: it is a real attachment as far as the plugin is concerned,
@@ -30,24 +29,27 @@ const TRIP_ATTACHMENT_CONTENT = [
 const TRIP_NOTE_CONTENT = [
   '# Trip',
   '',
-  'A note with an attachment of its own, so you can watch the two travel together.',
+  'A note whose only attachment lives in a shared folder somewhere else, so you can watch collecting',
+  'bring it home.',
   '',
-  '![trip-photo](<./trip-photo.svg>)',
+  '![trip-photo](<../_shared-attachments/trip-photo.svg>)',
   ''
 ].join('\n');
 
 /**
- * Creates the note-plus-attachment pair the walkthrough asks you to make by hand.
+ * Creates the note-plus-distant-attachment pair the walkthrough asks you to make by hand.
  *
  * The manual steps are "create a note" then "paste or drag an image into it", which needs an image to
- * hand and leaves the attachment wherever your Obsidian settings put it — so the demo starts from a
- * different place for every reader.
+ * hand and leaves the attachment wherever your Obsidian settings put it — so the demo would start from a
+ * different place for every reader. This puts it somewhere deliberately wrong instead.
  *
- * Manual equivalent: create `Trip.md` and paste an image into it.
+ * Manual equivalent: create `Trip.md`, and embed an image that lives in some other folder.
  */
 export async function createTripNote(app: App): Promise<void> {
-  if (!app.vault.getFolderByPath(TRIP_FOLDER_PATH)) {
-    await app.vault.createFolder(TRIP_FOLDER_PATH);
+  for (const folderPath of [TRIP_FOLDER_PATH, SHARED_ATTACHMENTS_FOLDER_PATH]) {
+    if (!app.vault.getFolderByPath(folderPath)) {
+      await app.vault.createFolder(folderPath);
+    }
   }
 
   const existingAttachment = app.vault.getFileByPath(TRIP_ATTACHMENT_PATH);
@@ -69,38 +71,21 @@ export async function createTripNote(app: App): Promise<void> {
     await app.workspace.getLeaf(false).openFile(note);
   }
 
-  new Notice('Trip.md and its attachment are ready.');
+  new Notice('Trip.md is ready, with its attachment parked in a shared folder.');
 }
 
 /**
- * Moves `Trip.md` into an `Archive` subfolder — the step whose result is the whole lesson.
+ * Deletes everything the buttons above created.
  *
- * Manual equivalent: drag `Trip.md` into a folder in the File Explorer.
- */
-export async function moveTripNoteToArchive(app: App): Promise<void> {
-  const note = app.vault.getFileByPath(TRIP_NOTE_PATH);
-  if (!note) {
-    new Notice('Trip.md is not where it started — create it again first.');
-    return;
-  }
-
-  if (!app.vault.getFolderByPath(ARCHIVE_FOLDER_PATH)) {
-    await app.vault.createFolder(ARCHIVE_FOLDER_PATH);
-  }
-
-  await app.fileManager.renameFile(note, MOVED_TRIP_NOTE_PATH);
-  new Notice('Moved. Did the attachment come with it, and does the embed still resolve?');
-}
-
-/**
- * Deletes everything the two buttons above created.
- *
- * Manual equivalent: delete the `Materials/01 Attachments move with their note` folder.
+ * Manual equivalent: delete the `Materials/01 Collect attachments into the note's folder` and
+ * `Materials/_shared-attachments` folders.
  */
 export async function resetTripDemo(app: App): Promise<void> {
-  const folder = app.vault.getFolderByPath(TRIP_FOLDER_PATH);
-  if (folder) {
-    await app.fileManager.trashFile(folder);
+  for (const folderPath of [TRIP_FOLDER_PATH, SHARED_ATTACHMENTS_FOLDER_PATH]) {
+    const folder = app.vault.getFolderByPath(folderPath);
+    if (folder) {
+      await app.fileManager.trashFile(folder);
+    }
   }
   new Notice('Trip demo reset.');
 }

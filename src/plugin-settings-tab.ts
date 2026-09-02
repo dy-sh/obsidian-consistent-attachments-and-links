@@ -1,8 +1,9 @@
 import type { SettingDefinitionItem } from 'obsidian';
+import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import type { PluginSettingsTabBaseConstructorParams } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 
 import { setIcon } from 'obsidian';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
@@ -15,105 +16,33 @@ import {
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
 } from './plugin-settings.ts';
 
-type PluginSettingsTabConstructorParams = PluginSettingsTabBaseConstructorParams<PluginSettings>;
+interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
+  readonly pluginSuggestionComponent: PluginSuggestionComponent;
+}
 
-const MOVE_ATTACHMENTS_WITH_NOTE_SETTING_NAME = 'Move Attachments with Note';
-const DELETE_ATTACHMENTS_WITH_NOTE_SETTING_NAME = 'Delete Unused Attachments with Note';
-const DELETE_EXIST_FILES_WHEN_MOVE_NOTE_SETTING_NAME = 'Delete Duplicate Attachments on Note Move';
 const AUTO_COLLECT_ATTACHMENTS_SETTING_NAME = 'Auto Collect Attachments';
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
+  private readonly pluginSuggestionComponent: PluginSuggestionComponent;
+
   public constructor(params: PluginSettingsTabConstructorParams) {
     super(params);
+    this.pluginSuggestionComponent = params.pluginSuggestionComponent;
   }
 
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
+      // The suggestion banner has to travel as a row: Obsidian renders the declarative definitions and never
+      // Calls `display()` once `getSettingDefinitions()` is non-empty, so there is no container to write into
+      // Otherwise. The row body is emptied first, leaving the Setting element as a bare host for the banner.
       this.settingEx({
-        desc: 'Automatically move attachments when a note is relocated. This includes attachments located in the same folder or any of its subfolders.',
-        name: MOVE_ATTACHMENTS_WITH_NOTE_SETTING_NAME,
+        name: '',
         render: (setting) => {
-          setting.addToggle((toggle) =>
-            this.bind({
-              onChanged: async () => {
-                await this.checkDangerousSetting('shouldMoveAttachmentsWithNote', MOVE_ATTACHMENTS_WITH_NOTE_SETTING_NAME);
-              },
-              propertyName: 'shouldMoveAttachmentsWithNote',
-              valueComponent: toggle
-            })
-          );
-        }
-      }),
-      this.settingEx({
-        desc: 'Automatically remove attachments that are no longer referenced in other notes when the note is deleted.',
-        name: DELETE_ATTACHMENTS_WITH_NOTE_SETTING_NAME,
-        render: (setting) => {
-          setting.addToggle((toggle) =>
-            this.bind({
-              onChanged: async () => {
-                await this.checkDangerousSetting('shouldDeleteAttachmentsWithNote', DELETE_ATTACHMENTS_WITH_NOTE_SETTING_NAME);
-              },
-              propertyName: 'shouldDeleteAttachmentsWithNote',
-              valueComponent: toggle
-            })
-          );
-        }
-      }),
-      this.settingEx({
-        desc: 'Automatically update links to attachments and other notes when moving notes or attachments.',
-        name: 'Update links',
-        render: (setting) => {
-          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldUpdateLinks', valueComponent: toggle }));
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText('When the folder becomes empty, ');
-          f.createEl('br');
-          appendCodeBlock(f, 'Keep');
-          f.appendText(' - will keep the empty folder, ');
-          f.createEl('br');
-          appendCodeBlock(f, 'Delete');
-          f.appendText(' - will delete the empty folder, ');
-          f.createEl('br');
-          appendCodeBlock(f, 'Delete with empty parents');
-          f.appendText(' - will delete the empty folder and its empty parent folders.');
-        }),
-        name: 'Empty folder behavior',
-        render: (setting) => {
-          setting.addDropdown((dropdown) => {
-            dropdown.addOptions({
-              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-              [EmptyFolderBehavior.Keep]: 'Keep',
-              [EmptyFolderBehavior.Delete]: 'Delete',
-              [EmptyFolderBehavior.DeleteWithEmptyParents]: 'Delete with empty parents'
-              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-            });
-            this.bind({ propertyName: 'emptyFolderBehavior', valueComponent: dropdown });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: 'Automatically delete attachments when moving a note if a file with the same name exists in the destination folder. If disabled, the file will be renamed and moved.',
-        name: DELETE_EXIST_FILES_WHEN_MOVE_NOTE_SETTING_NAME,
-        render: (setting) => {
-          setting.addToggle((toggle) =>
-            this.bind({
-              onChanged: async () => {
-                await this.checkDangerousSetting('shouldDeleteExistingFilesWhenMovingNote', DELETE_EXIST_FILES_WHEN_MOVE_NOTE_SETTING_NAME);
-              },
-              propertyName: 'shouldDeleteExistingFilesWhenMovingNote',
-              valueComponent: toggle
-            })
-          );
-        }
-      }),
-      this.settingEx({
-        desc: 'When a note is renamed, its linked references are automatically updated. If this option is enabled, the text of backlinks to this note will also be modified.',
-        name: 'Update backlink text on note rename',
-        render: (setting) => {
-          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldChangeNoteBacklinksDisplayText', valueComponent: toggle }));
-        }
+          setting.settingEl.empty();
+          this.pluginSuggestionComponent.renderBanner(setting.settingEl);
+        },
+        searchable: false,
+        visible: () => this.pluginSuggestionComponent.getSuggestedPluginState() !== SuggestedPluginState.Enabled
       }),
       this.settingEx({
         desc: createFragment((f) => {

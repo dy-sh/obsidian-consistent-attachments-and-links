@@ -18,11 +18,13 @@ describe('PluginSettings', () => {
       expect(settings.moveAttachmentToProperFolderUsedByMultipleNotesMode).toBe(MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll);
       expect(settings.consistencyReportFile).toBe('consistency-report.md');
       expect(settings.shouldAddCommandsToFileMenu).toBe(true);
-      expect(settings.shouldChangeNoteBacklinksDisplayText).toBe(true);
       expect(settings.shouldShowBackupWarning).toBe(true);
-      expect(settings.shouldUpdateLinks).toBe(true);
       expect(settings.treatAsAttachmentExtensions).toStrictEqual(['.excalidraw.md']);
       expect(settings.hadDangerousSettingsReverted).toBe(false);
+      expect(settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined).toBe(false);
+      // A fresh install has nothing to hand to Advanced Rename and Delete Handler, so it is never offered a
+      // Migration.
+      expect(settings.proposedRenameDeleteSettings).toBeNull();
     });
   });
 
@@ -137,22 +139,18 @@ describe('PluginSettings', () => {
     it('should do nothing when the backup warning is disabled', () => {
       const settings = new PluginSettings();
       settings.shouldShowBackupWarning = false;
-      settings.shouldDeleteAttachmentsWithNote = true;
+      settings.shouldCollectAttachmentsAutomatically = true;
       settings.revertDangerousSettings();
-      expect(settings.shouldDeleteAttachmentsWithNote).toBe(true);
+      expect(settings.shouldCollectAttachmentsAutomatically).toBe(true);
       expect(settings.hadDangerousSettingsReverted).toBe(false);
     });
 
+    // The three rename/delete settings this used to revert moved to Advanced Rename and Delete Handler in
+    // 4.0.0, which reverts its own. Auto-collecting is the one destructive setting still owned here.
     it('should revert dangerous settings and record that they were reverted', () => {
       const settings = new PluginSettings();
-      settings.shouldDeleteAttachmentsWithNote = true;
-      settings.shouldDeleteExistingFilesWhenMovingNote = true;
-      settings.shouldMoveAttachmentsWithNote = true;
       settings.shouldCollectAttachmentsAutomatically = true;
       settings.revertDangerousSettings();
-      expect(settings.shouldDeleteAttachmentsWithNote).toBe(false);
-      expect(settings.shouldDeleteExistingFilesWhenMovingNote).toBe(false);
-      expect(settings.shouldMoveAttachmentsWithNote).toBe(false);
       expect(settings.shouldCollectAttachmentsAutomatically).toBe(false);
       expect(settings.hadDangerousSettingsReverted).toBe(true);
     });

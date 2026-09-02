@@ -2,9 +2,15 @@
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov) [![GitHub release](https://img.shields.io/github/v/release/dy-sh/obsidian-consistent-attachments-and-links)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases) [![GitHub downloads](https://img.shields.io/github/downloads/dy-sh/obsidian-consistent-attachments-and-links/total)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links/releases) [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/mnaoumov/obsidian-consistent-attachments-and-links)
 
-[Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder. Move a note and its attachments stay behind; delete one and you either strand files or take someone else's with you.
+[Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
 
-This plugin makes a vault consistent in the plainest sense: every link a real relative path in standard Markdown, every attachment in its note's own folder. Then it keeps it that way — moving attachments with their note, updating links on rename, and cleaning up what is left behind.
+This plugin makes a vault consistent in the plainest sense: every link a real relative path in standard Markdown, every attachment in its note's own folder. It collects scattered attachments into place, converts an existing vault to that shape in one command, and audits the whole vault for what is still broken.
+
+> [!IMPORTANT]
+>
+> Since **4.0.0** this plugin no longer handles renames and deletions. Install [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) to keep attachments traveling with their note and links rewritten when you move, rename or delete one — it owns that for the whole vault now, so several plugins can no longer fight over it. This plugin offers to hand your old settings across the first time it sees it, and everything else here keeps working without it.
+
+<!-- Separates the two callouts; without it markdownlint reads them as one blockquote. -->
 
 > [!WARNING]
 >
@@ -20,13 +26,11 @@ This plugin makes a vault consistent in the plainest sense: every link a real re
 <div>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Standard Markdown links, and paths that really resolve" width="600"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-3.png"><img src="images/screenshots/screenshot-desktop-3.png" alt="Attachments collected beside their own note" width="600"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-4.png"><img src="images/screenshots/screenshot-desktop-4.png" alt="Move the note and its attachment follows" width="600"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-5.png"><img src="images/screenshots/screenshot-desktop-5.png" alt="A report of every bad link, changing nothing" width="600"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-4.png"><img src="images/screenshots/screenshot-desktop-4.png" alt="A report of every bad link, changing nothing" width="600"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="Wikilinks: fine here, broken everywhere else" width="270"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Standard Markdown links, and paths that really resolve" width="270"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-3.png"><img src="images/screenshots/screenshot-mobile-3.png" alt="Attachments collected beside their own note" width="270"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-4.png"><img src="images/screenshots/screenshot-mobile-4.png" alt="Move the note and its attachment follows" width="270"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-5.png"><img src="images/screenshots/screenshot-mobile-5.png" alt="A report of every bad link, changing nothing" width="270"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-4.png"><img src="images/screenshots/screenshot-mobile-4.png" alt="A report of every bad link, changing nothing" width="270"></a>
 </div>
 
 </details>
@@ -47,8 +51,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## What it does
 
-- **Attachments follow their note.** Move or delete a note and its attachments go with it — safely, never taking a file another note still references. [01 Attachments move with their note](<./demo-vault/01 Attachments move with their note.md>)
-- **Links stay valid.** Renaming and moving rewrite the links that point at what you touched. [02 Links stay valid on rename and move](<./demo-vault/02 Links stay valid on rename and move.md>)
+- **Collect attachments into the note's own folder**, on command or as you edit — safely, never stealing a file another note still references. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
 - **Audit the whole vault** and get a report of bad links, bad embed paths, wikilinks and wiki-embeds, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Convert an existing vault** — wikilinks to Markdown links, paths to relative, attachments collected into place, empty folders swept — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which of the destructive operations are unlocked. [05 Settings](<./demo-vault/05 Settings.md>)

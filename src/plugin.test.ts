@@ -35,18 +35,11 @@ interface PluginPrivate {
   createTranslationsMap(): TranslationsMap;
 }
 
-interface RenameDeleteSettingsProbe {
-  emptyFolderBehavior: string;
-  isNote(path: string): boolean;
-  isPathIgnored(path: string): boolean;
-  shouldDeleteConflictingAttachments: boolean;
-  shouldHandleDeletions: boolean;
-  shouldHandleRenames: boolean;
-  shouldRenameAttachmentFolder: boolean;
-  shouldUpdateFileNameAliases: boolean;
+interface PluginSuggestionComponentParams {
+  isSuggestionDeclined(this: void): boolean;
+  setSuggestionDeclined(this: void, isDeclined: boolean): Promise<void>;
+  readonly suggestedPluginId: string;
 }
-
-type SettingsBuilder = () => RenameDeleteSettingsProbe;
 
 interface SettingTabsHolder {
   settingTabs__: unknown[];
@@ -57,17 +50,10 @@ const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 // --- Hoisted shared state ---
 
 const hoisted = vi.hoisted(() => ({
-  mockFilesHandlerInstance: {
-    isNoteEx: vi.fn((): boolean => true)
-  },
   mockSettings: {
-    emptyFolderBehavior: 'DeleteWithEmptyParents',
+    isAdvancedRenameAndDeleteHandlerSuggestionDeclined: false,
     isPathIgnored: vi.fn((): boolean => false),
-    shouldChangeNoteBacklinksDisplayText: true,
-    shouldDeleteAttachmentsWithNote: false,
-    shouldDeleteExistingFilesWhenMovingNote: false,
-    shouldMoveAttachmentsWithNote: false,
-    shouldUpdateLinks: true
+    proposedRenameDeleteSettings: null
   }
 }));
 
@@ -83,8 +69,6 @@ vi.mock('./links-handler.ts', () => ({
 
 vi.mock('./files-handler.ts', () => ({
   FilesHandler: class {
-    public isNoteEx = hoisted.mockFilesHandlerInstance.isNoteEx;
-
     public constructor(_params: unknown) {
       // No-op.
     }
@@ -111,6 +95,11 @@ vi.mock('./consistent-attachments-and-links-component.ts', () => ({
 vi.mock('./plugin-settings-component.ts', () => ({
   // Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it.
   PluginSettingsComponent: class extends Component {
+    public editAndSave = vi.fn(async (settingsEditor: (settings: unknown) => void): Promise<void> => {
+      settingsEditor(hoisted.mockSettings);
+      await noopAsync();
+    });
+
     public on = vi.fn((event: string): EventRef => ({ id: `${event}-ref` }));
 
     public settings = hoisted.mockSettings;
@@ -128,6 +117,35 @@ vi.mock('./plugin-settings-tab.ts', () => ({
     }
   }
 }));
+
+// Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it without the
+// Migration reaching for another plugin's API.
+vi.mock('./rename-delete-handler-migration-component.ts', () => ({
+  RenameDeleteHandlerMigrationComponent: class extends Component {
+    public constructor(_params: unknown) {
+      super();
+    }
+  }
+}));
+
+// Capture the `PluginSuggestionComponent` constructor argument so the closures the plugin hands it — the
+// Declined-flag getter and setter — can be invoked directly. The stub returns a fresh real Component so the
+// Real PluginBase lifecycle can load it as a child without reaching the community-plugin registry.
+const { pluginSuggestionStub } = vi.hoisted(() => ({
+  pluginSuggestionStub: vi.fn<(params: PluginSuggestionComponentParams) => object>()
+}));
+
+vi.mock('obsidian-dev-utils/obsidian/components/plugin-suggestion-component', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/plugin-suggestion-component')>();
+  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn used with `new` must be a non-arrow function returning a fresh real Component.
+  pluginSuggestionStub.mockImplementation(function NamedStub() {
+    return new Component();
+  });
+  return {
+    ...actual,
+    PluginSuggestionComponent: pluginSuggestionStub
+  };
+});
 
 // --- Command handler mocks (the plugin's own modules) ---
 
@@ -200,6 +218,8 @@ vi.mock(
 import { translationsMap } from './i18n/locales/translations-map.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { Plugin } from './plugin.ts';
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
 const PLUGIN_NAME = 'Consistent Attachments and Links';
@@ -226,13 +246,8 @@ async function createLoadedPlugin(): Promise<Plugin> {
   return plugin;
 }
 
-function getRegisteredSettingsBuilder(): SettingsBuilder {
-  const renameDeleteHandlersMap = getObsidianDevUtilsState('renameDeleteHandlersMap', new Map<string, SettingsBuilder>()).value;
-  const builder = renameDeleteHandlersMap.get(PLUGIN_ID);
-  if (!builder) {
-    throw new Error('Rename/delete settings builder was not registered.');
-  }
-  return builder;
+function hasRegisteredRenameDeleteHandler(): boolean {
+  return getObsidianDevUtilsState('renameDeleteHandlersMap', new Map<string>()).value.has(PLUGIN_ID);
 }
 
 function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
@@ -241,13 +256,24 @@ function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknow
   castTo<Record<string, unknown>>(rawTarget)[key] = value;
 }
 
+function suggestionParams(): PluginSuggestionComponentParams {
+  const call = pluginSuggestionStub.mock.calls[0];
+  if (!call) {
+    throw new Error('PluginSuggestionComponent was not constructed.');
+  }
+  return call[0];
+}
+
 // --- Tests ---
 
 describe('Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The settings object is shared across tests, and `editAndSave` really writes to it, so the decline flag
+    // Has to be put back or a later test inherits an earlier one's answer.
+    hoisted.mockSettings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = false;
+    hoisted.mockSettings.proposedRenameDeleteSettings = null;
     hoisted.mockSettings.isPathIgnored.mockReturnValue(false);
-    hoisted.mockFilesHandlerInstance.isNoteEx.mockReturnValue(true);
     nextCommandHandlerIndex = 0;
 
     const appMock = App.createConfigured__();
@@ -262,9 +288,6 @@ describe('Plugin', () => {
     // Since obsidian-dev-utils 89.0.0 the base bridges its command handlers into Notebook Navigator's
     // Menus, which looks the plugin up on layout-ready -- so `plugins` has to answer on the strict mock.
     seedOnRawTarget(app, 'plugins', { getPlugin: vi.fn().mockReturnValue(null) });
-
-    // The real RenameDeleteHandlerComponent monkey-patches FileManager.runAsyncLinkUpdate during its onload, so it is provided on the mock FileManager for the real patch to wrap the original.
-    seedOnRawTarget(app.fileManager, 'runAsyncLinkUpdate', vi.fn((handler: (updates: unknown[]) => Promise<void>) => handler([])));
 
     // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument (debug controller, permanent notices) read/write the same seeded holder.
     castTo<AppGlobal>(window).app = app;
@@ -302,34 +325,39 @@ describe('Plugin', () => {
     });
   });
 
-  describe('rename-delete settings builder', () => {
-    it('should build settings from the plugin settings', async () => {
+  describe('rename and delete handling', () => {
+    // Advanced Rename and Delete Handler owns rename/delete handling since 4.0.0. Two handlers acting on one
+    // Rename corrupts links and moves attachments twice, so this plugin must register none — the inverse of
+    // What it used to assert.
+    it('should not register a rename/delete handler of its own', async () => {
       await createLoadedPlugin();
-      const settings = getRegisteredSettingsBuilder()();
-      expect(settings).toMatchObject({
-        emptyFolderBehavior: 'DeleteWithEmptyParents',
-        shouldDeleteConflictingAttachments: false,
-        shouldHandleDeletions: false,
-        shouldHandleRenames: true,
-        shouldRenameAttachmentFolder: false,
-        shouldUpdateFileNameAliases: true
-      });
+      expect(hasRegisteredRenameDeleteHandler()).toBe(false);
     });
 
-    it('should expose isNote that delegates to the files handler', async () => {
+    it('should suggest Advanced Rename and Delete Handler instead', async () => {
       await createLoadedPlugin();
-      hoisted.mockFilesHandlerInstance.isNoteEx.mockReturnValue(false);
-      const settings = getRegisteredSettingsBuilder()();
-      expect(settings.isNote('note.md')).toBe(false);
-      expect(hoisted.mockFilesHandlerInstance.isNoteEx).toHaveBeenCalledWith('note.md');
+      expect(pluginSuggestionStub).toHaveBeenCalled();
+      expect(suggestionParams().suggestedPluginId).toBe('advanced-rename-and-delete-handler');
     });
 
-    it('should expose isPathIgnored that delegates to the settings', async () => {
+    it('should report the suggestion as not declined until the user says otherwise', async () => {
       await createLoadedPlugin();
-      hoisted.mockSettings.isPathIgnored.mockReturnValue(true);
-      const settings = getRegisteredSettingsBuilder()();
-      expect(settings.isPathIgnored('note.md')).toBe(true);
-      expect(hoisted.mockSettings.isPathIgnored).toHaveBeenCalledWith('note.md');
+      expect(suggestionParams().isSuggestionDeclined()).toBe(false);
+    });
+
+    it('should remember a declined suggestion in its own settings', async () => {
+      await createLoadedPlugin();
+      const params = suggestionParams();
+      await params.setSuggestionDeclined(true);
+      expect(params.isSuggestionDeclined()).toBe(true);
+    });
+
+    it('should offer the legacy rename and delete settings to the new owner', async () => {
+      const plugin = new Plugin(app, manifest);
+      const addChildSpy = vi.spyOn(plugin, 'addChild');
+      await plugin.onload();
+      const addedChildren = addChildSpy.mock.calls.map((call) => call[0]);
+      expect(addedChildren.some((child) => child instanceof RenameDeleteHandlerMigrationComponent)).toBe(true);
     });
   });
 });

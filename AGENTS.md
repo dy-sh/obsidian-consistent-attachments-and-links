@@ -3,36 +3,32 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code
 in this repository.
 
-## Direction: stay Advanced-Exclude-agnostic; fix the root cause in dev-utils
+## Rename and delete handling is NOT this plugin's — do not re-add a handler
 
-This plugin must NOT couple to Advanced Exclude — no `app.advancedExclude`, no "bulk in
-progress" signal handshake. (A prototype gating the settings builder's `isPathIgnored` on
-`app.advancedExclude.isApplyingProjection` was committed then reverted precisely to keep the
-plugin agnostic.)
+Since **4.0.0** this plugin registers no `RenameDeleteHandlerComponent`. Advanced Rename and Delete Handler
+(`advanced-rename-and-delete-handler`) owns the implementation *and* its settings for the whole vault. Five
+plugins used to bundle a copy of the dev-utils handler; two handlers acting on one rename corrupt links and
+move attachments twice, and which copy won depended on Obsidian's load order, so vault behavior depended on
+version skew. That plugin's `src/conflicting-plugins.ts` refuses to run beside this one below `4.0.0`.
 
-The bulk-deletion freeze was caused by the dev-utils delete handler acting on **index-only
-removals** — a synthetic `vault.on('delete')` where the file still exists on disk (e.g. when a
-folder is hidden). The agnostic fix skips the handler when `await app.vault.adapter.exists(path)`
-is true; because it is async it lives in dev-utils' `RenameDeleteHandler`, not this plugin's sync
-`isPathIgnored`. It ships in `obsidian-dev-utils` `>= 80.1.0` and requires no plugin code change.
+What lives here instead:
 
-## Integration tests
+- `src/advanced-rename-and-delete-handler.ts` — that plugin's id, name, and the shape of its public API as
+  this plugin compiles against it. It is an Obsidian plugin repo, not an npm package, so the contract is
+  declared rather than imported; the authoritative copy is its own `src/plugin-api.ts`.
+- `src/rename-delete-handler-migration-component.ts` — offers the user's old values through that plugin's
+  `migrateSettings` API, once. **Two defects T711-P18 shipped here first, both invisible to unit tests:**
+  never gate the component's setup on the pending value in `onload` (the settings component is a sibling
+  still loading, so `settings` holds defaults and the migration is lost for good — wire both the API ref's
+  `change` and the settings component's `loadSettings`, and re-read inside the propose path); and use
+  `editAndSave`, never `setProperty`, for both the declined flag and the pending value, or a decline returns
+  on the next reload and an applied migration is offered forever.
+- The suggestion banner travels as a settings **row**: Obsidian never calls `display()` once
+  `getSettingDefinitions()` is non-empty.
 
-`src/bulk-delete.desktop-performance.integration.test.ts` (vitest project
-`integration-tests:desktop-performance`, run via `npm run test:integration:desktop:performance`)
-guards the fix:
-
-- **O(N) reproduction**: a bulk **real** deletion (`trashFile`) of N notes resolves the
-  attachment path exactly once per note — and zero times with the plugin disabled. Real
-  deletions are inherently O(N); the fix does not (and must not) change this.
-- **Index-only-removal skip**: firing one `vault.on('delete')` per note **without** removing it
-  from disk must resolve **zero** attachment paths, because the disk-existence guard skips every
-  synthetic removal. A single real deletion enqueued last is the FIFO drain marker proving the
-  synthetic handlers actually ran.
-
-> The integration test runs the built bundle `dist/build`, not `node_modules`. After any
-> `obsidian-dev-utils` upgrade, run `npm run build` first or the test silently exercises the
-> stale pre-upgrade bundle.
+The `bulk-delete.desktop-performance.integration.test.ts` suite and its vault generator were deleted with the
+handler — they proved an O(N) cost that is no longer incurred here. The `integration-tests:desktop-performance`
+project stays (obsidian-dev-utils declares it fleet-wide with `passWithNoTests`).
 
 ## Pinned versions
 

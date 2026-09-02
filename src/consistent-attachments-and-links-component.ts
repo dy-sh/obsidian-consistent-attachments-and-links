@@ -1,7 +1,4 @@
-import type {
-  App,
-  CachedMetadata
-} from 'obsidian';
+import type { App } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 
@@ -13,10 +10,7 @@ import {
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { omitAsyncReturnType } from 'obsidian-dev-utils/function';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
-import {
-  getOrCreateFile,
-  isMarkdownFile
-} from 'obsidian-dev-utils/obsidian/file-system';
+import { getOrCreateFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
@@ -48,7 +42,6 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
 export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly attachmentCollector: AttachmentCollector;
-  private readonly deletedNoteCache: Map<string, CachedMetadata> = new Map<string, CachedMetadata>();
   private readonly filesHandler: FilesHandler;
   private readonly linksHandler: LinksHandler;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
@@ -308,14 +301,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   protected override onLayoutReady(): void {
     invokeAsyncSafely(() => this.showBackupWarning());
 
-    this.registerEvent(
-      this.app.metadataCache.on('deleted', (file, previousCache) => {
-        if (previousCache) {
-          this.handleDeletedMetadata(file, previousCache);
-        }
-      })
-    );
-
     this.registerEvent(this.app.metadataCache.on('changed', (file) => {
       addToQueue({
         abortSignal: this.abortSignalComponent.abortSignal,
@@ -325,17 +310,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
         operationName: 'handleMetadataCacheChanged'
       });
     }));
-  }
-
-  private handleDeletedMetadata(file: TFile, previousCache: CachedMetadata): void {
-    if (
-      !this.pluginSettingsComponent.settings.shouldDeleteAttachmentsWithNote || this.pluginSettingsComponent.settings.isPathIgnored(file.path)
-      || !isMarkdownFile(file)
-    ) {
-      return;
-    }
-
-    this.deletedNoteCache.set(file.path, previousCache);
   }
 
   private handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void {

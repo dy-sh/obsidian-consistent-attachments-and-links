@@ -5,17 +5,21 @@
  * driving a staged vault in Obsidian Mobile on a real Android emulator and
  * writing `images/screenshots/screenshot-mobile-N.png`.
  *
- * FIVE shots following the README's own argument: a vault whose links only
+ * FOUR shots following the README's own argument: a vault whose links only
  * Obsidian can resolve, then each thing the plugin does about it — links
  * rewritten as real relative paths, attachments collected into the note's own
- * folder, both following the note when it moves, and a consistency report that
- * names what is still broken without touching anything.
+ * folder, and a consistency report that names what is still broken without
+ * touching anything.
+ *
+ * There used to be a fifth, showing an attachment following its note across a
+ * move. Advanced Rename and Delete Handler owns that since 4.0.0, so this plugin
+ * cannot show it any more.
  *
  * Every command is the plugin's OWN command, run through the command palette's
  * id, and every claim is asserted against the vault afterwards: shot 2 asserts
- * the link syntax changed, shots 3 and 4 assert the attachment's path, shot 5
- * asserts the report names the broken link. A command that silently did nothing
- * cannot be shipped as one that worked.
+ * the link syntax changed, shot 3 asserts the attachment's path, shot 4 asserts
+ * the report names the broken link. A command that silently did nothing cannot
+ * be shipped as one that worked.
  *
  * Worth taking on a phone because that is where a vault most often stops being
  * portable: attachments pile up and the file tree is a drawer nobody opens. The
@@ -86,9 +90,7 @@ const HEIGHT_IN_PIXELS = 1600;
 const PLUGIN_ID = 'consistent-attachments-and-links';
 
 const NOTES_FOLDER = 'Notes';
-const ARCHIVE_FOLDER = 'Archive';
 const SUBJECT_NOTE_PATH = `${NOTES_FOLDER}/Meeting.md`;
-const MOVED_NOTE_PATH = `${ARCHIVE_FOLDER}/Meeting.md`;
 const TARGET_NOTE_PATH = `${NOTES_FOLDER}/Design notes.md`;
 
 /**
@@ -97,10 +99,9 @@ const TARGET_NOTE_PATH = `${NOTES_FOLDER}/Design notes.md`;
  */
 const ORIGINAL_ATTACHMENT_PATH = 'attachments/diagram.png';
 const COLLECTED_ATTACHMENT_PATH = `${NOTES_FOLDER}/assets/diagram.png`;
-const MOVED_ATTACHMENT_PATH = `${ARCHIVE_FOLDER}/assets/diagram.png`;
 
 /**
- * A link to a note that does not exist, so shot 5's report has something true to
+ * A link to a note that does not exist, so shot 4's report has something true to
  * say. Without it the report reads "no problems found", which proves the command
  * runs but not that it is worth running.
  */
@@ -124,12 +125,9 @@ beforeAll(async () => {
   vault.populate({
     [`.obsidian/plugins/${PLUGIN_ID}/data.json`]: JSON.stringify({
       consistencyReportFile: REPORT_PATH,
-      // Both halves of one decision: the warning modal would sit over every
-      // Frame, AND leaving it on makes the plugin revert the very settings this
-      // Storyboard is about back to their safe values on load.
-      shouldMoveAttachmentsWithNote: true,
-      shouldShowBackupWarning: false,
-      shouldUpdateLinks: true
+      // The warning modal would otherwise sit over every frame, and the command
+      // That raised it would still be awaiting an answer.
+      shouldShowBackupWarning: false
     }),
     [ORIGINAL_ATTACHMENT_PATH]: '',
     [SUBJECT_NOTE_PATH]: buildSubjectNote(),
@@ -168,14 +166,8 @@ beforeAll(async () => {
       (fontApp as FontSizeApp).updateFontSize();
 
       // The plugin collects attachments into the folder OBSIDIAN is configured
-      // To use, so the destination in shots 3 and 4 is this setting's doing.
+      // To use, so the destination in shot 3 is this setting's doing.
       app.vault.setConfig('attachmentFolderPath', './assets');
-
-      // Obsidian's own link updating, which the plugin's README names as one of
-      // The settings that matter. Without it the moved note keeps its old
-      // Relative paths and shot 4 photographs a note whose links all just broke —
-      // The opposite of what the plugin is for.
-      app.vault.setConfig('alwaysUpdateLinks', true);
 
       // The two settings the plugin's own "Recommended Obsidian settings" note
       // Asks for. They decide what the plugin WRITES when it rewrites a link:
@@ -270,23 +262,14 @@ describe('mobile store screenshots', () => {
     await shoot(3, 'Attachments collected beside their own note');
   });
 
-  it('4 - the attachment follows the note', async () => {
-    await moveNote();
-    const paths = await waitForFile(MOVED_ATTACHMENT_PATH);
-    expect(paths).toContain(MOVED_ATTACHMENT_PATH);
-    expect(paths).not.toContain(COLLECTED_ATTACHMENT_PATH);
-    const content = await openNote(MOVED_NOTE_PATH, true);
-    // The file moving is only half of it: the embed inside the note has to point
-    // At where it moved to, or the frame shows a note full of fresh dead links.
-    expect(content).toContain('assets/diagram.png');
-    await shoot(4, 'Move the note and its attachment follows');
-  });
-
-  it('5 - what is still broken, without touching anything', async () => {
+  // There used to be a frame here showing an attachment following its note across a move. Advanced Rename
+  // And Delete Handler owns that since 4.0.0, so this plugin can no longer show it — and a store screenshot
+  // Of a feature it does not have is worse than one frame fewer.
+  it('4 - what is still broken, without touching anything', async () => {
     await runCommand('check-consistency');
     const report = await openNote(REPORT_PATH);
     expect(report).toContain(MISSING_NOTE_NAME);
-    await shoot(5, 'A report of every bad link, changing nothing');
+    await shoot(4, 'A report of every bad link, changing nothing');
   });
 });
 
@@ -347,45 +330,6 @@ async function listFiles(): Promise<string[]> {
     callback({ app }) {
       return app.vault.getFiles().map((file) => file.path);
     },
-    vaultPath: vaultPath()
-  });
-}
-
-/**
- * Moves the subject note to another folder through the Obsidian API.
- */
-async function moveNote(): Promise<void> {
-  await evalInObsidian({
-    async callback({ app, lib: { waitUntil }, movedNotePath, subjectNotePath }) {
-      const MOVE_TIMEOUT_IN_MILLISECONDS = 20_000;
-      const SETTLE_DELAY_IN_MILLISECONDS = 1500;
-      const RESIZE_SETTLE_DELAY_IN_MILLISECONDS = 2000;
-
-      await sleep(RESIZE_SETTLE_DELAY_IN_MILLISECONDS);
-
-      const file = app.vault.getFileByPath(subjectNotePath);
-      if (!file) {
-        throw new Error(`Note is missing from the vault: ${subjectNotePath}`);
-      }
-
-      // `renameFile` does not create the destination folder, and a missing one
-      // Fails as a bare `ENOENT` from the adapter rather than anything readable.
-      const destinationFolder = movedNotePath.slice(0, movedNotePath.lastIndexOf('/'));
-      if (!app.vault.getFolderByPath(destinationFolder)) {
-        await app.vault.createFolder(destinationFolder);
-      }
-
-      await app.fileManager.renameFile(file, movedNotePath);
-
-      await waitUntil({
-        message: 'the moved note to settle',
-        predicate: () => Boolean(app.vault.getFileByPath(movedNotePath)),
-        timeoutInMilliseconds: MOVE_TIMEOUT_IN_MILLISECONDS
-      });
-
-      await sleep(SETTLE_DELAY_IN_MILLISECONDS);
-    },
-    input: { movedNotePath: MOVED_NOTE_PATH, subjectNotePath: SUBJECT_NOTE_PATH },
     vaultPath: vaultPath()
   });
 }
