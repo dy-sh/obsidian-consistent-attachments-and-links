@@ -1,11 +1,4 @@
-import type {
-  Reference,
-  ReferenceCache
-} from 'obsidian';
-import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
-import type { GenerateMarkdownLinkParams } from 'obsidian-dev-utils/obsidian/link';
-import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
+import type { Reference } from 'obsidian';
 
 import {
   isFrontmatterLinkCache,
@@ -17,20 +10,15 @@ import {
   resolveSubpath,
   TFile
 } from 'obsidian';
-import { normalizeOptionalProperties } from 'obsidian-dev-utils/object-utils';
-import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
   getFileOrNull,
   MARKDOWN_FILE_EXTENSION
 } from 'obsidian-dev-utils/obsidian/file-system';
 import {
-  extractLinkFile,
   generateMarkdownLink,
-  LinkPathStyle,
   splitSubpath
 } from 'obsidian-dev-utils/obsidian/link';
 import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/reference';
 import {
   dirname,
   join
@@ -48,28 +36,7 @@ interface LinksHandlerCheckConsistencyParams {
 
 interface LinksHandlerConstructorParams {
   readonly app: App;
-  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
-  readonly resourceLockComponent: null | ResourceLockComponent;
-}
-
-interface LinksHandlerConvertAllNoteRefPathsToRelativeParams {
-  readonly abortSignal: AbortSignal;
-  readonly isEmbed: boolean;
-  readonly notePath: string;
-}
-
-interface LinksHandlerConvertLinkParams {
-  readonly forceRelativePath?: boolean | undefined;
-  readonly link: Reference;
-  readonly note: TFile;
-  readonly oldNotePath: string;
-  readonly pathChangeMap?: Map<string, string> | undefined;
-}
-
-interface ReferenceChangeInfo {
-  newLink: string;
-  old: ReferenceCache;
 }
 
 export class ConsistencyCheckResult extends Map<string, Reference[]> {
@@ -116,14 +83,10 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 
 export class LinksHandler {
   private readonly app: App;
-  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
-  private readonly resourceLockComponent: null | ResourceLockComponent;
 
   public constructor(params: LinksHandlerConstructorParams) {
     this.app = params.app;
-    this.resourceLockComponent = params.resourceLockComponent;
-    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -158,104 +121,6 @@ export class LinksHandler {
         badFrontmatterLinks.add(note.path, frontmatterLink);
       }
     }
-  }
-
-  public async convertAllNoteEmbedsPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: true, notePath });
-  }
-
-  public async convertAllNoteLinksPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
-    return await this.convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: false, notePath });
-  }
-
-  private async convertAllNoteRefPathsToRelative(params: LinksHandlerConvertAllNoteRefPathsToRelativeParams): Promise<ReferenceChangeInfo[]> {
-    const { abortSignal, isEmbed, notePath } = params;
-    if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
-      return [];
-    }
-
-    if (this.pluginSettingsComponent.settings.isTreatedAsAttachment(notePath)) {
-      return [];
-    }
-
-    const note = getFileOrNull({ app: this.app, pathOrFile: notePath });
-    if (!note) {
-      return [];
-    }
-
-    const changedRefs: ReferenceChangeInfo[] = [];
-
-    await applyFileChanges({
-      abortSignal,
-      app: this.app,
-      changesProvider: async ({ content }) => {
-        const cache = await getCacheSafe(this.app, note);
-        abortSignal.throwIfAborted();
-        const cachedContent = await this.app.vault.cachedRead(note);
-        abortSignal.throwIfAborted();
-        if (content !== cachedContent) {
-          return null;
-        }
-        if (!cache) {
-          return [];
-        }
-        const refs = (isEmbed ? cache.embeds : cache.links) ?? [];
-        const changes: FileChange[] = [];
-
-        for (const ref of refs) {
-          const newContent = this.convertLink({
-            forceRelativePath: true,
-            link: ref,
-            note,
-            oldNotePath: notePath
-          });
-          changes.push(referenceToFileChange(ref, newContent));
-          changedRefs.push({ newLink: newContent, old: ref });
-        }
-
-        return changes;
-      },
-      pathOrFile: note,
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      resourceLockComponent: this.resourceLockComponent
-    });
-
-    return changedRefs;
-  }
-
-  private convertLink({
-    forceRelativePath,
-    link,
-    note,
-    oldNotePath,
-    pathChangeMap
-  }: LinksHandlerConvertLinkParams): string {
-    const { linkPath, subpath } = splitSubpath(link.link);
-    const oldLinkPath = extractLinkFile({ app: this.app, link, sourcePathOrFile: oldNotePath })?.path ?? join(dirname(oldNotePath), linkPath);
-    const newLinkPath = pathChangeMap
-      ? pathChangeMap.get(oldLinkPath)
-      : extractLinkFile({ app: this.app, link, sourcePathOrFile: note.path })?.path ?? join(dirname(note.path), linkPath);
-    if (!newLinkPath) {
-      return link.original;
-    }
-
-    const targetPathOrFile = getFileOrNull({ app: this.app, pathOrFile: newLinkPath }) ?? getFileOrNull({ app: this.app, pathOrFile: oldLinkPath });
-
-    if (!targetPathOrFile) {
-      return link.original;
-    }
-
-    const alias = link.displayText && join(note.parent?.path ?? '', link.displayText) === oldLinkPath ? undefined : link.displayText;
-
-    return generateMarkdownLink(normalizeOptionalProperties<GenerateMarkdownLinkParams>({
-      alias,
-      app: this.app,
-      linkPathStyle: forceRelativePath ? LinkPathStyle.RelativePathToTheSource : LinkPathStyle.ObsidianSettingsDefault,
-      originalLink: link.original,
-      sourcePathOrFile: note.path,
-      subpath,
-      targetPathOrFile
-    }));
   }
 
   private async isValidLink(link: Reference, notePath: string): Promise<boolean> {

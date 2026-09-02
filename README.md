@@ -4,7 +4,7 @@
 
 [Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
 
-This plugin makes a vault consistent in the plainest sense: every link a real relative path in standard Markdown, every attachment in its note's own folder. It collects scattered attachments into place, converts an existing vault to that shape in one command, and audits the whole vault for what is still broken.
+This plugin makes that visible: it audits the whole vault and reports every link whose written path does not itself lead to its target, repairs names and paths that a platform you sync to would reject, and collects scattered attachments into place.
 
 > [!IMPORTANT]
 >
@@ -14,7 +14,13 @@ This plugin makes a vault consistent in the plainest sense: every link a real re
 
 > [!IMPORTANT]
 >
-> This plugin no longer converts wikilinks to Markdown links. It was built to force a vault's migration to Markdown links; that is no longer its job, so the four `Replace all wiki…` commands are gone and the consistency report no longer treats a wikilink as a defect. [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns the conversion now, over a wider surface — one file, one folder or the whole vault, plus converting as you type. Everything this plugin does about *paths* is unchanged.
+> This plugin no longer converts wikilinks to Markdown links. It was built to force a vault's migration to Markdown links; that is no longer its job, so the four `Replace all wiki…` commands are gone and the consistency report no longer treats a wikilink as a defect. [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns the conversion now, over a wider surface — one file, one folder or the whole vault, plus converting as you type.
+
+<!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
+
+> [!IMPORTANT]
+>
+> This plugin no longer rewrites a link's path either, so the four `Convert all … paths to relative` commands are gone with it. Rewriting a link into a *style* is not what this plugin is for — it reports every link whose written path does not lead to its target, and leaves how you write your links to you. [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns link paths as well as link style. The report is unchanged: a path that does not resolve is still listed, whether or not anything offers to convert it.
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
@@ -24,17 +30,17 @@ This plugin makes a vault consistent in the plainest sense: every link a real re
 
 <!-- markdownlint-disable MD033 -->
 
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-1.png"><img src="images/screenshots/screenshot-desktop-1.png" alt="Paths only Obsidian can resolve" width="600"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-1.png"><img src="images/screenshots/screenshot-desktop-1.png" alt="A name your other devices reject" width="600"></a>
 
 <details>
 <summary>More screenshots</summary>
 
 <div>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Every path a real relative path" width="600"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Repaired, with the original name kept" width="600"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-3.png"><img src="images/screenshots/screenshot-desktop-3.png" alt="Attachments collected beside their own note" width="600"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-4.png"><img src="images/screenshots/screenshot-desktop-4.png" alt="A report of every bad link, changing nothing" width="600"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="Paths only Obsidian can resolve" width="270"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Every path a real relative path" width="270"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="A name your other devices reject" width="270"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Repaired, with the original name kept" width="270"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-3.png"><img src="images/screenshots/screenshot-mobile-3.png" alt="Attachments collected beside their own note" width="270"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-4.png"><img src="images/screenshots/screenshot-mobile-4.png" alt="A report of every bad link, changing nothing" width="270"></a>
 </div>
@@ -60,7 +66,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Collect attachments into the note's own folder**, on command or as you edit — safely, never stealing a file another note still references. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
 - **Audit the whole vault** and get a report of bad links, bad embed paths and bad frontmatter links, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
-- **Convert an existing vault** — paths made relative, attachments collected into place, empty folders swept — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
+- **Tidy an existing vault** — attachments collected into place, empty folders swept, names repaired — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which of the destructive operations are unlocked. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
 

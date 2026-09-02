@@ -2,7 +2,7 @@
 
 Every command this plugin adds, and what it does to your vault. The bulk ones rewrite many files at once, so read the warning in [00 Start](<./00 Start.md>) before running any of them on a real vault.
 
-Looking for `Replace All Wiki Links with Markdown Links` or one of its three siblings? They are gone - [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns wikilink conversion now, and does it over a wider surface. See [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
+Looking for `Replace All Wiki Links with Markdown Links` or `Convert All Link Paths to Relative`, or one of their three siblings each? They are gone - [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns both link style and link paths now, and does it over a wider surface. This plugin reports a link whose written path does not lead to its target; it no longer offers to rewrite one. See [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
 
 ## Check Vault Consistency
 
@@ -19,29 +19,13 @@ Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>
 
 The fastest way to clean up a vault: runs the others in the order that works, one after another.
 
-1. `Convert All Embed Paths to Relative`
-2. `Convert All Link Paths to Relative`
-3. `Collect All Attachments`
-4. `Delete Empty Folders`
-5. `Fix Incompatible Paths`
+1. `Collect All Attachments`
+2. `Delete Empty Folders`
+3. `Fix Incompatible Paths`
 
 The order matters: attachments are collected before empty folders are swept, so nothing is deleted while something still points into it. Renaming comes last, because every step before it resolves links against the names the files still had.
 
 To also give attachments content-based names, run [`Unique attachments`](https://community.obsidian.md/plugins/unique-attachments) afterwards — optional, and a separate plugin.
-
-## Convert All Embed Paths to Relative
-
-Rewrites every embed's path so it resolves from the note rather than from the vault root.
-
-- `![](title.png)` becomes `![](../attachments/title.png)`
-
-This is the step that does most of the work towards consistency: afterwards every embed points at a real file by a path that survives leaving the vault.
-
-## Convert All Link Paths to Relative
-
-The same for links.
-
-- `[](readme.md)` becomes `[](../readme.md)`
 
 ## Collect All Attachments
 

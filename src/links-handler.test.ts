@@ -5,10 +5,6 @@ import type {
   ReferenceCache,
   TFile
 } from 'obsidian';
-import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
-import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
-import type { Mock } from 'vitest';
 
 import {
   isFrontmatterLinkCache,
@@ -19,17 +15,13 @@ import {
   resolveSubpath
 } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
-import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
 import {
-  extractLinkFile,
   generateMarkdownLink,
   splitSubpath
 } from 'obsidian-dev-utils/obsidian/link';
 import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/reference';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
-import { resolveValue } from 'obsidian-dev-utils/value-provider';
 import {
   beforeEach,
   describe,
@@ -54,10 +46,6 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
   isReferenceCache: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/file-change', () => ({
-  applyFileChanges: vi.fn()
-}));
-
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
   getFileOrNull: vi.fn()
@@ -65,7 +53,6 @@ vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
 
 vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/link')>(),
-  extractLinkFile: vi.fn(),
   generateMarkdownLink: vi.fn(),
   splitSubpath: vi.fn()
 }));
@@ -76,35 +63,14 @@ vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
   getLinks: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/reference', () => ({
-  referenceToFileChange: vi.fn()
-}));
-
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
 
-interface ConvertAllNoteRefPathsToRelativeParams {
-  readonly abortSignal: AbortSignal;
-  readonly isEmbed: boolean;
-  readonly notePath: string;
-}
-
-interface ConvertLinkParams {
-  readonly forceRelativePath?: boolean;
-  readonly link: Reference;
-  readonly note: TFile;
-  readonly oldNotePath: string;
-  readonly pathChangeMap?: Map<string, string>;
-}
-
 interface LinksHandlerPrivate {
-  convertAllNoteRefPathsToRelative(params: ConvertAllNoteRefPathsToRelativeParams): Promise<unknown[]>;
-  convertLink(params: ConvertLinkParams): string;
   isValidLink(link: Reference, notePath: string): Promise<boolean>;
-  updateLinks(note: TFile, oldNotePath: string, pathChangeMap?: Map<string, string>): Promise<void>;
 }
 
 interface ParentLike {
@@ -113,20 +79,16 @@ interface ParentLike {
 
 interface SettingsLike {
   isPathIgnored(path: string): boolean;
-  isTreatedAsAttachment(path: string): boolean;
 }
 
 const mockIsFrontmatterLinkCache = vi.mocked(isFrontmatterLinkCache);
 const mockIsReferenceCache = vi.mocked(isReferenceCache);
 const mockNormalizePath = vi.mocked(normalizePath);
 const mockResolveSubpath = vi.mocked(resolveSubpath);
-const mockApplyFileChanges = vi.mocked(applyFileChanges);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
-const mockExtractLinkFile = vi.mocked(extractLinkFile);
 const mockGenerateMarkdownLink = vi.mocked(generateMarkdownLink);
 const mockSplitSubpath = vi.mocked(splitSubpath);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
-const mockReferenceToFileChange = vi.mocked(referenceToFileChange);
 
 function asPrivate(handler: LinksHandler): LinksHandlerPrivate {
   return castTo<LinksHandlerPrivate>(handler);
@@ -164,7 +126,6 @@ function createReferenceCache(overrides: Partial<FrontmatterLinkCache & Referenc
 
 describe('LinksHandler', () => {
   let app: App;
-  let cachedRead: Mock<(file: TFile) => Promise<string>>;
   let handler: LinksHandler;
   let pluginSettingsComponent: PluginSettingsComponent;
   let settings: SettingsLike;
@@ -172,23 +133,15 @@ describe('LinksHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     settings = {
-      isPathIgnored: vi.fn().mockReturnValue(false),
-      isTreatedAsAttachment: vi.fn().mockReturnValue(false)
+      isPathIgnored: vi.fn().mockReturnValue(false)
     };
-    cachedRead = vi.fn<(file: TFile) => Promise<string>>().mockResolvedValue('content');
-    app = strictProxy<App>({
-      vault: strictProxy<App['vault']>({
-        cachedRead
-      })
-    });
+    app = strictProxy<App>({});
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
       settings: castTo<PluginSettingsComponent['settings']>(settings)
     });
     handler = new LinksHandler({
       app,
-      pluginNoticeComponent: strictProxy<PluginNoticeComponent>({}),
-      pluginSettingsComponent,
-      resourceLockComponent: strictProxy<ResourceLockComponent>({})
+      pluginSettingsComponent
     });
     mockNormalizePath.mockImplementation((p: string) => p.replace(/^\//, ''));
   });
@@ -376,199 +329,6 @@ describe('LinksHandler', () => {
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       mockResolveSubpath.mockReturnValue(null);
       expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(false);
-    });
-  });
-
-  describe('convertAllNoteEmbedsPathsToRelative / convertAllNoteLinksPathsToRelative', () => {
-    let abortSignal: AbortSignal;
-
-    beforeEach(() => {
-      abortSignal = new AbortController().signal;
-    });
-
-    it('should delegate embeds conversion with isEmbed true', async () => {
-      castTo<ReturnType<typeof vi.fn>>(settings.isPathIgnored).mockReturnValue(true);
-      expect(await handler.convertAllNoteEmbedsPathsToRelative('ignored.md', abortSignal)).toEqual([]);
-    });
-
-    it('should delegate links conversion with isEmbed false', async () => {
-      castTo<ReturnType<typeof vi.fn>>(settings.isPathIgnored).mockReturnValue(true);
-      expect(await handler.convertAllNoteLinksPathsToRelative('ignored.md', abortSignal)).toEqual([]);
-    });
-  });
-
-  describe('convertAllNoteRefPathsToRelative', () => {
-    let abortSignal: AbortSignal;
-
-    beforeEach(() => {
-      abortSignal = new AbortController().signal;
-    });
-
-    it('should return empty when the note is treated as an attachment (e.g. Excalidraw)', async () => {
-      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
-      expect(await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: true, notePath: 'drawing.excalidraw.md' })).toEqual([]);
-      expect(mockGetFileOrNull).not.toHaveBeenCalled();
-      expect(mockApplyFileChanges).not.toHaveBeenCalled();
-    });
-
-    it('should return empty when the note is not found', async () => {
-      mockGetFileOrNull.mockReturnValue(null);
-      expect(await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: false, notePath: 'missing.md' })).toEqual([]);
-    });
-
-    it('should convert refs and collect change infos', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      const ref = createReferenceCache({ link: 'img.png', original: '![[img.png]]' });
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({ embeds: [ref], links: [] }));
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('img.png'));
-      mockGetFileOrNull.mockReturnValue(note);
-      mockGenerateMarkdownLink.mockReturnValue('![](img.png)');
-      mockReferenceToFileChange.mockReturnValue(castTo<FileChange>({ newContent: '![](img.png)' }));
-      cachedRead.mockResolvedValue('content');
-
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-
-      const result = await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: true, notePath: 'note.md' });
-      expect(result).toEqual([{ newLink: '![](img.png)', old: ref }]);
-    });
-
-    it('should convert links when isEmbed is false', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      const ref = createReferenceCache({ link: 'a.md', original: '[[a.md]]' });
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({ embeds: [], links: [ref] }));
-      mockSplitSubpath.mockReturnValue({ linkPath: 'a.md', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('a.md'));
-      mockGenerateMarkdownLink.mockReturnValue('[a](a.md)');
-      mockReferenceToFileChange.mockReturnValue(castTo<FileChange>({ newContent: '[a](a.md)' }));
-      cachedRead.mockResolvedValue('content');
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-      const result = await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: false, notePath: 'note.md' });
-      expect(result).toEqual([{ newLink: '[a](a.md)', old: ref }]);
-    });
-
-    it('should default missing refs to empty when the cache has no embeds key', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
-      cachedRead.mockResolvedValue('content');
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-      const result = await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: true, notePath: 'note.md' });
-      expect(result).toEqual([]);
-    });
-
-    it('should return null from the handler when content has changed', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({ embeds: [], links: [] }));
-      cachedRead.mockResolvedValue('different');
-      let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-      const result = await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: true, notePath: 'note.md' });
-      expect(handlerResult).toBeNull();
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty changes when there is no cache', async () => {
-      const note = createFile('note.md');
-      mockGetFileOrNull.mockReturnValue(note);
-      mockGetCacheSafe.mockResolvedValue(null);
-      cachedRead.mockResolvedValue('content');
-      let handlerResult: unknown;
-      mockApplyFileChanges.mockImplementation(async ({ changesProvider }) => {
-        handlerResult = await resolveValue(changesProvider, { abortSignal, content: 'content' });
-      });
-      const result = await asPrivate(handler).convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: false, notePath: 'note.md' });
-      expect(handlerResult).toEqual([]);
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('convertLink', () => {
-    it('should return the original link when there is no new link path', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(null);
-      const note = createFile('note.md');
-      const link = createRef({ original: '[[img.png]]' });
-      const pathChangeMap = new Map<string, string>();
-      expect(asPrivate(handler).convertLink({ link, note, oldNotePath: 'note.md', pathChangeMap })).toBe('[[img.png]]');
-    });
-
-    it('should return the original link when the target file cannot be resolved', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('img.png'));
-      mockGetFileOrNull.mockReturnValue(null);
-      const note = createFile('note.md');
-      const link = createRef({ original: '[[img.png]]' });
-      expect(asPrivate(handler).convertLink({ link, note, oldNotePath: 'note.md' })).toBe('[[img.png]]');
-    });
-
-    it('should generate a relative markdown link when forceRelativePath is set', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('img.png'));
-      const target = createFile('img.png');
-      mockGetFileOrNull.mockReturnValue(target);
-      mockGenerateMarkdownLink.mockReturnValue('![](../img.png)');
-      const note = createFile('note.md', 'md', { path: 'folder' });
-      const link = createRef({ displayText: 'caption', original: '![[img.png]]' });
-      const result = asPrivate(handler).convertLink({ forceRelativePath: true, link, note, oldNotePath: 'note.md' });
-      expect(result).toBe('![](../img.png)');
-      expect(mockGenerateMarkdownLink).toHaveBeenCalledWith(expect.objectContaining({ linkPathStyle: 'RelativePathToTheSource' }));
-    });
-
-    it('should drop the alias when display text equals the old link path', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('folder/img.png'));
-      mockGetFileOrNull.mockReturnValue(createFile('folder/img.png'));
-      mockGenerateMarkdownLink.mockReturnValue('[[folder/img.png]]');
-      const note = createFile('folder/note.md', 'md', { path: 'folder' });
-      const link = createRef({ displayText: 'img.png', original: '[[folder/img.png]]' });
-      asPrivate(handler).convertLink({ link, note, oldNotePath: 'note.md' });
-      expect(mockGenerateMarkdownLink).toHaveBeenCalledWith(expect.objectContaining({ alias: undefined }));
-    });
-
-    it('should use the path change map to resolve the new link path', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'old.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('old.png'));
-      mockGetFileOrNull.mockReturnValue(createFile('new.png'));
-      mockGenerateMarkdownLink.mockReturnValue('[[new.png]]');
-      const note = createFile('note.md');
-      const link = createRef({ original: '[[old.png]]' });
-      const pathChangeMap = new Map([['old.png', 'new.png']]);
-      const result = asPrivate(handler).convertLink({ link, note, oldNotePath: 'note.md', pathChangeMap });
-      expect(result).toBe('[[new.png]]');
-    });
-
-    it('should fall back to joining when extractLinkFile returns null without a map', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(null);
-      mockGetFileOrNull.mockReturnValueOnce(null).mockReturnValueOnce(createFile('note/img.png'));
-      mockGenerateMarkdownLink.mockReturnValue('[[img.png]]');
-      const note = createFile('note.md', 'md', { path: '' });
-      const link = createRef({ original: '[[img.png]]' });
-      const result = asPrivate(handler).convertLink({ link, note, oldNotePath: 'note.md' });
-      expect(result).toBe('[[img.png]]');
-    });
-
-    it('should default note.parent path to empty when computing the alias', () => {
-      mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockExtractLinkFile.mockReturnValue(createFile('img.png'));
-      mockGetFileOrNull.mockReturnValue(createFile('img.png'));
-      mockGenerateMarkdownLink.mockReturnValue('[[img.png]]');
-      const note = createFile('note.md', 'md', null);
-      const link = createRef({ displayText: 'caption', original: '[[img.png]]' });
-      asPrivate(handler).convertLink({ link, note, oldNotePath: 'note.md' });
-      expect(mockGenerateMarkdownLink).toHaveBeenCalledWith(expect.objectContaining({ alias: 'caption' }));
     });
   });
 });

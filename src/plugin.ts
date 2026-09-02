@@ -16,10 +16,6 @@ import { CheckConsistencyCommandHandler } from './command-handlers/check-consist
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
-import { ConvertAllEmbedsPathsToRelativeCommandHandler } from './command-handlers/convert-all-embeds-paths-to-relative-command-handler.ts';
-import { ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler } from './command-handlers/convert-all-embeds-paths-to-relative-current-note-command-handler.ts';
-import { ConvertAllLinkPathsToRelativeCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-command-handler.ts';
-import { ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler } from './command-handlers/convert-all-link-paths-to-relative-current-note-command-handler.ts';
 import { DeleteEmptyFoldersCommandHandler } from './command-handlers/delete-empty-folders-command-handler.ts';
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
@@ -71,9 +67,7 @@ export class Plugin extends PluginBase {
 
     const linksHandler = new LinksHandler({
       app: this.app,
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      pluginSettingsComponent,
-      resourceLockComponent: this.resourceLockComponent
+      pluginSettingsComponent
     });
 
     const filesHandler = new FilesHandler({
@@ -155,13 +149,6 @@ export class Plugin extends PluginBase {
         resourceLockComponent: this.resourceLockComponent
       }),
       new DeleteEmptyFoldersCommandHandler(consistentAttachmentsAndLinksComponent),
-      new ConvertAllLinkPathsToRelativeCommandHandler({
-        abortSignalComponent: this.abortSignalComponent,
-        consistentAttachmentsAndLinksComponent
-      }),
-      new ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
-      new ConvertAllEmbedsPathsToRelativeCommandHandler(consistentAttachmentsAndLinksComponent),
-      new ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
       new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)

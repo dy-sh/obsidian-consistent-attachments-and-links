@@ -178,22 +178,6 @@ vi.mock(
   () => ({ CollectAttachmentsInCurrentFolderCommandHandler: CommandHandlerMock })
 );
 vi.mock('./command-handlers/collect-attachments-in-file-command-handler.ts', () => ({ CollectAttachmentsInFileCommandHandler: CommandHandlerMock }));
-vi.mock(
-  './command-handlers/convert-all-embeds-paths-to-relative-command-handler.ts',
-  () => ({ ConvertAllEmbedsPathsToRelativeCommandHandler: CommandHandlerMock })
-);
-vi.mock(
-  './command-handlers/convert-all-embeds-paths-to-relative-current-note-command-handler.ts',
-  () => ({ ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler: CommandHandlerMock })
-);
-vi.mock(
-  './command-handlers/convert-all-link-paths-to-relative-command-handler.ts',
-  () => ({ ConvertAllLinkPathsToRelativeCommandHandler: CommandHandlerMock })
-);
-vi.mock(
-  './command-handlers/convert-all-link-paths-to-relative-current-note-command-handler.ts',
-  () => ({ ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler: CommandHandlerMock })
-);
 vi.mock('./command-handlers/delete-empty-folders-command-handler.ts', () => ({ DeleteEmptyFoldersCommandHandler: CommandHandlerMock }));
 vi.mock('./command-handlers/move-attachment-to-proper-folder-command-handler.ts', () => ({ MoveAttachmentToProperFolderCommandHandler: CommandHandlerMock }));
 vi.mock('./command-handlers/reorganize-vault-command-handler.ts', () => ({ ReorganizeVaultCommandHandler: CommandHandlerMock }));
@@ -292,8 +276,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 12 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 14 total.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(14);
+      // The plugin wires the OpenDemoVault handler plus 8 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 10 total.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(10);
     });
 
     it('should register the open demo vault command', async () => {

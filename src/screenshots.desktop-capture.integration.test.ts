@@ -5,21 +5,33 @@
  * (T461-P21), driving a staged vault in a real Obsidian and writing
  * `images/screenshots/screenshot-desktop-N.png`.
  *
- * FOUR shots following the README's own argument: a vault whose PATHS only
- * Obsidian can resolve, then each thing the plugin does about it — every path
- * rewritten to resolve from the note that holds it, attachments collected into
+ * FOUR shots following the plugin's scope line — report strictly, repair
+ * narrowly, never rewrite: a name the platforms this vault syncs to would
+ * reject, that name repaired with the original kept, attachments collected into
  * the note's own folder, and a consistency report that names what is still
  * broken without touching anything.
  *
- * There used to be a fifth, showing an attachment following its note across a
- * move. Advanced Rename and Delete Handler owns that since 4.0.0, so this plugin
- * cannot show it any more.
+ * Shots 1 and 2 used to show a path rewritten to resolve from the note holding
+ * it. T912 removed the commands that did it — rewriting a link's style is not
+ * this plugin's job — so the pair moved onto the repair half of the scope line.
+ * There used to be a fifth shot too, showing an attachment following its note
+ * across a move; Advanced Rename and Delete Handler owns that since 4.0.0.
+ *
+ * WHY THE OFFENDER IS AN OVER-LONG NAME AND NOT A FORBIDDEN CHARACTER. The
+ * capture host has to be able to CREATE the offending file, and Windows is the
+ * strictest platform on characters — nothing it forbids can be created here at all.
+ * The one gap that runs the other way is length, and it is not even the same
+ * unit: the staged name is 143 UTF-16 units (fine on NTFS) and 263 UTF-8 bytes
+ * (over the 255-byte per-name limit ext4 and APFS enforce). So the offender is a
+ * long name, the Android rule is the one turned on, and the mobile suite — which
+ * captures on ext4, where that name cannot exist — stages the inverse.
  *
  * Every command is the plugin's OWN command, run through the command palette's
  * id, and every claim is asserted against the vault afterwards: shot 2 asserts
- * the paths became relative, shot 3 asserts the attachment's path, shot 4 asserts
- * the report names the broken link. A command that silently did nothing cannot
- * be shipped as one that worked.
+ * the long name is gone and the original survived in the note's frontmatter,
+ * shot 3 asserts the attachment's path, shot 4 asserts the report names the
+ * broken link. A command that silently did nothing cannot be shipped as one
+ * that worked.
  */
 
 import {
@@ -76,14 +88,6 @@ const NOTES_FOLDER = 'Notes';
 const SUBJECT_NOTE_PATH = `${NOTES_FOLDER}/Meeting.md`;
 
 /**
- * Deliberately NOT beside the subject note. Obsidian's default link format is the
- * shortest path that resolves, so a link from `Notes/` to a note at the root is
- * written without any `../` — fine inside Obsidian, dead everywhere else. That gap
- * is what shots 1 and 2 are about, and a sibling target would not have one.
- */
-const TARGET_NOTE_PATH = 'Design notes.md';
-
-/**
  * Where the attachment starts: one shared folder at the vault root, which is
  * Obsidian's own default and the arrangement the plugin exists to undo.
  */
@@ -97,23 +101,55 @@ const COLLECTED_ATTACHMENT_PATH = `${NOTES_FOLDER}/assets/diagram.png`;
  */
 const MISSING_NOTE_NAME = 'Budget';
 
+/**
+ * 143 characters, 263 UTF-8 bytes: NTFS counts the 143 and accepts it, so this
+ * suite can stage it, while every ext4 and APFS device the vault syncs to counts
+ * the 263 and rejects it. Shots 1 and 2 are the two sides of that gap.
+ *
+ * Cyrillic rather than CJK, which the first version used. The capture host has no
+ * CJK font, so `文` rendered as a row of tofu boxes and the frame read as mojibake
+ * rather than as a long name. Latin-with-diacritics is the other candidate and is
+ * worse: at ~1.1 bytes per character it needs over 230 characters to break 255
+ * bytes, which pushes the whole path past Windows' 259-character limit and the
+ * file cannot be created at all. Cyrillic is two bytes per character AND present
+ * in the default Windows UI font, which is the only combination that satisfies
+ * every constraint at once — do not "simplify" it back to ASCII.
+ */
+// Russian test fixture, not project vocabulary: seeding the dictionary with it would let a real typo through elsewhere. cspell:disable-next-line
+const LONG_NAME = 'Заметки о встрече команды и решениях по проекту '.repeat(3).trim();
+const LONG_NAME_NOTE_PATH = `${NOTES_FOLDER}/${LONG_NAME}.md`;
+
+/**
+ * The per-name limit ext4 and APFS enforce, in bytes. Asserted rather than
+ * commented: an edit to {@link LONG_NAME} that drops it under the limit would
+ * otherwise leave shot 1 captioned "a name your other devices reject" over a name
+ * they accept perfectly well, and shot 2 waiting for a repair that never comes.
+ */
+const MAX_NAME_LENGTH_IN_BYTES = 255;
+
 const REPORT_PATH = 'consistency-report.md';
 
 const IMAGES_DIRECTORY = join(process.cwd(), 'images', 'screenshots');
 
 beforeAll(async () => {
+  expect(Buffer.byteLength(LONG_NAME, 'utf-8')).toBeGreaterThan(MAX_NAME_LENGTH_IN_BYTES);
+
   const vault = getTemporaryVault();
 
   vault.populate({
     [`.obsidian/plugins/${PLUGIN_ID}/data.json`]: JSON.stringify({
       consistencyReportFile: REPORT_PATH,
+      // Android, not Windows: the staged long name is legal on the NTFS volume this
+      // Capture runs on and illegal on every device the vault would sync to, which
+      // Is the whole claim shots 1 and 2 make.
+      shouldEnsurePathCompatibilityOnAndroid: true,
       // The warning modal would otherwise sit over every frame, and the command
       // That raised it would still be awaiting an answer.
       shouldShowBackupWarning: false
     }),
+    [LONG_NAME_NOTE_PATH]: '# A name no phone will accept\n\nThis file name is 143 characters, which is 263 bytes in UTF-8.\n',
     [ORIGINAL_ATTACHMENT_PATH]: '',
-    [SUBJECT_NOTE_PATH]: buildSubjectNote(),
-    [TARGET_NOTE_PATH]: '# Design notes\n\nThe shape we agreed on.\n'
+    [SUBJECT_NOTE_PATH]: buildSubjectNote()
   });
 
   // Written as bytes rather than through `populate`, which takes text.
@@ -215,24 +251,28 @@ beforeAll(async () => {
 });
 
 describe('desktop store screenshots', () => {
-  it('1 - paths only Obsidian can resolve', async () => {
+  it('1 - a name the vault\'s other devices reject', async () => {
     const content = await openNote(SUBJECT_NOTE_PATH);
-    // Standard Markdown already, and still broken: both paths are written from the
-    // Vault root, which only Obsidian's own resolver reads that way.
-    expect(content).toContain('](Design%20notes.md)');
-    expect(content).toContain('](attachments/diagram.png)');
-    await shoot(1, 'Paths only Obsidian can resolve');
+    // The name is legal here and only here: the file exists on this NTFS volume,
+    // And the note links to it, so the frame shows both the offender and the link
+    // That will have to follow it.
+    expect(await listFiles()).toContain(LONG_NAME_NOTE_PATH);
+    expect(content).toContain(LONG_NAME);
+    await shoot(1, 'A name your other devices reject');
   });
 
-  it('2 - every path a real relative path', async () => {
-    // Two commands, one frame: the plugin splits links from embeds, and a reader
-    // Does not care which is which — they care that the path works outside Obsidian.
-    await runCommand('convert-all-link-paths-to-relative');
-    await runCommand('convert-all-embed-paths-to-relative');
-    const content = await openNote(SUBJECT_NOTE_PATH);
-    expect(content).toContain('../Design%20notes.md');
-    expect(content).toContain('../attachments/diagram.png');
-    await shoot(2, 'Every path a real relative path');
+  it('2 - repaired, with the original name kept', async () => {
+    await runCommand('fix-incompatible-paths');
+
+    const repairedPath = await waitForRepairedNote();
+    // Shortening the name is only half of it. The name a user chose is not
+    // Disposable, so the repair puts it back into the note as `title` and an
+    // Alias — which is what this frame is actually of.
+    const content = await openNote(repairedPath);
+    expect(repairedPath).not.toBe(LONG_NAME_NOTE_PATH);
+    expect(content).toContain(`title: ${LONG_NAME}`);
+    expect(content).toContain(LONG_NAME);
+    await shoot(2, 'Repaired, with the original name kept');
   });
 
   it('3 - attachments collected into the note\'s own folder', async () => {
@@ -285,11 +325,12 @@ async function buildDiagram(): Promise<Uint8Array> {
 /**
  * Builds the note every shot is framed on.
  *
- * Standard Markdown throughout, written the way Obsidian writes it: the shortest
- * path that Obsidian itself can resolve. Three forms on purpose — a link and an
- * embed that both point OUT of `Notes/` without saying so, and a link to a note
- * that does not exist. The first two are what shot 2 repairs; the third is what
- * shot 4's report has to find.
+ * Standard Markdown throughout, written the way Obsidian writes it. Three forms
+ * on purpose — a link to the over-long name, an embed of the attachment that
+ * shot 3 collects, and a link to a note that does not exist. The first is what
+ * shot 2 repairs, and it is here rather than only in the file tree so the frame
+ * can show the link following the rename; the third is what shot 4's report has
+ * to find.
  *
  * @returns The note's Markdown.
  */
@@ -297,7 +338,7 @@ function buildSubjectNote(): string {
   return [
     '# Meeting',
     '',
-    'Agreed to follow [Design notes](Design%20notes.md) for the layout.',
+    `Agreed to follow [the naming note](<${LONG_NAME}.md>) for the layout.`,
     '',
     '![diagram](attachments/diagram.png)',
     '',
@@ -466,17 +507,6 @@ function vaultPath(): string {
   return getTemporaryVault().path;
 }
 
-/**
- * Waits, from the Node side, for a file to appear at a path.
- *
- * The plugin's commands hand their work to an internal queue and return
- * immediately, so "the command ran" and "the vault changed" are separate events.
- * Polled from here rather than inside one closure because a whole-vault walk can
- * outlast the transport's per-call cap.
- *
- * @param path - The path the file should end up at.
- * @returns Every file path in the vault once it does.
- */
 async function waitForFile(path: string): Promise<string[]> {
   const ATTEMPTS = 20;
   const INTERVAL_IN_MILLISECONDS = 1500;
@@ -492,4 +522,43 @@ async function waitForFile(path: string): Promise<string[]> {
   }
 
   return paths;
+}
+
+/**
+ * Waits, from the Node side, for a file to appear at a path.
+ *
+ * The plugin's commands hand their work to an internal queue and return
+ * immediately, so "the command ran" and "the vault changed" are separate events.
+ * Polled from here rather than inside one closure because a whole-vault walk can
+ * outlast the transport's per-call cap.
+ *
+ * @param path - The path the file should end up at.
+ * @returns Every file path in the vault once it does.
+ */
+/**
+ * Waits for the repair to rename the over-long note, and reports where it landed.
+ *
+ * The repaired name cannot be predicted here: `repairName` cuts by code point to
+ * fit 255 BYTES, and `renameSafe` may append a deduplication suffix on top. So the
+ * note is found by the prefix that survives either way rather than by a name this
+ * suite computes and would have to keep in step.
+ *
+ * @returns The repaired note's path, or the original one if the rename never happened.
+ */
+async function waitForRepairedNote(): Promise<string> {
+  const ATTEMPTS = 20;
+  const INTERVAL_IN_MILLISECONDS = 1500;
+
+  const prefix = `${NOTES_FOLDER}/${LONG_NAME.slice(0, 20)}`;
+  for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+    const paths = await listFiles();
+    const repairedPath = paths.find((path) => path.startsWith(prefix) && path !== LONG_NAME_NOTE_PATH);
+    if (repairedPath) {
+      return repairedPath;
+    }
+
+    await sleepInNode({ milliseconds: INTERVAL_IN_MILLISECONDS });
+  }
+
+  return LONG_NAME_NOTE_PATH;
 }

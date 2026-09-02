@@ -1,6 +1,6 @@
 # Reorganize and convert links
 
-The plugin's headline bulk feature turns an inconsistent vault into a portable one where every path resolves from the note that holds it and every attachment sits next to the note that uses it. You can run the steps individually or all at once.
+The plugin's headline bulk feature tidies a vault in one pass: every attachment beside the note that uses it, the empty folders that leaves swept up, and every name repaired that a platform you sync to would reject. You can run the steps individually or all at once.
 
 > [!WARNING]
 >
@@ -8,22 +8,20 @@ The plugin's headline bulk feature turns an inconsistent vault into a portable o
 
 <!-- Separates the two callouts; without it markdownlint reads them as one blockquote. -->
 
-> [!NOTE] Converting wikilinks is a different plugin's job
+> [!NOTE] Rewriting links is a different plugin's job
 >
-> This plugin used to have `Replace All Wiki Links with Markdown Links` and three siblings, because it was built to force a vault's migration to Markdown links. It no longer does that. [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns the conversion, over a wider surface — one file, one folder or the whole vault, plus converting as you type. Run it first if your vault still uses wikilinks, then come back here for the paths.
+> This plugin used to have `Replace All Wiki Links with Markdown Links` and `Convert All Link Paths to Relative`, and three siblings each, because it was built to force a vault's migration to relative Markdown links. It no longer does that: it **reports** a link whose written path does not lead to its target and leaves how you write your links to you. [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns both the style and the path, over a wider surface — one file, one folder or the whole vault, plus converting as you type. Run it first if your links need reshaping, then come back here for everything else.
 
 ## The individual commands
 
-- **Convert All Embed Paths to Relative**
-  - rewrites embed paths to be relative to the note.
-- **Convert All Link Paths to Relative**
-  - the same, for links.
 - **Collect All Attachments**
   - moves every attachment into its note's folder.
 - **Delete Empty Folders**
   - removes folders left empty afterwards.
+- **Fix Incompatible Paths**
+  - repairs the names a platform you sync to would reject, walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
-Each of these also has a **current note** variant that acts only on the active note.
+**Collect All Attachments** also has a **current note** variant that acts only on the active note.
 
 ## Try it
 
@@ -56,20 +54,6 @@ Or step through the individual commands instead of `Reorganize Vault`:
 
 ```code-button
 ---
-caption: Convert all embed paths to relative
----
-require('/demoSetup.ts').runCommand(app, 'convert-all-embed-paths-to-relative');
-```
-
-```code-button
----
-caption: Convert all link paths to relative
----
-require('/demoSetup.ts').runCommand(app, 'convert-all-link-paths-to-relative');
-```
-
-```code-button
----
 caption: Collect all attachments
 ---
 require('/demoSetup.ts').runCommand(app, 'collect-attachments-entire-vault');
@@ -94,16 +78,18 @@ Manual equivalent: the Command Palette entries of the same names.
 - **Move Attachment to Proper Folder** moves a single attachment to the folder of the note that uses it, resolving shared attachments per `moveAttachmentToProperFolderUsedByMultipleNotesMode`.
 - Which parts of the vault are eligible is bounded by the include/exclude path settings covered in [05 Settings](<./05 Settings.md>).
 
-## Attachment-like Markdown files (such as Excalidraw) are left untouched
+## Attachment-like Markdown files (such as Excalidraw) travel as attachments
 
-Some plugins store data in files that are Markdown on disk but are really attachments. Excalidraw, for example, saves each drawing as a `.excalidraw.md` file and references its embedded images with wikilinks. Rewriting those references would stop the drawing from rendering, so the link-rewriting commands skip any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [05 Settings](<./05 Settings.md>)).
+Some plugins store data in files that are Markdown on disk but are really attachments. Excalidraw, for example, saves each drawing as a `.excalidraw.md` file. It is not a note you would ever read on its own - it belongs to whatever note embeds it, and it should follow that note the way a `.png` does.
+
+So any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [05 Settings](<./05 Settings.md>)) counts as an **attachment** rather than a note when attachments are collected: a note that references a drawing carries it into the note's own folder instead of leaving it behind as a sibling note.
 
 ### Try it
 
-1. Open [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>) - it references [Shared target](<./Materials/04 Reorganize and convert links/Shared target.md>) with a wikilink, exactly as Excalidraw stores its embeds.
-2. Run **Convert All Link Paths to Relative** (or **Reorganize Vault**).
-3. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>) - its long round-trip path to **Shared target** collapsed to the short one that resolves from the note itself.
-4. Re-open [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>) - its wikilink is **unchanged**, because the file is treated as an attachment.
+1. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>) - it references both [Shared target](<./Materials/04 Reorganize and convert links/Shared target.md>), an ordinary note, and [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>), which is Markdown on disk but an attachment as far as this setting is concerned.
+2. Run **Collect All Attachments** (or **Reorganize Vault**).
+3. The drawing has moved into the folder the note's attachments belong in. **Shared target**, an ordinary note, has not moved at all.
+4. Empty `treatAsAttachmentExtensions` in [05 Settings](<./05 Settings.md>) and run it again on a fresh copy - the drawing now reads as a note and stays put, which is the difference the setting makes.
 
 ## The file and folder context menu commands
 
