@@ -2,11 +2,6 @@ import type { App } from 'obsidian';
 import type { MockInstance } from 'vitest';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
-import {
-  getPath,
-  isNote
-} from 'obsidian-dev-utils/obsidian/file-system';
 import { listSafe } from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
@@ -60,17 +55,11 @@ vi.mock('obsidian-dev-utils/obsidian/vault-delete', () => ({
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { FilesHandler } from './files-handler.ts';
 
+// All that survives of FilesHandler is deleteEmptyFolders, which reads exactly one setting.
 interface SettingsLike {
-  collectAttachmentUsedByMultipleNotesMode?: string;
-  emptyFolderBehavior: string;
-  isExcludedFromAttachmentCollecting(path: string): boolean;
   isPathIgnored(path: string): boolean;
-  isTreatedAsAttachment(path: string): boolean;
-  shouldDeleteExistingFilesWhenMovingNote: boolean;
 }
 
-const mockGetPath = vi.mocked(getPath);
-const mockIsNote = vi.mocked(isNote);
 const mockListSafe = vi.mocked(listSafe);
 
 describe('FilesHandler', () => {
@@ -89,11 +78,7 @@ describe('FilesHandler', () => {
     vi.clearAllMocks();
 
     settings = {
-      emptyFolderBehavior: EmptyFolderBehavior.Keep,
-      isExcludedFromAttachmentCollecting: vi.fn().mockReturnValue(false),
-      isPathIgnored: vi.fn().mockReturnValue(false),
-      isTreatedAsAttachment: vi.fn().mockReturnValue(false),
-      shouldDeleteExistingFilesWhenMovingNote: false
+      isPathIgnored: vi.fn().mockReturnValue(false)
     };
 
     exists = vi.fn<(path: string, isCaseSensitive?: boolean) => Promise<boolean>>().mockResolvedValue(true);
@@ -126,31 +111,6 @@ describe('FilesHandler', () => {
 
   afterEach(() => {
     warnSpy.mockRestore();
-  });
-
-  describe('isNoteEx', () => {
-    it('should return false when pathOrFile is null', () => {
-      expect(handler.isNoteEx(null)).toBe(false);
-      expect(mockIsNote).not.toHaveBeenCalled();
-    });
-
-    it('should return false when not a note', () => {
-      mockIsNote.mockReturnValue(false);
-      expect(handler.isNoteEx('foo.png')).toBe(false);
-    });
-
-    it('should return true when a note and extension is not treated as attachment', () => {
-      mockIsNote.mockReturnValue(true);
-      mockGetPath.mockReturnValue('note.md');
-      expect(handler.isNoteEx('note.md')).toBe(true);
-    });
-
-    it('should return false when path ends with a treated-as-attachment extension', () => {
-      mockIsNote.mockReturnValue(true);
-      mockGetPath.mockReturnValue('drawing.excalidraw.md');
-      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
-      expect(handler.isNoteEx('drawing.excalidraw.md')).toBe(false);
-    });
   });
 
   describe('deleteEmptyFolders', () => {

@@ -1,10 +1,5 @@
 import type { App } from 'obsidian';
-import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
 
-import {
-  getPath,
-  isNote
-} from 'obsidian-dev-utils/obsidian/file-system';
 import { listSafe } from 'obsidian-dev-utils/obsidian/vault';
 import { trimStart } from 'obsidian-dev-utils/string';
 
@@ -46,14 +41,5 @@ export class FilesHandler {
         }
       }
     }
-  }
-
-  public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
-    if (!pathOrFile || !isNote(pathOrFile)) {
-      return false;
-    }
-
-    const path = getPath(this.app, pathOrFile);
-    return !this.pluginSettingsComponent.settings.isTreatedAsAttachment(path);
   }
 }
