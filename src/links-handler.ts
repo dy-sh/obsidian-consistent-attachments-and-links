@@ -26,11 +26,8 @@ import {
 import {
   extractLinkFile,
   generateMarkdownLink,
-  hasWikilinkSyntax,
   LinkPathStyle,
-  LinkStyle,
-  splitSubpath,
-  updateLinksInFile
+  splitSubpath
 } from 'obsidian-dev-utils/obsidian/link';
 import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/reference';
@@ -47,8 +44,6 @@ interface LinksHandlerCheckConsistencyParams {
   readonly badFrontmatterLinks: ConsistencyCheckResult;
   readonly badLinks: ConsistencyCheckResult;
   readonly note: TFile;
-  readonly wikiEmbeds: ConsistencyCheckResult;
-  readonly wikiLinks: ConsistencyCheckResult;
 }
 
 interface LinksHandlerConstructorParams {
@@ -70,12 +65,6 @@ interface LinksHandlerConvertLinkParams {
   readonly note: TFile;
   readonly oldNotePath: string;
   readonly pathChangeMap?: Map<string, string> | undefined;
-}
-
-interface LinksHandlerReplaceAllNoteWikilinksWithMarkdownLinksParams {
-  readonly abortSignal: AbortSignal;
-  readonly embedOnlyLinks: boolean;
-  readonly notePath: string;
 }
 
 interface ReferenceChangeInfo {
@@ -139,7 +128,7 @@ export class LinksHandler {
   }
 
   public async checkConsistency(params: LinksHandlerCheckConsistencyParams): Promise<void> {
-    const { badEmbeds, badFrontmatterLinks, badLinks, note, wikiEmbeds, wikiLinks } = params;
+    const { badEmbeds, badFrontmatterLinks, badLinks, note } = params;
     if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
       return;
     }
@@ -156,19 +145,11 @@ export class LinksHandler {
       if (!(await this.isValidLink(link, note.path))) {
         badLinks.add(note.path, link);
       }
-
-      if (hasWikilinkSyntax(link.original)) {
-        wikiLinks.add(note.path, link);
-      }
     }
 
     for (const embed of embeds) {
       if (!(await this.isValidLink(embed, note.path))) {
         badEmbeds.add(note.path, embed);
-      }
-
-      if (hasWikilinkSyntax(embed.original)) {
-        wikiEmbeds.add(note.path, embed);
       }
     }
 
@@ -185,41 +166,6 @@ export class LinksHandler {
 
   public async convertAllNoteLinksPathsToRelative(notePath: string, abortSignal: AbortSignal): Promise<ReferenceChangeInfo[]> {
     return await this.convertAllNoteRefPathsToRelative({ abortSignal, isEmbed: false, notePath });
-  }
-
-  public async replaceAllNoteWikilinksWithMarkdownLinks(params: LinksHandlerReplaceAllNoteWikilinksWithMarkdownLinksParams): Promise<number> {
-    const { abortSignal, embedOnlyLinks, notePath } = params;
-    if (this.pluginSettingsComponent.settings.isPathIgnored(notePath)) {
-      return 0;
-    }
-
-    if (this.pluginSettingsComponent.settings.isTreatedAsAttachment(notePath)) {
-      return 0;
-    }
-
-    const noteFile = getFileOrNull({ app: this.app, pathOrFile: notePath });
-    if (!noteFile) {
-      console.warn(`can't update wikilinks in note, file not found: ${notePath}`);
-      return 0;
-    }
-
-    const cache = await getCacheSafe(this.app, noteFile);
-    abortSignal.throwIfAborted();
-    if (!cache) {
-      return 0;
-    }
-
-    const links = (embedOnlyLinks ? cache.embeds : cache.links) ?? [];
-    const result = links.filter((link) => hasWikilinkSyntax(link.original)).length;
-    await updateLinksInFile({
-      app: this.app,
-      linkStyle: LinkStyle.Markdown,
-      newSourcePathOrFile: noteFile,
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      resourceLockComponent: this.resourceLockComponent,
-      shouldUpdateEmbedOnlyLinks: embedOnlyLinks
-    });
-    return result;
   }
 
   private async convertAllNoteRefPathsToRelative(params: LinksHandlerConvertAllNoteRefPathsToRelativeParams): Promise<ReferenceChangeInfo[]> {

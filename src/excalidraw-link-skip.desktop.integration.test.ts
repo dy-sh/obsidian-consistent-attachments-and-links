@@ -3,13 +3,22 @@
  *
  * Desktop integration suite for issue #151: the plugin's link-rewriting operations must SKIP files
  * treated as attachments (default `treatAsAttachmentExtensions = ['.excalidraw.md']`), so the
- * image wikilinks Excalidraw stores inside a `.excalidraw.md` are left untouched (converting them to
- * Markdown links breaks Excalidraw's embedded-image rendering).
+ * image references Excalidraw stores inside a `.excalidraw.md` are left untouched (rewriting them
+ * breaks Excalidraw's embedded-image rendering).
  *
- * It drives the REAL user flow — the `Replace all wiki embeds with Markdown embeds` command over the
- * whole vault — against a vault holding a normal note and an `.excalidraw.md`, each with the SAME
- * `![[image]]` wikilink embed. After the command runs it asserts the normal note's embed WAS converted
- * to a Markdown embed (the flow really ran) while the `.excalidraw.md`'s embed is UNCHANGED.
+ * It drives the REAL user flow — the `Convert all embed paths to relative` command over the whole
+ * vault — against a vault holding a normal note and an `.excalidraw.md`, each with the SAME
+ * `![[image]]` embed of a file OUTSIDE their folder. After the command runs it asserts the normal
+ * note's embed WAS rewritten (the flow really ran) while the `.excalidraw.md`'s embed is UNCHANGED.
+ *
+ * Both notes live in a subfolder while the image sits at the vault root, because a relative-path
+ * conversion is a no-op when everything is already in the same folder — with a flat vault the
+ * "flow really ran" probe could never fire, and the suite would pass without testing anything.
+ *
+ * The command used to be `Replace all wiki embeds with Markdown embeds`, which T846 removed when
+ * wikilink conversion moved to Better Markdown Links. The guarantee is unchanged: it is
+ * `isTreatedAsAttachment` that is under test, and the path conversion honours it exactly as the
+ * removed command did.
  *
  * Desktop-only (per G47: the file name alone picks the project). No Android emulator is available in
  * this environment; the behavior itself is platform-agnostic, so this can become
@@ -25,10 +34,10 @@ import {
 } from 'vitest';
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
-const REPLACE_WIKI_EMBEDS_COMMAND_ID = `${PLUGIN_ID}:replace-all-wiki-embeds-with-markdown-embeds`;
+const CONVERT_EMBED_PATHS_COMMAND_ID = `${PLUGIN_ID}:convert-all-embed-paths-to-relative`;
 const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
 describe('Link rewriting skips .excalidraw.md attachments (issue #151)', () => {
-  it('converts a normal note wiki embed but leaves the .excalidraw.md wiki embed untouched', async () => {
+  it('rewrites a normal note embed path but leaves the .excalidraw.md embed untouched', async () => {
     const result = await evalInObsidian({
       async callback({
         app,
@@ -37,18 +46,20 @@ describe('Link rewriting skips .excalidraw.md attachments (issue #151)', () => {
         waitTimeoutInMilliseconds
       }) {
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
+        const folderPath = `excl-notes-${stamp}`;
         const imagePath = `excl-img-${stamp}.png`;
-        const normalPath = `excl-normal-${stamp}.md`;
-        const drawingPath = `excl-drawing-${stamp}.excalidraw.md`;
+        const normalPath = `${folderPath}/excl-normal.md`;
+        const drawingPath = `${folderPath}/excl-drawing.excalidraw.md`;
         const embed = `![[${imagePath}]]`;
 
-        for (const path of [imagePath, normalPath, drawingPath]) {
+        for (const path of [imagePath, normalPath, drawingPath, folderPath]) {
           const existing = app.vault.getAbstractFileByPath(path);
           if (existing) {
             await app.fileManager.trashFile(existing);
           }
         }
 
+        await app.vault.createFolder(folderPath);
         await app.vault.createBinary(imagePath, new ArrayBuffer(4));
         const normalFile = await app.vault.create(normalPath, embed);
         const drawingFile = await app.vault.create(drawingPath, embed);
@@ -64,12 +75,12 @@ describe('Link rewriting skips .excalidraw.md attachments (issue #151)', () => {
 
         app.commands.executeCommandById(commandId);
 
-        // The flow really ran once the normal note's wiki embed became a Markdown embed.
+        // The flow really ran once the normal note's embed points up out of its folder.
         await waitUntil({
-          message: 'normal note wiki embed was not converted to a Markdown embed',
+          message: 'normal note embed path was not rewritten',
           predicate: async () => {
             const content = await app.vault.read(normalFile);
-            return !content.includes('![[') && content.includes('](');
+            return content !== embed;
           },
           timeoutInMilliseconds: waitTimeoutInMilliseconds
         });
@@ -77,7 +88,7 @@ describe('Link rewriting skips .excalidraw.md attachments (issue #151)', () => {
         const normalContent = await app.vault.read(normalFile);
         const drawingContent = await app.vault.read(drawingFile);
 
-        for (const path of [imagePath, normalPath, drawingPath]) {
+        for (const path of [imagePath, normalPath, drawingPath, folderPath]) {
           const existing = app.vault.getAbstractFileByPath(path);
           if (existing) {
             await app.fileManager.trashFile(existing);
@@ -91,17 +102,17 @@ describe('Link rewriting skips .excalidraw.md attachments (issue #151)', () => {
         };
       },
       input: {
-        commandId: REPLACE_WIKI_EMBEDS_COMMAND_ID,
+        commandId: CONVERT_EMBED_PATHS_COMMAND_ID,
         waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
       },
       vaultPath: getTemporaryVault().path
     });
 
-    // The normal note's wiki embed was rewritten to a Markdown embed.
-    expect(result.normalContent).not.toContain('![[');
-    expect(result.normalContent).toContain('](');
+    // The normal note's embed was rewritten to a path that resolves from the note's own folder.
+    expect(result.normalContent).not.toBe(result.originalEmbed);
+    expect(result.normalContent).toContain('../');
 
-    // The .excalidraw.md file's wiki embed is left exactly as it was (Excalidraw keeps rendering).
+    // The .excalidraw.md file's embed is left exactly as it was (Excalidraw keeps rendering).
     expect(result.drawingContent).toBe(result.originalEmbed);
   });
 });

@@ -67,8 +67,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
     const badLinks = new ConsistencyCheckResult('Bad links');
     const badEmbeds = new ConsistencyCheckResult('Bad embeds');
-    const wikiLinks = new ConsistencyCheckResult('Wiki links');
-    const wikiEmbeds = new ConsistencyCheckResult('Wiki embeds');
     const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
@@ -76,7 +74,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
-        await this.linksHandler.checkConsistency({ badEmbeds, badFrontmatterLinks, badLinks, note, wikiEmbeds, wikiLinks });
+        await this.linksHandler.checkConsistency({ badEmbeds, badFrontmatterLinks, badLinks, note });
       },
       progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
       shouldContinueOnError: true,
@@ -86,11 +84,11 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const notePath = this.pluginSettingsComponent.settings.consistencyReportFile;
 
     // Walks files and folders rather than notes, and reads no file content, so it is its own pass rather
-    // Than a sixth result filled by the loop above.
+    // Than a fourth result filled by the loop above.
     const pathCompatibility = new PathCompatibilityCheckResult();
     this.pathCompatibilityHandler.check(pathCompatibility);
 
-    const text = [badLinks, badEmbeds, wikiLinks, wikiEmbeds, badFrontmatterLinks, pathCompatibility]
+    const text = [badLinks, badEmbeds, badFrontmatterLinks, pathCompatibility]
       .map((result) => result.toString(this.app, notePath))
       .join('');
     await createFolderSafe(this.app, dirname(notePath));
@@ -211,8 +209,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public async reorganizeVault(): Promise<void> {
     await this.saveAllOpenNotes();
 
-    await this.replaceAllWikilinksWithMarkdownLinks();
-    await this.replaceAllWikiEmbedsWithMarkdownEmbeds();
     await this.convertAllEmbedsPathsToRelative();
     await this.convertAllLinkPathsToRelative(this.abortSignalComponent.abortSignal);
     this.attachmentCollector.collectAttachmentsEntireVault();
@@ -220,98 +216,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     // Last: it renames files, and every step above resolves links against the names they had.
     await this.fixIncompatiblePaths();
     this.pluginNoticeComponent.showNotice('Reorganization of the vault completed');
-  }
-
-  public async replaceAllWikiEmbedsWithMarkdownEmbeds(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    let changedLinksCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => `Replacing wiki embeds with markdown embeds ${iterationString} - ${item.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (note) => {
-        if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({
-          abortSignal: this.abortSignalComponent.abortSignal,
-          embedOnlyLinks: true,
-          notePath: note.path
-        });
-        changedLinksCount += result;
-        processedNotesCount++;
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Replacing wiki embeds with markdown embeds...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedLinksCount === 0) {
-      this.pluginNoticeComponent.showNotice('No wiki embeds found that need to be replaced');
-    } else {
-      this.pluginNoticeComponent.showNotice(
-        `Replaced ${String(changedLinksCount)} wiki embed${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
-      );
-    }
-  }
-
-  public replaceAllWikiEmbedsWithMarkdownEmbedsCurrentNote(note: TFile): void {
-    addToQueue({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: true, notePath: note.path })),
-      operationName: 'Replace all wiki embeds with markdown embeds in current note'
-    });
-  }
-
-  public async replaceAllWikilinksWithMarkdownLinks(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    let changedLinksCount = 0;
-    let processedNotesCount = 0;
-
-    await loop({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => `Replacing wikilinks with markdown links ${iterationString} - ${item.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (note) => {
-        if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
-          return;
-        }
-
-        const result = await this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({
-          abortSignal: this.abortSignalComponent.abortSignal,
-          embedOnlyLinks: false,
-          notePath: note.path
-        });
-        changedLinksCount += result;
-        processedNotesCount++;
-      },
-      progressBarTitle: 'Consistent Attachments and Links: Replacing wikilinks with markdown links...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
-
-    if (changedLinksCount === 0) {
-      this.pluginNoticeComponent.showNotice('No wiki links found that need to be replaced');
-    } else {
-      this.pluginNoticeComponent.showNotice(
-        `Replaced ${String(changedLinksCount)} wikilink${changedLinksCount > 1 ? 's' : ''} from ${String(processedNotesCount)} note${processedNotesCount > 1 ? 's' : ''}`
-      );
-    }
-  }
-
-  public replaceAllWikilinksWithMarkdownLinksCurrentNote(note: TFile): void {
-    addToQueue({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      operationFunction: omitAsyncReturnType((abortSignal) => this.linksHandler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: note.path })),
-      operationName: 'Replace all wiki embeds with markdown embeds in current note'
-    });
   }
 
   protected override onLayoutReady(): void {

@@ -5,11 +5,11 @@
  * (T461-P21), driving a staged vault in a real Obsidian and writing
  * `images/screenshots/screenshot-desktop-N.png`.
  *
- * FOUR shots following the README's own argument: a vault whose links only
- * Obsidian can resolve, then each thing the plugin does about it — links
- * rewritten as real relative paths, attachments collected into the note's own
- * folder, and a consistency report that names what is still broken without
- * touching anything.
+ * FOUR shots following the README's own argument: a vault whose PATHS only
+ * Obsidian can resolve, then each thing the plugin does about it — every path
+ * rewritten to resolve from the note that holds it, attachments collected into
+ * the note's own folder, and a consistency report that names what is still
+ * broken without touching anything.
  *
  * There used to be a fifth, showing an attachment following its note across a
  * move. Advanced Rename and Delete Handler owns that since 4.0.0, so this plugin
@@ -17,7 +17,7 @@
  *
  * Every command is the plugin's OWN command, run through the command palette's
  * id, and every claim is asserted against the vault afterwards: shot 2 asserts
- * the link syntax changed, shot 3 asserts the attachment's path, shot 4 asserts
+ * the paths became relative, shot 3 asserts the attachment's path, shot 4 asserts
  * the report names the broken link. A command that silently did nothing cannot
  * be shipped as one that worked.
  */
@@ -74,7 +74,14 @@ const PLUGIN_ID = 'consistent-attachments-and-links';
 
 const NOTES_FOLDER = 'Notes';
 const SUBJECT_NOTE_PATH = `${NOTES_FOLDER}/Meeting.md`;
-const TARGET_NOTE_PATH = `${NOTES_FOLDER}/Design notes.md`;
+
+/**
+ * Deliberately NOT beside the subject note. Obsidian's default link format is the
+ * shortest path that resolves, so a link from `Notes/` to a note at the root is
+ * written without any `../` — fine inside Obsidian, dead everywhere else. That gap
+ * is what shots 1 and 2 are about, and a sibling target would not have one.
+ */
+const TARGET_NOTE_PATH = 'Design notes.md';
 
 /**
  * Where the attachment starts: one shared folder at the vault root, which is
@@ -126,6 +133,16 @@ beforeAll(async () => {
         predicate: () => Boolean(app.vault.getFileByPath(subjectNotePath)),
         timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
       });
+
+      // A Notice is not a modal, so the dismiss pass further down never reaches one,
+      // And the plugin's Advanced Rename and Delete Handler suggestion lands in the
+      // Top-right corner — directly over the link text these frames exist to show.
+      // Staging `isAdvancedRenameAndDeleteHandlerSuggestionDeclined` in `data.json`
+      // Does NOT stop it; hiding the container does, for every notice any plugin
+      // Raises mid-run.
+      const noticeStyle = createEl('style');
+      noticeStyle.textContent = '.notice-container, .notice { visibility: hidden; }';
+      document.head.append(noticeStyle);
 
       // Where a file sits is half of every claim here, so the tree stays open.
       app.workspace.leftSplit.expand();
@@ -198,26 +215,24 @@ beforeAll(async () => {
 });
 
 describe('desktop store screenshots', () => {
-  it('1 - links only Obsidian can resolve', async () => {
+  it('1 - paths only Obsidian can resolve', async () => {
     const content = await openNote(SUBJECT_NOTE_PATH);
-    expect(content).toContain('[[Design notes]]');
-    expect(content).toContain('![[diagram.png]]');
-    await shoot(1, 'Wikilinks: fine here, broken everywhere else');
+    // Standard Markdown already, and still broken: both paths are written from the
+    // Vault root, which only Obsidian's own resolver reads that way.
+    expect(content).toContain('](Design%20notes.md)');
+    expect(content).toContain('](attachments/diagram.png)');
+    await shoot(1, 'Paths only Obsidian can resolve');
   });
 
-  it('2 - every link a real relative path', async () => {
-    // Four commands, one frame: the plugin splits "make this a normal Markdown
-    // Link" from "make this path real", and a reader does not care which is
-    // Which — they care that the link works outside Obsidian.
-    await runCommand('replace-all-wikilinks-with-markdown-links');
-    await runCommand('replace-all-wiki-embeds-with-markdown-embeds');
+  it('2 - every path a real relative path', async () => {
+    // Two commands, one frame: the plugin splits links from embeds, and a reader
+    // Does not care which is which — they care that the path works outside Obsidian.
     await runCommand('convert-all-link-paths-to-relative');
     await runCommand('convert-all-embed-paths-to-relative');
     const content = await openNote(SUBJECT_NOTE_PATH);
-    expect(content).not.toContain('[[Design notes]]');
-    expect(content).toContain('Design%20notes.md');
+    expect(content).toContain('../Design%20notes.md');
     expect(content).toContain('../attachments/diagram.png');
-    await shoot(2, 'Standard Markdown links, and paths that really resolve');
+    await shoot(2, 'Every path a real relative path');
   });
 
   it('3 - attachments collected into the note\'s own folder', async () => {
@@ -270,9 +285,11 @@ async function buildDiagram(): Promise<Uint8Array> {
 /**
  * Builds the note every shot is framed on.
  *
- * Three link forms on purpose: a wikilink, a wiki embed, and a wikilink to a note
- * that does not exist. The first two are what shot 2 converts; the third is what
- * shot 5's report has to find.
+ * Standard Markdown throughout, written the way Obsidian writes it: the shortest
+ * path that Obsidian itself can resolve. Three forms on purpose — a link and an
+ * embed that both point OUT of `Notes/` without saying so, and a link to a note
+ * that does not exist. The first two are what shot 2 repairs; the third is what
+ * shot 4's report has to find.
  *
  * @returns The note's Markdown.
  */
@@ -280,11 +297,11 @@ function buildSubjectNote(): string {
   return [
     '# Meeting',
     '',
-    'Agreed to follow [[Design notes]] for the layout.',
+    'Agreed to follow [Design notes](Design%20notes.md) for the layout.',
     '',
-    '![[diagram.png]]',
+    '![diagram](attachments/diagram.png)',
     '',
-    `Costs are still open — see [[${MISSING_NOTE_NAME}]].`,
+    `Costs are still open — see [${MISSING_NOTE_NAME}](${MISSING_NOTE_NAME}.md).`,
     ''
   ].join('\n');
 }

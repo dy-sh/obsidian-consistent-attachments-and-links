@@ -8,10 +8,7 @@ import type {
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
 import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
-import type {
-  Mock,
-  MockInstance
-} from 'vitest';
+import type { Mock } from 'vitest';
 
 import {
   isFrontmatterLinkCache,
@@ -27,16 +24,13 @@ import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
 import {
   extractLinkFile,
   generateMarkdownLink,
-  hasWikilinkSyntax,
-  splitSubpath,
-  updateLinksInFile
+  splitSubpath
 } from 'obsidian-dev-utils/obsidian/link';
 import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { referenceToFileChange } from 'obsidian-dev-utils/obsidian/reference';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import { resolveValue } from 'obsidian-dev-utils/value-provider';
 import {
-  afterEach,
   beforeEach,
   describe,
   expect,
@@ -73,9 +67,7 @@ vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/link')>(),
   extractLinkFile: vi.fn(),
   generateMarkdownLink: vi.fn(),
-  hasWikilinkSyntax: vi.fn(),
-  splitSubpath: vi.fn(),
-  updateLinksInFile: vi.fn()
+  splitSubpath: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
@@ -133,8 +125,6 @@ const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockExtractLinkFile = vi.mocked(extractLinkFile);
 const mockGenerateMarkdownLink = vi.mocked(generateMarkdownLink);
 const mockSplitSubpath = vi.mocked(splitSubpath);
-const mockTestWikilink = vi.mocked(hasWikilinkSyntax);
-const mockUpdateLinksInFile = vi.mocked(updateLinksInFile);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockReferenceToFileChange = vi.mocked(referenceToFileChange);
 
@@ -178,7 +168,6 @@ describe('LinksHandler', () => {
   let handler: LinksHandler;
   let pluginSettingsComponent: PluginSettingsComponent;
   let settings: SettingsLike;
-  let warnSpy: MockInstance<typeof console.warn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -201,12 +190,7 @@ describe('LinksHandler', () => {
       pluginSettingsComponent,
       resourceLockComponent: strictProxy<ResourceLockComponent>({})
     });
-    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     mockNormalizePath.mockImplementation((p: string) => p.replace(/^\//, ''));
-  });
-
-  afterEach(() => {
-    warnSpy.mockRestore();
   });
 
   describe('checkConsistency', () => {
@@ -221,9 +205,7 @@ describe('LinksHandler', () => {
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
-        note: createFile('note.md'),
-        wikiEmbeds: createResult(),
-        wikiLinks: createResult()
+        note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
     });
@@ -235,14 +217,12 @@ describe('LinksHandler', () => {
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
-        note: createFile('note.md'),
-        wikiEmbeds: createResult(),
-        wikiLinks: createResult()
+        note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
     });
 
-    it('should record bad links, embeds, wikilinks and frontmatter links', async () => {
+    it('should record bad links, embeds and frontmatter links', async () => {
       const link = createReferenceCache({ link: 'bad', original: '[[bad]]' });
       const embed = createReferenceCache({ link: 'bad-embed', original: '![[bad-embed]]' });
       const fmLink = createReferenceCache({ key: 'prop', link: 'bad-fm', original: 'bad-fm' });
@@ -253,30 +233,23 @@ describe('LinksHandler', () => {
       }));
       mockSplitSubpath.mockReturnValue({ linkPath: 'bad', subpath: '' });
       mockGetFileOrNull.mockReturnValue(null);
-      mockTestWikilink.mockReturnValue(true);
 
       const badLinks = createResult();
       const badEmbeds = createResult();
-      const wikiLinks = createResult();
-      const wikiEmbeds = createResult();
       const badFrontmatterLinks = createResult();
       await handler.checkConsistency({
         badEmbeds,
         badFrontmatterLinks,
         badLinks,
-        note: createFile('note.md'),
-        wikiEmbeds,
-        wikiLinks
+        note: createFile('note.md')
       });
 
       expect(badLinks.get('note.md')).toEqual([link]);
       expect(badEmbeds.get('note.md')).toEqual([embed]);
-      expect(wikiLinks.get('note.md')).toEqual([link]);
-      expect(wikiEmbeds.get('note.md')).toEqual([embed]);
       expect(badFrontmatterLinks.get('note.md')).toEqual([fmLink]);
     });
 
-    it('should not record valid links or non-wikilinks', async () => {
+    it('should not record valid links', async () => {
       const link = createReferenceCache({ link: 'good', original: '[good](good)' });
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({
         embeds: [],
@@ -285,20 +258,15 @@ describe('LinksHandler', () => {
       }));
       mockSplitSubpath.mockReturnValue({ linkPath: 'good', subpath: '' });
       mockGetFileOrNull.mockReturnValue(createFile('good.md'));
-      mockTestWikilink.mockReturnValue(false);
 
       const badLinks = createResult();
-      const wikiLinks = createResult();
       await handler.checkConsistency({
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
-        note: createFile('note.md'),
-        wikiEmbeds: createResult(),
-        wikiLinks
+        note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
-      expect(wikiLinks.size).toBe(0);
     });
 
     it('should not record valid embeds or valid frontmatter links', async () => {
@@ -311,21 +279,16 @@ describe('LinksHandler', () => {
       }));
       mockSplitSubpath.mockReturnValue({ linkPath: 'good', subpath: '' });
       mockGetFileOrNull.mockReturnValue(createFile('good.md'));
-      mockTestWikilink.mockReturnValue(false);
 
       const badEmbeds = createResult();
       const badFrontmatterLinks = createResult();
-      const wikiEmbeds = createResult();
       await handler.checkConsistency({
         badEmbeds,
         badFrontmatterLinks,
         badLinks: createResult(),
-        note: createFile('note.md'),
-        wikiEmbeds,
-        wikiLinks: createResult()
+        note: createFile('note.md')
       });
       expect(badEmbeds.size).toBe(0);
-      expect(wikiEmbeds.size).toBe(0);
       expect(badFrontmatterLinks.size).toBe(0);
     });
 
@@ -336,9 +299,7 @@ describe('LinksHandler', () => {
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
-        note: createFile('note.md'),
-        wikiEmbeds: createResult(),
-        wikiLinks: createResult()
+        note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
     });
@@ -415,78 +376,6 @@ describe('LinksHandler', () => {
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       mockResolveSubpath.mockReturnValue(null);
       expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(false);
-    });
-  });
-
-  describe('replaceAllNoteWikilinksWithMarkdownLinks', () => {
-    let abortSignal: AbortSignal;
-
-    beforeEach(() => {
-      abortSignal = new AbortController().signal;
-    });
-
-    it('should return 0 when the note path is ignored', async () => {
-      castTo<ReturnType<typeof vi.fn>>(settings.isPathIgnored).mockReturnValue(true);
-      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'ignored.md' })).toBe(0);
-    });
-
-    it('should return 0 when the note is treated as an attachment (e.g. Excalidraw)', async () => {
-      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
-      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'drawing.excalidraw.md' })).toBe(0);
-      expect(mockGetFileOrNull).not.toHaveBeenCalled();
-      expect(mockUpdateLinksInFile).not.toHaveBeenCalled();
-    });
-
-    it('should warn and return 0 when the note file is not found', async () => {
-      mockGetFileOrNull.mockReturnValue(null);
-      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'missing.md' })).toBe(0);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('file not found'));
-    });
-
-    it('should return 0 when there is no cache', async () => {
-      mockGetFileOrNull.mockReturnValue(createFile('note.md'));
-      mockGetCacheSafe.mockResolvedValue(null);
-      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'note.md' })).toBe(0);
-    });
-
-    it('should count wikilinks among links and update the file', async () => {
-      mockGetFileOrNull.mockReturnValue(createFile('note.md'));
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({
-        links: [createReferenceCache({ original: '[[a]]' }), createReferenceCache({ original: '[b](b)' })]
-      }));
-      mockTestWikilink.mockImplementation((original: string) => original.startsWith('[['));
-      mockUpdateLinksInFile.mockResolvedValue(undefined);
-      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: false, notePath: 'note.md' })).toBe(1);
-      expect(mockUpdateLinksInFile).toHaveBeenCalledWith(expect.objectContaining({ shouldUpdateEmbedOnlyLinks: false }));
-    });
-
-    it('should count embeds when embedOnlyLinks is true', async () => {
-      mockGetFileOrNull.mockReturnValue(createFile('note.md'));
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({
-        embeds: [createReferenceCache({ original: '![[a]]' })]
-      }));
-      mockTestWikilink.mockReturnValue(true);
-      mockUpdateLinksInFile.mockResolvedValue(undefined);
-      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: true, notePath: 'note.md' })).toBe(1);
-      expect(mockUpdateLinksInFile).toHaveBeenCalledWith(expect.objectContaining({ shouldUpdateEmbedOnlyLinks: true }));
-    });
-
-    it('should default missing embeds to empty', async () => {
-      mockGetFileOrNull.mockReturnValue(createFile('note.md'));
-      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
-      mockUpdateLinksInFile.mockResolvedValue(undefined);
-      expect(await handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal, embedOnlyLinks: true, notePath: 'note.md' })).toBe(0);
-    });
-
-    it('should throw when aborted after reading the cache', async () => {
-      const controller = new AbortController();
-      mockGetFileOrNull.mockReturnValue(createFile('note.md'));
-      mockGetCacheSafe.mockImplementation(() => {
-        controller.abort();
-        return Promise.resolve(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
-      });
-      await expect(handler.replaceAllNoteWikilinksWithMarkdownLinks({ abortSignal: controller.signal, embedOnlyLinks: false, notePath: 'note.md' })).rejects
-        .toThrow();
     });
   });
 

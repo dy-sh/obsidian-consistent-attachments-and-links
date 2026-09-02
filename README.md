@@ -10,7 +10,13 @@ This plugin makes a vault consistent in the plainest sense: every link a real re
 >
 > Since **4.0.0** this plugin no longer handles renames and deletions. Install [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) to keep attachments traveling with their note and links rewritten when you move, rename or delete one — it owns that for the whole vault now, so several plugins can no longer fight over it. This plugin offers to hand your old settings across the first time it sees it, and everything else here keeps working without it.
 
-<!-- Separates the two callouts; without it markdownlint reads them as one blockquote. -->
+<!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
+
+> [!IMPORTANT]
+>
+> This plugin no longer converts wikilinks to Markdown links. It was built to force a vault's migration to Markdown links; that is no longer its job, so the four `Replace all wiki…` commands are gone and the consistency report no longer treats a wikilink as a defect. [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns the conversion now, over a wider surface — one file, one folder or the whole vault, plus converting as you type. Everything this plugin does about *paths* is unchanged.
+
+<!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
 > [!WARNING]
 >
@@ -18,17 +24,17 @@ This plugin makes a vault consistent in the plainest sense: every link a real re
 
 <!-- markdownlint-disable MD033 -->
 
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-1.png"><img src="images/screenshots/screenshot-desktop-1.png" alt="Wikilinks: fine here, broken everywhere else" width="600"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-1.png"><img src="images/screenshots/screenshot-desktop-1.png" alt="Paths only Obsidian can resolve" width="600"></a>
 
 <details>
 <summary>More screenshots</summary>
 
 <div>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Standard Markdown links, and paths that really resolve" width="600"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Every path a real relative path" width="600"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-3.png"><img src="images/screenshots/screenshot-desktop-3.png" alt="Attachments collected beside their own note" width="600"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-4.png"><img src="images/screenshots/screenshot-desktop-4.png" alt="A report of every bad link, changing nothing" width="600"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="Wikilinks: fine here, broken everywhere else" width="270"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Standard Markdown links, and paths that really resolve" width="270"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="Paths only Obsidian can resolve" width="270"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Every path a real relative path" width="270"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-3.png"><img src="images/screenshots/screenshot-mobile-3.png" alt="Attachments collected beside their own note" width="270"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-4.png"><img src="images/screenshots/screenshot-mobile-4.png" alt="A report of every bad link, changing nothing" width="270"></a>
 </div>
@@ -52,9 +58,9 @@ A copy of the vault ships with every release. You can access it via any of the f
 ## What it does
 
 - **Collect attachments into the note's own folder**, on command or as you edit — safely, never stealing a file another note still references. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
-- **Audit the whole vault** and get a report of bad links, bad embed paths, wikilinks and wiki-embeds, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
+- **Audit the whole vault** and get a report of bad links, bad embed paths and bad frontmatter links, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
-- **Convert an existing vault** — wikilinks to Markdown links, paths to relative, attachments collected into place, empty folders swept — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
+- **Convert an existing vault** — paths made relative, attachments collected into place, empty folders swept — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which of the destructive operations are unlocked. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
 

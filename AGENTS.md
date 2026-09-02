@@ -30,6 +30,37 @@ The `bulk-delete.desktop-performance.integration.test.ts` suite and its vault ge
 handler — they proved an O(N) cost that is no longer incurred here. The `integration-tests:desktop-performance`
 project stays (obsidian-dev-utils declares it fleet-wide with `passWithNoTests`).
 
+## Wikilink conversion is NOT this plugin's — do not re-add it, and do not re-add the report buckets
+
+The original author built this plugin to **force a vault's migration to Markdown links**. That stopped being
+a requirement (owner, 2026-09-01), and T846 removed the whole surface: the four `Replace all wiki…` command
+handlers, `LinksHandler.replaceAllNoteWikilinksWithMarkdownLinks`, the first two steps of `reorganizeVault`,
+and the `Wiki links` / `Wiki embeds` buckets of the consistency report.
+
+[Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns the conversion. It
+already reached further — one file, one folder or the whole vault, plus automatic modes — and gained a
+force-`LinkStyle.Markdown` mode (T845-P14) specifically so nothing was lost in the move.
+
+**The report buckets went deliberately, not by oversight.** Listing a wikilink under *inconsistencies* IS the
+forced-migration premise; keeping the audit while dropping the commands would have left the plugin reporting
+a defect it no longer offers to fix. The report's remaining sections — bad links, bad embeds, bad frontmatter
+links, path compatibility — are about links that do not resolve, which is a different claim.
+
+What stays, and why it can look like a leftover:
+
+- `treatAsAttachmentExtensions` / `isTreatedAsAttachment` are still honoured, by
+  `convertAllNoteRefPathsToRelative`. Issue #151's guarantee is unchanged and
+  `excalidraw-link-skip.desktop.integration.test.ts` still proves it — it just drives
+  `convert-all-embed-paths-to-relative` now. Its staged vault puts the notes in a subfolder on purpose: with
+  everything at the vault root a relative-path conversion is a no-op, and the suite would pass without
+  testing anything.
+- `wikilink` stays in `cspell.json`. `06 Recommended Obsidian settings.md` is about *Obsidian's* wikilink
+  setting, and the Excalidraw demo material still needs the word.
+
+**Release ordering:** Better Markdown Links' force-Markdown mode was on its `main` but unreleased when this
+landed (its `5.0.0` predates it). Do not ship a release of this plugin carrying the removal until that
+plugin has published a version with the mode, or the capability is lost between releases rather than moved.
+
 ## Path compatibility (T698)
 
 `Fix incompatible paths` and the report's `Path compatibility` section repair names and paths that are

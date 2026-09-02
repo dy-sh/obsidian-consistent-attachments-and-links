@@ -24,10 +24,6 @@ import { DeleteEmptyFoldersCommandHandler } from './command-handlers/delete-empt
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { ReorganizeVaultCommandHandler } from './command-handlers/reorganize-vault-command-handler.ts';
-import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler } from './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-command-handler.ts';
-import { ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler } from './command-handlers/replace-all-wiki-embeds-with-markdown-embeds-current-note-command-handler.ts';
-import { ReplaceAllWikilinksWithMarkdownLinksCommandHandler } from './command-handlers/replace-all-wikilinks-with-markdown-links-command-handler.ts';
-import { ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler } from './command-handlers/replace-all-wikilinks-with-markdown-links-current-note-command-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 import { FilesHandler } from './files-handler.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
@@ -166,10 +162,6 @@ export class Plugin extends PluginBase {
       new ConvertAllLinkPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
       new ConvertAllEmbedsPathsToRelativeCommandHandler(consistentAttachmentsAndLinksComponent),
       new ConvertAllEmbedsPathsToRelativeCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
-      new ReplaceAllWikilinksWithMarkdownLinksCommandHandler(consistentAttachmentsAndLinksComponent),
-      new ReplaceAllWikilinksWithMarkdownLinksCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
-      new ReplaceAllWikiEmbedsWithMarkdownEmbedsCommandHandler(consistentAttachmentsAndLinksComponent),
-      new ReplaceAllWikiEmbedsWithMarkdownEmbedsCurrentNoteCommandHandler(consistentAttachmentsAndLinksComponent),
       new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
