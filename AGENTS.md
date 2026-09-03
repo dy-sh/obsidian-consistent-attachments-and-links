@@ -157,9 +157,22 @@ Things that are easy to get wrong here, and were:
 - **`renameSafe` can undo the repair.** Its `getSafeRenamePath` appends a space and a number on a collision,
   which can push the name back over the limit it was just brought under. `renameToName` re-checks the resolved path and
   retries with a shorter basename; it terminates because the fed-back basename strictly shrinks.
-- **Trim trailing dots and spaces BEFORE the reserved-name test.** Windows strips them before deciding, so
-  a trailing-space `CON` is as reserved as a bare `CON`. Testing the raw name lets that spelling through, and trimming afterwards
-  turns an accepted name into a rejected one.
+- **The Windows naming rules are ODU's — do not re-derive them here (T920).** `isWindowsReservedName`,
+  `hasWindowsTrailingChars` and `trimWindowsTrailingChars` in `obsidian-dev-utils/obsidian/validation` own
+  the reserved-device-name and trailing-character rules, beside the character sets that were already there.
+  `isWindowsReservedName` trims trailing dots and spaces and drops the last extension itself, so a caller
+  needs to know neither step. What stays local is the *profile guard* — whether Windows is one of the
+  platforms this vault must satisfy — which is why `trimTrailingDotsAndSpaces` still exists as a thin
+  profile-aware wrapper.
+- **`repairName` passes the REBUILT name to `isWindowsReservedName`, never the bare basename.** Its
+  `params.basename` has already had the extension split off, and the library drops one extension of its own,
+  so the bare basename would strip a second segment and call `CON.x` + `md` reserved — contradicting the
+  report, which accepts `CON.x.md`. Rebuilding makes both functions ask the identical question about the
+  identical string. That sharing also **fixed** a divergence the two had carried: the report has always
+  called a folder named `CON.x` reserved, while the repair left it alone.
+- **Trim trailing dots and spaces BEFORE the de-reserving underscore.** The library trims for its own answer,
+  so a trailing-space `CON` is reported reserved either way — but the underscore is appended to whatever the
+  local basename holds, and leaving that space on de-reserves to `CON _` instead of `CON_`.
 - **255 is BYTES on ext4/APFS and UTF-16 units on NTFS.** They are different limits in different units, which
   is why the settings are one toggle per platform rather than three numbers. Cut by code point, never by
   UTF-16 unit, or a surrogate pair splits.
@@ -170,9 +183,10 @@ Things that are easy to get wrong here, and were:
   that mismatch is ours to fix since the rename was ours. Keeping a bundle together in general is
   File Bundles' job (P48), not this plugin's.
 
-Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) is plugin-local only because ODU does
-not own it yet; the character sets beside it (`WINDOWS_UNSAFE_PATH_CHARS` and friends) already do. T886-P1
-moves it there.
+Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) moved to ODU in T886-P1 and was
+consumed here in T920, on the `obsidian-dev-utils@99.0.0` bump. Two cases stay deliberately **unmatched**
+there, so do not "fix" them here either: `CONIN$` / `CONOUT$` and the superscript `COM²` forms, which every
+Windows version that runs Obsidian accepts — matching them would rename files that work.
 
 ## Pinned versions
 
