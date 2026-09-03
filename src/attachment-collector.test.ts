@@ -870,6 +870,43 @@ describe('AttachmentCollector', () => {
       expect(loopOptions.items).toEqual([]);
     });
 
+    it('should skip a treated-as-attachment file passed directly (issue #151)', async () => {
+      const noteFile = createFile('a.md');
+      const drawingFile = createFile('a.excalidraw.md');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNote.mockReturnValue(true);
+      mockGetPath.mockImplementation((_app, pathOrFile) => castTo<TFile>(pathOrFile).path);
+      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockImplementation((path: string) => path === 'a.excalidraw.md');
+      mockConfirm.mockResolvedValue(true);
+      await runOperation([noteFile, drawingFile]);
+      const loopOptions = castTo<LoopOptionsLike>(mockLoop.mock.calls[0]?.[0]);
+      expect(loopOptions.items).toEqual([noteFile]);
+    });
+
+    it('should skip a treated-as-attachment child during folder recursion (issue #151)', async () => {
+      const folder = strictProxy<TAbstractFile>({ path: 'folder' });
+      const childNote = createFile('folder/a.md');
+      const childDrawing = createFile('folder/a.excalidraw.md');
+      mockIsFile.mockImplementation((f) => f === childNote || f === childDrawing);
+      mockIsFolder.mockImplementation((f) => f === folder);
+      mockIsNote.mockReturnValue(true);
+      mockGetPath.mockImplementation((_app, pathOrFile) => castTo<TFile>(pathOrFile).path);
+      castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockImplementation((path: string) => path === 'folder/a.excalidraw.md');
+      mockConfirm.mockResolvedValue(true);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childNote);
+        callback(childDrawing);
+      });
+      try {
+        await runOperation([folder]);
+      } finally {
+        recurseSpy.mockRestore();
+      }
+      const loopOptions = castTo<LoopOptionsLike>(mockLoop.mock.calls[0]?.[0]);
+      expect(loopOptions.items).toEqual([childNote]);
+    });
+
     it('should process each note via loop processItem', async () => {
       const noteFile = createFile('a.md');
       mockIsFile.mockReturnValue(true);

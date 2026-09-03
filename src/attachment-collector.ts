@@ -471,14 +471,19 @@ export class AttachmentCollector {
     }
     const noteFilesSet = new Set<TFile>();
 
+    // `isNoteEx`, not the plain extension-based `isNote`: a file listed in `treatAsAttachmentExtensions`
+    // Is Markdown on disk but is really an attachment, and scanning one as a source note rewrites the
+    // References stored inside it — which is exactly what issue #151 forbids, because that is where
+    // Excalidraw keeps its embedded-image links. This is the single choke point for every collect entry
+    // Point (vault, folder, file, auto-collect), so filtering here covers all of them.
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && isNote(abstractFile)) {
+      if (isFile(abstractFile) && this.isNoteEx(abstractFile)) {
         noteFilesSet.add(abstractFile);
       }
 
       if (isFolder(abstractFile)) {
         Vault.recurseChildren(abstractFile, (child) => {
-          if (isFile(child) && isNote(child)) {
+          if (isFile(child) && this.isNoteEx(child)) {
             noteFilesSet.add(child);
           }
         });
