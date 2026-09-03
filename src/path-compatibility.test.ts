@@ -357,6 +357,25 @@ describe('path-compatibility', () => {
       })).toBe('CON_');
     });
 
+    /*
+     * The report has always called folder `CON.x` reserved; before the rules moved into the library the
+     * repair disagreed and left it alone, because it tested the extension-less basename verbatim. Sharing
+     * one predicate settles it. `CON.x.md` stays accepted on both sides — only the LAST extension is
+     * dropped, so what is tested there is `CON.x`, not `CON`.
+     */
+    it('should de-reserve an extension-less name whose second segment was hiding the reserved word', () => {
+      const params = {
+        basename: 'CON.x',
+        isFolder: true,
+        maxVaultRootPathLength: 40,
+        parentPath: '',
+        platforms: [PathCompatibilityPlatform.Windows]
+      };
+
+      expect(repairName({ ...params, extension: '' })).toBe('CON.x_');
+      expect(repairName({ ...params, extension: 'md', isFolder: false })).toBe('CON.x.md');
+    });
+
     it('should trim trailing dots and spaces from the basename', () => {
       expect(repairName({
         basename: 'draft. ',

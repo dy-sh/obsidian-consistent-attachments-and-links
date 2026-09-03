@@ -15,7 +15,10 @@
 import { Platform } from 'obsidian';
 import {
   getOsUnsafePathCharsRegExp,
-  OBSIDIAN_UNSAFE_FILENAME_CHARS
+  hasWindowsTrailingChars,
+  isWindowsReservedName,
+  OBSIDIAN_UNSAFE_FILENAME_CHARS,
+  trimWindowsTrailingChars
 } from 'obsidian-dev-utils/obsidian/validation';
 
 /**
@@ -218,16 +221,6 @@ const LINUX_MAX_PATH_BYTES = 4096;
  */
 const DARWIN_MAX_PATH_BYTES = 1024;
 
-/**
- * The MS-DOS device names Windows still refuses as a file name, with or without an extension.
- *
- * `CONIN$` / `CONOUT$` and the superscript `COM²` forms are deliberately absent: they are accepted by every
- * Windows version that runs Obsidian, and matching them would rename files that work.
- */
-const RESERVED_NAME_REG_EXP = /^(?:AUX|COM[1-9]|CON|LPT[1-9]|NUL|PRN)$/i;
-
-const TRAILING_DOTS_AND_SPACES_REG_EXP = /[ .]+$/;
-
 const PATH_COMPATIBILITY_PROFILES: Record<PathCompatibilityPlatform, PathCompatibilityProfile> = {
   [PathCompatibilityPlatform.Android]: {
     hasWindowsNamingRules: false,
@@ -304,13 +297,11 @@ export function findPathCompatibilityViolations(params: FindPathCompatibilityVio
     }
 
     if (profile.hasWindowsNamingRules) {
-      // Windows strips trailing dots and spaces before it decides, so `CON ` is every bit as reserved as
-      // `CON` — checking the raw name would let exactly that spelling through.
-      if (RESERVED_NAME_REG_EXP.test(getBasenameOfName(name.replace(TRAILING_DOTS_AND_SPACES_REG_EXP, '')))) {
+      if (isWindowsReservedName(name)) {
         violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.ReservedName });
       }
 
-      if (TRAILING_DOTS_AND_SPACES_REG_EXP.test(name)) {
+      if (hasWindowsTrailingChars(name)) {
         violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.TrailingCharacter });
       }
     }
@@ -396,12 +387,18 @@ export function repairName(params: RepairNameParams): null | string {
   extension = trimTrailingDotsAndSpaces(extension, profiles);
 
   /*
-   * Trim BEFORE the reserved-name test, never after: Windows strips trailing dots and spaces before it
-   * decides, so `CON ` is reserved, and trimming afterwards would turn an accepted name into `CON`.
+   * Trim BEFORE the de-reserving below, never after. `isWindowsReservedName` trims for its own answer, so
+   * `CON ` is reported reserved either way — but the underscore is appended to whatever is here, and an
+   * untrimmed `CON ` would de-reserve to `CON _` instead of `CON_`.
    */
   basename = trimTrailingDotsAndSpaces(basename, profiles);
 
-  if (profiles.some((profile) => profile.hasWindowsNamingRules) && RESERVED_NAME_REG_EXP.test(basename)) {
+  /*
+   * The REBUILT name, never the bare basename: `params.basename` has already had its extension split off,
+   * and the library drops one extension of its own, so passing the basename would strip a second segment
+   * and call `CON.x` + `md` reserved — which is not what the report says about `CON.x.md`.
+   */
+  if (profiles.some((profile) => profile.hasWindowsNamingRules) && isWindowsReservedName(buildName(basename, extension))) {
     // A trailing underscore rather than a prefix: it keeps the name sorting where the user expects it.
     basename += '_';
   }
@@ -442,11 +439,6 @@ function doesFitEveryProfile(basename: string, extension: string, profiles: Path
   });
 }
 
-function getBasenameOfName(name: string): string {
-  const dotIndex = name.lastIndexOf('.');
-  return dotIndex <= 0 ? name : name.slice(0, dotIndex);
-}
-
 function getName(path: string): string {
   const slashIndex = path.lastIndexOf('/');
   return slashIndex === -1 ? path : path.slice(slashIndex + 1);
@@ -471,6 +463,10 @@ function replaceForbiddenCharacters($string: string, profile: PathCompatibilityP
     .replace(OBSIDIAN_UNSAFE_FILENAME_CHARS, '-');
 }
 
+/*
+ * The profile guard is the plugin's, not the library's: the library answers for Windows unconditionally, and
+ * this decides whether Windows is one of the platforms the vault has to satisfy.
+ */
 function trimTrailingDotsAndSpaces($string: string, profiles: PathCompatibilityProfile[]): string {
-  return profiles.some((profile) => profile.hasWindowsNamingRules) ? $string.replace(TRAILING_DOTS_AND_SPACES_REG_EXP, '') : $string;
+  return profiles.some((profile) => profile.hasWindowsNamingRules) ? trimWindowsTrailingChars($string) : $string;
 }
