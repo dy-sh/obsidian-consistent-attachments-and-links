@@ -1,10 +1,7 @@
 import type { TAbstractFile } from 'obsidian';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
-import {
-  isFile,
-  isNote
-} from 'obsidian-dev-utils/obsidian/file-system';
+import { isFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeEach,
@@ -18,8 +15,7 @@ import type { AttachmentCollector } from '../attachment-collector.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
-  isFile: vi.fn(),
-  isNote: vi.fn()
+  isFile: vi.fn()
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
@@ -39,7 +35,6 @@ interface PluginSettingsLike {
 }
 
 const mockIsFile = vi.mocked(isFile);
-const mockIsNote = vi.mocked(isNote);
 
 function asPrivate(handler: CollectAttachmentsInFileCommandHandler): CommandHandlerPrivate {
   return castTo<CommandHandlerPrivate>(handler);
@@ -52,15 +47,18 @@ function createAbstractFile(path: string): TAbstractFile {
 describe('CollectAttachmentsInFileCommandHandler', () => {
   let collectAttachmentsInAbstractFiles: ReturnType<typeof vi.fn<(abstractFiles: TAbstractFile[]) => void>>;
   let handler: CollectAttachmentsInFileCommandHandler;
+  let isNoteEx: ReturnType<typeof vi.fn<(pathOrFile: unknown) => boolean>>;
   let settings: PluginSettingsLike;
 
   beforeEach(() => {
     vi.clearAllMocks();
     collectAttachmentsInAbstractFiles = vi.fn<(abstractFiles: TAbstractFile[]) => void>();
+    isNoteEx = vi.fn<(pathOrFile: unknown) => boolean>();
     settings = { shouldAddCommandsToFileMenu: true };
     handler = new CollectAttachmentsInFileCommandHandler({
       attachmentCollector: strictProxy<AttachmentCollector>({
-        collectAttachmentsInAbstractFiles
+        collectAttachmentsInAbstractFiles,
+        isNoteEx: (pathOrFile: unknown) => isNoteEx(pathOrFile)
       }),
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
         settings: castTo<PluginSettingsComponent['settings']>(settings)
@@ -76,34 +74,47 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
     it('should return true when the abstract file is not a file', () => {
       mockIsFile.mockReturnValue(false);
       expect(asPrivate(handler).canExecuteAbstractFile(createAbstractFile('folder'))).toBe(true);
-      expect(mockIsNote).not.toHaveBeenCalled();
+      expect(isNoteEx).not.toHaveBeenCalled();
     });
 
     it('should return true when the file is a note', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
+      isNoteEx.mockReturnValue(true);
       expect(asPrivate(handler).canExecuteAbstractFile(createAbstractFile('note.md'))).toBe(true);
     });
 
     it('should return false when the file is not a note', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(false);
+      isNoteEx.mockReturnValue(false);
       expect(asPrivate(handler).canExecuteAbstractFile(createAbstractFile('image.png'))).toBe(false);
+    });
+
+    it('should return false for a file treated as an attachment, such as a drawing (issue #151)', () => {
+      mockIsFile.mockReturnValue(true);
+      isNoteEx.mockReturnValue(false);
+      expect(asPrivate(handler).canExecuteAbstractFile(createAbstractFile('drawing.excalidraw.md'))).toBe(false);
     });
   });
 
   describe('canExecuteAbstractFiles', () => {
     it('should return true when all files are notes', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
+      isNoteEx.mockReturnValue(true);
       const files = [createAbstractFile('a.md'), createAbstractFile('b.md')];
       expect(asPrivate(handler).canExecuteAbstractFiles(files)).toBe(true);
     });
 
     it('should return false when a file is not a note', () => {
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValueOnce(true).mockReturnValueOnce(false);
+      isNoteEx.mockReturnValueOnce(true).mockReturnValueOnce(false);
       const files = [createAbstractFile('a.md'), createAbstractFile('b.png')];
+      expect(asPrivate(handler).canExecuteAbstractFiles(files)).toBe(false);
+    });
+
+    it('should return false when one of the files is treated as an attachment (issue #151)', () => {
+      mockIsFile.mockReturnValue(true);
+      isNoteEx.mockReturnValueOnce(true).mockReturnValueOnce(false);
+      const files = [createAbstractFile('a.md'), createAbstractFile('drawing.excalidraw.md')];
       expect(asPrivate(handler).canExecuteAbstractFiles(files)).toBe(false);
     });
 
@@ -111,7 +122,7 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
       mockIsFile.mockReturnValue(false);
       const files = [createAbstractFile('folder1'), createAbstractFile('folder2')];
       expect(asPrivate(handler).canExecuteAbstractFiles(files)).toBe(true);
-      expect(mockIsNote).not.toHaveBeenCalled();
+      expect(isNoteEx).not.toHaveBeenCalled();
     });
   });
 

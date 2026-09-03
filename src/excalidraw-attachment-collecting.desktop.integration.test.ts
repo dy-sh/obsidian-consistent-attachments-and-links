@@ -14,15 +14,16 @@
  * A plain image is staged alongside and asserted in both phases, so a run where the collect simply
  * did not happen fails loudly rather than reading as "the drawing was correctly skipped".
  *
- * WHAT THIS SUITE IS NOT. It replaces `excalidraw-link-skip.desktop.integration.test.ts`, which
- * claimed issue #151 — "link-rewriting operations must skip files treated as attachments", so the
- * image references Excalidraw stores INSIDE a `.excalidraw.md` are never rewritten. That suite drove
- * `Convert all embed paths to relative`, which T912 removed as out of scope. The guarantee did not
- * move to collecting: the collector's walk (`attachment-collector.ts:478-484`) selects notes with
- * obsidian-dev-utils' plain `isNote`, which is extension-based and never consults
- * `treatAsAttachmentExtensions` — so collecting scans a `.excalidraw.md` as an ordinary note and DOES
- * rewrite what is inside it. That is a pre-existing defect, measured on 2026-09-02 and tracked as
- * T919-P22; do not read this suite as covering it.
+ * WHAT THIS SUITE IS NOT. It covers ONE of the two directions, and only that one. It replaces
+ * `excalidraw-link-skip.desktop.integration.test.ts`, which claimed issue #151 — "link-rewriting
+ * operations must skip files treated as attachments", so the image references Excalidraw stores INSIDE
+ * a `.excalidraw.md` are never rewritten. That suite drove `Convert all embed paths to relative`, which
+ * T912 removed as out of scope, and the guarantee did NOT come along to collecting on its own: the
+ * collector's walk selected notes with obsidian-dev-utils' plain extension-based `isNote`, so a
+ * drawing was scanned as an ordinary note and what was written inside it WAS rewritten. T919-P22 fixed
+ * that by moving the walk onto `isNoteEx`, and
+ * `excalidraw-source-note-skip.desktop.integration.test.ts` is the suite that covers it. Do not read
+ * this one as covering it.
  *
  * Desktop-only (per G47: the file name alone picks the project). No Android emulator is available in
  * this environment; the behavior itself is platform-agnostic, so this can become

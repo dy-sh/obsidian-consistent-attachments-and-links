@@ -82,9 +82,9 @@ links, path compatibility — are about links that do not resolve, which is a di
 
 What stays, and why it can look like a leftover:
 
-- `treatAsAttachmentExtensions` / `isTreatedAsAttachment` are still honoured, now only by
+- `treatAsAttachmentExtensions` / `isTreatedAsAttachment` are still honoured, now only through
   `AttachmentCollector.isNoteEx`. See the T912 section below for what that does and does not mean for
-  issue #151 — the answer changed, and the old one is still the intuitive one.
+  issue #151.
 - `wikilink` stays in `cspell.json`. `06 Recommended Obsidian settings.md` is about *Obsidian's* wikilink
   setting, and the Excalidraw demo material still needs the word.
 
@@ -92,7 +92,7 @@ What stays, and why it can look like a leftover:
 landed (its `5.0.0` predates it). Do not ship a release of this plugin carrying the removal until that
 plugin has published a version with the mode, or the capability is lost between releases rather than moved.
 
-## Link-path rewriting is NOT this plugin's either — and issue #151 no longer means what it says (T912)
+## Link-path rewriting is NOT this plugin's either — and issue #151 now lives in one predicate (T912, T919)
 
 T912 removed the four `Convert all … paths to relative` commands, `LinksHandler`'s whole rewriting half
 (`convertAllNoteRefPathsToRelative`, `convertLink`, and with them the notice and resource-lock dependencies
@@ -106,21 +106,32 @@ nothing was waiting on it, so unlike T846 this carried no release gate of its ow
 **Issue #151 is the trap here.** It says the plugin's link-rewriting operations must SKIP a file listed in
 `treatAsAttachmentExtensions`, so the image references Excalidraw stores inside a `.excalidraw.md` are never
 rewritten. `convertAllNoteRefPathsToRelative` was the last thing that honoured it, and it is gone. The
-obvious assumption — that attachment collecting inherited the guarantee — is **false, and was measured**:
+obvious assumption — that attachment collecting inherited the guarantee — was **false, and was measured**:
+`collectAttachmentsInAbstractFilesImpl` selected the notes it scans with obsidian-dev-utils' plain `isNote`
+(`isMarkdownFile || isCanvasFile || isBaseFile`), which never consults the setting, so a `.excalidraw.md` was
+scanned as an ordinary note and its references WERE rewritten. **T919 fixed that**, and the state now is:
 
-- `AttachmentCollector.collectAttachmentsInAbstractFilesImpl` selects notes with obsidian-dev-utils' plain
-  `isNote` (`isMarkdownFile || isCanvasFile || isBaseFile`), which never consults the setting. So a
-  `.excalidraw.md` is scanned as an ordinary note and its references ARE rewritten. Tracked as **T919-P22**;
-  do not fix it here without reading that item, since collecting itself leaves under T901.
-- `isNoteEx` — the predicate that DOES consult the setting — is called in exactly one place,
-  `prepareAttachmentToMove`, where it decides whether a link's TARGET is a note. That is the opposite
-  direction, and it is what makes a referenced `.excalidraw.md` travel as an attachment.
+- **Collecting is the only operation left that rewrites a link at all**, so #151's whole guarantee lives in
+  one predicate at one choke point: the walk in `collectAttachmentsInAbstractFilesImpl` uses
+  `AttachmentCollector.isNoteEx` (`isNote && !isTreatedAsAttachment`), which covers every entry point —
+  vault, folder, file and auto-collect. `collect-attachments-in-file-command-handler.ts` uses the same
+  predicate so the command is refused on a drawing rather than offered and then silently doing nothing.
+- **There was never a middle option.** Collecting an attachment IS a move plus a rewrite of the referencing
+  file, so a drawing whose own attachments moved would necessarily have been rewritten. Skipping it as a
+  source note is the entire behavior; do not re-derive "move its attachments but leave its text alone".
+- `isNoteEx` also gates the opposite direction, in `prepareAttachmentToMove`, where it decides whether a
+  link's TARGET is a note. That is what makes a referenced `.excalidraw.md` travel as an attachment.
+- **The report still reads a drawing, deliberately.** `checkConsistency` walks `getMarkdownFilesSorted` and
+  reports a drawing's unresolvable links like any other file's. #151 forbids rewriting, not reporting, and
+  "report strictly" is the first third of the scope line. Do not "fix" this by filtering the report.
+- **Custom Attachment Location has the identical defect** in its own forked collector (T919 verified it
+  read-only and minted T925-P4 for it). When collecting leaves under T901, the fix must survive the move.
 
-So `excalidraw-link-skip.desktop.integration.test.ts` was replaced by
-`excalidraw-attachment-collecting.desktop.integration.test.ts`, which covers the second bullet with a
-control phase, and says in its own header that it does not cover the first. The demo vault's Excalidraw
-walkthrough was reframed the same way. **Do not restore the "left untouched" wording anywhere** — it
-described a guarantee the code no longer makes.
+So `excalidraw-link-skip.desktop.integration.test.ts` was replaced by two suites, each covering one
+direction with a control phase: `excalidraw-attachment-collecting.desktop.integration.test.ts` (a referenced
+drawing travels) and `excalidraw-source-note-skip.desktop.integration.test.ts` (a drawing is never scanned as
+a source note). The "left untouched" wording is true again — but only of collecting, and only about what is
+written inside the file; it is NOT a claim that the plugin ignores such a file everywhere.
 
 Screenshots 1 and 2 moved onto path repair, which forced a per-platform offender: the capture host must be
 able to CREATE the offending name, so desktop stages an over-long-in-bytes name (legal on NTFS) and Android

@@ -1,10 +1,7 @@
 import type { TAbstractFile } from 'obsidian';
 
 import { AbstractFileCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler';
-import {
-  isFile,
-  isNote
-} from 'obsidian-dev-utils/obsidian/file-system';
+import { isFile } from 'obsidian-dev-utils/obsidian/file-system';
 
 import type { AttachmentCollector } from '../attachment-collector.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
@@ -31,13 +28,17 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
+  // `isNoteEx`, not the plain `isNote`: the collector's walk skips a file listed in
+  // `treatAsAttachmentExtensions` (issue #151), so offering the command on a drawing would offer a
+  // Command that silently does nothing. The same predicate gates
+  // `move-attachment-to-proper-folder-command-handler.ts`.
   protected override canExecuteAbstractFile(abstractFile: TAbstractFile): boolean {
-    return !isFile(abstractFile) || isNote(abstractFile);
+    return !isFile(abstractFile) || this.attachmentCollector.isNoteEx(abstractFile);
   }
 
   protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && !isNote(abstractFile)) {
+      if (isFile(abstractFile) && !this.attachmentCollector.isNoteEx(abstractFile)) {
         return false;
       }
     }

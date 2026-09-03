@@ -84,6 +84,8 @@ Some plugins store data in files that are Markdown on disk but are really attach
 
 So any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [05 Settings](<./05 Settings.md>)) counts as an **attachment** rather than a note when attachments are collected: a note that references a drawing carries it into the note's own folder instead of leaving it behind as a sibling note.
 
+It works the other way round too, and that half matters just as much. Such a file is never scanned as a note of its own, so whatever is written inside it is left exactly as it is - its own attachments are not moved and its links are not rewritten. That is the point: a drawing keeps its references in its own private format, and rewriting them would stop it rendering. For the same reason **Collect attachments in current note** is simply not offered while a drawing is the active file.
+
 ### Try it
 
 1. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>) - it references both [Shared target](<./Materials/04 Reorganize and convert links/Shared target.md>), an ordinary note, and [Diagram.excalidraw](<./Materials/04 Reorganize and convert links/Diagram.excalidraw.md>), which is Markdown on disk but an attachment as far as this setting is concerned.
