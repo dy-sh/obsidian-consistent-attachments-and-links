@@ -253,10 +253,6 @@ describe('Plugin', () => {
     // Seed the obsidianDevUtilsState holder on the raw target behind the strict-proxy App so the real getObsidianDevUtilsState can read/write it (the proxy throws on first access to an unassigned property, and the default proxy set-trap would not land the value on the target).
     seedOnRawTarget(app, 'obsidianDevUtilsState', {});
 
-    // Since obsidian-dev-utils 89.0.0 the base bridges its command handlers into Notebook Navigator's
-    // Menus, which looks the plugin up on layout-ready -- so `plugins` has to answer on the strict mock.
-    seedOnRawTarget(app, 'plugins', { getPlugin: vi.fn().mockReturnValue(null) });
-
     // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument (debug controller, permanent notices) read/write the same seeded holder.
     castTo<AppGlobal>(window).app = app;
   });
