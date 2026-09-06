@@ -1,0 +1,38 @@
+name: Update LICENSE Year
+
+# `obsidianmd/validate-license` compares the LICENSE copyright year against the current year at lint
+# time, so every repo it runs in turns red the moment the year rolls over. This bumps the end year on
+# 1 January so that never happens.
+
+on:
+  schedule:
+    - cron: '0 0 1 1 *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-year:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+
+      - name: Bump the copyright end year
+        id: bump
+        run: |
+          YEAR="$(date -u +%Y)" perl -i -pe 's/^(\s*Copyright \(C\) )(\d{4})(?:-\d{4})?( by )/$1 . $2 . ($2 eq $ENV{YEAR} ? "" : "-$ENV{YEAR}") . $3/e' LICENSE
+          if git diff --quiet -- LICENSE; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update LICENSE copyright year" -- LICENSE
+          git push
