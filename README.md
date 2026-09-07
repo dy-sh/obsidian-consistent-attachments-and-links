@@ -58,7 +58,7 @@ This plugin makes that visible: it audits the whole vault and reports every link
 A copy of the vault ships with every release. You can access it via any of the following:
 
 1. Running the **Consistent Attachments and Links: Open demo vault** command.
-2. Downloading `consistent-attachments-and-links-demo-vault-<version>.zip` (`<version>` is the release version) from the [Releases](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases).
+2. Downloading `consistent-attachments-and-links-demo-vault.zip` from the [Releases](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases). It unzips into a single `consistent-attachments-and-links-demo-vault-<version>` folder.
 3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
 
 ## What it does
