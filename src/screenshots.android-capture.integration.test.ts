@@ -245,7 +245,7 @@ beforeAll(async () => {
   // Warning modal that sits over every frame AND blocks the commands behind it
   // Until someone clicks OK. That modal is exactly what the first run shipped.
   await evalInObsidian({
-    async callback({ app, lib: { waitUntil }, pluginId }) {
+    async callback({ app, lib: { clickElement, waitUntil }, pluginId }) {
       const RELOAD_TIMEOUT_IN_MILLISECONDS = 20_000;
 
       await app.plugins.disablePlugin(pluginId);
@@ -269,7 +269,7 @@ beforeAll(async () => {
           break;
         }
 
-        button.click();
+        await clickElement({ element: button });
         await sleep(DISMISS_DELAY_IN_MILLISECONDS);
       }
     },
@@ -514,7 +514,7 @@ async function openNote(notePath: string, shouldShowTree = false): Promise<strin
  */
 async function runCommand(commandId: string): Promise<void> {
   await evalInObsidian({
-    async callback({ app, commandId: id, pluginId }) {
+    async callback({ app, commandId: id, lib: { clickElement }, pluginId }) {
       const SETTLE_DELAY_IN_MILLISECONDS = 3000;
       const RESIZE_SETTLE_DELAY_IN_MILLISECONDS = 2000;
 
@@ -539,7 +539,7 @@ async function runCommand(commandId: string): Promise<void> {
       for (let attempt = 0; attempt < CONFIRM_ATTEMPTS; attempt++) {
         const confirmButton = document.querySelector('.modal-container button.mod-cta');
         if (confirmButton instanceof HTMLElement) {
-          confirmButton.click();
+          await clickElement({ element: confirmButton });
           break;
         }
 
