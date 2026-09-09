@@ -64,8 +64,17 @@ npm run test
 npm run test:coverage
 ```
 
+### Branch Gate
+
+Before you open a pull request, run the branch gate. It is the release preflight itself, so it catches
+the checks that `lint` and `test` do not reach - and catches them in seconds rather than at release time:
+
+```bash
+npm run gate
+```
+
 ## Pull Requests
 
 - Base your PR on the `master` branch.
-- Ensure all checks pass (`lint`, `format:check`, `spellcheck`, `test`).
+- Ensure the branch gate passes (`npm run gate`).
 - Use [Conventional Commits](https://www.conventionalcommits.org/) for your commit messages.
