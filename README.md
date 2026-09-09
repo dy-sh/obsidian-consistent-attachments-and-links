@@ -94,7 +94,7 @@ To install the latest beta release of this plugin (regardless if it is available
 
 By default, debug messages for this plugin are hidden.
 
-To show them, run the following command:
+To show them, run the following command in the `DevTools Console`:
 
 ```js
 window.DEBUG.enable('consistent-attachments-and-links');
