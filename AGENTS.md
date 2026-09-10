@@ -47,16 +47,19 @@ version skew. That plugin's `src/conflicting-plugins.ts` refuses to run beside t
 
 What lives here instead:
 
-- `src/advanced-rename-and-delete-handler.ts` — that plugin's id, name, and the shape of its public API as
-  this plugin compiles against it. It is an Obsidian plugin repo, not an npm package, so the contract is
-  declared rather than imported; the authoritative copy is its own `src/plugin-api.ts`.
-- `src/rename-delete-handler-migration-component.ts` — offers the user's old values through that plugin's
-  `migrateSettings` API, once. **Two defects T711-P18 shipped here first, both invisible to unit tests:**
-  never gate the component's setup on the pending value in `onload` (the settings component is a sibling
-  still loading, so `settings` holds defaults and the migration is lost for good — wire both the API ref's
-  `change` and the settings component's `loadSettings`, and re-read inside the propose path); and use
-  `editAndSave`, never `setProperty`, for both the declined flag and the pending value, or a decline returns
-  on the next reload and an applied migration is offered forever.
+- `src/advanced-rename-and-delete-handler.ts` — that plugin's id and name, plus `MigratableSettings`: the
+  values this plugin may hand over. Only that payload is declared here. The envelope carrying it —
+  `migrateSettings`, who is proposing, whether it was applied — is dev-utils' `SettingsMigrationApi`, which
+  both ends compile against, so that half can no longer drift silently. That plugin is an Obsidian plugin
+  repo, not an npm package, and the authoritative copy of its contract is its own `src/plugin-api.ts`.
+- The handover itself is dev-utils' `SettingsMigrationComponent`, constructed in `plugin.ts`; this plugin
+  supplies only `getProposedSettings` and `retireProposedSettings`. **Two defects T711-P18 shipped here
+  first, both invisible to unit tests, and knowing them is what stops the next person hand-rolling a sixth
+  copy:** never gate the component's setup on the pending value in `onload` (the settings component is a
+  sibling still loading, so `settings` holds defaults and the migration is lost for good — the shared
+  component wires both the API ref's `change` and the settings component's `loadSettings`, and re-reads
+  inside the propose path); and use `editAndSave`, never `setProperty`, for both the declined flag and the
+  pending value, or a decline returns on the next reload and an applied migration is offered forever.
 - The suggestion banner travels as a settings **row**: Obsidian never calls `display()` once
   `getSettingDefinitions()` is non-empty.
 

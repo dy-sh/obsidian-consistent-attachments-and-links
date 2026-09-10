@@ -3,9 +3,12 @@ import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
 import { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
+import { SettingsMigrationComponent } from 'obsidian-dev-utils/obsidian/components/settings-migration-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
+
+import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
 
 import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
@@ -27,7 +30,6 @@ import { LinksHandler } from './links-handler.ts';
 import { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
-import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
 
 const SUGGESTION_REASON = 'Consistent Attachments and Links no longer handles renames and deletions itself.'
   + ' Without Advanced Rename and Delete Handler, moving or renaming a note leaves its attachments behind,'
@@ -90,9 +92,17 @@ export class Plugin extends PluginBase {
     );
 
     this.addChild(
-      new RenameDeleteHandlerMigrationComponent({
+      new SettingsMigrationComponent<MigratableSettings>({
+        apiVersionRange: '^1',
         app: this.app,
+        getProposedSettings: (): MigratableSettings | null => pluginSettingsComponent.settings.proposedRenameDeleteSettings,
         pluginSettingsComponent,
+        providerPluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+        retireProposedSettings: async (): Promise<void> => {
+          await pluginSettingsComponent.editAndSave((settings) => {
+            settings.proposedRenameDeleteSettings = null;
+          });
+        },
         sourcePluginId: this.manifest.id
       })
     );
