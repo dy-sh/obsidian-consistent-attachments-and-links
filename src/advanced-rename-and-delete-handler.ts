@@ -1,12 +1,15 @@
 /**
  * @file
  *
- * The plugin that owns rename/delete handling since this plugin's 4.0.0, and the shape of its public API as
- * this plugin compiles against it.
+ * The plugin that owns rename/delete handling since this plugin's 4.0.0, and the settings this plugin may
+ * hand over to it.
  *
- * The API is declared here rather than imported: that plugin is an Obsidian plugin repo, not an npm package,
- * so there is nothing to depend on. It publishes contract version `1.0.0`, so consumers ask for `^1`. The
- * authoritative copy is its own `src/plugin-api.ts`.
+ * Only the PAYLOAD is declared here. The envelope carrying it — `migrateSettings`, who is proposing, and
+ * whether the user applied it — is `SettingsMigrationApi` in
+ * `obsidian-dev-utils/obsidian/plugin/settings-migration-api`, which both ends of the handover compile
+ * against, so that half can no longer drift silently. What stays this plugin's own is which settings it has
+ * to offer, which is nobody else's business. That plugin publishes contract version `1.0.0`, so consumers
+ * ask for `^1`; the authoritative copy is its own `src/plugin-api.ts`.
  */
 
 import type { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
@@ -20,19 +23,6 @@ export const ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID = 'advanced-rename-and
  * The display name of that plugin, shown to the user.
  */
 export const ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME = 'Advanced Rename and Delete Handler';
-
-/**
- * Advanced Rename and Delete Handler's API, as this plugin uses it.
- */
-export interface AdvancedRenameAndDeleteHandlerApi {
-  /**
-   * Offers the user a set of settings values this plugin proposes, and applies what they approve.
-   *
-   * @param params - The proposal.
-   * @returns What the user approved.
-   */
-  migrateSettings(params: MigrateSettingsParams): Promise<MigrateSettingsResult>;
-}
 
 /**
  * The settings this plugin may propose. Every member is optional — only what the user actually customized is
@@ -87,30 +77,4 @@ export interface MigratableSettings {
    * Extensions whose files are attachments even though their extension says otherwise.
    */
   readonly treatAsAttachmentExtensions?: readonly string[];
-}
-
-/**
- * Parameters for {@link AdvancedRenameAndDeleteHandlerApi.migrateSettings}.
- */
-export interface MigrateSettingsParams {
-  /**
-   * The values this plugin proposes.
-   */
-  readonly proposedSettings: MigratableSettings;
-
-  /**
-   * The `manifest.id` of the plugin making the proposal, shown in the dialog.
-   */
-  readonly sourcePluginId: string;
-}
-
-/**
- * The outcome of {@link AdvancedRenameAndDeleteHandlerApi.migrateSettings}.
- */
-export interface MigrateSettingsResult {
-  /**
-   * Whether the user approved the migration. `false` means they cancelled and nothing was written — the
-   * proposal must NOT be recorded as done.
-   */
-  readonly isApplied: boolean;
 }

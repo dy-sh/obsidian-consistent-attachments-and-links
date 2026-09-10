@@ -19,6 +19,8 @@ import {
   vi
 } from 'vitest';
 
+import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
+
 interface AppGlobal {
   app: AppOriginal;
 }
@@ -41,6 +43,14 @@ interface PluginSuggestionComponentParams {
   readonly suggestedPluginId: string;
 }
 
+interface SettingsMigrationComponentParams {
+  readonly apiVersionRange: string;
+  getProposedSettings(this: void): MigratableSettings | null;
+  readonly providerPluginId: string;
+  retireProposedSettings(this: void): Promise<void>;
+  readonly sourcePluginId: string;
+}
+
 interface SettingTabsHolder {
   settingTabs__: unknown[];
 }
@@ -49,13 +59,23 @@ const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
 // --- Hoisted shared state ---
 
-const hoisted = vi.hoisted(() => ({
-  mockSettings: {
+const hoisted = vi.hoisted(() => {
+  const mockSettings = {
     isAdvancedRenameAndDeleteHandlerSuggestionDeclined: false,
     isPathIgnored: vi.fn((): boolean => false),
-    proposedRenameDeleteSettings: null
-  }
-}));
+    proposedRenameDeleteSettings: null as MigratableSettings | null
+  };
+  return {
+    // Shared rather than a per-instance class field, so a test can assert that a write went through
+    // `editAndSave` without having to reach the component instance the plugin built.
+    editAndSave: vi.fn(async (settingsEditor: (settings: unknown) => void): Promise<void> => {
+      settingsEditor(mockSettings);
+      // eslint-disable-next-line obsidian-dev-utils/prefer-noop-async -- a hoisted factory cannot reach a top-level import.
+      await Promise.resolve();
+    }),
+    mockSettings
+  };
+});
 
 // --- Mocks for the plugin's OWN sibling modules (allowed: not obsidian-dev-utils / obsidian-test-mocks) ---
 
@@ -95,10 +115,7 @@ vi.mock('./consistent-attachments-and-links-component.ts', () => ({
 vi.mock('./plugin-settings-component.ts', () => ({
   // Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it.
   PluginSettingsComponent: class extends Component {
-    public editAndSave = vi.fn(async (settingsEditor: (settings: unknown) => void): Promise<void> => {
-      settingsEditor(hoisted.mockSettings);
-      await noopAsync();
-    });
+    public editAndSave = hoisted.editAndSave;
 
     public on = vi.fn((event: string): EventRef => ({ id: `${event}-ref` }));
 
@@ -118,22 +135,32 @@ vi.mock('./plugin-settings-tab.ts', () => ({
   }
 }));
 
-// Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it without the
-// Migration reaching for another plugin's API.
-vi.mock('./rename-delete-handler-migration-component.ts', () => ({
-  RenameDeleteHandlerMigrationComponent: class extends Component {
-    public constructor(_params: unknown) {
-      super();
-    }
-  }
-}));
-
 // Capture the `PluginSuggestionComponent` constructor argument so the closures the plugin hands it — the
 // Declined-flag getter and setter — can be invoked directly. The stub returns a fresh real Component so the
 // Real PluginBase lifecycle can load it as a child without reaching the community-plugin registry.
 const { pluginSuggestionStub } = vi.hoisted(() => ({
   pluginSuggestionStub: vi.fn<(params: PluginSuggestionComponentParams) => object>()
 }));
+
+// The same treatment for the dev-utils settings-migration component. What is this plugin's own is the pair
+// Of closures it hands over — which pending values are offered, and how the retirement is persisted — so
+// They are captured and invoked directly. The offer-and-retire dance around them belongs to dev-utils and is
+// Tested there.
+const { settingsMigrationStub } = vi.hoisted(() => ({
+  settingsMigrationStub: vi.fn<(params: SettingsMigrationComponentParams) => object>()
+}));
+
+vi.mock('obsidian-dev-utils/obsidian/components/settings-migration-component', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/settings-migration-component')>();
+  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn used with `new` must be a non-arrow function returning a fresh real Component.
+  settingsMigrationStub.mockImplementation(function NamedStub() {
+    return new Component();
+  });
+  return {
+    ...actual,
+    SettingsMigrationComponent: settingsMigrationStub
+  };
+});
 
 vi.mock('obsidian-dev-utils/obsidian/components/plugin-suggestion-component', async (importOriginal) => {
   const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/plugin-suggestion-component')>();
@@ -186,8 +213,6 @@ vi.mock('./command-handlers/reorganize-vault-command-handler.ts', () => ({ Reorg
 import { translationsMap } from './i18n/locales/translations-map.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { Plugin } from './plugin.ts';
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
 const PLUGIN_NAME = 'Consistent Attachments and Links';
@@ -216,6 +241,14 @@ async function createLoadedPlugin(): Promise<Plugin> {
 
 function hasRegisteredRenameDeleteHandler(): boolean {
   return getObsidianDevUtilsState('renameDeleteHandlersMap', new Map<string>()).value.has(PLUGIN_ID);
+}
+
+function migrationParams(): SettingsMigrationComponentParams {
+  const call = settingsMigrationStub.mock.calls[0];
+  if (!call) {
+    throw new Error('SettingsMigrationComponent was not constructed.');
+  }
+  return call[0];
 }
 
 function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
@@ -317,11 +350,37 @@ describe('Plugin', () => {
     });
 
     it('should offer the legacy rename and delete settings to the new owner', async () => {
-      const plugin = new Plugin(app, manifest);
-      const addChildSpy = vi.spyOn(plugin, 'addChild');
-      await plugin.onload();
-      const addedChildren = addChildSpy.mock.calls.map((call) => call[0]);
-      expect(addedChildren.some((child) => child instanceof RenameDeleteHandlerMigrationComponent)).toBe(true);
+      await createLoadedPlugin();
+      expect(settingsMigrationStub).toHaveBeenCalledOnce();
+      expect(migrationParams().providerPluginId).toBe('advanced-rename-and-delete-handler');
+      expect(migrationParams().sourcePluginId).toBe(PLUGIN_ID);
+      expect(migrationParams().apiVersionRange).toBe('^1');
+    });
+
+    it('should offer nothing while no legacy values are pending', async () => {
+      await createLoadedPlugin();
+      expect(migrationParams().getProposedSettings()).toBeNull();
+    });
+
+    it('should offer the pending values once the settings carry them', async () => {
+      await createLoadedPlugin();
+      const proposal = { shouldHandleDeletions: true, shouldHandleRenames: true };
+      hoisted.mockSettings.proposedRenameDeleteSettings = proposal;
+
+      expect(migrationParams().getProposedSettings()).toBe(proposal);
+    });
+
+    // Retiring through `editAndSave` rather than `setProperty` is what makes the retirement outlive a
+    // Reload; the in-memory-only variant would offer the migration again forever.
+    it('should retire the pending values to disk once the migration is applied', async () => {
+      await createLoadedPlugin();
+      hoisted.mockSettings.proposedRenameDeleteSettings = { shouldHandleRenames: true };
+      hoisted.editAndSave.mockClear();
+
+      await migrationParams().retireProposedSettings();
+
+      expect(hoisted.editAndSave).toHaveBeenCalledOnce();
+      expect(migrationParams().getProposedSettings()).toBeNull();
     });
   });
 });
