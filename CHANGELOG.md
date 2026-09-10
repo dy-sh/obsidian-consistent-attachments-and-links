@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 4.0.1
+
+- refactor: replace the hand-rolled settings-migration copy with the shared component
+- chore: adopt the npm run gate branch gate
+- docs: say where the debug command is run
+- refactor(android): drive the Android suites with trusted input
+- docs: name the unversioned demo-vault asset and the folder it unzips into
+- chore: make the LICENSE copyright line lintable and guard it against the year roll-over
+- test(test-mocks): drop the hand-rolled app.plugins seed, and sweep the dependencies
+- refactor(path-compatibility): consume ODU's Windows naming-rule predicates
+- fix(attachment-collector): honour treat-as-attachment in the note walk
+- feat: strip the four convert-to-relative commands
+- docs(agents): settle the plugin's scope line and mint the removals it implies
+- feat: hand wikilink conversion to Better Markdown Links
+- docs: describe what the plugin does, and point every link at the real repo
+- feat(path-compatibility): repair names and paths that other platforms reject
+
 ## 4.0.0
 
 **Breaking: this plugin no longer handles renames and deletions.**
