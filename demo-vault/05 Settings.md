@@ -10,12 +10,12 @@ Open **Settings -> Community plugins -> Consistent Attachments and Links** to co
 
 Nothing here — since 4.0.0 those settings belong to [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler), which owns rename and delete handling for the whole vault. Its settings tab is where **Should handle renames**, **Should handle deletions**, **Should rename attachment folder**, **Should update file name aliases**, **Should delete conflicting attachments** and **Empty folder behavior** live now.
 
-Upgrading from 3.x does not lose your answers: this plugin offers them to that plugin once, the first time both are installed, and shows you exactly what would change before anything is written. Two bookkeeping keys track that hand-over, and neither has a row in the settings tab:
+This plugin needs that plugin, and does nothing without it: while it is missing or disabled, this plugin loads nothing, says why in a notice and in its settings tab, and installs it in one click. It finishes loading the moment the other plugin appears, with no restart. Installing it changes nothing on its own — its defaults do nothing until you turn renames or deletions on. This vault installs it for you on first open.
+
+Upgrading from 3.x does not lose your answers: this plugin offers them to that plugin once, the first time both are installed, and shows you exactly what would change before anything is written. One bookkeeping key tracks that hand-over, and it has no row in the settings tab:
 
 - `proposedRenameDeleteSettings`
   - the rename and delete values you had in 3.x, waiting to be offered. `null` once the migration has been applied - or from the start, on a fresh install that never had any. Cancelling the offer leaves them here, so it comes back next time.
-- `isAdvancedRenameAndDeleteHandlerSuggestionDeclined`
-  - whether you have dismissed the suggestion to install that plugin. It silences the notice only; the banner at the top of the settings tab stays, because opening that tab is a fresher signal than an answer you gave earlier.
 
 ## Collecting attachments as you edit
 

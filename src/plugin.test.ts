@@ -1,15 +1,21 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- Test mocks require empty constructors and constructor-only classes. */
+/* eslint-disable perfectionist/sort-named-imports -- dprint orders these members by their ORIGINAL name (`Plugin` before `PluginManifest`) while perfectionist orders them by the LOCAL alias (`PluginManifest` before `PluginOriginal`). For an aliased import the two orders conflict, and satisfying one re-breaks the other. */
 import type {
   App as AppOriginal,
   Command,
+  Plugin as PluginOriginal,
   PluginManifest
 } from 'obsidian';
+/* eslint-enable perfectionist/sort-named-imports -- Only the aliased import above is exempt. */
+import type { PluginDependency } from 'obsidian-dev-utils/obsidian/components/plugin-gate-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
 import { Component } from 'obsidian';
+import { waitForAllAsyncOperations } from 'obsidian-dev-utils/async';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { getObsidianDevUtilsState } from 'obsidian-dev-utils/obsidian-dev-utils-state';
+import { publishPluginApi } from 'obsidian-dev-utils/obsidian/plugin/plugin-api';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
   beforeEach,
@@ -33,14 +39,13 @@ interface EventRef {
   id: string;
 }
 
-interface PluginPrivate {
-  createTranslationsMap(): TranslationsMap;
+// `getPluginDependencies` is protected on the base, so a test reads it through a probe.
+interface PluginDependenciesProbe {
+  getPluginDependencies(): PluginDependency[];
 }
 
-interface PluginSuggestionComponentParams {
-  isSuggestionDeclined(this: void): boolean;
-  setSuggestionDeclined(this: void, isDeclined: boolean): Promise<void>;
-  readonly suggestedPluginId: string;
+interface PluginPrivate {
+  createTranslationsMap(): TranslationsMap;
 }
 
 interface SettingsMigrationComponentParams {
@@ -61,7 +66,6 @@ const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
 const hoisted = vi.hoisted(() => {
   const mockSettings = {
-    isAdvancedRenameAndDeleteHandlerSuggestionDeclined: false,
     isPathIgnored: vi.fn((): boolean => false),
     proposedRenameDeleteSettings: null as MigratableSettings | null
   };
@@ -135,13 +139,6 @@ vi.mock('./plugin-settings-tab.ts', () => ({
   }
 }));
 
-// Capture the `PluginSuggestionComponent` constructor argument so the closures the plugin hands it — the
-// Declined-flag getter and setter — can be invoked directly. The stub returns a fresh real Component so the
-// Real PluginBase lifecycle can load it as a child without reaching the community-plugin registry.
-const { pluginSuggestionStub } = vi.hoisted(() => ({
-  pluginSuggestionStub: vi.fn<(params: PluginSuggestionComponentParams) => object>()
-}));
-
 // The same treatment for the dev-utils settings-migration component. What is this plugin's own is the pair
 // Of closures it hands over — which pending values are offered, and how the retirement is persisted — so
 // They are captured and invoked directly. The offer-and-retire dance around them belongs to dev-utils and is
@@ -159,18 +156,6 @@ vi.mock('obsidian-dev-utils/obsidian/components/settings-migration-component', a
   return {
     ...actual,
     SettingsMigrationComponent: settingsMigrationStub
-  };
-});
-
-vi.mock('obsidian-dev-utils/obsidian/components/plugin-suggestion-component', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/plugin-suggestion-component')>();
-  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn used with `new` must be a non-arrow function returning a fresh real Component.
-  pluginSuggestionStub.mockImplementation(function NamedStub() {
-    return new Component();
-  });
-  return {
-    ...actual,
-    PluginSuggestionComponent: pluginSuggestionStub
   };
 });
 
@@ -226,7 +211,11 @@ const manifest = castTo<PluginManifest>({
   version: '1.0.0'
 });
 
+// The contract the stand-in provider publishes.
+const PROVIDER_API_VERSION = '1.0.0';
+
 let app: AppOriginal;
+let providerComponent: Component;
 
 function asPrivate(plugin: Plugin): PluginPrivate {
   return castTo<PluginPrivate>(plugin);
@@ -257,12 +246,11 @@ function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknow
   castTo<Record<string, unknown>>(rawTarget)[key] = value;
 }
 
-function suggestionParams(): PluginSuggestionComponentParams {
-  const call = pluginSuggestionStub.mock.calls[0];
-  if (!call) {
-    throw new Error('PluginSuggestionComponent was not constructed.');
-  }
-  return call[0];
+/**
+ * Withdraws the stand-in provider's API, as Advanced Rename and Delete Handler being disabled would.
+ */
+function unpublishProviderApi(): void {
+  providerComponent.unload();
 }
 
 // --- Tests ---
@@ -270,9 +258,8 @@ function suggestionParams(): PluginSuggestionComponentParams {
 describe('Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // The settings object is shared across tests, and `editAndSave` really writes to it, so the decline flag
-    // Has to be put back or a later test inherits an earlier one's answer.
-    hoisted.mockSettings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = false;
+    // The settings object is shared across tests, and `editAndSave` really writes to it, so the pending value
+    // Has to be put back or a later test inherits an earlier one's.
     hoisted.mockSettings.proposedRenameDeleteSettings = null;
     hoisted.mockSettings.isPathIgnored.mockReturnValue(false);
     nextCommandHandlerIndex = 0;
@@ -288,6 +275,25 @@ describe('Plugin', () => {
 
     // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument (debug controller, permanent notices) read/write the same seeded holder.
     castTo<AppGlobal>(window).app = app;
+
+    // What the dependency gate reaches when the dependency is missing: it registers a settings tab explaining
+    // What to install. `obsidian-test-mocks` does not model `app.setting`.
+    seedOnRawTarget(app, 'setting', {
+      addSettingTab: vi.fn(),
+      removeSettingTab: vi.fn()
+    });
+
+    // Advanced Rename and Delete Handler is a declared dependency, so everything past the base loads only once
+    // Its API is published. An empty API is enough: the gate checks only that one is there, at a matching
+    // Version. Each test gets a fresh app, and with it a fresh registry.
+    providerComponent = new Component();
+    providerComponent.load();
+    publishPluginApi({
+      api: {},
+      apiVersion: PROVIDER_API_VERSION,
+      component: providerComponent,
+      plugin: castTo<PluginOriginal>({ manifest: { id: 'advanced-rename-and-delete-handler' } })
+    });
   });
 
   describe('createTranslationsMap', () => {
@@ -331,22 +337,42 @@ describe('Plugin', () => {
       expect(hasRegisteredRenameDeleteHandler()).toBe(false);
     });
 
-    it('should suggest Advanced Rename and Delete Handler instead', async () => {
-      await createLoadedPlugin();
-      expect(pluginSuggestionStub).toHaveBeenCalled();
-      expect(suggestionParams().suggestedPluginId).toBe('advanced-rename-and-delete-handler');
+    it('should declare Advanced Rename and Delete Handler as a dependency it cannot run without', () => {
+      const plugin = new Plugin(app, manifest);
+
+      const [dependency, ...rest] = castTo<PluginDependenciesProbe>(plugin).getPluginDependencies();
+
+      expect(rest).toEqual([]);
+      expect(dependency?.pluginId).toBe('advanced-rename-and-delete-handler');
+      expect(dependency?.pluginName).toBe('Advanced Rename and Delete Handler');
+      // This plugin only ever migrates, which every `1.x` contract supports.
+      expect(dependency?.apiVersionRange).toBe('^1');
+      expect(dependency?.reason).toContain('Advanced Rename and Delete Handler');
     });
 
-    it('should report the suggestion as not declined until the user says otherwise', async () => {
-      await createLoadedPlugin();
-      expect(suggestionParams().isSuggestionDeclined()).toBe(false);
+    it('should load nothing of its own while the dependency is missing', async () => {
+      unpublishProviderApi();
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+
+      expect(settingsMigrationStub).not.toHaveBeenCalled();
+      expect(castTo<SettingTabsHolder>(plugin).settingTabs__).toHaveLength(0);
+      plugin.unload();
     });
 
-    it('should remember a declined suggestion in its own settings', async () => {
-      await createLoadedPlugin();
-      const params = suggestionParams();
-      await params.setSuggestionDeclined(true);
-      expect(params.isSuggestionDeclined()).toBe(true);
+    // The commands are registered through the base's universal command component, which outlives the
+    // Feature surface; left alone they would stay in the palette, calling into torn-down components.
+    it('should withdraw its own commands once the dependency goes away', async () => {
+      const plugin = await createLoadedPlugin();
+      const commands = castTo<CommandsHolder>(plugin).commands__;
+      expect(commands.size).toBe(10);
+
+      unpublishProviderApi();
+      await waitForAllAsyncOperations();
+
+      // Only the base's own Unlock active note command is left, which belongs to no surface.
+      expect(commands.size).toBe(1);
+      plugin.unload();
     });
 
     it('should offer the legacy rename and delete settings to the new owner', async () => {

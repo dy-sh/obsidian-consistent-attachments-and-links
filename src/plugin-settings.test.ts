@@ -25,7 +25,6 @@ describe('PluginSettings', () => {
       expect(settings.shouldShowBackupWarning).toBe(true);
       expect(settings.treatAsAttachmentExtensions).toStrictEqual(['.excalidraw.md']);
       expect(settings.hadDangerousSettingsReverted).toBe(false);
-      expect(settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined).toBe(false);
       // A fresh install has nothing to hand to Advanced Rename and Delete Handler, so it is never offered a
       // Migration.
       expect(settings.proposedRenameDeleteSettings).toBeNull();

@@ -8,7 +8,7 @@ This plugin makes that visible: it audits the whole vault and reports every link
 
 > [!IMPORTANT]
 >
-> Since **4.0.0** this plugin no longer handles renames and deletions. Install [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) to keep attachments traveling with their note and links rewritten when you move, rename or delete one — it owns that for the whole vault now, so several plugins can no longer fight over it. This plugin offers to hand your old settings across the first time it sees it, and everything else here keeps working without it.
+> Since **4.0.0** this plugin no longer handles renames and deletions. Install [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) to keep attachments traveling with their note and links rewritten when you move, rename or delete one — it owns that for the whole vault now, so several plugins can no longer fight over it. This plugin requires it: it loads nothing until that plugin is installed, explains why, and installs it in one click — which changes nothing on its own, since its defaults do nothing until you turn renames or deletions on. It then offers to hand your old settings across.
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
