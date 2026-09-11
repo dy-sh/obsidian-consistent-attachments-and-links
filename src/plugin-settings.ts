@@ -29,14 +29,6 @@ export class PluginSettings {
   public consistencyReportFile = 'consistency-report.md';
 
   /**
-   * Whether the user has already declined the suggestion to install Advanced Rename and Delete Handler.
-   *
-   * Only the load-time notice honours it — the settings-tab banner is shown regardless, because a user
-   * looking at these settings right now is a fresher signal than an answer they gave earlier.
-   */
-  public isAdvancedRenameAndDeleteHandlerSuggestionDeclined = false;
-
-  /**
    * The length, in characters, of the longest vault root path this vault is expected to live under.
    *
    * `0` means the running vault's real root, which is what makes the on-machine check exact with nothing

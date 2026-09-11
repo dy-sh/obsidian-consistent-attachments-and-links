@@ -28,3 +28,6 @@ dist
 
 .claude/settings.local.json
 coverage
+
+# Released builds of other plugins, downloaded for the integration vaults.
+.cache

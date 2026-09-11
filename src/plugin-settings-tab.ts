@@ -1,9 +1,6 @@
 import type { SettingDefinitionItem } from 'obsidian';
-import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
-import type { PluginSettingsTabBaseConstructorParams } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 
 import { setIcon } from 'obsidian';
-import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
@@ -20,10 +17,6 @@ import {
   CollectAttachmentUsedByMultipleNotesMode,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
 } from './plugin-settings.ts';
-
-interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
-  readonly pluginSuggestionComponent: PluginSuggestionComponent;
-}
 
 const AUTO_COLLECT_ATTACHMENTS_SETTING_NAME = 'Auto Collect Attachments';
 
@@ -48,27 +41,10 @@ const PATH_COMPATIBILITY_PLATFORM_PROPERTY_NAMES = {
 } as const satisfies Record<PathCompatibilityPlatform, keyof PluginSettings>;
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
-  private readonly pluginSuggestionComponent: PluginSuggestionComponent;
-
-  public constructor(params: PluginSettingsTabConstructorParams) {
-    super(params);
-    this.pluginSuggestionComponent = params.pluginSuggestionComponent;
-  }
-
+  // There is no row for Advanced Rename and Delete Handler: it is a declared dependency, so while it is missing
+  // This tab is never registered at all and the library's own blocked tab explains what to install.
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
-      // The suggestion banner has to travel as a row: Obsidian renders the declarative definitions and never
-      // Calls `display()` once `getSettingDefinitions()` is non-empty, so there is no container to write into
-      // Otherwise. The row body is emptied first, leaving the Setting element as a bare host for the banner.
-      this.settingEx({
-        name: '',
-        render: (setting) => {
-          setting.settingEl.empty();
-          this.pluginSuggestionComponent.renderBanner(setting.settingEl);
-        },
-        searchable: false,
-        visible: () => this.pluginSuggestionComponent.getSuggestedPluginState() !== SuggestedPluginState.Enabled
-      }),
       this.settingEx({
         desc: createFragment((f) => {
           f.appendText('Add the plugin\'s commands (');

@@ -2,14 +2,12 @@ import type {
   SettingGroup,
   ToggleComponent
 } from 'obsidian';
-import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { AsyncEvents } from 'obsidian-dev-utils/async-events';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
-import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
@@ -59,9 +57,6 @@ class MockDataHandler implements DataHandler {
 
 const originalAddToggle = SettingEx.prototype.addToggle;
 
-// What the stubbed suggestion component reports, so a test can put the tab in either state.
-let suggestedPluginState: SuggestedPluginState = SuggestedPluginState.NotInstalled;
-
 async function createTab(): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const pluginSettingsComponent = new PluginSettingsComponent({
@@ -80,17 +75,9 @@ async function createTab(): Promise<CreatedTab> {
       callback(toggle);
     });
   });
-  // The banner row asks the suggestion component whether to render, then hands it an element. A stub keeps
-  // Both out of the community-plugin registry, which the real component reads.
   const tab = new PluginSettingsTab({
     plugin,
-    pluginSettingsComponent,
-    pluginSuggestionComponent: strictProxy<PluginSuggestionComponent>({
-      getSuggestedPluginState: () => suggestedPluginState,
-      renderBanner: () => {
-        // The banner's contents are the suggestion component's business, not this tab's.
-      }
-    })
+    pluginSettingsComponent
   });
 
   renderRows(tab);
@@ -106,14 +93,6 @@ async function flushMicrotasks(): Promise<void> {
 
 function getSettingNames(tab: PluginSettingsTab): string[] {
   return tab.getSettingDefinitions().map((definition) => 'name' in definition ? definition.name : '');
-}
-
-function isBannerVisible(tab: PluginSettingsTab): boolean {
-  const [firstDefinition] = tab.getSettingDefinitions();
-  if (!firstDefinition || !('visible' in firstDefinition) || typeof firstDefinition.visible !== 'function') {
-    throw new TypeError('The first row is not the suggestion banner.');
-  }
-  return firstDefinition.visible();
 }
 
 /**
@@ -143,7 +122,6 @@ beforeAll(async () => {
 describe('PluginSettingsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    suggestedPluginState = SuggestedPluginState.NotInstalled;
   });
 
   afterEach(() => {
@@ -178,25 +156,11 @@ describe('PluginSettingsTab', () => {
     expect(names).not.toContain('Update backlink text on note rename');
   });
 
-  // The banner has to be a row: Obsidian never calls `display()` once the declarative definitions are
-  // Non-empty, so a row is the only place it can go.
-  it('should carry the suggestion banner as its first row', async () => {
+  // Advanced Rename and Delete Handler is a declared dependency: while it is missing this tab is never shown,
+  // And the library's own blocked tab says what to install. So there is no banner row left to carry.
+  it('should carry no nameless banner row, only settings', async () => {
     const { tab } = await createTab();
-    const [firstDefinition] = tab.getSettingDefinitions();
-    expect(firstDefinition).toBeDefined();
-    expect(firstDefinition && 'name' in firstDefinition ? firstDefinition.name : undefined).toBe('');
-  });
-
-  it('should show the suggestion banner while the suggested plugin is not enabled', async () => {
-    const { tab } = await createTab();
-    expect(isBannerVisible(tab)).toBe(true);
-  });
-
-  // Nothing to suggest once it is installed and running, so the row takes no space.
-  it('should hide the suggestion banner once the suggested plugin is enabled', async () => {
-    suggestedPluginState = SuggestedPluginState.Enabled;
-    const { tab } = await createTab();
-    expect(isBannerVisible(tab)).toBe(false);
+    expect(getSettingNames(tab)).not.toContain('');
   });
 
   it('should capture toggles for the dangerous settings', async () => {

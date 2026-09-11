@@ -1,8 +1,9 @@
+import type { PluginDependency } from 'obsidian-dev-utils/obsidian/components/plugin-gate-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
+import { Component } from 'obsidian';
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
-import { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { SettingsMigrationComponent } from 'obsidian-dev-utils/obsidian/components/settings-migration-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
@@ -31,13 +32,39 @@ import { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 
-const SUGGESTION_REASON = 'Consistent Attachments and Links no longer handles renames and deletions itself.'
-  + ' Without Advanced Rename and Delete Handler, moving or renaming a note leaves its attachments behind,'
-  + ' and deleting one no longer cleans up the attachments only it referenced.';
+const DEPENDENCY_REASON = 'Consistent Attachments and Links no longer handles renames and deletions itself.'
+  + ' Advanced Rename and Delete Handler does: it moves a note\'s attachments with the note, and cleans up the'
+  + ' attachments only a deleted note referenced.';
+
+/**
+ * The contract range of Advanced Rename and Delete Handler this plugin requires. It only ever calls
+ * `migrateSettings`, which every `1.x` contract publishes.
+ */
+const DEPENDENCY_API_VERSION_RANGE = '^1';
 
 export class Plugin extends PluginBase {
   protected override createTranslationsMap(): TranslationsMap {
     return translationsMap;
+  }
+
+  /**
+   * Declares Advanced Rename and Delete Handler as a dependency this plugin cannot run without.
+   *
+   * It owns renames and deletions since this plugin's 4.0.0. Without it, attachments silently stop following
+   * their notes — and nothing would connect that to a plugin removed weeks earlier. Declared, this plugin does
+   * nothing while it is missing, says why, and installs it in one click.
+   *
+   * @returns The dependency.
+   */
+  protected override getPluginDependencies(): PluginDependency[] {
+    return [
+      {
+        apiVersionRange: DEPENDENCY_API_VERSION_RANGE,
+        pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+        pluginName: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME,
+        reason: DEPENDENCY_REASON
+      }
+    ];
   }
 
   protected override async onloadImpl(): Promise<void> {
@@ -48,25 +75,6 @@ export class Plugin extends PluginBase {
       })
     );
     this.pluginSettingsComponent = pluginSettingsComponent;
-
-    const pluginSuggestionComponent = this.addChild(
-      new PluginSuggestionComponent({
-        app: this.app,
-        isSuggestionDeclined: (): boolean => pluginSettingsComponent.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined,
-        pluginNoticeComponent: this.pluginNoticeComponent,
-        pluginSettingsComponent,
-        reason: SUGGESTION_REASON,
-        // `editAndSave`, not `setProperty`: a decline has to outlive a reload, and `setProperty` only edits
-        // The in-memory state.
-        setSuggestionDeclined: async (isDeclined): Promise<void> => {
-          await pluginSettingsComponent.editAndSave((settings) => {
-            settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = isDeclined;
-          });
-        },
-        suggestedPluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
-        suggestedPluginName: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
-      })
-    );
 
     const linksHandler = new LinksHandler({
       app: this.app,
@@ -80,8 +88,7 @@ export class Plugin extends PluginBase {
 
     const pluginSettingsTab = new PluginSettingsTab({
       plugin: this,
-      pluginSettingsComponent,
-      pluginSuggestionComponent
+      pluginSettingsComponent
     });
 
     this.addChild(
@@ -93,7 +100,7 @@ export class Plugin extends PluginBase {
 
     this.addChild(
       new SettingsMigrationComponent<MigratableSettings>({
-        apiVersionRange: '^1',
+        apiVersionRange: DEPENDENCY_API_VERSION_RANGE,
         app: this.app,
         getProposedSettings: (): MigratableSettings | null => pluginSettingsComponent.settings.proposedRenameDeleteSettings,
         pluginSettingsComponent,
@@ -137,7 +144,11 @@ export class Plugin extends PluginBase {
       })
     );
 
-    await this.commandHandlerComponent.registerCommandHandlers(() => [
+    // TODO: Drop the disposal below once obsidian-dev-utils ties commands registered from `onloadImpl` to the
+    // Feature surface. Today they go through the base's universal command component, so they outlive the
+    // Surface — which unloads whenever the dependency goes away, and reloads, running this method again, when
+    // It comes back. Left alone, the commands would stay in the palette calling into torn-down components.
+    const commandHandlersDisposable = await this.commandHandlerComponent.registerCommandHandlers(() => [
       new OpenDemoVaultCommandHandler({
         app: this.app,
         pluginId: this.manifest.id,
@@ -164,5 +175,9 @@ export class Plugin extends PluginBase {
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
     ]);
+    // A child, so it unloads with the feature surface and takes the commands with it.
+    this.addChild(new Component()).register(() => {
+      commandHandlersDisposable.dispose();
+    });
   }
 }

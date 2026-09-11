@@ -62,6 +62,12 @@ const DEMO_VAULT_TEST_FILES = 'src/**/*.demo-vault.integration.test.ts';
  */
 const DEMO_VAULT_TIMEOUT_IN_MILLISECONDS = 600_000;
 
+/**
+ * The desktop, Android and performance projects' global setup: the harness's own, plus this plugin's
+ * dependency.
+ */
+const GLOBAL_SETUP_FILE = './scripts/vitest-global-setup.ts';
+
 export const config = defineObsidianPluginVitestConfig({
   customProjects(context: ObsidianPluginVitestConfigContext): TestProjectConfiguration[] {
     return [
@@ -99,5 +105,13 @@ export const config = defineObsidianPluginVitestConfig({
         }
       }
     ];
+  },
+  editContext(context: ObsidianPluginVitestConfigContext): void {
+    // This plugin declares Advanced Rename and Delete Handler as a dependency and loads nothing without it, so
+    // Every vault these projects open has it seeded. The capture projects spread these same objects and so
+    // Inherit it; the demo-vault project brings a setup of its own that seeds it too.
+    context.desktop.globalSetup = [GLOBAL_SETUP_FILE];
+    context.android.globalSetup = [GLOBAL_SETUP_FILE];
+    context.desktopPerformance.globalSetup = [GLOBAL_SETUP_FILE];
   }
 });

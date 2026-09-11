@@ -58,10 +58,24 @@ What lives here instead:
   copy:** never gate the component's setup on the pending value in `onload` (the settings component is a
   sibling still loading, so `settings` holds defaults and the migration is lost for good — the shared
   component wires both the API ref's `change` and the settings component's `loadSettings`, and re-reads
-  inside the propose path); and use `editAndSave`, never `setProperty`, for both the declined flag and the
-  pending value, or a decline returns on the next reload and an applied migration is offered forever.
-- The suggestion banner travels as a settings **row**: Obsidian never calls `display()` once
-  `getSettingDefinitions()` is non-empty.
+  inside the propose path); and use `editAndSave`, never `setProperty`, for the pending value, or an applied
+  migration is offered forever.
+- That plugin is a **declared dependency**, through `getPluginDependencies()` in `plugin.ts` — no longer the
+  optional suggestion it was in 4.0.x. Until its API is published, `onloadImpl` does not run: no commands, no
+  handlers, no settings tab of this plugin's own; the library shows a blocked tab and a notice that installs it
+  in one click, and finishes the load the moment it arrives. Asking for it is harmless because its defaults do
+  nothing until renames or deletions are turned on.
+
+Consequences for the tests:
+
+- **Every integration vault seeds it.** `scripts/helpers/advanced-rename-and-delete-handler-seed.ts` downloads
+  the pinned RELEASE (cached under `.cache/`) and writes it into the vault with a `data.json` that leaves
+  renames, attachment moves and deletions off. The desktop, Android and performance projects get it from
+  `scripts/vitest-global-setup.ts`, wired in `scripts/vitest-config.ts`; the demo-vault project composes it
+  into its own setup. No suite may disable or remove it: it outlives each file, and taking it away closes this
+  plugin's gate for every later file in the run.
+- **Unit tests publish a stand-in API.** `src/plugin.test.ts` publishes an empty API for it in `beforeEach`;
+  without it nothing past the base loads. `unpublishProviderApi()` withdraws it to test the blocked path.
 
 The `bulk-delete.desktop-performance.integration.test.ts` suite and its vault generator were deleted with the
 handler — they proved an O(N) cost that is no longer incurred here. The `integration-tests:desktop-performance`

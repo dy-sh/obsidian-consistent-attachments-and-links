@@ -4,7 +4,7 @@ Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsid
 
 > [!IMPORTANT] Renaming and deleting moved out
 >
-> Since 4.0.0 this plugin no longer handles renames and deletions. [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) owns those for the whole vault — install it to keep attachments traveling with their note and links rewritten when you move, rename or delete one. Everything in this vault keeps working without it.
+> Since 4.0.0 this plugin no longer handles renames and deletions. [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) owns those for the whole vault — this plugin requires it and loads nothing without it, so this vault installs it for you on first open. Turn on its rename and delete handling to keep attachments traveling with their note and links rewritten when you move, rename or delete one.
 
 <!-- Separates the two callouts; without it markdownlint reads them as one blockquote. -->
 
