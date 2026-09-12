@@ -40,7 +40,15 @@ import {
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
 const COLLECT_IN_FILE_COMMAND_ID = `${PLUGIN_ID}:collect-attachments-in-file`;
-const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
+/*
+ * Under the transport's ~30s per-closure cap, not at it.
+ * Two waits share this one budget, so at 20_000 apiece the closure declared 40s.
+ * The eval is killed at the cap first and reported as a bare transport timeout.
+ * That names the harness rather than the wait that overran.
+ * What is waited on here lands in well under a second, so the smaller ceiling costs nothing.
+ * The constant feeds nothing but the closure's own input, so no Node-side wait sees it.
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 12_000;
 
 interface PhaseResult {
   readonly isDrawingCollected: boolean;

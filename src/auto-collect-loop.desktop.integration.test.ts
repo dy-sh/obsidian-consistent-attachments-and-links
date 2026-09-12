@@ -30,7 +30,15 @@ import {
 } from 'vitest';
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
-const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
+/*
+ * Under the transport's ~30s per-closure cap, not at it.
+ * Two waits and the 6s settle below share this one budget, so at 20_000 apiece the closure declared 46s.
+ * The eval is killed at the cap first and reported as a bare transport timeout.
+ * That names the harness rather than the wait that overran.
+ * Indexing two notes and collecting two attachments both land in well under a second.
+ * The constant feeds nothing but the closure's own input, so no Node-side wait sees it.
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 9000;
 // A generous window in which a still-looping (unfixed) auto-collect would escalate the deduplication suffix.
 const SETTLE_IN_MILLISECONDS = 6000;
 
