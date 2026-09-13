@@ -79,7 +79,7 @@ Consequences for the tests:
 
 The `bulk-delete.desktop-performance.integration.test.ts` suite and its vault generator were deleted with the
 handler — they proved an O(N) cost that is no longer incurred here. The `integration-tests:desktop-performance`
-project stays (obsidian-dev-utils declares it fleet-wide with `passWithNoTests`).
+project stays (obsidian-dev-utils declares it for every project with `passWithNoTests`).
 
 ## Wikilink conversion is NOT this plugin's — do not re-add it, and do not re-add the report buckets
 
@@ -167,7 +167,7 @@ invalid on a platform the vault is synced to. Two files, split on testability:
 
 Things that are easy to get wrong here, and were:
 
-- **Rename through ODU's `renameSafe`, never `app.vault.rename`.** `renameSafe` goes via
+- **Rename through obsidian-dev-utils' `renameSafe`, never `app.vault.rename`.** `renameSafe` goes via
   `app.fileManager.renameFile`, so Obsidian rewrites every link and Advanced Rename and Delete Handler moves
   attachments. The reference implementation this came from
   (`F:\Obsidian\.scripts\src\Invocables\FixLongPaths.ts`) used `vault.rename` and silently broke links.

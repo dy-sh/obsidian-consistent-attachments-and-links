@@ -327,7 +327,7 @@ describe('AttachmentCollector', () => {
 
     it('should return null when the attachment is already at its proper path', async () => {
       const attachmentFile = createFile('attachments/img 1.png');
-      // A deduplication-parked attachment (`img 1.png`) is recognized as already proper by the ODU helper,
+      // A deduplication-parked attachment (`img 1.png`) is recognized as already proper by the obsidian-dev-utils helper,
       // So no move is scheduled — this is what makes auto-collect converge (issue #152).
       mockIsAtProperAttachmentPath.mockResolvedValue(true);
       const result = await collector.getProperAttachmentPath(buildParams(attachmentFile));
@@ -495,7 +495,7 @@ describe('AttachmentCollector', () => {
     it('should not rename a deduplication-parked attachment already at its proper path (single-ref, issue #152)', async () => {
       // Regression guard for the endless auto-collect loop: the attachment sits at `attachments/img 1.png`
       // (parked with an Obsidian deduplication suffix because a different file occupies the deduplication-free
-      // Slot). The deduplication-free proper path from getAttachmentFilePath still DIFFERS, but the ODU helper
+      // Slot). The deduplication-free proper path from getAttachmentFilePath still DIFFERS, but the obsidian-dev-utils helper
       // Recognizes the parked file as already proper, so no move is scheduled and the loop converges.
       mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('attachments/img 1.png'));
