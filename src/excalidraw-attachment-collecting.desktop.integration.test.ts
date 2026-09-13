@@ -18,10 +18,10 @@
  * `excalidraw-link-skip.desktop.integration.test.ts`, which claimed issue #151 — "link-rewriting
  * operations must skip files treated as attachments", so the image references Excalidraw stores INSIDE
  * a `.excalidraw.md` are never rewritten. That suite drove `Convert all embed paths to relative`, which
- * T912 removed as out of scope, and the guarantee did NOT come along to collecting on its own: the
+ * was removed as out of scope, and the guarantee did NOT come along to collecting on its own: the
  * collector's walk selected notes with obsidian-dev-utils' plain extension-based `isNote`, so a
- * drawing was scanned as an ordinary note and what was written inside it WAS rewritten. T919-P22 fixed
- * that by moving the walk onto `isNoteEx`, and
+ * drawing was scanned as an ordinary note and what was written inside it WAS rewritten. That was fixed
+ * by moving the walk onto `isNoteEx`, and
  * `excalidraw-source-note-skip.desktop.integration.test.ts` is the suite that covers it. Do not read
  * this one as covering it.
  *

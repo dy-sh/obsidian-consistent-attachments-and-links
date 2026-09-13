@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * Produces the mobile screenshots the community-store listing needs (T461-P21),
+ * Produces the mobile screenshots the community-store listing needs,
  * driving a staged vault in Obsidian Mobile on a real Android emulator and
  * writing `images/screenshots/screenshot-mobile-N.png`.
  *
@@ -12,7 +12,7 @@
  * broken without touching anything.
  *
  * Shots 1 and 2 used to show a path rewritten to resolve from the note holding
- * it. T912 removed the commands that did it — rewriting a link's style is not
+ * it. The commands that did it are gone — rewriting a link's style is not
  * this plugin's job — so the pair moved onto the repair half of the scope line.
  * There used to be a fifth shot too, showing an attachment following its note
  * across a move; Advanced Rename and Delete Handler owns that since 4.0.0.

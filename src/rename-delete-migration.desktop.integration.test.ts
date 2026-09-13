@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * Desktop integration suite for the 3.x rename/delete settings hand-over (T714-P22).
+ * Desktop integration suite for the 3.x rename/delete settings hand-over.
  *
  * The one seam unit tests cannot reach: a REAL `data.json` written by a 3.x install, loaded by a real
  * plugin in a real Obsidian, and saved back. That round trip is where the values are actually at risk —
@@ -10,7 +10,7 @@
  * answers are gone before Advanced Rename and Delete Handler is ever installed to receive them, and
  * nothing anywhere would report it.
  *
- * T711-P18 is why this exists: the sibling plugin shipped this same change with two defects that every
+ * The sibling plugin is why this exists: it shipped this same change with two defects that every
  * unit test passed and a single live run caught.
  *
  * Only this plugin is involved. The other half — the dialog that reviews a proposal and writes what the
