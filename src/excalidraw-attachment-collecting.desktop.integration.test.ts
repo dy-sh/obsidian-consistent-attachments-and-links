@@ -25,7 +25,7 @@
  * `excalidraw-source-note-skip.desktop.integration.test.ts` is the suite that covers it. Do not read
  * this one as covering it.
  *
- * Desktop-only (per G47: the file name alone picks the project). No Android emulator is available in
+ * Desktop-only (the file name alone picks the project). No Android emulator is available in
  * this environment; the behavior itself is platform-agnostic, so this can become
  * `*.cross-platform.integration.test.ts` the day one is.
  */

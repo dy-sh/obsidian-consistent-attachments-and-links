@@ -41,7 +41,7 @@
  * The opposite direction — a drawing REFERENCED by a note travels as that note's attachment — is
  * covered by `excalidraw-attachment-collecting.desktop.integration.test.ts`.
  *
- * Desktop-only (per G47: the file name alone picks the project). No Android emulator is available in
+ * Desktop-only (the file name alone picks the project). No Android emulator is available in
  * this environment; the behavior itself is platform-agnostic, so this can become
  * `*.cross-platform.integration.test.ts` the day one is.
  */

@@ -16,7 +16,7 @@
  *    occupies the deduplication-free slot) is NOT renamed again — the collect converges after the one legitimate
  *    move, so no `… 2.png`/`… 3.png` escalation appears and the file stays put (the loop is broken).
  *
- * Desktop-only (per G47: the file name alone picks the project). No Android emulator is available in
+ * Desktop-only (the file name alone picks the project). No Android emulator is available in
  * this environment; the behavior itself is platform-agnostic, so this can become
  * `*.cross-platform.integration.test.ts` the day one is.
  */

@@ -14,7 +14,7 @@
  * CJK characters are 300 UTF-8 bytes — over ext4's 255-byte limit and untouched by any limit Windows has —
  * which is exactly the case a character count gets wrong.
  *
- * Desktop-only (per G47: the file name alone picks the project). `manifest.json` declares
+ * Desktop-only (the file name alone picks the project). `manifest.json` declares
  * `isDesktopOnly: false` and the behavior is platform-agnostic, so this can become
  * `*.cross-platform.integration.test.ts` the day an Android emulator is available here — the same
  * documented gap `context-menu-toggle.desktop.integration.test.ts` carries.
