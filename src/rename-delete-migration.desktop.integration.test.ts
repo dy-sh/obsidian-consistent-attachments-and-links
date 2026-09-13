@@ -17,7 +17,7 @@
  * user approves — belongs to Advanced Rename and Delete Handler and is covered by its own
  * `settings-migration.cross-platform.integration.test.ts`.
  *
- * Desktop-only (per G47: the file name alone picks the project). The behavior itself is
+ * Desktop-only (the file name alone picks the project). The behavior itself is
  * platform-agnostic and can move to `*.cross-platform.` the day an emulator is available here.
  */
 

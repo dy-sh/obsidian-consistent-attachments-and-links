@@ -257,6 +257,6 @@ already pulls `3.2.0` into this tree. The major bump is safe because `@wdio/util
 `computeExecutablePath`, all still exported by `3.x`.
 
 **Never take `npm audit fix --force` here** — its remedy downgrades `obsidian-integration-testing` from
-`10.x` to `1.1.2` (G100). **Remove the override** when `@wdio/utils` moves to `@puppeteer/browsers@^3`
+`10.x` to `1.1.2`. **Remove the override** when `@wdio/utils` moves to `@puppeteer/browsers@^3`
 itself; the `check` in [`pinned-versions.json`](pinned-versions.json) watches exactly that. Mirrors the same
 override in `obsidian-dev-utils`; keep the two in step.

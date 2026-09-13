@@ -73,7 +73,7 @@ The settings that moved: `shouldUpdateLinks`, `shouldMoveAttachmentsWithNote`, `
 ## 3.35.1
 
 - chore: update libs
-- refactor(test): collapse the shared integration suites per G47
+- refactor(test): collapse the shared integration suites into one cross-platform file each
 - chore: update libs
 - chore(vitest): adopt the shared Obsidian plugin vitest configuration
 

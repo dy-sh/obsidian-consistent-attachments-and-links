@@ -75,7 +75,7 @@ vi.mock('obsidian-dev-utils/obsidian/file-manager', () => ({
 }));
 
 // Spread the real module: `isFolder` / `isMarkdownFile` / `asFile` do the type routing this handler is built
-// On, and a stub of them would be testing the stub (G49).
+// On, and a stub of them would be testing the stub.
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
   getFileOrNull: vi.fn(),

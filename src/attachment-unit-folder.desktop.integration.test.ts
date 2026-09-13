@@ -14,7 +14,7 @@
  * vaults, so a user with both installed must not watch one keep a folder whole while the other tears
  * it apart.
  *
- * Desktop-only (per G47: the file name alone picks the project). No Android emulator is available in
+ * Desktop-only (the file name alone picks the project). No Android emulator is available in
  * this environment; the behavior itself is platform-agnostic, so this can become
  * `*.cross-platform.integration.test.ts` the day one is.
  */
