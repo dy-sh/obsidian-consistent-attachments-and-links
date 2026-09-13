@@ -9,7 +9,7 @@
 - docs: name the unversioned demo-vault asset and the folder it unzips into
 - chore: make the LICENSE copyright line lintable and guard it against the year roll-over
 - test(test-mocks): drop the hand-rolled app.plugins seed, and sweep the dependencies
-- refactor(path-compatibility): consume ODU's Windows naming-rule predicates
+- refactor(path-compatibility): consume obsidian-dev-utils' Windows naming-rule predicates
 - fix(attachment-collector): honour treat-as-attachment in the note walk
 - feat: strip the four convert-to-relative commands
 - docs(agents): settle the plugin's scope line and mint the removals it implies
@@ -120,7 +120,7 @@ The settings that moved: `shouldUpdateLinks`, `shouldMoveAttachmentsWithNote`, `
 ## 3.33.13
 
 - docs: standardize demo-vault README
-- docs: drop per-plugin demo-vault setup notes (bootstrap covered by ODU harness)
+- docs: drop per-plugin demo-vault setup notes (bootstrap covered by the obsidian-dev-utils harness)
 - docs(demo-vault): create the Consistent Attachments and Links demo vault
 - chore: update libs
 - docs: update
