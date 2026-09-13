@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code
 in this repository.
 
-## The scope line — read this before adding any command (T891)
+## The scope line — read this before adding any command
 
 > Consistent Attachments and Links **reports** every link whose written path does not itself lead to its
 > target — Obsidian's own resolver is deliberately more forgiving than that — and **repairs** names and
@@ -53,7 +53,7 @@ What lives here instead:
   both ends compile against, so that half can no longer drift silently. That plugin is an Obsidian plugin
   repo, not an npm package, and the authoritative copy of its contract is its own `src/plugin-api.ts`.
 - The handover itself is dev-utils' `SettingsMigrationComponent`, constructed in `plugin.ts`; this plugin
-  supplies only `getProposedSettings` and `retireProposedSettings`. **Two defects T711-P18 shipped here
+  supplies only `getProposedSettings` and `retireProposedSettings`. **Two defects the sibling plugin shipped here
   first, both invisible to unit tests, and knowing them is what stops the next person hand-rolling a sixth
   copy:** never gate the component's setup on the pending value in `onload` (the settings component is a
   sibling still loading, so `settings` holds defaults and the migration is lost for good — the shared
@@ -84,13 +84,13 @@ project stays (obsidian-dev-utils declares it fleet-wide with `passWithNoTests`)
 ## Wikilink conversion is NOT this plugin's — do not re-add it, and do not re-add the report buckets
 
 The original author built this plugin to **force a vault's migration to Markdown links**. That stopped being
-a requirement (owner, 2026-09-01), and T846 removed the whole surface: the four `Replace all wiki…` command
+a requirement (owner, 2026-09-01), and the whole surface was removed: the four `Replace all wiki…` command
 handlers, `LinksHandler.replaceAllNoteWikilinksWithMarkdownLinks`, the first two steps of `reorganizeVault`,
 and the `Wiki links` / `Wiki embeds` buckets of the consistency report.
 
 [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) owns the conversion. It
 already reached further — one file, one folder or the whole vault, plus automatic modes — and gained a
-force-`LinkStyle.Markdown` mode (T845-P14) specifically so nothing was lost in the move.
+force-`LinkStyle.Markdown` mode specifically so nothing was lost in the move.
 
 **The report buckets went deliberately, not by oversight.** Listing a wikilink under *inconsistencies* IS the
 forced-migration premise; keeping the audit while dropping the commands would have left the plugin reporting
@@ -100,7 +100,7 @@ links, path compatibility — are about links that do not resolve, which is a di
 What stays, and why it can look like a leftover:
 
 - `treatAsAttachmentExtensions` / `isTreatedAsAttachment` are still honoured, now only through
-  `AttachmentCollector.isNoteEx`. See the T912 section below for what that does and does not mean for
+  `AttachmentCollector.isNoteEx`. See the link-path rewriting section below for what that does and does not mean for
   issue #151.
 - `wikilink` stays in `cspell.json`. `06 Recommended Obsidian settings.md` is about *Obsidian's* wikilink
   setting, and the Excalidraw demo material still needs the word.
@@ -109,16 +109,16 @@ What stays, and why it can look like a leftover:
 landed (its `5.0.0` predates it). Do not ship a release of this plugin carrying the removal until that
 plugin has published a version with the mode, or the capability is lost between releases rather than moved.
 
-## Link-path rewriting is NOT this plugin's either — and issue #151 now lives in one predicate (T912, T919)
+## Link-path rewriting is NOT this plugin's either — and issue #151 now lives in one predicate
 
-T912 removed the four `Convert all … paths to relative` commands, `LinksHandler`'s whole rewriting half
-(`convertAllNoteRefPathsToRelative`, `convertLink`, and with them the notice and resource-lock dependencies
-that only `applyFileChanges` needed), and two more steps of `reorganizeVault`. `LinksHandler` is now
-`checkConsistency` + `isValidLink` + `ConsistencyCheckResult` — a reporter, nothing else.
+The four `Convert all … paths to relative` commands are gone, and with them `LinksHandler`'s whole
+rewriting half (`convertAllNoteRefPathsToRelative`, `convertLink`, and the notice and resource-lock
+dependencies that only `applyFileChanges` needed) and two more steps of `reorganizeVault`. `LinksHandler`
+is now `checkConsistency` + `isValidLink` + `ConsistencyCheckResult` — a reporter, nothing else.
 
 This was a **scope removal, not a handover**: rewriting a link into a style is the "never rewrite" third of
 the scope line. Better Markdown Links is named in the README and demo vault as where link paths live, but
-nothing was waiting on it, so unlike T846 this carried no release gate of its own.
+nothing was waiting on it, so unlike the wikilink removal this carried no release gate of its own.
 
 **Issue #151 is the trap here.** It says the plugin's link-rewriting operations must SKIP a file listed in
 `treatAsAttachmentExtensions`, so the image references Excalidraw stores inside a `.excalidraw.md` are never
@@ -126,7 +126,7 @@ rewritten. `convertAllNoteRefPathsToRelative` was the last thing that honoured i
 obvious assumption — that attachment collecting inherited the guarantee — was **false, and was measured**:
 `collectAttachmentsInAbstractFilesImpl` selected the notes it scans with obsidian-dev-utils' plain `isNote`
 (`isMarkdownFile || isCanvasFile || isBaseFile`), which never consults the setting, so a `.excalidraw.md` was
-scanned as an ordinary note and its references WERE rewritten. **T919 fixed that**, and the state now is:
+scanned as an ordinary note and its references WERE rewritten. **That is fixed**, and the state now is:
 
 - **Collecting is the only operation left that rewrites a link at all**, so #151's whole guarantee lives in
   one predicate at one choke point: the walk in `collectAttachmentsInAbstractFilesImpl` uses
@@ -141,8 +141,8 @@ scanned as an ordinary note and its references WERE rewritten. **T919 fixed that
 - **The report still reads a drawing, deliberately.** `checkConsistency` walks `getMarkdownFilesSorted` and
   reports a drawing's unresolvable links like any other file's. #151 forbids rewriting, not reporting, and
   "report strictly" is the first third of the scope line. Do not "fix" this by filtering the report.
-- **Custom Attachment Location has the identical defect** in its own forked collector (T919 verified it
-  read-only and minted T925-P4 for it). When collecting leaves under T901, the fix must survive the move.
+- **Custom Attachment Location has the identical defect** in its own forked collector (verified there read-only, and
+  tracked against that plugin). When collecting eventually moves there, the fix must survive the move.
 
 So `excalidraw-link-skip.desktop.integration.test.ts` was replaced by two suites, each covering one
 direction with a control phase: `excalidraw-attachment-collecting.desktop.integration.test.ts` (a referenced
@@ -155,7 +155,7 @@ able to CREATE the offending name, so desktop stages an over-long-in-bytes name 
 stages a reserved `CON` (legal on ext4). Both suites' headers carry the full reasoning, including which
 candidate characters Obsidian's own `vault.create` refuses on every platform.
 
-## Path compatibility (T698)
+## Path compatibility
 
 `Fix incompatible paths` and the report's `Path compatibility` section repair names and paths that are
 invalid on a platform the vault is synced to. Two files, split on testability:
@@ -174,7 +174,7 @@ Things that are easy to get wrong here, and were:
 - **`renameSafe` can undo the repair.** Its `getSafeRenamePath` appends a space and a number on a collision,
   which can push the name back over the limit it was just brought under. `renameToName` re-checks the resolved path and
   retries with a shorter basename; it terminates because the fed-back basename strictly shrinks.
-- **The Windows naming rules are ODU's — do not re-derive them here (T920).** `isWindowsReservedName`,
+- **The Windows naming rules are `obsidian-dev-utils`' — do not re-derive them here.** `isWindowsReservedName`,
   `hasWindowsTrailingChars` and `trimWindowsTrailingChars` in `obsidian-dev-utils/obsidian/validation` own
   the reserved-device-name and trailing-character rules, beside the character sets that were already there.
   `isWindowsReservedName` trims trailing dots and spaces and drops the last extension itself, so a caller
@@ -198,10 +198,10 @@ Things that are easy to get wrong here, and were:
   exceeds it.
 - **The sidecar follows the rename.** Renaming an attachment orphans the sidecar note that describes it, and
   that mismatch is ours to fix since the rename was ours. Keeping a bundle together in general is
-  File Bundles' job (P48), not this plugin's.
+  File Bundles' job, not this plugin's.
 
-Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) moved to ODU in T886-P1 and was
-consumed here in T920, on the `obsidian-dev-utils@99.0.0` bump. Two cases stay deliberately **unmatched**
+Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) moved to `obsidian-dev-utils` and was
+consumed here on the `obsidian-dev-utils@99.0.0` bump. Two cases stay deliberately **unmatched**
 there, so do not "fix" them here either: `CONIN$` / `CONOUT$` and the superscript `COM²` forms, which every
 Windows version that runs Obsidian accepts — matching them would rename files that work.
 

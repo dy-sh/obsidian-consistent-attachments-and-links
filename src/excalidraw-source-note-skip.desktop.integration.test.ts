@@ -8,9 +8,9 @@
  * That is issue #151's actual guarantee. Excalidraw stores each drawing's embedded-image references
  * inside the `.excalidraw.md` itself, and rewriting them stops the drawing rendering. Collecting is now
  * the only operation in the plugin that rewrites a link at all — `LinksHandler`'s rewriting half left
- * under T912 — so the guarantee lives entirely in the collector's walk
+ * with the scope removal — so the guarantee lives entirely in the collector's walk
  * (`attachment-collector.ts:collectAttachmentsInAbstractFilesImpl`), which selects notes with
- * `isNoteEx` rather than obsidian-dev-utils' plain extension-based `isNote`. Before T919-P22 it used
+ * `isNoteEx` rather than obsidian-dev-utils' plain extension-based `isNote`. Before that fix it used
  * `isNote`, and a drawing WAS scanned, moved and rewritten; that was measured against a real Obsidian,
  * not read off the source.
  *

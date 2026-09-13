@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * Desktop integration suite for the `Fix incompatible paths` command (T698): the bulk repair of files whose
+ * Desktop integration suite for the `Fix incompatible paths` command: the bulk repair of files whose
  * name or path is invalid on a platform the vault is synced to.
  *
  * It drives the REAL command through the command palette's own registry and asserts the observable effects a
@@ -34,7 +34,7 @@ const COMMAND_ID = `${PLUGIN_ID}:fix-incompatible-paths`;
 // 100 × 3 bytes = 300, over the 255-byte per-name limit; 100 UTF-16 units, under every Windows limit.
 const LONG_CJK_BASENAME = '文'.repeat(100);
 
-describe('Fix incompatible paths (T698)', () => {
+describe('Fix incompatible paths', () => {
   it('renames a name that is too long in bytes, rewrites the link to it, and preserves the original name', async () => {
     const result = await evalInObsidian({
       async callback({
