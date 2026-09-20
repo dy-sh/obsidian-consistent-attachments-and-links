@@ -22,7 +22,14 @@ import {
 const PLUGIN_ID = 'consistent-attachments-and-links';
 const DEPENDENCY_PLUGIN_ID = 'advanced-rename-and-delete-handler';
 const COLLECT_COMMAND_ID = `${PLUGIN_ID}:collect-attachments-entire-vault`;
-const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
+/*
+ * Under the transport's ~30s per-closure cap, not at it. The one closure below charges this ceiling TWICE —
+ * Once for the withdrawal, once for the return — and the whole callback is a single `Runtime.evaluate`, so the
+ * Sum is what has to fit, leaving room for the two plugin toggles themselves. Both waits are for an event the
+ * Dependency gate fires as soon as the plugin list changes, so a run that needs even a second of this is
+ * Already anomalous; the ceiling is headroom for a loaded machine, not a budget for slow work.
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 10_000;
 
 interface DependencyProbeResult {
   readonly isCommandRegisteredAfterReturn: boolean;
