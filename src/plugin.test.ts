@@ -351,8 +351,8 @@ describe('Plugin', () => {
       plugin.unload();
     });
 
-    // The commands are registered through the base's universal command component, which outlives the
-    // Feature surface; left alone they would stay in the palette, calling into torn-down components.
+    // Commands registered from `onloadImpl` belong to the feature surface, which unloads whenever the
+    // Dependency goes away — so they leave the palette with it rather than calling into torn-down components.
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
