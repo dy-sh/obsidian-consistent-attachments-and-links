@@ -11,8 +11,15 @@
  * restores the default and the drawing travels. Without the control phase a suite like this passes
  * whenever the collect works at all, proving nothing about the setting.
  *
- * A plain image is staged alongside and asserted in both phases, so a run where the collect simply
- * did not happen fails loudly rather than reading as "the drawing was correctly skipped".
+ * TWO plain images are staged alongside and asserted in both phases, so a run where the collect simply
+ * did not happen fails loudly rather than reading as "the drawing was correctly skipped". The second one
+ * is placed AFTER the drawing link in the note on purpose, and is the suite's settle point: the collector
+ * walks a note's references in DOCUMENT order (`getLinks` ends in `sortReferences`) and awaits each move
+ * before starting the next, so the trailing image cannot land until the drawing's turn is over — moved in
+ * the fix phase, skipped in the control phase. Waiting on the LEADING image alone is what failed once:
+ * it lands before the drawing is touched, so the snapshot could read a fix-phase drawing whose move was
+ * still in flight as "not collected", and a control-phase drawing the walk had not yet reached as
+ * "correctly left alone" — a false pass in the other direction.
  *
  * WHAT THIS SUITE IS NOT. It covers ONE of the two directions, and only that one. It replaces
  * `excalidraw-link-skip.desktop.integration.test.ts`, which claimed issue #151 — "link-rewriting
@@ -52,6 +59,11 @@ const WAIT_TIMEOUT_IN_MILLISECONDS = 12_000;
 
 interface PhaseResult {
   readonly isDrawingCollected: boolean;
+
+  /**
+   * Whether BOTH staged plain images travel — the leading one, which proves the collect ran at all,
+   * and the trailing one, which proves the walk got past the drawing link.
+   */
   readonly isImageCollected: boolean;
 }
 
@@ -146,8 +158,9 @@ describe('A .excalidraw.md travels as an attachment', () => {
         }
 
         /*
-         * Stages a note referencing BOTH a plain image and a drawing, each sitting outside the note's
-         * folder so the collect has somewhere to move them from.
+         * Stages a note referencing a plain image, a drawing and a second plain image in that order, each
+         * sitting outside the note's folder so the collect has somewhere to move them from. The order is
+         * load-bearing: see the trailing-image paragraph in this file's header.
          */
         async function runPhase(shouldTreatDrawingAsAttachment: boolean): Promise<PhaseResult> {
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
@@ -155,7 +168,20 @@ describe('A .excalidraw.md travels as an attachment', () => {
           const sourceFolder = `excl-src-${stamp}`;
           const imagePath = `${sourceFolder}/excl-image-${stamp}.png`;
           const drawingPath = `${sourceFolder}/excl-drawing-${stamp}.excalidraw.md`;
+          const trailingImagePath = `${sourceFolder}/excl-trailing-${stamp}.png`;
           const notePath = `excl-note-${stamp}.md`;
+
+          /*
+           * The single reading of what ended up in the proper folder. The wait below polls it and the
+           * phase returns it, so the condition waited for and the result asserted on cannot disagree.
+           */
+          function readCollected(): PhaseResult {
+            const collectedPaths = app.vault.getFiles().map((file) => file.path).filter((path) => path.startsWith(`${properFolder}/`));
+            return {
+              isDrawingCollected: collectedPaths.some((path) => path.endsWith('.excalidraw.md')),
+              isImageCollected: collectedPaths.some((path) => path.includes('-image-')) && collectedPaths.some((path) => path.includes('-trailing-'))
+            };
+          }
 
           try {
             vaultConfig.setConfig('attachmentFolderPath', properFolder);
@@ -165,13 +191,14 @@ describe('A .excalidraw.md travels as an attachment', () => {
             await app.vault.createFolder(sourceFolder);
             await app.vault.createBinary(imagePath, new ArrayBuffer(4));
             await app.vault.create(drawingPath, '# drawing\n');
-            const note = await app.vault.create(notePath, `![[${imagePath}]]\n\n[[${drawingPath}]]\n`);
+            await app.vault.createBinary(trailingImagePath, new ArrayBuffer(4));
+            const note = await app.vault.create(notePath, `![[${imagePath}]]\n\n[[${drawingPath}]]\n\n![[${trailingImagePath}]]\n`);
 
             await waitUntil({
               message: 'the note references were not indexed',
               predicate: () => {
                 const cache = app.metadataCache.getFileCache(note);
-                return (cache?.embeds?.length ?? 0) > 0 && (cache?.links?.length ?? 0) > 0;
+                return (cache?.embeds?.length ?? 0) > 1 && (cache?.links?.length ?? 0) > 0;
               },
               timeoutInMilliseconds: waitTimeoutInMilliseconds
             });
@@ -179,18 +206,19 @@ describe('A .excalidraw.md travels as an attachment', () => {
             await app.workspace.getLeaf(false).openFile(note);
             app.commands.executeCommandById(collectCommandId);
 
-            // The plain image travels in BOTH phases, so it is the signal that the collect ran at all.
+            /*
+             * Both plain images travel in BOTH phases, so this is the signal that the collect ran at all —
+             * and, because the trailing one sits after the drawing link, that the walk is already past the
+             * drawing. Only then is the snapshot below a verdict on the drawing rather than on how far the
+             * collect happened to have got.
+             */
             await waitUntil({
-              message: 'the plain image was not collected, so the flow never ran',
-              predicate: () => Boolean(app.vault.getAbstractFileByPath(`${properFolder}/${imagePath.split('/', 2)[1] ?? ''}`)),
+              message: 'the plain images were not collected, so the collect never ran or never reached past the drawing',
+              predicate: () => readCollected().isImageCollected,
               timeoutInMilliseconds: waitTimeoutInMilliseconds
             });
 
-            const collectedPaths = app.vault.getFiles().map((file) => file.path).filter((path) => path.startsWith(`${properFolder}/`));
-            return {
-              isDrawingCollected: collectedPaths.some((path) => path.endsWith('.excalidraw.md')),
-              isImageCollected: collectedPaths.some((path) => path.endsWith('.png'))
-            };
+            return readCollected();
           } finally {
             // The desktop suite shares one vault, and the sibling suites enumerate it and assert on
             // Exactly which files survive. Take everything this phase created back out.
@@ -225,7 +253,8 @@ describe('A .excalidraw.md travels as an attachment', () => {
     // A settings object that could not be found would make every assertion below vacuous.
     expect(result.settingsFound).toBe(true);
 
-    // Both phases really collected, so the difference between them is the setting and nothing else.
+    // Both phases really collected — and got past the drawing link, the trailing image being the proof —
+    // So the difference between them is the setting and nothing else.
     expect(result.control.isImageCollected).toBe(true);
     expect(result.fix.isImageCollected).toBe(true);
 
