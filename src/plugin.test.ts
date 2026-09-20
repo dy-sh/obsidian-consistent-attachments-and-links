@@ -91,14 +91,6 @@ vi.mock('./links-handler.ts', () => ({
   }
 }));
 
-vi.mock('./files-handler.ts', () => ({
-  FilesHandler: class {
-    public constructor(_params: unknown) {
-      // No-op.
-    }
-  }
-}));
-
 vi.mock('./attachment-collector.ts', () => ({
   AttachmentCollector: class {
     public constructor(_params: unknown) {
@@ -190,7 +182,6 @@ vi.mock(
   () => ({ CollectAttachmentsInCurrentFolderCommandHandler: CommandHandlerMock })
 );
 vi.mock('./command-handlers/collect-attachments-in-file-command-handler.ts', () => ({ CollectAttachmentsInFileCommandHandler: CommandHandlerMock }));
-vi.mock('./command-handlers/delete-empty-folders-command-handler.ts', () => ({ DeleteEmptyFoldersCommandHandler: CommandHandlerMock }));
 vi.mock('./command-handlers/move-attachment-to-proper-folder-command-handler.ts', () => ({ MoveAttachmentToProperFolderCommandHandler: CommandHandlerMock }));
 vi.mock('./command-handlers/reorganize-vault-command-handler.ts', () => ({ ReorganizeVaultCommandHandler: CommandHandlerMock }));
 
@@ -311,8 +302,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 8 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 10 total.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(10);
+      // The plugin wires the OpenDemoVault handler plus 7 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 9 total.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(9);
     });
 
     it('should register the open demo vault command', async () => {
@@ -365,7 +356,7 @@ describe('Plugin', () => {
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
-      expect(commands.size).toBe(10);
+      expect(commands.size).toBe(9);
 
       unpublishProviderApi();
       await waitForAllAsyncOperations();
