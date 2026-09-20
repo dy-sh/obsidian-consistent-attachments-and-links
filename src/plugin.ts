@@ -1,7 +1,6 @@
 import type { PluginDependency } from 'obsidian-dev-utils/obsidian/components/plugin-gate-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
-import { Component } from 'obsidian';
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
 import { SettingsMigrationComponent } from 'obsidian-dev-utils/obsidian/components/settings-migration-component';
@@ -136,11 +135,7 @@ export class Plugin extends PluginBase {
       })
     );
 
-    // TODO: Drop the disposal below once obsidian-dev-utils ties commands registered from `onloadImpl` to the
-    // Feature surface. Today they go through the base's universal command component, so they outlive the
-    // Surface — which unloads whenever the dependency goes away, and reloads, running this method again, when
-    // It comes back. Left alone, the commands would stay in the palette calling into torn-down components.
-    const commandHandlersDisposable = await this.commandHandlerComponent.registerCommandHandlers(() => [
+    await this.commandHandlerComponent.registerCommandHandlers(() => [
       new OpenDemoVaultCommandHandler({
         app: this.app,
         pluginId: this.manifest.id,
@@ -166,9 +161,5 @@ export class Plugin extends PluginBase {
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
     ]);
-    // A child, so it unloads with the feature surface and takes the commands with it.
-    this.addChild(new Component()).register(() => {
-      commandHandlersDisposable.dispose();
-    });
   }
 }
