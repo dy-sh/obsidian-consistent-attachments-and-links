@@ -24,6 +24,12 @@ This plugin makes that visible: it audits the whole vault and reports every link
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
+> [!IMPORTANT]
+>
+> The `Delete empty folders` command is gone too. An empty folder is not a link problem — the command read no link and the report never listed one — and this plugin's automatic half of it moved to [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) in **4.0.0** already, as its **Empty folder behavior** setting. That plugin now offers the manual vault-wide sweep as well, under the same `Delete empty folders` name and the same command id, so an existing hotkey keeps working. You already have it installed: this plugin requires it.
+
+<!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
+
 > [!WARNING]
 >
 > As the plugin might change your vault layout, it is crucial that you backup your vault before making any massive changes with this plugin!
@@ -66,7 +72,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Collect attachments into the note's own folder**, on command or as you edit — safely, never stealing a file another note still references. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
 - **Audit the whole vault** and get a report of bad links, bad embed paths and bad frontmatter links, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
-- **Tidy an existing vault** — attachments collected into place, empty folders swept, names repaired — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
+- **Tidy an existing vault** — attachments collected into place, names repaired — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which of the destructive operations are unlocked. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
 

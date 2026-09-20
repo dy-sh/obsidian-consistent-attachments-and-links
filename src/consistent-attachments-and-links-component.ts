@@ -23,7 +23,6 @@ import type { AttachmentCollector } from './attachment-collector.ts';
 import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
-import { FilesHandler } from './files-handler.ts';
 import {
   ConsistencyCheckResult,
   LinksHandler
@@ -34,7 +33,6 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentCollector: AttachmentCollector;
-  readonly filesHandler: FilesHandler;
   readonly linksHandler: LinksHandler;
   readonly pathCompatibilityHandler: PathCompatibilityHandler;
   readonly pluginNoticeComponent: PluginNoticeComponent;
@@ -44,7 +42,6 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
 export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly attachmentCollector: AttachmentCollector;
-  private readonly filesHandler: FilesHandler;
   private readonly linksHandler: LinksHandler;
   private readonly pathCompatibilityHandler: PathCompatibilityHandler;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
@@ -54,7 +51,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     super(params.app);
     this.abortSignalComponent = params.abortSignalComponent;
     this.attachmentCollector = params.attachmentCollector;
-    this.filesHandler = params.filesHandler;
     this.linksHandler = params.linksHandler;
     this.pathCompatibilityHandler = params.pathCompatibilityHandler;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
@@ -107,10 +103,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     }
   }
 
-  public async deleteEmptyFolders(): Promise<void> {
-    await this.filesHandler.deleteEmptyFolders('/');
-  }
-
   public async fixIncompatiblePaths(): Promise<void> {
     await this.pathCompatibilityHandler.fix();
   }
@@ -119,7 +111,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     await this.saveAllOpenNotes();
 
     this.attachmentCollector.collectAttachmentsEntireVault();
-    await this.deleteEmptyFolders();
     // Last: it renames files, and every step above resolves links against the names they had.
     await this.fixIncompatiblePaths();
     this.pluginNoticeComponent.showNotice('Reorganization of the vault completed');

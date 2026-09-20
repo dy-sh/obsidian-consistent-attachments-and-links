@@ -1,6 +1,6 @@
 # Reorganize and convert links
 
-The plugin's headline bulk feature tidies a vault in one pass: every attachment beside the note that uses it, the empty folders that leaves swept up, and every name repaired that a platform you sync to would reject. You can run the steps individually or all at once.
+The plugin's headline bulk feature tidies a vault in one pass: every attachment beside the note that uses it, and every name repaired that a platform you sync to would reject. You can run the steps individually or all at once.
 
 > [!WARNING]
 >
@@ -16,12 +16,12 @@ The plugin's headline bulk feature tidies a vault in one pass: every attachment 
 
 - **Collect All Attachments**
   - moves every attachment into its note's folder.
-- **Delete Empty Folders**
-  - removes folders left empty afterwards.
 - **Fix Incompatible Paths**
   - repairs the names a platform you sync to would reject, walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
 **Collect All Attachments** also has a **current note** variant that acts only on the active note.
+
+Collecting attachments leaves folders behind empty, and sweeping those up is [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler)'s **Delete empty folders** command - same name and same command id as the one this plugin used to offer, so a hotkey you already set still works. You have that plugin installed, because this one requires it. Run it after **Reorganize Vault** if you want the debris gone.
 
 ## Try it
 
@@ -50,7 +50,7 @@ require('/demoSetup.ts').runCommand(app, 'check-consistency');
 
 Manual equivalent: run those commands from the Command Palette in that order.
 
-Or step through the individual commands instead of `Reorganize Vault`:
+Or run the individual command instead of `Reorganize Vault`:
 
 ```code-button
 ---
@@ -59,14 +59,9 @@ caption: Collect all attachments
 require('/demoSetup.ts').runCommand(app, 'collect-attachments-entire-vault');
 ```
 
-```code-button
----
-caption: Delete empty folders
----
-require('/demoSetup.ts').runCommand(app, 'delete-empty-folders');
-```
+Manual equivalent: the Command Palette entry of the same name.
 
-Manual equivalent: the Command Palette entries of the same names.
+There is no button here for **Delete empty folders**: it belongs to Advanced Rename and Delete Handler now, and these buttons only run this plugin's own commands. Run it from the Command Palette once the collecting above is done.
 
 > [!NOTE]
 >

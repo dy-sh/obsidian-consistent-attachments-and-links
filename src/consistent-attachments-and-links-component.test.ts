@@ -22,7 +22,6 @@ import {
 } from 'vitest';
 
 import type { AttachmentCollector } from './attachment-collector.ts';
-import type { FilesHandler } from './files-handler.ts';
 import type { LinksHandler } from './links-handler.ts';
 import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -77,11 +76,6 @@ vi.mock('./links-handler.ts', () => ({
   LinksHandler: class {}
 }));
 
-vi.mock('./files-handler.ts', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- Placeholder class so the value import resolves; the real instance is injected.
-  FilesHandler: class {}
-}));
-
 // Spread the real module: the path-compatibility handler reaches `folder-note`, which imports members this
 // Suite does not stub, and a bare object mock makes those `undefined` at import time.
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
@@ -122,10 +116,6 @@ const mockAttachmentCollector = strictProxy<AttachmentCollector>({
   collectAttachmentsInAbstractFiles: vi.fn((): void => undefined)
 });
 
-const mockFilesHandler = strictProxy<FilesHandler>({
-  deleteEmptyFolders: vi.fn((): Promise<void> => noopAsync())
-});
-
 const mockLinksHandler = strictProxy<LinksHandler>({
   checkConsistency: vi.fn((): Promise<void> => noopAsync())
 });
@@ -156,7 +146,6 @@ function createComponent(): ConsistentAttachmentsAndLinksComponent {
     abortSignalComponent: mockAbortSignalComponent,
     app,
     attachmentCollector: mockAttachmentCollector,
-    filesHandler: mockFilesHandler,
     linksHandler: mockLinksHandler,
     pathCompatibilityHandler: mockPathCompatibilityHandler,
     pluginNoticeComponent: mockPluginNoticeComponent,
@@ -243,20 +232,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     });
   });
 
-  describe('deleteEmptyFolders', () => {
-    it('should delegate to the files handler', async () => {
-      const component = createComponent();
-      await component.deleteEmptyFolders();
-      expect(mockFilesHandler.deleteEmptyFolders).toHaveBeenCalledWith('/');
-    });
-  });
-
   describe('reorganizeVault', () => {
     it('should run the full reorganization pipeline', async () => {
       const component = createComponent();
       await component.reorganizeVault();
       expect(mockAttachmentCollector.collectAttachmentsEntireVault).toHaveBeenCalled();
-      expect(mockFilesHandler.deleteEmptyFolders).toHaveBeenCalled();
+      expect(mockPathCompatibilityHandler.fix).toHaveBeenCalled();
       expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Reorganization of the vault completed');
     });
   });

@@ -155,6 +155,43 @@ able to CREATE the offending name, so desktop stages an over-long-in-bytes name 
 stages a reserved `CON` (legal on ext4). Both suites' headers carry the full reasoning, including which
 candidate characters Obsidian's own `vault.create` refuses on every platform.
 
+## `Delete empty folders` is NOT this plugin's — do not re-add it, and `FilesHandler` is gone with it
+
+The command, `ConsistentAttachmentsAndLinksComponent.deleteEmptyFolders`, its step in `reorganizeVault`, and
+the whole of `src/files-handler.ts` were removed. `deleteEmptyFolders` was that class's only method, so
+nothing was left to keep.
+
+**Why it went, checked rather than assumed** (the owner asked outright what it had to do with consistency):
+
+- **It read no link and no metadata cache.** It was a plain recursive filesystem walk — the one surface here
+  that never touched a link.
+- **It repaired something the report never named as a defect.** The report's sections are bad links, bad
+  embeds, bad frontmatter links and path compatibility. An empty folder appears in none of them, so the
+  plugin swept up debris it never claimed was debris.
+- **Its automatic half had already left in 4.0.0**, where `deleteEmptyFolders` was migrated into Advanced
+  Rename and Delete Handler's `emptyFolderBehavior`. Only the manual sweep stayed behind, which is the
+  awkward half: the plugin cleaned up on command but not on rename.
+- **The sweep existed to clean up after attachment MOVES**, immediately after `collectAttachmentsEntireVault`
+  in `reorganizeVault` — and collecting itself is leaving. Its reason to exist goes with it.
+
+**This was a handover, and the receiving half shipped FIRST.** Advanced Rename and Delete Handler `1.3.0`
+carries the manual vault-wide command, deliberately under **the same id and the same name** —
+`advanced-rename-and-delete-handler:delete-empty-folders`, *Delete empty folders* — so a user's hotkey and
+command-palette habit survive the move. That is why every doc here points at it by name instead of simply
+dropping the capability, and it is a safe thing to promise: that plugin is a declared dependency, so a user
+running this one always has it. That plugin's `src/consistent-attachments-and-links.ts` knows which versions
+of this plugin overlap with it.
+
+**The legacy settings path is NOT part of this and must keep working.** `LegacySettings.deleteEmptyFolders`
+in `plugin-settings-component.ts` — and the conversion mapping it onto `emptyFolderBehavior`, which
+`parkRenameDeleteSettings` hands across as `proposedRenameDeleteSettings` — is what carries a pre-4.0.0
+user's choice to the plugin that owns it now. It reads the saved `data.json` record and never touched the
+command or `FilesHandler`, so the removal could not reach it, and it stays. Deleting that property because
+"the feature is gone" would strip the key from `data.json` on the first save and lose the migration for
+good — the reason the whole `LegacySettings` class exists is spelled out in its own comment.
+
+`reorganizeVault` itself stays for now; retiring it is separate work.
+
 ## Path compatibility
 
 `Fix incompatible paths` and the report's `Path compatibility` section repair names and paths that are

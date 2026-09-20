@@ -20,12 +20,10 @@ import { CheckConsistencyCommandHandler } from './command-handlers/check-consist
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
-import { DeleteEmptyFoldersCommandHandler } from './command-handlers/delete-empty-folders-command-handler.ts';
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { ReorganizeVaultCommandHandler } from './command-handlers/reorganize-vault-command-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
-import { FilesHandler } from './files-handler.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { LinksHandler } from './links-handler.ts';
 import { PathCompatibilityHandler } from './path-compatibility-handler.ts';
@@ -81,11 +79,6 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
-    const filesHandler = new FilesHandler({
-      app: this.app,
-      pluginSettingsComponent
-    });
-
     const pluginSettingsTab = new PluginSettingsTab({
       plugin: this,
       pluginSettingsComponent
@@ -136,7 +129,6 @@ export class Plugin extends PluginBase {
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
         attachmentCollector,
-        filesHandler,
         linksHandler,
         pathCompatibilityHandler,
         pluginNoticeComponent: this.pluginNoticeComponent,
@@ -170,7 +162,6 @@ export class Plugin extends PluginBase {
         pluginSettingsComponent,
         resourceLockComponent: this.resourceLockComponent
       }),
-      new DeleteEmptyFoldersCommandHandler(consistentAttachmentsAndLinksComponent),
       new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
