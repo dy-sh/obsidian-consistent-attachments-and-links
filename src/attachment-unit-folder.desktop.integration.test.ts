@@ -30,13 +30,17 @@ import {
 const PLUGIN_ID = 'consistent-attachments-and-links';
 /*
  * Under the transport's ~30s per-closure cap, not at it.
- * Two waits share this one budget, so at 20_000 apiece the closure declared 40s.
- * The eval is killed at the cap first and reported as a bare transport timeout.
- * That names the harness rather than the wait that overran.
- * What is waited on here lands in well under a second, so the smaller ceiling costs nothing.
+ * The closure runs `runPhase` TWICE - a control phase and a fix phase - and each run declares two
+ * waits, so this one constant is charged FOUR times against the cap rather than the two that are
+ * visible in the body: 20 000 ms of the 30 000 the transport allows.
+ * Counting the waits rather than the call sites is how it last read as 24s while declaring 48s, and a
+ * closure over the cap can only ever die as a bare transport timeout naming the harness rather than
+ * the wait that overran.
+ * Indexing a staged note and collecting one attachment to its expected path both land in well under a
+ * second, so the smaller ceiling costs nothing and a stall fails with the message that names it.
  * The constant feeds nothing but the closure's own input, so no Node-side wait sees it.
  */
-const WAIT_TIMEOUT_IN_MILLISECONDS = 12_000;
+const WAIT_TIMEOUT_IN_MILLISECONDS = 5000;
 const COLLECT_COMMAND_ID = 'consistent-attachments-and-links:collect-attachments-in-file';
 
 interface PhaseResult {
