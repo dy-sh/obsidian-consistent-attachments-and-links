@@ -59,13 +59,17 @@ const COLLECT_IN_FILE_COMMAND_ID = `${PLUGIN_ID}:collect-attachments-in-file`;
 const COLLECT_IN_FOLDER_COMMAND_ID = `${PLUGIN_ID}:collect-attachments-in-current-folder`;
 /*
  * Under the transport's ~30s per-closure cap, not at it.
- * Three waits share this one budget, so at 20_000 apiece the closure declared 60s.
- * The eval is killed at the cap first and reported as a bare transport timeout.
- * That names the harness rather than the wait that overran.
- * Indexing, a modal opening and one image being collected all land in well under a second.
+ * The closure runs `runPhase` TWICE - a control phase and a fix phase - and each run declares three
+ * waits, so this one constant is charged SIX times against the cap rather than the three that are
+ * visible in the body: 18 000 ms of the 30 000 the transport allows.
+ * Counting the waits rather than the call sites is how it last read as 24s while declaring 48s, and a
+ * closure over the cap can only ever die as a bare transport timeout naming the harness rather than
+ * the wait that overran.
+ * Indexing two staged embeds, a modal opening and one image being collected all land in well under a
+ * second, so the smaller ceiling costs nothing and a stall fails with the message that names it.
  * The constant feeds nothing but the closure's own input, so no Node-side wait sees it.
  */
-const WAIT_TIMEOUT_IN_MILLISECONDS = 8000;
+const WAIT_TIMEOUT_IN_MILLISECONDS = 3000;
 
 interface PhaseResult {
   readonly isDrawingContentUnchanged: boolean;
