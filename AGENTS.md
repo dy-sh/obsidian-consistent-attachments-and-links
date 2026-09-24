@@ -236,6 +236,14 @@ Things that are easy to get wrong here, and were:
 - **The sidecar follows the rename.** Renaming an attachment orphans the sidecar note that describes it, and
   that mismatch is ours to fix since the rename was ours. Keeping a bundle together in general is
   File Bundles' job, not this plugin's.
+- **The rename is the repair's EARLIEST observable effect, not its last.** `renameToName` follows it with
+  the sidecar move and then `preserveOriginalName`, which awaits an `addAlias` and a `processFrontmatter`
+  write, and the metadata cache has to re-read the file on top of both. So anything observing the command
+  from outside — an integration closure, a follow-on pass — that stops when the old path disappears is
+  reading a write still in flight. Measured here at 1 run in 6: the alias had landed and the title had not,
+  which is exactly how `path-compatibility.desktop.integration.test.ts` used to fail on `aliases` in one run
+  and on `title` in the next. It now waits for the preserved values themselves, through the same function
+  its assertions read them with.
 
 Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) moved to `obsidian-dev-utils` and was
 consumed here on the `obsidian-dev-utils@99.0.0` bump. Two cases stay deliberately **unmatched**
