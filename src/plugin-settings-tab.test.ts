@@ -193,6 +193,11 @@ describe('PluginSettingsTab', () => {
     const { toggles } = await createTab();
     const autoCollectToggle = toggles[1];
     expect(autoCollectToggle).toBeDefined();
+    // The toggle starts off, and setting a toggle to the value it already holds fires no change, so it is
+    // turned on first for the switch back off to reach the check at all.
+    autoCollectToggle?.setValue(true);
+    await flushMicrotasks();
+    vi.mocked(alert).mockClear();
     autoCollectToggle?.setValue(false);
     await flushMicrotasks();
     expect(alert).not.toHaveBeenCalled();
