@@ -516,7 +516,7 @@ function describeItem(app: App, path: string, reportPath: string): string {
   const file = getFileOrNull({ app, pathOrFile: path });
 
   // A folder has no link form, so every item is also shown as a path — the link is an addition, not a
-  // Replacement.
+  // replacement.
   const link = file === null ? '' : `${generateMarkdownLink({ app, sourcePathOrFile: reportPath, targetPathOrFile: file })} `;
   return `${link}\`${path}\``;
 }

@@ -42,7 +42,7 @@ const PATH_COMPATIBILITY_PLATFORM_PROPERTY_NAMES = {
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   // There is no row for Advanced Rename and Delete Handler: it is a declared dependency, so while it is missing
-  // This tab is never registered at all and the library's own blocked tab explains what to install.
+  // this tab is never registered at all and the library's own blocked tab explains what to install.
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
       this.settingEx({

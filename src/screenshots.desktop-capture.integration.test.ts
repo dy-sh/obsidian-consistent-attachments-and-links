@@ -141,11 +141,11 @@ beforeAll(async () => {
     [`.obsidian/plugins/${PLUGIN_ID}/data.json`]: JSON.stringify({
       consistencyReportFile: REPORT_PATH,
       // Android, not Windows: the staged long name is legal on the NTFS volume this
-      // Capture runs on and illegal on every device the vault would sync to, which
-      // Is the whole claim shots 1 and 2 make.
+      // capture runs on and illegal on every device the vault would sync to, which
+      // is the whole claim shots 1 and 2 make.
       shouldEnsurePathCompatibilityOnAndroid: true,
       // The warning modal would otherwise sit over every frame, and the command
-      // That raised it would still be awaiting an answer.
+      // that raised it would still be awaiting an answer.
       shouldShowBackupWarning: false
     }),
     [LONG_NAME_NOTE_PATH]: '# A name no phone will accept\n\nThis file name is 143 characters, which is 263 bytes in UTF-8.\n',
@@ -172,11 +172,11 @@ beforeAll(async () => {
       });
 
       // A Notice is not a modal, so the dismiss pass further down never reaches one,
-      // And the plugin's Advanced Rename and Delete Handler suggestion lands in the
-      // Top-right corner — directly over the link text these frames exist to show.
+      // and the plugin's Advanced Rename and Delete Handler suggestion lands in the
+      // top-right corner — directly over the link text these frames exist to show.
       // Staging `isAdvancedRenameAndDeleteHandlerSuggestionDeclined` in `data.json`
-      // Does NOT stop it; hiding the container does, for every notice any plugin
-      // Raises mid-run.
+      // does NOT stop it; hiding the container does, for every notice any plugin
+      // raises mid-run.
       const noticeStyle = createEl('style');
       noticeStyle.textContent = '.notice-container, .notice { visibility: hidden; }';
       document.head.append(noticeStyle);
@@ -189,14 +189,14 @@ beforeAll(async () => {
       }
 
       // The plugin collects attachments into the folder OBSIDIAN is configured
-      // To use, so the destination in shot 3 is this setting's doing.
+      // to use, so the destination in shot 3 is this setting's doing.
       app.vault.setConfig('attachmentFolderPath', './assets');
 
       // The two settings the plugin's own "Recommended Obsidian settings" note
-      // Asks for. They decide what the plugin WRITES when it rewrites a link:
+      // asks for. They decide what the plugin WRITES when it rewrites a link:
       // Left at Obsidian's defaults, collecting an attachment produces a bare
       // `diagram.png` that only Obsidian's search can resolve — the very thing
-      // The listing claims to fix.
+      // the listing claims to fix.
       app.vault.setConfig('useMarkdownLinks', true);
       app.vault.setConfig('newLinkFormat', 'relative');
       app.vault.setConfig('showInlineTitle', false);
@@ -213,10 +213,10 @@ beforeAll(async () => {
   // `Runtime.evaluate` and the transport caps it at 30 seconds.
   //
   // The reload is what makes the staged `data.json` real. The harness enables the
-  // Plugin when it opens the vault — BEFORE this suite writes any settings — so
-  // Without it the plugin runs on defaults, and its default is to show a backup
-  // Warning modal that sits over every frame AND blocks the commands behind it
-  // Until someone clicks OK. That modal is exactly what the first run shipped.
+  // plugin when it opens the vault — BEFORE this suite writes any settings — so
+  // without it the plugin runs on defaults, and its default is to show a backup
+  // warning modal that sits over every frame AND blocks the commands behind it
+  // until someone clicks OK. That modal is exactly what the first run shipped.
   await evalInObsidian({
     async callback({ app, lib: { waitUntil }, pluginId }) {
       const RELOAD_TIMEOUT_IN_MILLISECONDS = 20_000;
@@ -231,9 +231,9 @@ beforeAll(async () => {
       });
 
       // The warning the FIRST load raised is still on screen — reloading the
-      // Plugin changes the setting, not the open dialog. It has to be dismissed
-      // Or it covers every frame and, worse, the command that raised it is still
-      // Awaiting the answer, so nothing the storyboard runs afterwards happens.
+      // plugin changes the setting, not the open dialog. It has to be dismissed
+      // or it covers every frame and, worse, the command that raised it is still
+      // awaiting the answer, so nothing the storyboard runs afterwards happens.
       const DISMISS_ATTEMPTS = 5;
       const DISMISS_DELAY_IN_MILLISECONDS = 500;
       for (let attempt = 0; attempt < DISMISS_ATTEMPTS; attempt++) {
@@ -255,8 +255,8 @@ describe('desktop store screenshots', () => {
   it('1 - a name the vault\'s other devices reject', async () => {
     const content = await openNote(SUBJECT_NOTE_PATH);
     // The name is legal here and only here: the file exists on this NTFS volume,
-    // And the note links to it, so the frame shows both the offender and the link
-    // That will have to follow it.
+    // and the note links to it, so the frame shows both the offender and the link
+    // that will have to follow it.
     expect(await listFiles()).toContain(LONG_NAME_NOTE_PATH);
     expect(content).toContain(LONG_NAME);
     await shoot(1, 'A name your other devices reject');
@@ -267,8 +267,8 @@ describe('desktop store screenshots', () => {
 
     const repairedPath = await waitForRepairedNote();
     // Shortening the name is only half of it. The name a user chose is not
-    // Disposable, so the repair puts it back into the note as `title` and an
-    // Alias — which is what this frame is actually of.
+    // disposable, so the repair puts it back into the note as `title` and an
+    // alias — which is what this frame is actually of.
     const content = await openNote(repairedPath);
     expect(repairedPath).not.toBe(LONG_NAME_NOTE_PATH);
     expect(content).toContain(`title: ${LONG_NAME}`);
@@ -289,7 +289,7 @@ describe('desktop store screenshots', () => {
 
   // There used to be a frame here showing an attachment following its note across a move. Advanced Rename
   // And Delete Handler owns that since 4.0.0, so this plugin can no longer show it — and a store screenshot
-  // Of a feature it does not have is worse than one frame fewer.
+  // of a feature it does not have is worse than one frame fewer.
   it('4 - what is still broken, without touching anything', async () => {
     await runCommand('check-consistency');
     const report = await openNote(REPORT_PATH);
@@ -379,7 +379,7 @@ async function openNote(notePath: string): Promise<string> {
       const RESIZE_SETTLE_DELAY_IN_MILLISECONDS = 2000;
 
       // Let the previous shot's capture settle: the device-metrics override it
-      // Sets and clears disturbs anything driven too soon afterwards.
+      // sets and clears disturbs anything driven too soon afterwards.
       await sleep(RESIZE_SETTLE_DELAY_IN_MILLISECONDS);
 
       const file = app.vault.getFileByPath(path);
@@ -401,8 +401,8 @@ async function openNote(notePath: string): Promise<string> {
       });
 
       // A folder the tree has not expanded is a folder the reader cannot see,
-      // And every claim here is about where a file sits. Expanded on every shot,
-      // Because the commands create folders that arrive collapsed.
+      // and every claim here is about where a file sits. Expanded on every shot,
+      // because the commands create folders that arrive collapsed.
       const fileExplorerLeaf = app.workspace.getLeavesOfType('file-explorer')[0];
       if (fileExplorerLeaf) {
         const view: unknown = fileExplorerLeaf.view;
@@ -416,8 +416,8 @@ async function openNote(notePath: string): Promise<string> {
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
 
       // No shot may ship with a dialog over it. The plugin's backup warning is
-      // The one that can appear here, and it did — silently, in every frame of an
-      // Early run — so this fails the shot rather than photographing it.
+      // the one that can appear here, and it did — silently, in every frame of an
+      // early run — so this fails the shot rather than photographing it.
       const modalCount = document.querySelectorAll('.modal-container').length;
       if (modalCount > 0) {
         const modalText = document.querySelector('.modal-container')?.textContent ?? '';
@@ -450,13 +450,13 @@ async function runCommand(commandId: string): Promise<void> {
       }
 
       // NOT awaited: several of these commands ask a question first and only
-      // Resolve once it is answered, so awaiting here would deadlock against the
-      // Click below.
+      // resolve once it is answered, so awaiting here would deadlock against the
+      // click below.
       app.commands.executeCommandById(fullId);
 
       // "Do you want to collect attachments for all notes in folders
-      // Recursively?" — the destructive commands confirm before they touch
-      // Anything, and until that is answered the command has done nothing at all.
+      // recursively?" — the destructive commands confirm before they touch
+      // anything, and until that is answered the command has done nothing at all.
       // This is what an unattended run has to say yes to.
       const CONFIRM_ATTEMPTS = 10;
       const CONFIRM_DELAY_IN_MILLISECONDS = 500;
@@ -471,7 +471,7 @@ async function runCommand(commandId: string): Promise<void> {
       }
 
       // These commands walk the whole vault through an internal queue, so the
-      // Wait is for the work rather than for the call.
+      // wait is for the work rather than for the call.
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
     },
     input: { commandId, pluginId: PLUGIN_ID },

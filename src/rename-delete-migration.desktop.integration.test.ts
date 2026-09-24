@@ -47,8 +47,8 @@ describe('The 3.x rename/delete settings hand-over', () => {
         const dataPath = `.obsidian/plugins/${pluginId}/data.json`;
 
         // Exactly what a 3.x install leaves behind: the settings this plugin owned until 4.0.0, in the
-        // Names 3.x used. `showBackupWarning` is the ANCIENT name, so the two-step conversion — ancient
-        // Name to 3.x name, then 3.x name to the new owner's name — is exercised rather than assumed.
+        // names 3.x used. `showBackupWarning` is the ANCIENT name, so the two-step conversion — ancient
+        // name to 3.x name, then 3.x name to the new owner's name — is exercised rather than assumed.
         await app.vault.adapter.write(
           dataPath,
           JSON.stringify({
@@ -65,7 +65,7 @@ describe('The 3.x rename/delete settings hand-over', () => {
         );
 
         // A reload is what makes the written file real: the plugin read its settings when the vault
-        // Opened, before this test wrote anything.
+        // opened, before this test wrote anything.
         await app.plugins.disablePlugin(pluginId);
         await app.plugins.enablePlugin(pluginId);
 
@@ -76,7 +76,7 @@ describe('The 3.x rename/delete settings hand-over', () => {
         });
 
         // `getPlugin` is typed as Obsidian's `Plugin`, which knows nothing of this plugin's own members, so
-        // The handle is taken as `unknown` and narrowed once.
+        // the handle is taken as `unknown` and narrowed once.
         const pluginHandle: unknown = app.plugins.getPlugin(pluginId);
         if (!pluginHandle) {
           throw new Error(`Plugin is not loaded: ${pluginId}`);
@@ -85,7 +85,7 @@ describe('The 3.x rename/delete settings hand-over', () => {
         const proposedAfterLoad = settingsComponent.settings['proposedRenameDeleteSettings'];
 
         // Force the save that rebuilds the record from the declared properties — the moment a dropped
-        // Property would vanish from disk.
+        // property would vanish from disk.
         await settingsComponent.editAndSave(() => {
           // Nothing to change; the save itself is the subject.
         });

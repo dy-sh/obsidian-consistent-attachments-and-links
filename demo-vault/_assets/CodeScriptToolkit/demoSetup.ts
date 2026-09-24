@@ -8,7 +8,7 @@ const TRIP_FOLDER_PATH = 'Materials/01 Collect attachments into the note\'s fold
 const TRIP_NOTE_PATH = `${TRIP_FOLDER_PATH}/Trip.md`;
 
 // The attachment starts in one shared folder at the vault root — Obsidian's own default, and the
-// Arrangement collecting exists to undo.
+// arrangement collecting exists to undo.
 const SHARED_ATTACHMENTS_FOLDER_PATH = 'Materials/_shared-attachments';
 const TRIP_ATTACHMENT_PATH = `${SHARED_ATTACHMENTS_FOLDER_PATH}/trip-photo.svg`;
 
@@ -48,7 +48,7 @@ const LINKING_NOTE_CONTENT = [
 ].join('\n');
 
 // A tiny SVG rather than a binary image: it is a real attachment as far as the plugin is concerned,
-// It is legible in the diff, and the vault does not have to ship a picture for the walkthrough.
+// it is legible in the diff, and the vault does not have to ship a picture for the walkthrough.
 const TRIP_ATTACHMENT_CONTENT = [
   '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80">',
   '  <rect width="120" height="80" fill="#4a7" />',

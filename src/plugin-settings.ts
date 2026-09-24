@@ -138,7 +138,7 @@ export class PluginSettings {
   private readonly _attachmentCollectingPaths = new PathSettings();
 
   // Only the exclude half is exposed: `isPathIgnored` then reduces to "matches one of these
-  // Patterns", which is what a designation list needs. Same shape as `_attachmentCollectingPaths`.
+  // patterns", which is what a designation list needs. Same shape as `_attachmentCollectingPaths`.
   private readonly _attachmentUnitFolderPaths = new PathSettings();
 
   private _hadDangerousSettingsReverted = false;
@@ -191,7 +191,7 @@ export class PluginSettings {
       return;
     }
     // Three of the four settings this used to revert moved to Advanced Rename and Delete Handler in 4.0.0,
-    // Which reverts its own. Auto-collecting is the one destructive setting still owned here.
+    // which reverts its own. Auto-collecting is the one destructive setting still owned here.
     this._hadDangerousSettingsReverted = this.shouldCollectAttachmentsAutomatically;
     this.shouldCollectAttachmentsAutomatically = false;
   }

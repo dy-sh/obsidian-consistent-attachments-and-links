@@ -189,7 +189,7 @@ describe('MisplacedAttachmentHandler', () => {
   });
 
   // The judgement is about the FOLDER. An attachment sitting in the right folder under a name the rename
-  // Template would not produce is a different defect, and this plugin does not offer to fix it.
+  // template would not produce is a different defect, and this plugin does not offer to fix it.
   it('should skip an attachment in the proper folder whose BASE NAME differs', async () => {
     whenProperPathIs('Files/note/note 2026-01-01.png');
     await check('Files/note/img.png');
@@ -198,7 +198,7 @@ describe('MisplacedAttachmentHandler', () => {
   });
 
   // The vault root reads as `/`, Obsidian's own convention and what `getAttachmentFolderPath` returns —
-  // Never `.`, which `dirname` would have given and which reads as a literal folder name in the report.
+  // never `.`, which `dirname` would have given and which reads as a literal folder name in the report.
   it('should name the vault root as the proper folder when that is where the attachment belongs', async () => {
     whenProperPathIs('img.png');
     await check('attachments/img.png');

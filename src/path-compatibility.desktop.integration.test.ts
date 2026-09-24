@@ -204,7 +204,7 @@ describe('Fix incompatible paths', () => {
     expect(result.settingsFound).toBe(true);
 
     // Renamed, and short enough that ext4 would accept it — including the `.md` extension, which is kept
-    // Whole because it is what tells Obsidian the file is a note.
+    // whole because it is what tells Obsidian the file is a note.
     expect(result.newName).not.toBe(`${LONG_CJK_BASENAME}.md`);
     expect(result.newName).toMatch(/\.md$/);
     expect(result.newNameByteLength).toBeLessThanOrEqual(255);

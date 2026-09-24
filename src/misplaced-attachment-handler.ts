@@ -169,9 +169,9 @@ export class MisplacedAttachmentHandler {
     } = params;
 
     // `isNoteEx` is `isNote && !isTreatedAsAttachment`, so a markdown file the user has declared an
-    // Attachment — `.excalidraw.md` by default — IS judged here. That is the same predicate
+    // attachment — `.excalidraw.md` by default — IS judged here. That is the same predicate
     // `prepareAttachmentToMove` uses to make such a file travel as an attachment, and answering differently
-    // Would leave the report and the collector disagreeing about what an attachment is.
+    // would leave the report and the collector disagreeing about what an attachment is.
     if (this.attachmentCollector.isNoteEx(attachmentFile)) {
       return;
     }
@@ -191,16 +191,16 @@ export class MisplacedAttachmentHandler {
     }
 
     // `parentFolderPath`, not `dirname`: it answers `/` for the vault root where `dirname` answers `.`, and
-    // It is what obsidian-dev-utils' own `getAttachmentFolderPath` returns — so the folder this report names
-    // Is byte-identical to the one that function would give for the same note.
+    // it is what obsidian-dev-utils' own `getAttachmentFolderPath` returns — so the folder this report names
+    // is byte-identical to the one that function would give for the same note.
     const properAttachmentFolderPath = parentFolderPath(properAttachmentPath);
 
     // Fold exactly as obsidian-dev-utils' `isAtProperAttachmentPath` does, so a case-insensitive adapter
-    // Does not make this section report a folder the collector considers a match.
+    // does not make this section report a folder the collector considers a match.
     const isInsensitive = getDataAdapterEx(this.app).insensitive;
 
     // Only the base name differs: the attachment IS in its configured folder, and renaming it is not this
-    // Plugin's to report.
+    // plugin's to report.
     if (fold(parentFolderPath(attachmentFile.path)) === fold(properAttachmentFolderPath)) {
       return;
     }

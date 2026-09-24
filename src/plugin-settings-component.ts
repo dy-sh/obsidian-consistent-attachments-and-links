@@ -11,7 +11,7 @@ import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts
 import { PluginSettings } from './plugin-settings.ts';
 
 // The saved record as a converter sees it: the keys this plugin used to declare, plus the ones it declares
-// Now, all optional because a record carries only what was actually saved.
+// now, all optional because a record carries only what was actually saved.
 type LegacySettingsRecord = Partial<LegacySettings> & Partial<PluginSettings>;
 
 // The proposal is assembled key by key, so it needs a mutable view of the readonly contract it produces.

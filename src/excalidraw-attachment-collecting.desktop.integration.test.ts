@@ -225,7 +225,7 @@ describe('A .excalidraw.md travels as an attachment', () => {
             return readCollected();
           } finally {
             // The desktop suite shares one vault, and the sibling suites enumerate it and assert on
-            // Exactly which files survive. Take everything this phase created back out.
+            // exactly which files survive. Take everything this phase created back out.
             const createdPaths = app.vault.getFiles().map((file) => file.path).filter((filePath) => filePath.includes(stamp)).reverse();
             for (const createdPath of createdPaths) {
               await trashIfExists(createdPath);
@@ -258,7 +258,7 @@ describe('A .excalidraw.md travels as an attachment', () => {
     expect(result.settingsFound).toBe(true);
 
     // Both phases really collected — and got past the drawing link, the trailing image being the proof —
-    // So the difference between them is the setting and nothing else.
+    // so the difference between them is the setting and nothing else.
     expect(result.control.isImageCollected).toBe(true);
     expect(result.fix.isImageCollected).toBe(true);
 

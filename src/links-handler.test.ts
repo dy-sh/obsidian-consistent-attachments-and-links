@@ -319,7 +319,7 @@ describe('LinksHandler', () => {
     });
 
     // The whole point of resolving once: a reference the report has already called bad must never reach the
-    // Misplaced-attachment section too.
+    // misplaced-attachment section too.
     it('should NOT offer a reference that failed to resolve to the misplaced-attachment check', async () => {
       const link = createReferenceCache({ link: 'bad', original: '[[bad]]' });
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({
@@ -346,8 +346,8 @@ describe('LinksHandler', () => {
   });
 
   // The resolution half of the old `isValidLink`. It now returns the resolved file rather than a boolean,
-  // Because the misplaced-attachment check needs the very file the reference reached — so every case below
-  // Asserts the IDENTITY of what came back, not merely that something did.
+  // because the misplaced-attachment check needs the very file the reference reached — so every case below
+  // asserts the IDENTITY of what came back, not merely that something did.
   describe('resolveValidReferenceTarget', () => {
     it('should resolve to the note itself when linkPath is empty', async () => {
       const note = createFile('note.md');

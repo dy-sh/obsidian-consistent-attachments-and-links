@@ -53,7 +53,7 @@ describe('Context-menu command toggle (issue #153)', () => {
         }
 
         // Walk the plugin's object graph to reach the live effective-settings object the menu
-        // Handlers read; mutating it changes what the next menu open produces (no reload needed).
+        // handlers read; mutating it changes what the next menu open produces (no reload needed).
         function findSettings(): ContextMenuSettings | null {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();

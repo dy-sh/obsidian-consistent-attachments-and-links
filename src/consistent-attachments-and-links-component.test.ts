@@ -89,7 +89,7 @@ vi.mock('./misplaced-attachment-handler.ts', () => ({
 }));
 
 // Spread the real module: the path-compatibility handler reaches `folder-note`, which imports members this
-// Suite does not stub, and a bare object mock makes those `undefined` at import time.
+// suite does not stub, and a bare object mock makes those `undefined` at import time.
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
   getOrCreateFile: (...$arguments: unknown[]): Promise<TFile> => hoisted.mockGetOrCreateFile(...$arguments),

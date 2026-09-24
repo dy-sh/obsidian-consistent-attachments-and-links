@@ -111,7 +111,7 @@ describe('Consistency report: misplaced attachments', () => {
         }
 
         // The plugin does not expose its settings publicly, so locate the live settings object by walking
-        // The plugin's component tree — the same approach the attachment-unit-folder suite takes.
+        // the plugin's component tree — the same approach the attachment-unit-folder suite takes.
         function findSettings(): null | ReportSettings {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();

@@ -144,11 +144,11 @@ export class AttachmentCollector {
 
   public async getProperAttachmentPath(params: AttachmentCollectorGetProperAttachmentPathParams): Promise<null | string> {
     // When the attachment already sits at its proper path — the proper base name OR the proper base name
-    // Plus an Obsidian deduplication suffix (` 1`, ` 2`, ...) parked there because a different file occupies
-    // The deduplication-free slot — there is nothing to move. Returning `null` here makes auto-collect
-    // Converge: without it, `getAttachmentFilePath({ shouldSkipDuplicateCheck: true })` yields the
-    // Deduplication-free target, which permanently disagrees with the deduplication-parked destination, so
-    // The note change fired by the preceding move re-triggers auto-collect and renames it forever (issue #152).
+    // plus an Obsidian deduplication suffix (` 1`, ` 2`, ...) parked there because a different file occupies
+    // the deduplication-free slot — there is nothing to move. Returning `null` here makes auto-collect
+    // converge: without it, `getAttachmentFilePath({ shouldSkipDuplicateCheck: true })` yields the
+    // deduplication-free target, which permanently disagrees with the deduplication-parked destination, so
+    // the note change fired by the preceding move re-triggers auto-collect and renames it forever (issue #152).
     if (
       await isAtProperAttachmentPath({
         app: this.app,
@@ -272,8 +272,8 @@ export class AttachmentCollector {
                 }
                 if (definedAttachmentMoveResult.unitFolderPath) {
                   // Copying the lone file out of a unit folder produces exactly the broken attachment
-                  // The unit designation exists to prevent, and copying the whole tree behind the
-                  // Other notes' backs is worse. Leave it where every note can still reach it.
+                  // the unit designation exists to prevent, and copying the whole tree behind the
+                  // other notes' backs is worse. Leave it where every note can still reach it.
                   console.warn(
                     `Skipping collecting attachment ${definedAttachmentMoveResult.oldAttachmentPath} as it belongs to the attachment unit folder`
                       + ` ${definedAttachmentMoveResult.unitFolderPath} and is referenced by multiple notes.\n${backlinksString}`
@@ -472,10 +472,10 @@ export class AttachmentCollector {
     const noteFilesSet = new Set<TFile>();
 
     // `isNoteEx`, not the plain extension-based `isNote`: a file listed in `treatAsAttachmentExtensions`
-    // Is Markdown on disk but is really an attachment, and scanning one as a source note rewrites the
-    // References stored inside it — which is exactly what issue #151 forbids, because that is where
+    // is Markdown on disk but is really an attachment, and scanning one as a source note rewrites the
+    // references stored inside it — which is exactly what issue #151 forbids, because that is where
     // Excalidraw keeps its embedded-image links. This is the single choke point for every collect entry
-    // Point (vault, folder, file, auto-collect), so filtering here covers all of them.
+    // point (vault, folder, file, auto-collect), so filtering here covers all of them.
     for (const abstractFile of abstractFiles) {
       if (isFile(abstractFile) && this.isNoteEx(abstractFile)) {
         noteFilesSet.add(abstractFile);
@@ -544,8 +544,8 @@ export class AttachmentCollector {
     oldAttachmentPaths.add(oldAttachmentFile.path);
 
     // An earlier link in this same note may have already carried this attachment away inside its unit
-    // Folder. The link snapshot still names the old path, so without this the file reads as
-    // Unresolvable and would be reported as a broken link rather than as work already done.
+    // folder. The link snapshot still names the old path, so without this the file reads as
+    // unresolvable and would be reported as a broken link rather than as work already done.
     for (const movedUnitFolderPath of params.movedUnitFolderPaths.keys()) {
       if (oldAttachmentFile.path.startsWith(`${movedUnitFolderPath}/`)) {
         return null;

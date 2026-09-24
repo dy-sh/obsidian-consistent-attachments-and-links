@@ -132,9 +132,9 @@ vi.mock('./plugin-settings-tab.ts', () => ({
 }));
 
 // The same treatment for the dev-utils settings-migration component. What is this plugin's own is the pair
-// Of closures it hands over — which pending values are offered, and how the retirement is persisted — so
-// They are captured and invoked directly. The offer-and-retire dance around them belongs to dev-utils and is
-// Tested there.
+// of closures it hands over — which pending values are offered, and how the retirement is persisted — so
+// they are captured and invoked directly. The offer-and-retire dance around them belongs to dev-utils and is
+// tested there.
 const { settingsMigrationStub } = vi.hoisted(() => ({
   settingsMigrationStub: vi.fn<(params: SettingsMigrationComponentParams) => object>()
 }));
@@ -250,7 +250,7 @@ describe('Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // The settings object is shared across tests, and `editAndSave` really writes to it, so the pending value
-    // Has to be put back or a later test inherits an earlier one's.
+    // has to be put back or a later test inherits an earlier one's.
     hoisted.mockSettings.proposedRenameDeleteSettings = null;
     hoisted.mockSettings.isPathIgnored.mockReturnValue(false);
     nextCommandHandlerIndex = 0;
@@ -268,15 +268,15 @@ describe('Plugin', () => {
     castTo<AppGlobal>(window).app = app;
 
     // What the dependency gate reaches when the dependency is missing: it registers a settings tab explaining
-    // What to install. `obsidian-test-mocks` does not model `app.setting`.
+    // what to install. `obsidian-test-mocks` does not model `app.setting`.
     seedOnRawTarget(app, 'setting', {
       addSettingTab: vi.fn(),
       removeSettingTab: vi.fn()
     });
 
     // Advanced Rename and Delete Handler is a declared dependency, so everything past the base loads only once
-    // Its API is published. An empty API is enough: the gate checks only that one is there, at a matching
-    // Version. Each test gets a fresh app, and with it a fresh registry.
+    // its API is published. An empty API is enough: the gate checks only that one is there, at a matching
+    // version. Each test gets a fresh app, and with it a fresh registry.
     providerComponent = new Component();
     providerComponent.load();
     publishPluginApi({
@@ -321,8 +321,8 @@ describe('Plugin', () => {
 
   describe('rename and delete handling', () => {
     // Advanced Rename and Delete Handler owns rename/delete handling since 4.0.0. Two handlers acting on one
-    // Rename corrupts links and moves attachments twice, so this plugin must register none — the inverse of
-    // What it used to assert.
+    // rename corrupts links and moves attachments twice, so this plugin must register none — the inverse of
+    // what it used to assert.
     it('should not register a rename/delete handler of its own', async () => {
       await createLoadedPlugin();
       expect(hasRegisteredRenameDeleteHandler()).toBe(false);
@@ -352,7 +352,7 @@ describe('Plugin', () => {
     });
 
     // Commands registered from `onloadImpl` belong to the feature surface, which unloads whenever the
-    // Dependency goes away — so they leave the palette with it rather than calling into torn-down components.
+    // dependency goes away — so they leave the palette with it rather than calling into torn-down components.
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
@@ -388,7 +388,7 @@ describe('Plugin', () => {
     });
 
     // Retiring through `editAndSave` rather than `setProperty` is what makes the retirement outlive a
-    // Reload; the in-memory-only variant would offer the migration again forever.
+    // reload; the in-memory-only variant would offer the migration again forever.
     it('should retire the pending values to disk once the migration is applied', async () => {
       await createLoadedPlugin();
       hoisted.mockSettings.proposedRenameDeleteSettings = { shouldHandleRenames: true };

@@ -54,7 +54,7 @@ describe('PluginSettingsComponent', () => {
     it('should reject an invalid regular expression in includePaths', async () => {
       const component = createComponent();
       // The real PluginSettings setter eagerly compiles regexes and would throw, so a strict proxy
-      // Is used to feed the validator an invalid pattern directly.
+      // is used to feed the validator an invalid pattern directly.
       const settings = strictProxy<PluginSettings>({
         excludePaths: [],
         includePaths: ['/[/']
@@ -130,7 +130,7 @@ describe('PluginSettingsComponent', () => {
       expect(component.settings.shouldCollectAttachmentsAutomatically).toBe(true);
       expect(component.settings.shouldShowBackupWarning).toBe(false);
       // The ancient names are mapped onto the 3.x ones first, and only then parked for the new owner — so a
-      // Vault that never saw 3.x still hands its values over intact.
+      // vault that never saw 3.x still hands its values over intact.
       expect(component.settings.proposedRenameDeleteSettings).toStrictEqual({
         shouldDeleteConflictingAttachments: true,
         shouldHandleDeletions: true,
@@ -167,7 +167,7 @@ describe('PluginSettingsComponent', () => {
     });
 
     // The path and treat-as-attachment settings are proposed, not handed over: many other features here still
-    // Read them.
+    // read them.
     it('should keep the settings it proposes but does not own', async () => {
       const component = createComponent({
         excludePaths: ['private'],

@@ -75,7 +75,7 @@ vi.mock('obsidian-dev-utils/obsidian/file-manager', () => ({
 }));
 
 // Spread the real module: `isFolder` / `isMarkdownFile` / `asFile` do the type routing this handler is built
-// On, and a stub of them would be testing the stub.
+// on, and a stub of them would be testing the stub.
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
   getFileOrNull: vi.fn(),
@@ -113,7 +113,7 @@ const mockResolveFolderNote = vi.mocked(resolveFolderNote);
 const mockResolveFolderNoteConfig = vi.mocked(resolveFolderNoteConfig);
 
 // The fixtures only ever carry the vault, never call through it, so a strict proxy makes any real use throw
-// Rather than quietly succeed.
+// rather than quietly succeed.
 const vault = Vault.create2__(strictProxy<DataAdapter>({}));
 const loadedFiles: TAbstractFile[] = [];
 
@@ -193,7 +193,7 @@ describe('PathCompatibilityHandler', () => {
     mockGetFileOrNull.mockReturnValue(null);
     mockGetSafeRenamePath.mockImplementation((params) => params.newPath);
     // Mimic the real rename: it mutates the abstract file, which is what the sidecar and preservation steps
-    // Read afterwards.
+    // read afterwards.
     mockRenameSafe.mockImplementation(async (params) => {
       const abstractFile = castTo<TAbstractFile>(params.oldPathOrAbstractFile);
       abstractFile.path = params.newPath;
@@ -499,7 +499,7 @@ describe('PathCompatibilityHandler', () => {
     it('should write into an attachment\'s existing sidecar note', async () => {
       const sidecar = createFile(`${LONG_BASENAME}.png.md`);
       // Track the sidecar's CURRENT path: the handler resolves it once before the rename and again after,
-      // And the mocked rename moves it in between.
+      // and the mocked rename moves it in between.
       mockGetFileOrNull.mockImplementation((params) => (params.pathOrFile === sidecar.path ? castTo<TFileOriginal>(sidecar) : null));
       setVault(createFile(`${LONG_BASENAME}.png`));
 
@@ -542,7 +542,7 @@ describe('PathCompatibilityHandler', () => {
     it('should rename an attachment\'s sidecar so it keeps matching the pattern', async () => {
       const sidecar = createFile(`${LONG_BASENAME}.png.md`);
       // Track the sidecar's CURRENT path: the handler resolves it once before the rename and again after,
-      // And the mocked rename moves it in between.
+      // and the mocked rename moves it in between.
       mockGetFileOrNull.mockImplementation((params) => (params.pathOrFile === sidecar.path ? castTo<TFileOriginal>(sidecar) : null));
       setVault(createFile(`${LONG_BASENAME}.png`));
 

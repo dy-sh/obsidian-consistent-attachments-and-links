@@ -160,7 +160,7 @@ describe('Auto-collect does not loop on already-proper attachments (issue #152)'
 
         try {
           // Point Obsidian's attachment folder at a dedicated subfolder so the "proper" path is a known
-          // Non-root location and a root/other-folder attachment is genuinely misplaced.
+          // non-root location and a root/other-folder attachment is genuinely misplaced.
           vaultConfig.setConfig('attachmentFolderPath', properFolder);
 
           for (const path of createdPaths) {
@@ -172,7 +172,7 @@ describe('Auto-collect does not loop on already-proper attachments (issue #152)'
           // Scenario 1: a plainly misplaced attachment at the vault root.
           await app.vault.createBinary(plainSrcPath, new ArrayBuffer(4));
           // Scenario 2: a different file already occupies the deduplication-free proper slot (the collision) so the
-          // Collected attachment must be parked at `… 1.png`.
+          // collected attachment must be parked at `… 1.png`.
           await app.vault.createBinary(collisionPath, new ArrayBuffer(8));
           await app.vault.createBinary(dupSrcPath, new ArrayBuffer(4));
 
@@ -189,7 +189,7 @@ describe('Auto-collect does not loop on already-proper attachments (issue #152)'
           });
 
           // Turn on the real setting and fire genuine note changes so the plugin's own
-          // MetadataCache('changed') handler drives auto-collect (the actual user flow).
+          // metadataCache('changed') handler drives auto-collect (the actual user flow).
           settings.shouldShowBackupWarning = false;
           settings.shouldCollectAttachmentsAutomatically = true;
           await app.vault.append(plainNote, '\n');

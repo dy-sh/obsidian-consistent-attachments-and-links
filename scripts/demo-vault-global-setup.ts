@@ -25,7 +25,7 @@ const CODE_SCRIPT_TOOLKIT_SETTINGS = {
 };
 
 // Advanced Rename and Delete Handler is seeded for the same reason: the vault's own `startup.ts` installs it
-// From the community registry, which is a network step too, and this plugin loads nothing until it is there.
+// from the community registry, which is a network step too, and this plugin loads nothing until it is there.
 // Seeded, the startup script finds it installed and enabled and leaves it alone.
 //
 // The ASYNC builder, not the synchronous `buildDemoVaultPopulate`: the sync one requires the injected
@@ -48,7 +48,7 @@ async function populate(): Promise<PopulateFilesParams> {
 }
 
 // Pre-populates the whole `demo-vault/` tree (plus the CodeScript Toolkit binary and its settings)
-// Before Obsidian opens, so the startup scan indexes every note in one pass. Used by
+// before Obsidian opens, so the startup scan indexes every note in one pass. Used by
 // `integration-tests:demo-vault`.
 const { setup, teardown } = createSetup({
   enableCommunityPlugins: [CODE_SCRIPT_TOOLKIT_PLUGIN_ID, ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID],
