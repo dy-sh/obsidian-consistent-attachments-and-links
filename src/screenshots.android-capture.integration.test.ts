@@ -59,6 +59,7 @@ import {
   readPngDimensions
 } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+// eslint-disable-next-line import-x/no-named-as-default -- sharp's ESM entry exports only the default; the named `sharp` the rule points at exists in the typings alone, where it is the very binding the default re-exports. `import { sharp } from 'sharp'` therefore typechecks and then throws `does not provide an export named 'sharp'` at runtime.
 import sharp from 'sharp';
 import {
   beforeAll,
