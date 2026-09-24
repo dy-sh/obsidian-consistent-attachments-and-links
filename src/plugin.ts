@@ -18,7 +18,6 @@ import {
 } from './advanced-rename-and-delete-handler.ts';
 import { CheckConsistencyCommandHandler } from './command-handlers/check-consistency-command-handler.ts';
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
-import { ReorganizeVaultCommandHandler } from './command-handlers/reorganize-vault-command-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 import {
   CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID,
@@ -192,7 +191,6 @@ export class Plugin extends PluginBase {
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginVersion: this.manifest.version
       }),
-      new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
     ]);

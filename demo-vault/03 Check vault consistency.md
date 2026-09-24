@@ -1,6 +1,6 @@
 # Check vault consistency
 
-Before reorganizing anything, you can audit the whole vault without changing a single file. The **Check Vault Consistency** command scans every note and writes a report listing what is not yet in the plugin's consistent form:
+Before repairing anything, you can audit the whole vault without changing a single file. The **Check Vault Consistency** command scans every note and writes a report listing what is not yet in the plugin's consistent form:
 
 - Bad (broken) links
 - Bad (broken) embed paths
@@ -38,4 +38,19 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ct
 ## What to notice
 
 - Nothing is modified by this command - it is a safe, read-only audit you can run any time.
-- The report is the natural starting point before you run the repair in [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
+- The report is the natural starting point before you run the repair in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
+
+## Attachment-like Markdown files (such as Excalidraw) count as attachments
+
+Some plugins store data in files that are Markdown on disk but are really attachments. Excalidraw, for example, saves each drawing as a `.excalidraw.md` file. It is not a note you would ever read on its own - it belongs to whatever note embeds it, exactly as a `.png` does.
+
+So any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [05 Settings](<./05 Settings.md>)) counts as an **attachment** rather than a note in the report's **Misplaced attachments** section: a drawing sitting outside the attachment folder of the note that references it is named there, just as a misplaced image would be. An ordinary note in the same place is not, because a note is not an attachment.
+
+The plugin never rewrites what is written inside such a file. A drawing keeps its references in its own private format, and rewriting them would stop it rendering.
+
+### Try it with a drawing
+
+1. Open [Source note](<./Materials/03 Check vault consistency/Source note.md>) - it references both [Shared target](<./Materials/03 Check vault consistency/Shared target.md>), an ordinary note, and [Diagram.excalidraw](<./Materials/03 Check vault consistency/Diagram.excalidraw.md>), which is Markdown on disk but an attachment as far as this setting is concerned.
+2. Run **Check Vault Consistency**.
+3. This vault keeps attachments in `_assets/attachments`, so the drawing is listed under **Misplaced attachments**, with that folder named as where it belongs. **Shared target**, an ordinary note in the same place, is not.
+4. Empty `treatAsAttachmentExtensions` in [05 Settings](<./05 Settings.md>) and check again - the drawing now reads as a note and is no longer judged, which is the difference the setting makes.

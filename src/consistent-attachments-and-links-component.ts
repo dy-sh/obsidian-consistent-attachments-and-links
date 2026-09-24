@@ -116,15 +116,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     await this.pathCompatibilityHandler.fix();
   }
 
-  public async reorganizeVault(): Promise<void> {
-    await this.saveAllOpenNotes();
-
-    // Collecting attachments, the step that used to come first, left with the rest of collecting for Custom
-    // Attachment Location in 5.0.0.
-    await this.fixIncompatiblePaths();
-    this.pluginNoticeComponent.showNotice('Reorganization of the vault completed');
-  }
-
   protected override onLayoutReady(): void {
     invokeAsyncSafely(() => this.showBackupWarning());
   }
@@ -147,12 +138,12 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       message: createFragment((f) => {
         f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
           wrapper.appendText(
-            'The \'Fix incompatible paths\' and \'Reorganize vault\' commands of \'Consistent Attachments and Links\' rename files and folders across your whole vault.'
+            'The \'Fix incompatible paths\' command of \'Consistent Attachments and Links\' renames files and folders across your whole vault.'
           );
           wrapper.createEl('br');
           wrapper.appendText('It is ');
           wrapper.createEl('strong', { text: 'STRONGLY' });
-          wrapper.appendText(' recommended to backup your vault before running them.');
+          wrapper.appendText(' recommended to backup your vault before running it.');
           wrapper.createEl('br');
           wrapper.createEl('a', { href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file', text: 'Read more' });
           wrapper.appendText(' about how to use the plugin.');

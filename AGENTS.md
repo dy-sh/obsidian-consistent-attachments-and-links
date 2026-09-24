@@ -83,7 +83,7 @@ The command, `ConsistentAttachmentsAndLinksComponent.deleteEmptyFolders`, its st
 
 **The legacy settings path is NOT part of this and must keep working.** `LegacySettings.deleteEmptyFolders` in `plugin-settings-component.ts` — and the conversion mapping it onto `emptyFolderBehavior`, which `parkRenameDeleteSettings` hands across as `proposedRenameDeleteSettings` — is what carries a pre-4.0.0 user's choice to the plugin that owns it now. It reads the saved `data.json` record and never touched the command or `FilesHandler`, so the removal could not reach it, and it stays. Deleting that property because "the feature is gone" would strip the key from `data.json` on the first save and lose the migration for good — the reason the whole `LegacySettings` class exists is spelled out in its own comment.
 
-`reorganizeVault` itself stays for now; retiring it is separate work.
+`reorganizeVault` has since been retired too — see the section on it below.
 
 ## Attachment collecting is NOT this plugin's — do not re-add it
 
@@ -104,9 +104,16 @@ What stays, and why it can look like a leftover:
 
 - **The misplaced-attachments report** keeps "Attachments" in the plugin's name. It took over the two reads it needed from the deleted collector — `isAtProperAttachmentPath` and `getAttachmentFilePath({ shouldSkipDuplicateCheck: true })`, plus the `isNote && !isTreatedAsAttachment` predicate — so it still asks the same question that plugin's `Move attachment to proper folder` asks.
 - **`treatAsAttachmentExtensions` stays**: the report reads it, and it is proposed to Advanced Rename and Delete Handler.
-- **The backup warning stays, reworded.** Auto-collect was the last setting `revertDangerousSettings()` reverted, so that method, `hadDangerousSettingsReverted` and the tab's dangerous-setting alert are gone. The one-time warning now names what still changes a vault: `Fix incompatible paths` and `Reorganize vault` rename files.
-- **`reorganizeVault` is now a single step** (`fixIncompatiblePaths`). Retiring it is separate work.
+- **The backup warning stays, reworded.** Auto-collect was the last setting `revertDangerousSettings()` reverted, so that method, `hadDangerousSettingsReverted` and the tab's dangerous-setting alert are gone. The one-time warning now names what still changes a vault: `Fix incompatible paths` renames files.
 - **Screenshot frame 3 (the collect story) was dropped**, as the rename frame was before it; the report frame became frame 3 and now shows a misplaced attachment. Its subject note embeds `../attachments/diagram.png` — a path that resolves literally — because the old `attachments/diagram.png` only resolved after collecting rewrote it, and the report would call it a bad embed rather than a misplaced one.
+
+## `Reorganize vault` is retired — do not re-add it
+
+`reorganize-vault` existed to run the whole reshaping sequence in one command: convert embeds and links to relative, collect attachments, delete empty folders, fix incompatible paths. The scope line removed every step but the last — two as rewriting, one to Custom Attachment Location, one to Advanced Rename and Delete Handler — so it ended as a wrapper around one call the user could already make as `Fix incompatible paths`. The command, `ReorganizeVaultCommandHandler` and `ConsistentAttachmentsAndLinksComponent.reorganizeVault` were removed.
+
+- **`saveAllOpenNotes` stays**, for `checkConsistency`, which reads file content. `Fix incompatible paths` never called it and does not need to: it renames through `renameSafe`, and an open editor follows a rename. The save was `reorganizeVault`'s, for the content-rewriting steps it no longer had.
+- **The demo vault's note 04 went with it, and the notes were NOT renumbered** — the same rule 02's removal set, stated in `00 Start.md`: links already pointing at a note keep resolving. Its one surviving section, the Excalidraw / `treatAsAttachmentExtensions` walkthrough, is about the report, so it moved into `03 Check vault consistency.md`, and its materials into `Materials/03 Check vault consistency/`.
+- **The public description was restated from the scope line here**, as the last of the strips: `manifest.json`, `package.json` and the README lead now say *reports* and *repairs names a platform's filesystem rejects*, not *breaks outside Obsidian*.
 
 ## Path compatibility
 

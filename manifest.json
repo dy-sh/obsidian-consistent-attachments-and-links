@@ -3,7 +3,7 @@
   "name": "Consistent Attachments and Links",
   "version": "4.1.0",
   "minAppVersion": "1.13.7",
-  "description": "Audits a vault for links and paths that break outside the app, and repairs what it finds. Reports every broken link and misplaced attachment, and repairs names that other platforms reject.",
+  "description": "Reports every link whose written path does not lead to its target and every misplaced attachment, and repairs names and paths that a platform your vault syncs to would reject.",
   "author": "Dmitry Savosh",
   "authorUrl": "https://github.com/dy-sh/",
   "isDesktopOnly": false,
