@@ -64,8 +64,8 @@ describe('Auto-collect does not loop on already-proper attachments (issue #152)'
         }
 
         interface VaultConfigAccess {
-          getConfig(key: string): unknown;
-          setConfig(key: string, value: unknown): void;
+          getConfig: (key: string) => unknown;
+          setConfig: (key: string, value: unknown) => void;
         }
 
         function isAutoCollectSettings(value: unknown): value is AutoCollectSettings {

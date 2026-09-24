@@ -35,7 +35,7 @@ describe('The 3.x rename/delete settings hand-over', () => {
     const result = await evalInObsidian({
       async callback({ app, lib: { waitUntil }, pluginId }) {
         interface PluginSettingsComponentLike {
-          editAndSave(settingsEditor: (settings: unknown) => void): Promise<void>;
+          editAndSave: (settingsEditor: (settings: unknown) => void) => Promise<void>;
           readonly settings: Record<string, unknown>;
         }
 

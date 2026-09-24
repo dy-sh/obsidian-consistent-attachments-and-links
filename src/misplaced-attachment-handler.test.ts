@@ -66,7 +66,7 @@ import {
 } from './misplaced-attachment-handler.ts';
 
 interface SettingsLike {
-  isPathIgnored(path: string): boolean;
+  isPathIgnored: (path: string) => boolean;
 }
 
 const mockIsFrontmatterLinkCache = vi.mocked(isFrontmatterLinkCache);

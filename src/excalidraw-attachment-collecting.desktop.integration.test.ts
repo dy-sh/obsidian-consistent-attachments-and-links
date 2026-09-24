@@ -88,13 +88,13 @@ describe('A .excalidraw.md travels as an attachment', () => {
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface AttachmentExtensionSettings {
-          isTreatedAsAttachment(path: string): boolean;
+          isTreatedAsAttachment: (path: string) => boolean;
           treatAsAttachmentExtensions: string[];
         }
 
         interface VaultConfigAccess {
-          getConfig(key: string): unknown;
-          setConfig(key: string, value: unknown): void;
+          getConfig: (key: string) => unknown;
+          setConfig: (key: string, value: unknown) => void;
         }
 
         function isAttachmentExtensionSettings(value: unknown): value is AttachmentExtensionSettings {

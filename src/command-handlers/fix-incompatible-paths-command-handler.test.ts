@@ -13,7 +13,7 @@ import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attac
 import { FixIncompatiblePathsCommandHandler } from './fix-incompatible-paths-command-handler.ts';
 
 interface CommandHandlerPrivate {
-  execute(): Promise<void>;
+  execute: () => Promise<void>;
 }
 
 function asPrivate(handler: FixIncompatiblePathsCommandHandler): CommandHandlerPrivate {

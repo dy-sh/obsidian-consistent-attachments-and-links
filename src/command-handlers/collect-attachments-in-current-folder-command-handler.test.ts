@@ -18,7 +18,7 @@ import type { AttachmentCollector } from '../attachment-collector.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect-attachments-in-current-folder-command-handler.ts';
 
 interface CommandHandlerPrivate {
-  executeFolder(folder: TFolder): void;
+  executeFolder: (folder: TFolder) => void;
 }
 
 function asPrivate(handler: CollectAttachmentsInCurrentFolderCommandHandler): CommandHandlerPrivate {
