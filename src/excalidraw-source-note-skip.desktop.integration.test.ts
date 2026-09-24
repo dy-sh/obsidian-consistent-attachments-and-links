@@ -241,9 +241,9 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
             });
 
             // The command-handler half: with the drawing active, `Collect attachments in current note`
-            // Is offered only while the drawing counts as a note. `checkCallback(true)` is the availability
-            // Probe Obsidian itself uses to decide whether to list the command, so this asks the question
-            // Without running anything — leaving the folder collect below as the only thing that moves a file.
+            // is offered only while the drawing counts as a note. `checkCallback(true)` is the availability
+            // probe Obsidian itself uses to decide whether to list the command, so this asks the question
+            // without running anything — leaving the folder collect below as the only thing that moves a file.
             await app.workspace.getLeaf(false).openFile(drawing);
             const fileCommandUnknown: unknown = app.commands.commands[collectInFileCommandId];
             const fileCommand = fileCommandUnknown as AvailabilityCheckableCommand | undefined;
@@ -294,7 +294,7 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
             };
           } finally {
             // The desktop suite shares one vault, and the sibling suites enumerate it and assert on
-            // Exactly which files survive. Take everything this phase created back out.
+            // exactly which files survive. Take everything this phase created back out.
             const createdPaths = app.vault.getFiles().map((file) => file.path).filter((filePath) => filePath.includes(stamp)).reverse();
             for (const createdPath of createdPaths) {
               await trashIfExists(createdPath);
@@ -328,24 +328,24 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
     expect(result.settingsFound).toBe(true);
 
     // The sibling is a barrier for the drawing's turn only while it sorts after the drawing. A rename that
-    // Flipped that would leave the drawing assertions reading a walk that had not reached it yet, so the
-    // Ordering is asserted rather than assumed.
+    // flipped that would leave the drawing assertions reading a walk that had not reached it yet, so the
+    // ordering is asserted rather than assumed.
     expect(result.control.isDrawingSortedBeforeSibling).toBe(true);
     expect(result.fix.isDrawingSortedBeforeSibling).toBe(true);
 
     // Both phases really collected — and got past the drawing, the sibling sorting after it being the
-    // Proof — so the difference between them is the setting and nothing else.
+    // proof — so the difference between them is the setting and nothing else.
     expect(result.control.isSiblingImageCollected).toBe(true);
     expect(result.fix.isSiblingImageCollected).toBe(true);
 
     // Without the extension listed, the drawing is an ordinary note: its command is offered, its own
-    // Attachment is collected, and the reference written inside it is rewritten to match.
+    // attachment is collected, and the reference written inside it is rewritten to match.
     expect(result.control.isFileCommandOfferedOnDrawing).toBe(true);
     expect(result.control.isDrawingImageCollected).toBe(true);
     expect(result.control.isDrawingContentUnchanged).toBe(false);
 
     // With it listed, the drawing is an attachment: the command is refused rather than offered and then
-    // Doing nothing, its attachment stays where it is, and its bytes are untouched (issue #151).
+    // doing nothing, its attachment stays where it is, and its bytes are untouched (issue #151).
     expect(result.fix.isFileCommandOfferedOnDrawing).toBe(false);
     expect(result.fix.isDrawingImageCollected).toBe(false);
     expect(result.fix.isDrawingContentUnchanged).toBe(true);

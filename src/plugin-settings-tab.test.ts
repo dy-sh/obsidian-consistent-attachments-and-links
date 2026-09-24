@@ -64,7 +64,7 @@ async function createTab(): Promise<CreatedTab> {
     pluginEventSource: new AsyncEvents<PluginEventMap>()
   });
   // The component must be loaded before its settings can be edited; obsidian-dev-utils 70.0.0
-  // Makes setProperty/editAndSave throw when the component is not loaded.
+  // makes setProperty/editAndSave throw when the component is not loaded.
   await pluginSettingsComponent.loadWithPromises();
   const plugin = strictProxy<Plugin>({ app: app.asOriginalType__() });
   const toggles: ToggleComponent[] = [];
@@ -144,7 +144,7 @@ describe('PluginSettingsTab', () => {
   });
 
   // Advanced Rename and Delete Handler owns these since 4.0.0, so offering them here would be offering to
-  // Configure a handler this plugin no longer runs.
+  // configure a handler this plugin no longer runs.
   it('should not render the rename and delete settings it no longer owns', async () => {
     const { tab } = await createTab();
     const names = getSettingNames(tab);
@@ -157,7 +157,7 @@ describe('PluginSettingsTab', () => {
   });
 
   // Advanced Rename and Delete Handler is a declared dependency: while it is missing this tab is never shown,
-  // And the library's own blocked tab says what to install. So there is no banner row left to carry.
+  // and the library's own blocked tab says what to install. So there is no banner row left to carry.
   it('should carry no nameless banner row, only settings', async () => {
     const { tab } = await createTab();
     expect(getSettingNames(tab)).not.toContain('');

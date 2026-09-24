@@ -120,8 +120,8 @@ export const config = defineObsidianPluginVitestConfig({
   },
   editContext(context: ObsidianPluginVitestConfigContext): void {
     // This plugin declares Advanced Rename and Delete Handler as a dependency and loads nothing without it, so
-    // Every vault these projects open has it seeded. The capture projects spread these same objects and so
-    // Inherit it; the demo-vault project brings a setup of its own that seeds it too.
+    // every vault these projects open has it seeded. The capture projects spread these same objects and so
+    // inherit it; the demo-vault project brings a setup of its own that seeds it too.
     context.desktop.globalSetup = [GLOBAL_SETUP_FILE];
     context.android.globalSetup = [GLOBAL_SETUP_FILE];
     context.desktopPerformance.globalSetup = [GLOBAL_SETUP_FILE];

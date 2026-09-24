@@ -383,7 +383,7 @@ export function repairName(params: RepairNameParams): null | string {
   }
 
   // `note.md ` parses as basename `note` + extension `md `, so trimming only the basename would leave the
-  // Trailing space exactly where Windows rejects it — at the end of the name.
+  // trailing space exactly where Windows rejects it — at the end of the name.
   extension = trimTrailingDotsAndSpaces(extension, profiles);
 
   /*

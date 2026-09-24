@@ -69,7 +69,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const badEmbeds = new ConsistencyCheckResult('Bad embeds');
     const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
     // Filled by the same walk as the three buckets above: it judges references, and only the ones that
-    // Resolved, so `LinksHandler` is the one place that has both the reference and its target.
+    // resolved, so `LinksHandler` is the one place that has both the reference and its target.
     const misplacedAttachments = new MisplacedAttachmentCheckResult();
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
@@ -94,7 +94,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const notePath = this.pluginSettingsComponent.settings.consistencyReportFile;
 
     // Walks files and folders rather than notes, and reads no file content, so it is its own pass rather
-    // Than a fourth result filled by the loop above.
+    // than a fourth result filled by the loop above.
     const pathCompatibility = new PathCompatibilityCheckResult();
     this.pathCompatibilityHandler.check(pathCompatibility);
 

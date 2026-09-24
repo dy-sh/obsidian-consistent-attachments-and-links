@@ -26,7 +26,7 @@ describe('PluginSettings', () => {
       expect(settings.treatAsAttachmentExtensions).toStrictEqual(['.excalidraw.md']);
       expect(settings.hadDangerousSettingsReverted).toBe(false);
       // A fresh install has nothing to hand to Advanced Rename and Delete Handler, so it is never offered a
-      // Migration.
+      // migration.
       expect(settings.proposedRenameDeleteSettings).toBeNull();
     });
   });

@@ -191,7 +191,7 @@ describe('Attachment unit folders travel whole', () => {
             };
           } finally {
             // The desktop suite shares one vault, and the sibling suites enumerate it and assert on
-            // Exactly which files survive. Take everything this phase created back out.
+            // exactly which files survive. Take everything this phase created back out.
             const createdPaths = app.vault.getFiles().map((file) => file.path).filter((filePath) => filePath.includes(stamp)).reverse();
             for (const createdPath of createdPaths) {
               await trashIfExists(createdPath);

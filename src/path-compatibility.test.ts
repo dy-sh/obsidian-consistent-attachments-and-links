@@ -414,7 +414,7 @@ describe('path-compatibility', () => {
     });
 
     // 3n + len('.md') <= 255 gives n = 84 — a character count would have allowed 252 and produced a name
-    // Every Android device rejects.
+    // every Android device rejects.
     it('should truncate by bytes where the platform counts bytes', () => {
       expect(repairName({
         basename: CJK.repeat(100),
@@ -473,7 +473,7 @@ describe('path-compatibility', () => {
     });
 
     // Truncation can expose trailing dots that were harmless in the middle of the name, and trimming those
-    // Can empty it — at which point there is nothing left to shorten.
+    // can empty it — at which point there is nothing left to shorten.
     it('should answer null when truncation exposes trailing dots that empty the name', () => {
       expect(repairName({
         basename: '..a',

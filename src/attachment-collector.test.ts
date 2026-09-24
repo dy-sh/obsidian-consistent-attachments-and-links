@@ -328,7 +328,7 @@ describe('AttachmentCollector', () => {
     it('should return null when the attachment is already at its proper path', async () => {
       const attachmentFile = createFile('attachments/img 1.png');
       // A deduplication-parked attachment (`img 1.png`) is recognized as already proper by the obsidian-dev-utils helper,
-      // So no move is scheduled — this is what makes auto-collect converge (issue #152).
+      // so no move is scheduled — this is what makes auto-collect converge (issue #152).
       mockIsAtProperAttachmentPath.mockResolvedValue(true);
       const result = await collector.getProperAttachmentPath(buildParams(attachmentFile));
       expect(result).toBeNull();
@@ -495,8 +495,8 @@ describe('AttachmentCollector', () => {
     it('should not rename a deduplication-parked attachment already at its proper path (single-ref, issue #152)', async () => {
       // Regression guard for the endless auto-collect loop: the attachment sits at `attachments/img 1.png`
       // (parked with an Obsidian deduplication suffix because a different file occupies the deduplication-free
-      // Slot). The deduplication-free proper path from getAttachmentFilePath still DIFFERS, but the obsidian-dev-utils helper
-      // Recognizes the parked file as already proper, so no move is scheduled and the loop converges.
+      // slot). The deduplication-free proper path from getAttachmentFilePath still DIFFERS, but the obsidian-dev-utils helper
+      // recognizes the parked file as already proper, so no move is scheduled and the loop converges.
       mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('attachments/img 1.png'));
       mockIsNote.mockReturnValue(false);
@@ -510,8 +510,8 @@ describe('AttachmentCollector', () => {
 
     describe('attachment unit folders', () => {
       // Kept deliberately identical in behavior to obsidian-custom-attachment-location's, since both
-      // Plugins collect over the same vaults and a user with both installed must not watch one keep a
-      // Folder whole while the other tears it apart.
+      // plugins collect over the same vaults and a user with both installed must not watch one keep a
+      // folder whole while the other tears it apart.
       const UNIT_FOLDER_PATH = 'old-folder/page_files';
 
       beforeEach(() => {

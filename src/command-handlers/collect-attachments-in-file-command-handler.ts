@@ -30,7 +30,7 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
 
   // `isNoteEx`, not the plain `isNote`: the collector's walk skips a file listed in
   // `treatAsAttachmentExtensions` (issue #151), so offering the command on a drawing would offer a
-  // Command that silently does nothing. The same predicate gates
+  // command that silently does nothing. The same predicate gates
   // `move-attachment-to-proper-folder-command-handler.ts`.
   protected override canExecuteAbstractFile(abstractFile: TAbstractFile): boolean {
     return !isFile(abstractFile) || this.attachmentCollector.isNoteEx(abstractFile);
