@@ -39,6 +39,7 @@ interface ComponentPrivate {
 
 interface DisplayTextLeaf {
   getDisplayText: () => string;
+  view: ViewTypeView;
 }
 
 interface GlobalAppHolder {
@@ -55,6 +56,10 @@ interface ObsidianDevUtilsStateHolder {
 
 interface SavableView {
   save: () => Promise<void>;
+}
+
+interface ViewTypeView {
+  getViewType: () => string;
 }
 
 // --- Hoisted shared state ---
@@ -259,7 +264,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       vi.spyOn(app.vault, 'modify').mockResolvedValue();
       vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((callback: (leaf: WorkspaceLeaf) => void) => {
-        callback(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => 'report.md' })));
+        callback(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => 'report.md', view: { getViewType: () => 'empty' } })));
       });
       const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();
@@ -270,7 +275,7 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const component = createComponent();
       vi.spyOn(app.vault, 'modify').mockResolvedValue();
       vi.spyOn(app.workspace, 'iterateAllLeaves').mockImplementation((callback: (leaf: WorkspaceLeaf) => void) => {
-        callback(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => '' })));
+        callback(castTo<WorkspaceLeaf>(castTo<DisplayTextLeaf>({ getDisplayText: () => '', view: { getViewType: () => 'empty' } })));
       });
       const openLinkTextSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
       await component.checkConsistency();

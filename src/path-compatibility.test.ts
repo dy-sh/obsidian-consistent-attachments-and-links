@@ -31,7 +31,14 @@ const ALL_PLATFORMS = [
   PathCompatibilityPlatform.Windows
 ];
 
-const originalPlatform = { ...Platform };
+// Only the flags `setPlatform` writes: the mock's `can*` members are getters, and spreading them back fails.
+const originalPlatform = {
+  isAndroidApp: Platform.isAndroidApp,
+  isIosApp: Platform.isIosApp,
+  isLinux: Platform.isLinux,
+  isMacOS: Platform.isMacOS,
+  isWin: Platform.isWin
+};
 
 function hasViolation(violations: readonly PathCompatibilityViolation[], platform: PathCompatibilityPlatform, type: PathCompatibilityViolationType): boolean {
   return violations.some((violation) => violation.platform === platform && violation.type === type);
