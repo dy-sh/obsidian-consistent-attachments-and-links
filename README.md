@@ -4,7 +4,7 @@
 
 [Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
 
-This plugin makes that visible: it audits the whole vault and reports every link whose written path does not itself lead to its target, repairs names and paths that a platform you sync to would reject, and collects scattered attachments into place.
+This plugin makes that visible: it audits the whole vault and reports every link whose written path does not itself lead to its target and every attachment sitting outside its note's attachment folder, and repairs names and paths that a platform you sync to would reject.
 
 > [!IMPORTANT]
 >
@@ -30,6 +30,12 @@ This plugin makes that visible: it audits the whole vault and reports every link
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
+> [!IMPORTANT]
+>
+> Since **5.0.0** this plugin no longer collects attachments. [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) owns that now: **Collect attachments** for a note, a folder or the whole vault, **Move attachment to proper folder**, and collecting as you edit. Two plugins used to each carry a copy of the same collector, and one owner is the fix. This plugin does not require it — the report and the path repair work without it — so it suggests it instead, and the first time both are installed it offers your old collect settings to it, shows you what would change, and writes nothing unless you approve. This plugin still **reports** an attachment outside its note's attachment folder; it no longer moves one.
+
+<!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
+
 > [!WARNING]
 >
 > As the plugin might change your vault layout, it is crucial that you backup your vault before making any massive changes with this plugin!
@@ -43,12 +49,10 @@ This plugin makes that visible: it audits the whole vault and reports every link
 
 <div>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Repaired, with the original name kept" width="600"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-3.png"><img src="images/screenshots/screenshot-desktop-3.png" alt="Attachments collected beside their own note" width="600"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-4.png"><img src="images/screenshots/screenshot-desktop-4.png" alt="A report of every bad link, changing nothing" width="600"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-desktop-3.png"><img src="images/screenshots/screenshot-desktop-3.png" alt="What is broken or misplaced, changing nothing" width="600"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="A name your other devices reject" width="270"></a>
 <a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Repaired, with the original name kept" width="270"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-3.png"><img src="images/screenshots/screenshot-mobile-3.png" alt="Attachments collected beside their own note" width="270"></a>
-<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-4.png"><img src="images/screenshots/screenshot-mobile-4.png" alt="A report of every bad link, changing nothing" width="270"></a>
+<a href="https://github.com/dy-sh/obsidian-consistent-attachments-and-links/blob/HEAD/images/screenshots/screenshot-mobile-3.png"><img src="images/screenshots/screenshot-mobile-3.png" alt="What is broken or misplaced, changing nothing" width="270"></a>
 </div>
 
 </details>
@@ -69,12 +73,12 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## What it does
 
-- **Collect attachments into the note's own folder**, on command or as you edit — safely, never stealing a file another note still references. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
 - **Audit the whole vault** and get a report of bad links, bad embed paths, bad frontmatter links and attachments sitting outside their configured attachment folder, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
-- **Tidy an existing vault** — attachments collected into place, names repaired — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
-- **Settings**, including which of the destructive operations are unlocked. [05 Settings](<./demo-vault/05 Settings.md>)
+- **Tidy an existing vault** — every rejected name repaired — in one command. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
+- **Settings**, including which platforms the path repair enforces. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
+- **Collecting attachments** moved to [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) in 5.0.0. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
 
 <!-- markdownlint-disable MD033 -->
 ## `Attachment Subfolder` setting <span id="attachment-subfolder-setting"></span>

@@ -6,6 +6,8 @@ Looking for `Replace All Wiki Links with Markdown Links` or `Convert All Link Pa
 
 Looking for `Delete Empty Folders`? It moved to [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler), which you already have installed because this plugin requires it. The command kept its name and its id, so a hotkey you set for it still works - only the plugin offering it changed. An empty folder is not a link problem, and that plugin has cleaned them up automatically since this one's 4.0.0 anyway, through its **Empty folder behavior** setting; the manual vault-wide sweep now sits beside it.
 
+Looking for `Collect All Attachments`, `Collect attachments in current note`, `Collect attachments in current folder` or `Move Attachment to Proper Folder`? They moved to [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) in 5.0.0, along with collecting as you edit - see [01 Collect attachments into the note's folder](<./01 Collect attachments into the note's folder.md>). This plugin still reports a misplaced attachment; it no longer moves one.
+
 ## Check Vault Consistency
 
 Reports what is inconsistent without changing anything — the one command that is always safe to run first. The report lists:
@@ -14,25 +16,15 @@ Reports what is inconsistent without changing anything — the one command that 
 - bad embed paths
 - bad frontmatter links
 - paths and names that are invalid on a platform you sync to
+- attachments outside the attachment folder of the note that references them
 
 Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>), and for the last one in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
 ## Reorganize Vault
 
-The fastest way to clean up a vault: runs the others in the order that works, one after another.
-
-1. `Collect All Attachments`
-2. `Fix Incompatible Paths`
-
-The order matters: renaming comes last, because the step before it resolves links against the names the files still had.
+Runs `Fix Incompatible Paths`, the one repair left, after saving every open note. It used to collect all attachments first; that step left with collecting in 5.0.0.
 
 To also give attachments content-based names, run [`Unique attachments`](https://community.obsidian.md/plugins/unique-attachments) afterwards — optional, and a separate plugin.
-
-## Collect All Attachments
-
-Moves every attachment into the folder its note's settings say it belongs in, per [06 Recommended Obsidian settings](<./06 Recommended Obsidian settings.md>). Use it when you are not sure every attachment is where it should be.
-
-An attachment referenced by more than one note is not simply moved — see [01 Collect attachments into the note's folder](<./01 Collect attachments into the note's folder.md>) for what happens instead.
 
 ## Fix Incompatible Paths
 

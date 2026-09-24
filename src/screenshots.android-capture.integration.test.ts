@@ -5,17 +5,19 @@
  * driving a staged vault in Obsidian Mobile on a real Android emulator and
  * writing `images/screenshots/screenshot-mobile-N.png`.
  *
- * FOUR shots following the plugin's scope line — report strictly, repair
+ * THREE shots following the plugin's scope line — report strictly, repair
  * narrowly, never rewrite: a name the platforms this vault syncs to would
- * reject, that name repaired with the original kept, attachments collected into
- * the note's own folder, and a consistency report that names what is still
- * broken without touching anything.
+ * reject, that name repaired with the original kept, and a consistency report
+ * that names what is still broken or misplaced without touching anything.
  *
  * Shots 1 and 2 used to show a path rewritten to resolve from the note holding
  * it. The commands that did it are gone — rewriting a link's style is not
  * this plugin's job — so the pair moved onto the repair half of the scope line.
  * There used to be a fifth shot too, showing an attachment following its note
- * across a move; Advanced Rename and Delete Handler owns that since 4.0.0.
+ * across a move; Advanced Rename and Delete Handler owns that since 4.0.0. And a
+ * fourth, showing attachments collected into the note's own folder; Custom
+ * Attachment Location owns collecting since 5.0.0, so the report now names that
+ * attachment as misplaced instead.
  *
  * THE OFFENDER IS THE INVERSE OF THE DESKTOP SUITE'S, AND IS STAGED DIFFERENTLY.
  * The capture host has to be able to CREATE the offending file. This leg captures
@@ -122,13 +124,13 @@ const SUBJECT_NOTE_PATH = `${NOTES_FOLDER}/Meeting.md`;
 
 /**
  * Where the attachment starts: one shared folder at the vault root, which is
- * Obsidian's own default and the arrangement the plugin exists to undo.
+ * Obsidian's own default, and the arrangement shot 3's report flags.
  */
 const ORIGINAL_ATTACHMENT_PATH = 'attachments/diagram.png';
-const COLLECTED_ATTACHMENT_PATH = `${NOTES_FOLDER}/assets/diagram.png`;
+const PROPER_ATTACHMENT_FOLDER_PATH = `${NOTES_FOLDER}/assets`;
 
 /**
- * A link to a note that does not exist, so shot 4's report has something true to
+ * A link to a note that does not exist, so shot 3's report has something true to
  * say. Without it the report reads "no problems found", which proves the command
  * runs but not that it is worth running.
  */
@@ -223,22 +225,22 @@ beforeAll(async () => {
       const fontApp: unknown = app;
       (fontApp as FontSizeApp).updateFontSize();
 
-      // The plugin collects attachments into the folder OBSIDIAN is configured
-      // to use, so the destination in shot 3 is this setting's doing.
+      // The report judges an attachment against the folder OBSIDIAN is configured
+      // to use, so the folder shot 3 names as proper is this setting's doing.
       app.vault.setConfig('attachmentFolderPath', './assets');
 
-      // Shot 3 moves an attachment a note still embeds, and Obsidian asks "Update
-      // links?" before it will. The prompt is a dialog, so it covers the frame AND
+      // Shot 2 renames a note another note still links to, and Obsidian asks
+      // "Update links?" before it will. The prompt is a dialog, so it covers the frame AND
       // blocks everything after it. The CDP transport writes this into `app.json`
       // itself ("Enabled alwaysUpdateLinks — headless rename support"); the Appium
       // transport does not, so the mobile leg has to set it here.
       app.vault.setConfig('alwaysUpdateLinks', true);
 
       // The two settings the plugin's own "Recommended Obsidian settings" note
-      // asks for. They decide what the plugin WRITES when it rewrites a link:
-      // Left at Obsidian's defaults, collecting an attachment produces a bare
-      // `diagram.png` that only Obsidian's search can resolve — the very thing
-      // the listing claims to fix.
+      // asks for. They decide what Obsidian WRITES when shot 2's rename rewrites
+      // the link to the repaired note: left at Obsidian's defaults, that is a bare
+      // name only Obsidian's search can resolve — the very thing the listing claims
+      // to fix.
       app.vault.setConfig('useMarkdownLinks', true);
       app.vault.setConfig('newLinkFormat', 'relative');
       app.vault.setConfig('showInlineTitle', false);
@@ -318,25 +320,20 @@ describe('mobile store screenshots', () => {
     await shoot(2, 'Repaired, with the original name kept');
   });
 
-  it('3 - attachments collected into the note\'s own folder', async () => {
-    await runCommand('collect-attachments-entire-vault');
-    const paths = await waitForFile(COLLECTED_ATTACHMENT_PATH);
-    expect(paths).toContain(COLLECTED_ATTACHMENT_PATH);
-    expect(paths).not.toContain(ORIGINAL_ATTACHMENT_PATH);
-    const content = await openNote(SUBJECT_NOTE_PATH, true);
-    // The move is only half of it: the embed has to point at where the file went.
-    expect(content).toContain('assets/diagram.png');
-    await shoot(3, 'Attachments collected beside their own note');
-  });
-
-  // There used to be a frame here showing an attachment following its note across a move. Advanced Rename
-  // And Delete Handler owns that since 4.0.0, so this plugin can no longer show it — and a store screenshot
-  // of a feature it does not have is worse than one frame fewer.
-  it('4 - what is still broken, without touching anything', async () => {
+  // There used to be a frame here showing an attachment following its note across a move, and one after
+  // it showing attachments collected into the note's own folder. Advanced Rename and Delete Handler owns the
+  // first since 4.0.0 and Custom Attachment Location the second since 5.0.0, so this plugin can no longer show
+  // either — and a store screenshot of a feature it does not have is worse than one frame fewer.
+  it('3 - what is still broken or misplaced, without touching anything', async () => {
     await runCommand('check-consistency');
     const report = await openNote(REPORT_PATH);
     expect(report).toContain(MISSING_NOTE_NAME);
-    await shoot(4, 'A report of every bad link, changing nothing');
+    // The attachment still sits in the shared root folder, and the report says where it belongs instead of
+    // moving it.
+    expect(report).toContain(`Attachment \`${ORIGINAL_ATTACHMENT_PATH}\` should be in \`${PROPER_ATTACHMENT_FOLDER_PATH}\``);
+    const paths = await listFiles();
+    expect(paths).toContain(ORIGINAL_ATTACHMENT_PATH);
+    await shoot(3, 'What is broken or misplaced, changing nothing');
   });
 });
 
@@ -369,11 +366,11 @@ async function buildDiagram(): Promise<Uint8Array> {
  * Builds the note every shot is framed on.
  *
  * Standard Markdown throughout, written the way Obsidian writes it. Three forms
- * on purpose — a link to the forbidden name, an embed of the attachment shot 3
- * collects, and a link to a note that does not
- * exist. The first is what shot 2 repairs, and it is here rather than only in the
- * file tree so the frame can show the link following the rename; the third is
- * what shot 4's report has to find.
+ * on purpose — a link to the forbidden name, an embed of the attachment shot 3's
+ * report names as misplaced, and a link to a note that does not exist. The first
+ * is what shot 2 repairs, and it is here rather than only in the file tree so the
+ * frame can show the link following the rename; the other two are what shot 3's
+ * report has to find.
  *
  * @returns The note's Markdown.
  */
@@ -383,7 +380,7 @@ function buildSubjectNote(): string {
     '',
     `Agreed to follow [the review note](<${BAD_NAME}.md>) for the layout.`,
     '',
-    '![diagram](attachments/diagram.png)',
+    '![diagram](../attachments/diagram.png)',
     '',
     `Costs are still open — see [${MISSING_NOTE_NAME}](${MISSING_NOTE_NAME}.md).`,
     ''
@@ -611,7 +608,7 @@ async function openNote(notePath: string, shouldShowTree = false): Promise<strin
  */
 async function runCommand(commandId: string): Promise<void> {
   await evalInObsidian({
-    async callback({ app, commandId: id, lib: { clickElement }, pluginId }) {
+    async callback({ app, commandId: id, pluginId }) {
       const SETTLE_DELAY_IN_MILLISECONDS = 3000;
       const RESIZE_SETTLE_DELAY_IN_MILLISECONDS = 2000;
 
@@ -622,26 +619,8 @@ async function runCommand(commandId: string): Promise<void> {
         throw new Error(`No such command: ${fullId}`);
       }
 
-      // NOT awaited: several of these commands ask a question first and only
-      // resolve once it is answered, so awaiting here would deadlock against the
-      // click below.
+      // NOT awaited: the settle below is what waits for the work.
       app.commands.executeCommandById(fullId);
-
-      // "Do you want to collect attachments for all notes in folders
-      // recursively?" — the destructive commands confirm before they touch
-      // anything, and until that is answered the command has done nothing at all.
-      // This is what an unattended run has to say yes to.
-      const CONFIRM_ATTEMPTS = 10;
-      const CONFIRM_DELAY_IN_MILLISECONDS = 500;
-      for (let attempt = 0; attempt < CONFIRM_ATTEMPTS; attempt++) {
-        const confirmButton = document.querySelector('.modal-container button.mod-cta');
-        if (confirmButton instanceof HTMLElement) {
-          await clickElement({ element: confirmButton });
-          break;
-        }
-
-        await sleep(CONFIRM_DELAY_IN_MILLISECONDS);
-      }
 
       // These commands walk the whole vault through an internal queue, so the
       // wait is for the work rather than for the call.
@@ -678,23 +657,6 @@ async function shoot(index: number, caption: string): Promise<void> {
 
 function vaultPath(): string {
   return getTemporaryVault().path;
-}
-
-async function waitForFile(path: string): Promise<string[]> {
-  const ATTEMPTS = 20;
-  const INTERVAL_IN_MILLISECONDS = 1500;
-
-  let paths: string[] = [];
-  for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
-    paths = await listFiles();
-    if (paths.includes(path)) {
-      return paths;
-    }
-
-    await sleepInNode({ milliseconds: INTERVAL_IN_MILLISECONDS });
-  }
-
-  return paths;
 }
 
 /**

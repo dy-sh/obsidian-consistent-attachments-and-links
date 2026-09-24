@@ -2,14 +2,15 @@ import type {
   SettingGroup,
   ToggleComponent
 } from 'obsidian';
+import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { AsyncEvents } from 'obsidian-dev-utils/async-events';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
@@ -34,10 +35,6 @@ import { translationsMap } from './i18n/locales/translations-map.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 
-vi.mock('obsidian-dev-utils/obsidian/modals/alert', () => ({
-  alert: vi.fn((): Promise<void> => noopAsync())
-}));
-
 interface CreatedTab {
   pluginSettingsComponent: PluginSettingsComponent;
   tab: PluginSettingsTab;
@@ -57,6 +54,10 @@ class MockDataHandler implements DataHandler {
 
 const originalAddToggle = SettingEx.prototype.addToggle;
 
+// What the stubbed suggestion component reports, so a test can put the tab in either state.
+let suggestedPluginState: SuggestedPluginState = SuggestedPluginState.NotInstalled;
+const renderBanner = vi.fn();
+
 async function createTab(): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const pluginSettingsComponent = new PluginSettingsComponent({
@@ -75,9 +76,15 @@ async function createTab(): Promise<CreatedTab> {
       callback(toggle);
     });
   });
+  // The banner row asks the suggestion component whether to render, then hands it an element. A stub keeps
+  // both out of the community-plugin registry, which the real component reads.
   const tab = new PluginSettingsTab({
     plugin,
-    pluginSettingsComponent
+    pluginSettingsComponent,
+    pluginSuggestionComponent: strictProxy<PluginSuggestionComponent>({
+      getSuggestedPluginState: () => suggestedPluginState,
+      renderBanner
+    })
   });
 
   renderRows(tab);
@@ -85,14 +92,16 @@ async function createTab(): Promise<CreatedTab> {
   return { pluginSettingsComponent, tab, toggles };
 }
 
-async function flushMicrotasks(): Promise<void> {
-  for (let index = 0; index < 20; index++) {
-    await noopAsync();
-  }
-}
-
 function getSettingNames(tab: PluginSettingsTab): string[] {
   return tab.getSettingDefinitions().map((definition) => 'name' in definition ? definition.name : '');
+}
+
+function isBannerVisible(tab: PluginSettingsTab): boolean {
+  const [firstDefinition] = tab.getSettingDefinitions();
+  if (!firstDefinition || !('visible' in firstDefinition) || typeof firstDefinition.visible !== 'function') {
+    throw new TypeError('The first row is not the suggestion banner.');
+  }
+  return firstDefinition.visible();
 }
 
 /**
@@ -122,6 +131,7 @@ beforeAll(async () => {
 describe('PluginSettingsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    suggestedPluginState = SuggestedPluginState.NotInstalled;
   });
 
   afterEach(() => {
@@ -136,7 +146,6 @@ describe('PluginSettingsTab', () => {
   it('should render all settings', async () => {
     const { tab } = await createTab();
     const names = getSettingNames(tab);
-    expect(names).toContain('Add commands to file menu');
     expect(names).toContain('Consistency report filename');
     expect(names).toContain('Include paths');
     expect(names).toContain('Exclude paths');
@@ -156,45 +165,40 @@ describe('PluginSettingsTab', () => {
     expect(names).not.toContain('Update backlink text on note rename');
   });
 
-  // Advanced Rename and Delete Handler is a declared dependency: while it is missing this tab is never shown,
-  // and the library's own blocked tab says what to install. So there is no banner row left to carry.
-  it('should carry no nameless banner row, only settings', async () => {
+  // Custom Attachment Location owns these since 5.0.0.
+  it('should not render the collect settings it no longer owns', async () => {
     const { tab } = await createTab();
-    expect(getSettingNames(tab)).not.toContain('');
+    const names = getSettingNames(tab);
+    expect(names).not.toContain('Add commands to file menu');
+    expect(names).not.toContain('Auto Collect Attachments');
+    expect(names).not.toContain('Exclude paths from attachment collecting');
+    expect(names).not.toContain('Attachment unit folders');
+    expect(names).not.toContain('Collect attachment used by multiple notes mode');
+    expect(names).not.toContain('Move attachment to proper folder used by multiple notes mode');
   });
 
-  it('should capture toggles for the dangerous settings', async () => {
+  // The banner has to be a row: Obsidian never calls `display()` once the declarative definitions are
+  // non-empty, so a row is the only place it can go.
+  it('should carry the Custom Attachment Location suggestion banner as its first row', async () => {
+    const { tab } = await createTab();
+    expect(getSettingNames(tab)[0]).toBe('');
+    expect(renderBanner).toHaveBeenCalledOnce();
+  });
+
+  it('should show the suggestion banner while the suggested plugin is not enabled', async () => {
+    const { tab } = await createTab();
+    expect(isBannerVisible(tab)).toBe(true);
+  });
+
+  // Nothing to suggest once it is installed and running, so the row takes no space.
+  it('should hide the suggestion banner once the suggested plugin is enabled', async () => {
+    suggestedPluginState = SuggestedPluginState.Enabled;
+    const { tab } = await createTab();
+    expect(isBannerVisible(tab)).toBe(false);
+  });
+
+  it('should bind its toggles', async () => {
     const { toggles } = await createTab();
     expect(toggles.length).toBeGreaterThan(0);
-  });
-
-  it('should show a warning when a dangerous setting is enabled', async () => {
-    const { toggles } = await createTab();
-    const autoCollectToggle = toggles[1];
-    expect(autoCollectToggle).toBeDefined();
-    autoCollectToggle?.setValue(true);
-    await flushMicrotasks();
-    expect(alert).toHaveBeenCalled();
-  });
-
-  it('should run the dangerous-setting check for every dangerous toggle', async () => {
-    const { toggles } = await createTab();
-    for (const toggle of toggles) {
-      toggle.setValue(true);
-      await flushMicrotasks();
-    }
-    // Auto-collect is the one dangerous toggle left — the other three moved to Advanced Rename and Delete
-    // Handler in 4.0.0. Non-dangerous toggles have no onChanged handler.
-    const DANGEROUS_TOGGLE_COUNT = 1;
-    expect(alert).toHaveBeenCalledTimes(DANGEROUS_TOGGLE_COUNT);
-  });
-
-  it('should not show a warning when a dangerous setting is disabled', async () => {
-    const { toggles } = await createTab();
-    const autoCollectToggle = toggles[1];
-    expect(autoCollectToggle).toBeDefined();
-    autoCollectToggle?.setValue(false);
-    await flushMicrotasks();
-    expect(alert).not.toHaveBeenCalled();
   });
 });

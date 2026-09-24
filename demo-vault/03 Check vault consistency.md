@@ -19,7 +19,7 @@ Two things it deliberately does **not** report:
 - An attachment that is in the right folder under a name your rename template would not have produced. That is a name, not a place, and this plugin does not rename attachments.
 - Anything already listed above as a bad link, embed or frontmatter link. A reference that does not resolve has no attachment to judge, so it is reported once, as the broken link it is.
 
-Acting on the finding is a separate step and always yours to take: run **Move attachment to proper folder** on the named file, or install Custom Attachment Location if you want placement handled as you write.
+Acting on the finding is a separate step and always yours to take. Since 5.0.0 moving attachments belongs to [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location): run its **Move attachment to proper folder** on the named file, or its **Collect attachments** on the note.
 
 ## Try it
 
@@ -38,4 +38,4 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ct
 ## What to notice
 
 - Nothing is modified by this command - it is a safe, read-only audit you can run any time.
-- The report is the natural starting point before you run the reorganization commands in [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
+- The report is the natural starting point before you run the repair in [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).

@@ -2,7 +2,10 @@ import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { AsyncEvents } from 'obsidian-dev-utils/async-events';
-import { noopAsync } from 'obsidian-dev-utils/function';
+import {
+  noop,
+  noopAsync
+} from 'obsidian-dev-utils/function';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
@@ -27,7 +30,11 @@ class MockDataHandler implements DataHandler {
   }
 
   public async saveData(data: unknown): Promise<void> {
-    this.data = data;
+    // Round-tripped through JSON, exactly as `data.json` is, so a reload reads what the file would hold. Not
+    // `structuredClone`: it keeps a key whose value is `undefined`, which JSON drops, and the saved record
+    // carries one for a private settings field (an obsidian-dev-utils defect), so a clone would reload a record
+    // no real `data.json` can contain.
+    this.data = JSON.parse(JSON.stringify(data) ?? 'null');
     await noopAsync();
   }
 }
@@ -127,7 +134,7 @@ describe('PluginSettingsComponent', () => {
         updateLinks: false
       });
       await component.loadWithPromises();
-      expect(component.settings.shouldCollectAttachmentsAutomatically).toBe(true);
+      expect(component.settings.proposedCollectSettings).toStrictEqual({ shouldCollectAttachmentsAutomatically: true });
       expect(component.settings.shouldShowBackupWarning).toBe(false);
       // The ancient names are mapped onto the 3.x ones first, and only then parked for the new owner — so a
       // vault that never saw 3.x still hands its values over intact.
@@ -187,6 +194,7 @@ describe('PluginSettingsComponent', () => {
       expect(component.settings.shouldShowBackupWarning).toBe(true);
       // Nothing was customized, so there is nothing of the user's to carry over and no migration is offered.
       expect(component.settings.proposedRenameDeleteSettings).toBeNull();
+      expect(component.settings.proposedCollectSettings).toBeNull();
     });
 
     it('should append legacy ignore paths to existing excludePaths', async () => {
@@ -197,6 +205,63 @@ describe('PluginSettingsComponent', () => {
       });
       await component.loadWithPromises();
       expect(component.settings.excludePaths).toStrictEqual(['existing', '/regex$/', 'folder']);
+    });
+  });
+
+  describe('collect settings handover', () => {
+    it('should park the 4.x collect settings for Custom Attachment Location', async () => {
+      const component = createComponent({
+        attachmentUnitFolderPaths: ['assets/page_files'],
+        collectAttachmentUsedByMultipleNotesMode: 'Copy',
+        excludePathsFromAttachmentCollecting: ['archive'],
+        moveAttachmentToProperFolderUsedByMultipleNotesMode: 'Prompt',
+        shouldAddCommandsToFileMenu: false,
+        shouldCollectAttachmentsAutomatically: true
+      });
+      await component.loadWithPromises();
+      // `shouldAddCommandsToFileMenu` is not proposed: that plugin has no toggle for it to land in.
+      expect(component.settings.proposedCollectSettings).toStrictEqual({
+        attachmentUnitFolderPaths: ['assets/page_files'],
+        collectAttachmentUsedByMultipleNotesMode: 'Copy',
+        excludePathsFromAttachmentCollecting: ['archive'],
+        moveAttachmentToProperFolderUsedByMultipleNotesMode: 'Prompt',
+        shouldCollectAttachmentsAutomatically: true
+      });
+    });
+
+    it('should propose only the collect keys the record carries', async () => {
+      const component = createComponent({ collectAttachmentUsedByMultipleNotesMode: 'Move' });
+      await component.loadWithPromises();
+      expect(component.settings.proposedCollectSettings).toStrictEqual({ collectAttachmentUsedByMultipleNotesMode: 'Move' });
+    });
+
+    it('should strip the collect keys from the saved record', async () => {
+      const dataHandler = new MockDataHandler({
+        collectAttachmentUsedByMultipleNotesMode: 'Copy',
+        shouldAddCommandsToFileMenu: false
+      });
+      const component = new PluginSettingsComponent({ dataHandler, pluginEventSource: new AsyncEvents<PluginEventMap>() });
+      await component.loadWithPromises();
+      await component.editAndSave(noop);
+      const saved = await dataHandler.loadData() as Record<string, unknown>;
+      expect(saved).not.toHaveProperty('collectAttachmentUsedByMultipleNotesMode');
+      expect(saved).not.toHaveProperty('shouldAddCommandsToFileMenu');
+      expect(saved['proposedCollectSettings']).toStrictEqual({ collectAttachmentUsedByMultipleNotesMode: 'Copy' });
+    });
+
+    // The failure this guards is an applied migration offered again on the next load, because a parked key
+    // was still in the record and got parked a second time.
+    it('should not bring a retired offer back on the next load', async () => {
+      const dataHandler = new MockDataHandler({ shouldCollectAttachmentsAutomatically: true });
+      const first = new PluginSettingsComponent({ dataHandler, pluginEventSource: new AsyncEvents<PluginEventMap>() });
+      await first.loadWithPromises();
+      await first.editAndSave((settings) => {
+        settings.proposedCollectSettings = null;
+      });
+
+      const second = new PluginSettingsComponent({ dataHandler, pluginEventSource: new AsyncEvents<PluginEventMap>() });
+      await second.loadWithPromises();
+      expect(second.settings.proposedCollectSettings).toBeNull();
     });
   });
 });

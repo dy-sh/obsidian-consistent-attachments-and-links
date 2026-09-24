@@ -9,7 +9,7 @@ import {
  * The dependency on Advanced Rename and Delete Handler, driven end to end: take it away and this plugin's
  * feature surface goes with it; bring it back and the surface returns, with no restart.
  *
- * The collect command stands in for the whole surface — it is registered by `onloadImpl`, which is exactly
+ * The check-consistency command stands in for the whole surface — it is registered by `onloadImpl`, which is exactly
  * what the dependency gate withholds. Bringing it back also re-runs `onloadImpl` on a plugin instance that
  * has run it before, which is the path a plugin written for a single load has to survive.
  *
@@ -21,7 +21,7 @@ import {
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
 const DEPENDENCY_PLUGIN_ID = 'advanced-rename-and-delete-handler';
-const COLLECT_COMMAND_ID = `${PLUGIN_ID}:collect-attachments-entire-vault`;
+const FEATURE_COMMAND_ID = `${PLUGIN_ID}:check-consistency`;
 /*
  * Under the transport's ~30s per-closure cap, not at it. The one closure below charges this ceiling TWICE —
  * Once for the withdrawal, once for the return — and the whole callback is a single `Runtime.evaluate`, so the
@@ -42,13 +42,13 @@ describe('Advanced Rename and Delete Handler as a dependency', () => {
     const result = await evalInObsidian({
       async callback({
         app,
-        collectCommandId,
         dependencyPluginId,
+        featureCommandId,
         lib: { waitUntil },
         timeoutInMilliseconds
       }): Promise<DependencyProbeResult> {
         function isCommandRegistered(): boolean {
-          return Object.hasOwn(app.commands.commands, collectCommandId);
+          return Object.hasOwn(app.commands.commands, featureCommandId);
         }
 
         const isCommandRegisteredBefore = isCommandRegistered();
@@ -81,8 +81,8 @@ describe('Advanced Rename and Delete Handler as a dependency', () => {
         }
       },
       input: {
-        collectCommandId: COLLECT_COMMAND_ID,
         dependencyPluginId: DEPENDENCY_PLUGIN_ID,
+        featureCommandId: FEATURE_COMMAND_ID,
         timeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
       }
     });

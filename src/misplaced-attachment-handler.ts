@@ -4,22 +4,22 @@
  * The `Misplaced attachments` section of the consistency report: every reference whose target is an
  * attachment sitting outside the attachment folder configured for the note that references it.
  *
- * **It only reports.** Moving the attachment is what `collect-attachments` did, and that is leaving for
- * Custom Attachment Location; a user who wants the finding acted on installs that plugin, or runs this
- * plugin's own `Move attachment to proper folder` on the named file. See the scope line in `AGENTS.md`.
+ * **It only reports.** Moving the attachment is what `collect-attachments` did, and that left for Custom
+ * Attachment Location in 5.0.0; a user who wants the finding acted on runs that plugin's `Collect attachments`
+ * or `Move attachment to proper folder`. See the scope line in `AGENTS.md`.
  *
  * Two things here are easy to get wrong, and both were:
  *
- * - **The judgement is about the FOLDER, not the path.** {@link AttachmentCollector.getProperAttachmentPath}
+ * - **The judgement is about the FOLDER, not the path.** obsidian-dev-utils' `getAttachmentFilePath`
  *   answers about the proper *path* — folder and templated base name both — so judging on it raw reports
  *   every attachment whose NAME does not match the rename template. That is a different defect, this plugin
  *   does not offer to fix it, and reporting what we do not repair is the mistake the wikilink buckets'
  *   removal already settled. So the comparison is `dirname` against `dirname`.
  * - **The proper path is asked for the REAL attachment, never a dummy.** An attachment folder template may
  *   depend on the attachment's own name, extension or stats, so `getAttachmentFolderPath`'s dummy-file
- *   route can answer about a file that does not exist. Asking {@link AttachmentCollector} the same question
- *   the `Move attachment to proper folder` command asks is also what keeps the report and the repair from
- *   disagreeing.
+ *   route can answer about a file that does not exist. Asking the same question, the same way, as Custom
+ *   Attachment Location's `Move attachment to proper folder` is also what keeps the report and the repair
+ *   from disagreeing.
  *
  * The Custom Attachment Location seam needs no code here. Every proper-path read goes through
  * obsidian-dev-utils' `getAttachmentFilePath`, which dispatches to `app.vault.getAvailablePathForAttachments.extended`
@@ -40,11 +40,18 @@ import {
   isReferenceCache,
   parentFolderPath
 } from '@obsidian-typings/obsidian-public-latest/implementations';
-import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
+import {
+  AttachmentPathContext,
+  getAttachmentFilePath,
+  isAtProperAttachmentPath
+} from 'obsidian-dev-utils/obsidian/attachment-path';
+import {
+  getFileOrNull,
+  isNote
+} from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { generateMarkdownLink } from 'obsidian-dev-utils/obsidian/link';
 
-import type { AttachmentCollector } from './attachment-collector.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 /**
@@ -80,7 +87,6 @@ interface MisplacedAttachmentHandlerCheckParams {
 
 interface MisplacedAttachmentHandlerConstructorParams {
   readonly app: App;
-  readonly attachmentCollector: AttachmentCollector;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -146,12 +152,10 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
  */
 export class MisplacedAttachmentHandler {
   private readonly app: App;
-  private readonly attachmentCollector: AttachmentCollector;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: MisplacedAttachmentHandlerConstructorParams) {
     this.app = params.app;
-    this.attachmentCollector = params.attachmentCollector;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -168,11 +172,11 @@ export class MisplacedAttachmentHandler {
       reference
     } = params;
 
-    // `isNoteEx` is `isNote && !isTreatedAsAttachment`, so a markdown file the user has declared an
-    // attachment — `.excalidraw.md` by default — IS judged here. That is the same predicate
-    // `prepareAttachmentToMove` uses to make such a file travel as an attachment, and answering differently
-    // would leave the report and the collector disagreeing about what an attachment is.
-    if (this.attachmentCollector.isNoteEx(attachmentFile)) {
+    // A note is not an attachment — unless the user declared its extension one (`.excalidraw.md` by
+    // default), in which case it IS judged here. That is the same rule a collector uses to make such a file
+    // travel as an attachment, and answering differently would leave the report and the repair disagreeing
+    // about what an attachment is.
+    if (isNote(attachmentFile) && !this.pluginSettingsComponent.settings.isTreatedAsAttachment(attachmentFile.path)) {
       return;
     }
 
@@ -180,15 +184,26 @@ export class MisplacedAttachmentHandler {
       return;
     }
 
-    const properAttachmentPath = await this.attachmentCollector.getProperAttachmentPath({
-      attachmentFile,
-      noteFilePath: notePath
-    });
-
-    // Already at its proper path, name and all.
-    if (properAttachmentPath === null) {
+    // Already at its proper path, name and all — or at that path plus an Obsidian deduplication suffix, parked
+    // there because a different file holds the suffix-free slot. Either way nothing would move it.
+    if (
+      await isAtProperAttachmentPath({
+        app: this.app,
+        attachmentPathOrFile: attachmentFile,
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: notePath
+      })
+    ) {
       return;
     }
+
+    const properAttachmentPath = await getAttachmentFilePath({
+      app: this.app,
+      context: AttachmentPathContext.Unknown,
+      notePathOrFile: notePath,
+      oldAttachmentPathOrFile: attachmentFile,
+      shouldSkipDuplicateCheck: true
+    });
 
     // `parentFolderPath`, not `dirname`: it answers `/` for the vault root where `dirname` answers `.`, and
     // it is what obsidian-dev-utils' own `getAttachmentFolderPath` returns — so the folder this report names

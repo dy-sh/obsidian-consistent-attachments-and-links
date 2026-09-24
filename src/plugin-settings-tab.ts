@@ -1,9 +1,9 @@
 import type { SettingDefinitionItem } from 'obsidian';
+import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
+import type { PluginSettingsTabBaseConstructorParams } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 
-import { setIcon } from 'obsidian';
+import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
-import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 
 import type { PluginSettings } from './plugin-settings.ts';
@@ -13,12 +13,10 @@ import {
   PATH_COMPATIBILITY_PLATFORMS,
   PathCompatibilityPlatform
 } from './path-compatibility.ts';
-import {
-  CollectAttachmentUsedByMultipleNotesMode,
-  MoveAttachmentToProperFolderUsedByMultipleNotesMode
-} from './plugin-settings.ts';
 
-const AUTO_COLLECT_ATTACHMENTS_SETTING_NAME = 'Auto Collect Attachments';
+interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
+  readonly pluginSuggestionComponent: PluginSuggestionComponent;
+}
 
 /**
  * What each platform's toggle actually enforces. They differ enough that one shared sentence would be wrong
@@ -41,26 +39,29 @@ const PATH_COMPATIBILITY_PLATFORM_PROPERTY_NAMES = {
 } as const satisfies Record<PathCompatibilityPlatform, keyof PluginSettings>;
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
+  private readonly pluginSuggestionComponent: PluginSuggestionComponent;
+
+  public constructor(params: PluginSettingsTabConstructorParams) {
+    super(params);
+    this.pluginSuggestionComponent = params.pluginSuggestionComponent;
+  }
+
   // There is no row for Advanced Rename and Delete Handler: it is a declared dependency, so while it is missing
-  // this tab is never registered at all and the library's own blocked tab explains what to install.
+  // this tab is never registered at all and the library's own blocked tab explains what to install. Custom
+  // Attachment Location is only suggested, so it does get one.
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
+      // The suggestion banner has to travel as a row: Obsidian renders the declarative definitions and never
+      // calls `display()` once `getSettingDefinitions()` is non-empty, so there is no container to write into
+      // otherwise. The row body is emptied first, leaving the Setting element as a bare host for the banner.
       this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText('Add the plugin\'s commands (');
-          appendCodeBlock(f, 'Collect attachments');
-          f.appendText(', ');
-          appendCodeBlock(f, 'Move attachment to proper folder');
-          f.appendText(') to the file and folder context menu.');
-          f.createEl('br');
-          f.appendText('Disable this to avoid duplicate menu items when another plugin (e.g. ');
-          appendCodeBlock(f, 'Custom Attachment Location');
-          f.appendText(') provides the same commands. The commands remain available in the command palette.');
-        }),
-        name: 'Add commands to file menu',
+        name: '',
         render: (setting) => {
-          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldAddCommandsToFileMenu', valueComponent: toggle }));
-        }
+          setting.settingEl.empty();
+          this.pluginSuggestionComponent.renderBanner(setting.settingEl);
+        },
+        searchable: false,
+        visible: () => this.pluginSuggestionComponent.getSuggestedPluginState() !== SuggestedPluginState.Enabled
       }),
       this.settingEx({
         desc: 'Specify the name of the file for the consistency report.',
@@ -69,21 +70,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           setting.addText((text) => {
             this.bind({ propertyName: 'consistencyReportFile', valueComponent: text });
           });
-        }
-      }),
-      this.settingEx({
-        desc: 'Automatically collect attachments when the note is edited.',
-        name: AUTO_COLLECT_ATTACHMENTS_SETTING_NAME,
-        render: (setting) => {
-          setting.addToggle((toggle) =>
-            this.bind({
-              onChanged: async () => {
-                await this.checkDangerousSetting('shouldCollectAttachmentsAutomatically', AUTO_COLLECT_ATTACHMENTS_SETTING_NAME);
-              },
-              propertyName: 'shouldCollectAttachmentsAutomatically',
-              valueComponent: toggle
-            })
-          );
         }
       }),
       this.settingEx({
@@ -124,57 +110,13 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
-          f.appendText('Exclude attachments from the following paths when ');
-          appendCodeBlock(f, 'Collect attachments');
-          f.appendText(' command is executed.');
-          f.createEl('br');
-          f.appendText('Insert each path on a new line');
-          f.createEl('br');
-          f.appendText('You can use path string or ');
-          appendCodeBlock(f, '/regular expression/');
-          f.createEl('br');
-          f.appendText('If the setting is empty, no paths are excluded from attachment collecting.');
-        }),
-        name: 'Exclude paths from attachment collecting',
-        render: (setting) => {
-          setting.addMultipleText((multipleText) => {
-            this.bind({ propertyName: 'excludePathsFromAttachmentCollecting', valueComponent: multipleText });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText('Treat the following folders as a single attachment. When ');
-          appendCodeBlock(f, 'Collect attachments');
-          f.appendText(' moves an attachment from one of them, the whole folder moves along with it.');
-          f.createEl('br');
-          f.appendText('Use this for attachments that are really a folder: a saved page next to its files folder, a drawing next to the images it references.');
-          f.createEl('br');
-          f.appendText('Insert each path on a new line');
-          f.createEl('br');
-          f.appendText('You can use path string or ');
-          appendCodeBlock(f, '/regular expression/');
-          f.createEl('br');
-          f.appendText('A plain path is matched from the vault root. To match a folder name wherever it appears, use a regular expression.');
-          f.createEl('br');
-          f.appendText('If the setting is empty, every attachment is moved on its own, which is the behavior without this setting.');
-        }),
-        name: 'Attachment unit folders',
-        render: (setting) => {
-          setting.addMultipleText((multipleText) => {
-            this.bind({ propertyName: 'attachmentUnitFolderPaths', valueComponent: multipleText });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
           f.appendText('Treat files with these extensions as attachments.');
           f.createEl('br');
           f.appendText('By default, ');
           appendCodeBlock(f, '.md');
           f.appendText(' and ');
           appendCodeBlock(f, '.canvas');
-          f.appendText(' linked files are not treated as attachments and are not moved with the note.');
+          f.appendText(' linked files are not treated as attachments, so the misplaced-attachments section of the consistency report does not judge where they are.');
           f.createEl('br');
           f.appendText('You can add custom extensions, e.g. ');
           appendCodeBlock(f, '.foo.md');
@@ -188,89 +130,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         render: (setting) => {
           setting.addMultipleText((multipleText) => {
             this.bind({ propertyName: 'treatAsAttachmentExtensions', valueComponent: multipleText });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.description.part1));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.description));
-        }),
-        name: t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.name),
-        render: (setting) => {
-          setting.addDropdown((dropdown) => {
-            dropdown.addOptions({
-              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-              [CollectAttachmentUsedByMultipleNotesMode.Skip]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText),
-              [CollectAttachmentUsedByMultipleNotesMode.Move]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText),
-              [CollectAttachmentUsedByMultipleNotesMode.Copy]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText),
-              [CollectAttachmentUsedByMultipleNotesMode.Cancel]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText),
-              [CollectAttachmentUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText)
-              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-            });
-            this.bind({ propertyName: 'collectAttachmentUsedByMultipleNotesMode', valueComponent: dropdown });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.description.part1));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.description));
-        }),
-        name: t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.name),
-        render: (setting) => {
-          setting.addDropdown((dropdown) => {
-            dropdown.addOptions({
-              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(
-                ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText
-              ),
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(
-                ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText
-              ),
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(
-                ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText
-              ),
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(
-                ($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText
-              )
-              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-            });
-            this.bind({ propertyName: 'moveAttachmentToProperFolderUsedByMultipleNotesMode', valueComponent: dropdown });
           });
         }
       }),
@@ -354,34 +213,5 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       })
     ];
-  }
-
-  private async checkDangerousSetting(settingKey: keyof PluginSettings, settingName: string): Promise<void> {
-    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- `settingKey` is a `keyof PluginSettings`, so the lookup is statically known to exist.
-    if (!(this.pluginSettingsComponent.settings[settingKey] as unknown)) {
-      return;
-    }
-
-    await alert({
-      app: this.app,
-      message: createFragment((f) => {
-        f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
-          wrapper.appendText('You enabled ');
-          wrapper.createEl('strong', { cls: 'markdown-rendered-code', text: settingName });
-          wrapper.appendText(' setting. Without proper configuration it might lead to inconvenient attachment rearrangements or even data loss in your vault.');
-          wrapper.createEl('br');
-          wrapper.appendText('It is ');
-          wrapper.createEl('strong', { text: 'STRONGLY' });
-          wrapper.appendText(' recommended to backup your vault before using the plugin.');
-          wrapper.createEl('br');
-          wrapper.createEl('a', { href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file', text: 'Read more' });
-          wrapper.appendText(' about how to use the plugin.');
-        });
-      }),
-      title: createFragment((f) => {
-        setIcon(f.createSpan(), 'triangle-alert');
-        f.appendText(' Consistent Attachments and Links');
-      })
-    });
   }
 }

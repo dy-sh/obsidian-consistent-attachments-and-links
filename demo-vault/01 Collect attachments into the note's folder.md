@@ -1,74 +1,30 @@
 # Collect attachments into the note's folder
 
-Obsidian's default is one shared attachments folder for the whole vault, so every note's images pile up in the same place and nothing tells you which picture belongs to which note. **Collect attachments** undoes that: it moves the attachments a note actually references into that note's own folder, and rewrites the links so they keep resolving.
+Since 5.0.0 this plugin no longer collects attachments. [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) does, and it offers more of it: **Collect attachments** for one note, one folder or the whole vault, **Move attachment to proper folder**, collecting automatically as you edit, and attachment folders built from a template. Its own demo vault walks through all of it.
 
-It does it safely. An attachment that another note also references is not simply taken away — what happens instead is yours to choose, through the **Attachment used by multiple notes** mode (`collectAttachmentUsedByMultipleNotesMode`), which can skip it, copy it, move it anyway, or ask.
+Why the change: two plugins each carried a copy of the same collector, kept deliberately identical, and a user who had both installed got two sets of collect commands in the file menu. One owner is the fix. This note keeps its name so links already pointing at it still resolve.
 
-Where the attachment lands is Obsidian's decision, not this plugin's: it goes to whatever **Default location for new attachments** is set to. See [06 Recommended Obsidian settings](<./06 Recommended Obsidian settings.md>).
+## What this plugin still does about attachments
 
-## Try it
-
-**Step 1 — make a note whose attachment lives somewhere else.** Doing this by hand needs an image to hand, and lands the attachment wherever your own settings put it — so the button creates both, with the attachment deliberately parked in a shared folder:
+It **reports** where they are. The **Misplaced attachments** section of the consistency report names every attachment that sits outside the attachment folder configured for the note that references it, and changes nothing. Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>).
 
 ```code-button
 ---
-caption: Create Trip.md with its attachment in a shared folder
+caption: Check Vault Consistency (read-only)
 ---
-await require('/demoSetup.ts').createTripNote(app);
+require('/demoSetup.ts').runCommand(app, 'check-consistency');
 ```
 
-Manual equivalent: create `Trip.md` and embed an image that lives in some other folder.
+Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 
-**Step 2 — collect.**
+Acting on a finding is Custom Attachment Location's **Move attachment to proper folder**, or its **Collect attachments**.
 
-```code-button
----
-caption: Collect attachments in current note
----
-require('/demoSetup.ts').runCommand(app, 'collect-attachments-in-file');
-```
+## Your collect settings are not lost
 
-Manual equivalent: run **Collect attachments in current note** from the Command Palette, or right-click the note in the File Explorer and choose **Collect attachments in file**.
-
-**Step 3.** The image has moved out of the shared folder and into the note's own, and the embed inside the note points at where it went. Open the moved note and check the embed still renders.
-
-Start over, or put the vault back:
-
-```code-button
----
-caption: Reset the Trip demo
----
-await require('/demoSetup.ts').resetTripDemo(app);
-```
-
-## Do it without running a command
-
-Collecting can also happen as you type, so a pasted image never has time to end up in the wrong folder:
-
-```code-button
----
-caption: Enable Auto Collect Attachments
----
-await require('/demoSetup.ts').changeSettings(app, { shouldCollectAttachmentsAutomatically: true });
-```
-
-```code-button
----
-caption: Restore the default (collect only on command)
----
-await require('/demoSetup.ts').changeSettings(app, { shouldCollectAttachmentsAutomatically: false });
-```
-
-It is off by default because it changes files on disk while you are editing them.
-
-## What to notice
-
-- The attachment ends up next to the note, not in a shared folder shared with everything else.
-- If the same image were embedded in another note too, the plugin would not silently steal it — see `collectAttachmentUsedByMultipleNotesMode` in [05 Settings](<./05 Settings.md>).
-- A folder that is really one attachment — a saved web page beside its `_files` folder, a drawing beside the images it references — travels whole, if you list it under **Attachment unit folders** (`attachmentUnitFolderPaths`).
+If you used collecting in 4.x, this plugin offers your settings to Custom Attachment Location once, the first time both are installed: what to do with an attachment several notes share, the paths collecting leaves alone, the attachment unit folders, and whether collecting ran as you edited. That plugin shows you exactly what would change and writes nothing unless you approve. Cancelling leaves the offer pending, so it comes back. See [05 Settings](<./05 Settings.md>) for the key that tracks it.
 
 ## Renaming and deleting notes
 
-Moving a note so its attachments follow, and deleting a note so its now-unused attachments go too, are **not** this plugin's job any more. Since 4.0.0 they belong to [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler), which owns them for the whole vault — several plugins used to each run their own copy, and two of them acting on one rename is how links get corrupted. Install it and its own demo vault walks through renaming, deleting and shared attachments.
+Moving a note so its attachments follow, and deleting a note so its now-unused attachments go too, left even earlier: since 4.0.0 they belong to [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler), which owns them for the whole vault. Install it and its own demo vault walks through renaming, deleting and shared attachments.
 
 Next: audit the whole vault at once in [03 Check vault consistency](<./03 Check vault consistency.md>).
