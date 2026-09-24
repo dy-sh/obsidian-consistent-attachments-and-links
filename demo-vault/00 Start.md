@@ -20,9 +20,9 @@ Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsid
 
 ## Your first two minutes
 
-1. Open [Source note](<./Materials/04 Reorganize and convert links/Source note.md>). It references **Shared target**, an ordinary note, and **Diagram.excalidraw**, which is Markdown on disk but is really a drawing — and the plugin treats those two very differently.
+1. Open [Source note](<./Materials/03 Check vault consistency/Source note.md>). It references **Shared target**, an ordinary note, and **Diagram.excalidraw**, which is Markdown on disk but is really a drawing — and the plugin treats those two very differently.
 2. Press the **Check Vault Consistency** button below. It changes nothing; it just writes a report of what a reader outside Obsidian would trip over.
-3. Read that report - the drawing is listed under **Misplaced attachments** and the ordinary note is not - then see why in [04 Reorganize and convert links](<./04 Reorganize and convert links.md>).
+3. Read that report - the drawing is listed under **Misplaced attachments** and the ordinary note is not - then see why in [03 Check vault consistency](<./03 Check vault consistency.md>).
 
 Then work down the list below. The bulk commands all have buttons - most usefully the read-only **Check Vault Consistency**, which is worth pressing before and after anything else so you can see exactly what changed:
 
@@ -39,14 +39,13 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 
 - [01 Collect attachments into the note's folder](<./01 Collect attachments into the note's folder.md>)
 - [03 Check vault consistency](<./03 Check vault consistency.md>)
-- [04 Reorganize and convert links](<./04 Reorganize and convert links.md>)
 - [05 Settings](<./05 Settings.md>)
 - [06 Recommended Obsidian settings](<./06 Recommended Obsidian settings.md>)
 - [07 Commands](<./07 Commands.md>)
 - [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>)
 
-The numbering has a gap where **02 Links stay valid on rename and move** used to be. Its subject went to Advanced Rename and Delete Handler with the rest of the rename handling; the remaining notes keep their numbers so links already pointing at them still resolve.
+The numbering has two gaps. **02 Links stay valid on rename and move** went to Advanced Rename and Delete Handler with the rest of the rename handling. **04 Reorganize and convert links** went when its subject did: link conversion left for Better Markdown Links, and the `Reorganize vault` command it walked through was retired once all it still ran was **Fix Incompatible Paths** - its one surviving section, about Excalidraw drawings, now lives in [03 Check vault consistency](<./03 Check vault consistency.md>). The remaining notes keep their numbers so links already pointing at them still resolve.
 
 ## Materials
 
-`Materials/` holds the notes and attachments the walkthroughs operate on, one folder per note that needs them — `Materials/04 Reorganize and convert links/` belongs to [04 Reorganize and convert links](<./04 Reorganize and convert links.md>). You never have to open it directly; each note links to what it needs. The repair walkthrough renames files, so expect the contents to change as you follow it — that is the point.
+`Materials/` holds the notes and attachments the walkthroughs operate on, one folder per note that needs them — `Materials/03 Check vault consistency/` belongs to [03 Check vault consistency](<./03 Check vault consistency.md>). You never have to open it directly; each note links to what it needs. The repair walkthrough renames files, so expect the contents to change as you follow it — that is the point.

@@ -270,12 +270,11 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     });
   });
 
-  describe('reorganizeVault', () => {
-    it('should run the full reorganization pipeline', async () => {
+  describe('fixIncompatiblePaths', () => {
+    it('should run the path compatibility repair', async () => {
       const component = createComponent();
-      await component.reorganizeVault();
+      await component.fixIncompatiblePaths();
       expect(mockPathCompatibilityHandler.fix).toHaveBeenCalled();
-      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Reorganization of the vault completed');
     });
   });
 

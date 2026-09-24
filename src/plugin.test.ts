@@ -197,7 +197,6 @@ const { CommandHandlerMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('./command-handlers/check-consistency-command-handler.ts', () => ({ CheckConsistencyCommandHandler: CommandHandlerMock }));
-vi.mock('./command-handlers/reorganize-vault-command-handler.ts', () => ({ ReorganizeVaultCommandHandler: CommandHandlerMock }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { translationsMap } from './i18n/locales/translations-map.ts';
@@ -332,8 +331,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 3 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 5 total. The four collect and move commands left for Custom Attachment Location in 5.0.0.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(5);
+      // The plugin wires the OpenDemoVault handler plus 2 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 4 total. The four collect and move commands left for Custom Attachment Location in 5.0.0, and Reorganize vault was retired.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(4);
     });
 
     it('should register the open demo vault command', async () => {
@@ -386,7 +385,7 @@ describe('Plugin', () => {
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
-      expect(commands.size).toBe(5);
+      expect(commands.size).toBe(4);
 
       unpublishProviderApi();
       await waitForAllAsyncOperations();

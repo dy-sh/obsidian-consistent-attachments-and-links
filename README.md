@@ -4,7 +4,7 @@
 
 [Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
 
-This plugin makes that visible: it audits the whole vault and reports every link whose written path does not itself lead to its target and every attachment sitting outside its note's attachment folder, and repairs names and paths that a platform you sync to would reject.
+This plugin makes that visible: it audits the whole vault and reports every link whose written path does not itself lead to its target and every attachment sitting outside its note's attachment folder, and repairs names and paths that a platform you sync to would reject — not because Obsidian cannot open them, but because that platform's filesystem cannot store them. It never rewrites a link into a style, moves an attachment or cleans up folders: where those matter, it reports and leaves the change to you.
 
 > [!IMPORTANT]
 >
@@ -36,9 +36,15 @@ This plugin makes that visible: it audits the whole vault and reports every link
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
+> [!IMPORTANT]
+>
+> The `Reorganize vault` command is gone as well. It used to run a whole reshaping sequence — converting links, collecting attachments, deleting empty folders, repairing paths — and every step but the last has moved to another plugin, so all it still did was run **Fix incompatible paths**. Run that command directly; it does exactly what `Reorganize vault` did.
+
+<!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
+
 > [!WARNING]
 >
-> As the plugin might change your vault layout, it is crucial that you backup your vault before making any massive changes with this plugin!
+> **Fix incompatible paths** renames files and folders across the whole vault, so it is crucial that you back up your vault before running it!
 
 <!-- markdownlint-disable MD033 -->
 
@@ -75,7 +81,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 - **Audit the whole vault** and get a report of bad links, bad embed paths, bad frontmatter links and attachments sitting outside their configured attachment folder, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
-- **Tidy an existing vault** — every rejected name repaired — in one command. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
+- **Every command**, and where the ones that left went. [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which platforms the path repair enforces. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
 - **Collecting attachments** moved to [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) in 5.0.0. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
