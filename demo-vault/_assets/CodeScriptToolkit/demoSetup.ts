@@ -1,6 +1,9 @@
 import type { App } from 'obsidian';
 
-import { Notice } from 'obsidian';
+import {
+  MarkdownView,
+  Notice
+} from 'obsidian';
 import { configureCommunityPlugin } from 'obsidian-dev-utils/obsidian/community-plugins';
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
@@ -189,10 +192,77 @@ export async function resetPathCompatibilityDemo(app: App): Promise<void> {
 /**
  * Runs one of the plugin's commands.
  *
+ * It returns as soon as the command has STARTED: the plugin runs every command fire-and-forget, so
+ * nothing here can await its end. For a command that later opens a note, use a wrapper that waits for
+ * that, as {@link checkConsistency} does.
+ *
  * Manual equivalent: the Command Palette entry of the same name.
  */
 export function runCommand(app: App, commandId: string): void {
   app.commands.executeCommandById(`${PLUGIN_ID}:${commandId}`);
+}
+
+const DEFAULT_CONSISTENCY_REPORT_PATH = 'consistency-report.md';
+const CONSISTENCY_REPORT_TIMEOUT_IN_MILLISECONDS = 30_000;
+const CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS = 50;
+
+/**
+ * Runs **Check vault consistency** and returns once its report is written and showing in a tab.
+ *
+ * Fired and forgotten, the check walks the vault in the background and then opens the report IN THE
+ * ACTIVE TAB — replacing whatever note is there by then. A reader who has moved on to the next
+ * walkthrough, or the suite clicking every button in this vault, has that note swapped out from under
+ * them seconds later, and the slower the walk (a cold start, a busy machine) the later the swap lands.
+ * Waiting for the report makes the button's `Executed successfully` mean the report is there to read.
+ *
+ * Manual equivalent: run **Check vault consistency** from the Command Palette.
+ */
+export async function checkConsistency(app: App): Promise<void> {
+  const reportPath = await getConsistencyReportPath(app);
+
+  let isReportWritten = false;
+  const modifyEventRef = app.vault.on('modify', (file) => {
+    if (file.path === reportPath) {
+      isReportWritten = true;
+    }
+  });
+
+  try {
+    runCommand(app, 'check-consistency');
+
+    // The report is written first and opened second, and it is opened only when no tab shows it yet —
+    // so "written, and showing somewhere" holds after either path.
+    const deadline = Date.now() + CONSISTENCY_REPORT_TIMEOUT_IN_MILLISECONDS;
+    while (!(isReportWritten && isReportShowing(app, reportPath))) {
+      if (Date.now() > deadline) {
+        throw new Error(`The consistency report ${reportPath} did not appear within ${String(CONSISTENCY_REPORT_TIMEOUT_IN_MILLISECONDS)} ms.`);
+      }
+      await sleep(CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS);
+    }
+  } finally {
+    app.vault.offref(modifyEventRef);
+  }
+}
+
+async function getConsistencyReportPath(app: App): Promise<string> {
+  const data: unknown = await app.plugins.getPlugin(PLUGIN_ID)?.loadData();
+  if (typeof data === 'object' && data !== null) {
+    const reportPath = (data as Record<string, unknown>)['consistencyReportFile'];
+    if (typeof reportPath === 'string' && reportPath !== '') {
+      return reportPath;
+    }
+  }
+  return DEFAULT_CONSISTENCY_REPORT_PATH;
+}
+
+function isReportShowing(app: App, reportPath: string): boolean {
+  return app.workspace.getLeavesOfType('markdown').some((leaf) => leaf.view instanceof MarkdownView && leaf.view.file?.path === reportPath);
+}
+
+async function sleep(milliseconds: number): Promise<void> {
+  await new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
 }
 
 /**
