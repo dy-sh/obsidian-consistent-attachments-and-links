@@ -31,7 +31,7 @@ The order matters more than any single command here, so each step is a button. R
 ---
 caption: 1. Check Vault Consistency (read-only)
 ---
-require('/demoSetup.ts').runCommand(app, 'check-consistency');
+await require('/demoSetup.ts').checkConsistency(app);
 ```
 
 ```code-button
@@ -45,7 +45,7 @@ require('/demoSetup.ts').runCommand(app, 'reorganize-vault');
 ---
 caption: 3. Check Vault Consistency again
 ---
-require('/demoSetup.ts').runCommand(app, 'check-consistency');
+await require('/demoSetup.ts').checkConsistency(app);
 ```
 
 Manual equivalent: run those commands from the Command Palette in that order.

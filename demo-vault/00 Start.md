@@ -24,7 +24,7 @@ Then work down the list below. The bulk commands all have buttons - most usefull
 ---
 caption: Check Vault Consistency (read-only)
 ---
-require('/demoSetup.ts').runCommand(app, 'check-consistency');
+await require('/demoSetup.ts').checkConsistency(app);
 ```
 
 Manual equivalent: run **Check Vault Consistency** from the Command Palette.
