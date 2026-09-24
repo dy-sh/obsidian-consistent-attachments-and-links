@@ -70,7 +70,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 ## What it does
 
 - **Collect attachments into the note's own folder**, on command or as you edit — safely, never stealing a file another note still references. [01 Collect attachments into the note's folder](<./demo-vault/01 Collect attachments into the note's folder.md>)
-- **Audit the whole vault** and get a report of bad links, bad embed paths and bad frontmatter links, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
+- **Audit the whole vault** and get a report of bad links, bad embed paths, bad frontmatter links and attachments sitting outside their configured attachment folder, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
 - **Tidy an existing vault** — attachments collected into place, names repaired — in one command or step by step. [04 Reorganize and convert links](<./demo-vault/04 Reorganize and convert links.md>) · [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which of the destructive operations are unlocked. [05 Settings](<./demo-vault/05 Settings.md>)

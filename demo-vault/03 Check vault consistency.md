@@ -6,6 +6,20 @@ Before reorganizing anything, you can audit the whole vault without changing a s
 - Bad (broken) embed paths
 - Bad (broken) frontmatter links
 - Paths and names that are invalid on a platform you sync to, covered in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>)
+- Attachments that sit outside the attachment folder configured for the note that references them
+
+## Misplaced attachments
+
+The last section answers a different question from the others: the link works, the file is there, it is just not where your settings say attachments for that note belong. For each such reference the report names the line, where the attachment is now, and the folder it should be in.
+
+It is asked **per note**, so it is correct in a vault where different notes have different attachment folders - including when [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location) is installed and computing the folder from a template. Nothing has to be configured for that to work.
+
+Two things it deliberately does **not** report:
+
+- An attachment that is in the right folder under a name your rename template would not have produced. That is a name, not a place, and this plugin does not rename attachments.
+- Anything already listed above as a bad link, embed or frontmatter link. A reference that does not resolve has no attachment to judge, so it is reported once, as the broken link it is.
+
+Acting on the finding is a separate step and always yours to take: run **Move attachment to proper folder** on the named file, or install Custom Attachment Location if you want placement handled as you write.
 
 ## Try it
 
@@ -19,7 +33,7 @@ require('/demoSetup.ts').runCommand(app, 'check-consistency');
 Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ctrl/Cmd-P`).
 
 1. The plugin generates a report note and opens it. Its path is configurable via the **Consistency report file** setting (`consistencyReportFile`, default `consistency-report.md`).
-2. Read the report to see which notes still contain broken links, broken embed paths, or paths that are invalid on a platform you sync to.
+2. Read the report to see which notes still contain broken links, broken embed paths, paths that are invalid on a platform you sync to, or attachments sitting outside their configured folder.
 
 ## What to notice
 

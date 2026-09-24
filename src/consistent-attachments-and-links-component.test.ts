@@ -23,11 +23,13 @@ import {
 
 import type { AttachmentCollector } from './attachment-collector.ts';
 import type { LinksHandler } from './links-handler.ts';
+import type { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
 import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
+import { MisplacedAttachmentCheckResult } from './misplaced-attachment-handler.ts';
 
 interface ComponentPrivate {
   handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void;
@@ -76,6 +78,16 @@ vi.mock('./links-handler.ts', () => ({
   LinksHandler: class {}
 }));
 
+vi.mock('./misplaced-attachment-handler.ts', () => ({
+  MisplacedAttachmentCheckResult: class {
+    public toString(): string {
+      return 'Misplaced attachments\n';
+    }
+  },
+  // eslint-disable-next-line @typescript-eslint/no-extraneous-class -- Placeholder class so the value import resolves; the real instance is injected.
+  MisplacedAttachmentHandler: class {}
+}));
+
 // Spread the real module: the path-compatibility handler reaches `folder-note`, which imports members this
 // Suite does not stub, and a bare object mock makes those `undefined` at import time.
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
@@ -120,6 +132,10 @@ const mockLinksHandler = strictProxy<LinksHandler>({
   checkConsistency: vi.fn((): Promise<void> => noopAsync())
 });
 
+const mockMisplacedAttachmentHandler = strictProxy<MisplacedAttachmentHandler>({
+  check: vi.fn((): Promise<void> => noopAsync())
+});
+
 const mockPathCompatibilityHandler = strictProxy<PathCompatibilityHandler>({
   check: vi.fn((): void => undefined),
   fix: vi.fn((): Promise<void> => noopAsync())
@@ -147,6 +163,7 @@ function createComponent(): ConsistentAttachmentsAndLinksComponent {
     app,
     attachmentCollector: mockAttachmentCollector,
     linksHandler: mockLinksHandler,
+    misplacedAttachmentHandler: mockMisplacedAttachmentHandler,
     pathCompatibilityHandler: mockPathCompatibilityHandler,
     pluginNoticeComponent: mockPluginNoticeComponent,
     pluginSettingsComponent: mockPluginSettingsComponent
@@ -207,6 +224,35 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(hoisted.mockCreateFolderSafe).toHaveBeenCalled();
       expect(modifySpy).toHaveBeenCalled();
       expect(openLinkTextSpy).toHaveBeenCalledWith('report.md', '/', false);
+    });
+
+    it('should write all five sections, with the misplaced attachments one last', async () => {
+      const component = createComponent();
+      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
+      const modifySpy = vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+
+      await component.checkConsistency();
+
+      const text = modifySpy.mock.calls[0]?.[1] ?? '';
+      expect(text).toContain('Bad links\n');
+      expect(text).toContain('Bad embeds\n');
+      expect(text).toContain('Bad frontmatter links\n');
+      expect(text).toContain('Misplaced attachments\n');
+      expect(text.indexOf('Misplaced attachments\n')).toBeGreaterThan(text.indexOf('Bad frontmatter links\n'));
+    });
+
+    it('should hand the misplaced-attachment handler and its bucket to the links handler', async () => {
+      const component = createComponent();
+      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
+      vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+
+      await component.checkConsistency();
+
+      const [checkParams] = vi.mocked(mockLinksHandler.checkConsistency).mock.calls[0] ?? [];
+      expect(checkParams?.misplacedAttachmentHandler).toBe(mockMisplacedAttachmentHandler);
+      expect(checkParams?.misplacedAttachments).toBeInstanceOf(MisplacedAttachmentCheckResult);
     });
 
     it('should not reopen the report when it is already open', async () => {
