@@ -159,11 +159,12 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     const app = this.app;
     const pluginSettingsComponent = this.pluginSettingsComponent;
 
-    if (
-      backlinks.keys().length > 1
-      && !await shouldContinueWithMode(context.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)
-    ) {
-      return false;
+    if (backlinks.keys().length > 1) {
+      if (!await shouldContinueWithMode(context.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)) {
+        return false;
+      }
+    } else {
+      backlinksToCopy = [...backlinks.keys()];
     }
 
     for (const backlink of backlinksToCopy) {

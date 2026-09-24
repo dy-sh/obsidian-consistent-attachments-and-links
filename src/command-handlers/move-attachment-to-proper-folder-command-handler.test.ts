@@ -377,23 +377,45 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       expect(mockDeleteIfNotUsed).not.toHaveBeenCalled();
     });
 
-    it('should not copy for a single backlink (handleMode not invoked)', async () => {
+    it('should copy, update the link and delete for a single backlink, without consulting the multiple-notes mode (re #160)', async () => {
       const attachment = createFile('attachment.png');
       const reference = createReference('![[attachment]]');
       const backlinkFile = createFile('note1.md');
+      // Deliberately Prompt: a single backlink is not a multiple-notes case, so no modal may be raised for it.
+      settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
       mockGetBacklinksForFileSafe
         .mockResolvedValueOnce(createBacklinks(new Map([['note1.md', [reference]]])))
-        .mockResolvedValueOnce(createBacklinks(new Map([['note1.md', [reference]]])));
-      settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+        .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockReturnValue(backlinkFile);
       getProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
-      mockEditLinks.mockResolvedValue();
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(reference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
       await runProcessItem(attachment);
 
-      // With a single backlink, handleMode is not invoked, so backlinksToCopy stays empty and no copy happens.
+      expect(mockSelectMode).not.toHaveBeenCalled();
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'new-folder/attachment.png', oldPathOrFile: attachment });
+      expect(mockUpdateLink).toHaveBeenCalledOnce();
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
+    });
+
+    it('should leave a single backlink alone when the attachment is already in the destination folder (re #160)', async () => {
+      const attachment = createFile('attachment.png');
+      const backlinkFile = createFile('note1.md');
+      settings.moveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(new Map([['note1.md', [createReference('![[attachment]]')]]])));
+      getFileByPath.mockReturnValue(backlinkFile);
+      getProperAttachmentPath.mockResolvedValue(null);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      await runProcessItem(attachment);
+
+      expect(warnSpy).toHaveBeenCalledWith('Skipping moving attachment attachment.png to proper folder as it is already in the destination folder.');
       expect(mockCopySafe).not.toHaveBeenCalled();
       expect(mockDeleteIfNotUsed).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
     it('should copy attachment, update matching links, and delete when no backlinks remain (CopyAll)', async () => {
