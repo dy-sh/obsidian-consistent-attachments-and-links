@@ -4,14 +4,14 @@ import type {
   Notice,
   Reference,
   TAbstractFile,
-  TFile,
-  TFolder
+  TFile
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type { LoopBuildNoticeMessageParams } from 'obsidian-dev-utils/obsidian/loop';
 import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 
+import { TFolder } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import {
@@ -139,7 +139,8 @@ function createFile(path: string): TFile {
 }
 
 function createFolder(path: string, children: TAbstractFile[] = []): TFolder {
-  return strictProxy<TFolder>({ children, path });
+  // A real `TFolder` instance: `Vault.recurseChildren` descends only into entries that are one, as Obsidian does.
+  return strictProxy<TFolder>(Object.assign(castTo<TFolder>(Object.create(TFolder.prototype)), { children, path }));
 }
 
 function createReference(original: string): Reference {
