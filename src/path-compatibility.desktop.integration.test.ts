@@ -20,6 +20,11 @@
  * documented gap `context-menu-toggle.desktop.integration.test.ts` carries.
  */
 
+import type {
+  FrontMatterCache,
+  TFile
+} from 'obsidian';
+
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
@@ -107,10 +112,41 @@ describe('Fix incompatible paths', () => {
         const folderPath = `t698-${stamp}`;
         const targetPath = `${folderPath}/${longBasename}.md`;
         const sourcePath = `${folderPath}/source.md`;
+        const originalName = `${longBasename}.md`;
 
         await app.vault.createFolder(folderPath);
         await app.vault.create(targetPath, '# Target\n');
         await app.vault.create(sourcePath, `# Source\n\n[target](<${longBasename}.md>)\n`);
+
+        interface PreservedNames {
+          aliases: string[];
+          title: string | undefined;
+        }
+
+        /*
+         * The repair picks the new name, so it is never known ahead of time: the renamed note is simply the
+         * only child of the fixture folder other than the source note, and every read re-resolves it.
+         */
+        function getRenamedFile(): null | TFile {
+          const renamedName = app.vault.getFolderByPath(folderPath)?.children
+            .find((child) => child.name !== 'source.md')?.name;
+          return renamedName === undefined ? null : app.vault.getFileByPath(`${folderPath}/${renamedName}`);
+        }
+
+        /*
+         * The two values the assertions read. The wait below and the snapshot both go through this one
+         * function, so what is waited for cannot drift from what is asserted.
+         */
+        function readPreservedNames(): PreservedNames {
+          const renamedFile = getRenamedFile();
+          const frontmatter: FrontMatterCache | undefined = renamedFile === null
+            ? undefined
+            : app.metadataCache.getFileCache(renamedFile)?.frontmatter;
+          return {
+            aliases: (frontmatter?.['aliases'] as string[] | undefined) ?? [],
+            title: frontmatter?.['title'] as string | undefined
+          };
+        }
 
         try {
           app.commands.executeCommandById(commandId);
@@ -121,22 +157,32 @@ describe('Fix incompatible paths', () => {
             predicate: () => app.vault.getAbstractFileByPath(targetPath) === null
           });
 
-          const renamed = app.vault.getFolderByPath(folderPath)?.children
-            .filter((child) => child.name !== 'source.md')
-            .map((child) => child.name) ?? [];
-          const newName = renamed[0] ?? '';
+          /*
+           * The rename is the EARLIEST observable effect of the command, not its last: `preserveOriginalName`
+           * then awaits an `addAlias` and a `processFrontmatter` write, and the metadata cache has to re-read
+           * the file on top of both. Stopping at the rename read a write still in flight and caught whichever
+           * half of it had landed, which is why this suite failed on `aliases` in one run and on `title` in
+           * the next. So wait for the preserved name itself, where the assertions read it.
+           */
+          await lib.waitUntil({
+            message: `the original name to be preserved in the frontmatter of the note renamed from ${targetPath}`,
+            predicate: () => {
+              const preserved = readPreservedNames();
+              return preserved.aliases.includes(originalName) && preserved.title === originalName;
+            }
+          });
 
+          const newName = getRenamedFile()?.name ?? '';
           const sourceContent = await app.vault.adapter.read(sourcePath);
-          const targetFile = app.vault.getFileByPath(`${folderPath}/${newName}`);
-          const frontmatter = targetFile === null ? undefined : app.metadataCache.getFileCache(targetFile)?.frontmatter;
+          const preservedNames = readPreservedNames();
 
           return {
-            aliases: (frontmatter?.['aliases'] as string[] | undefined) ?? [],
+            aliases: preservedNames.aliases,
             newName,
             newNameByteLength: new Blob([newName]).size,
             settingsFound: true,
             sourceContent,
-            title: frontmatter?.['title'] as string | undefined
+            title: preservedNames.title
           };
         } finally {
           settings.shouldEnsurePathCompatibilityOnAndroid = wasAndroidEnabled;
