@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## 4.1.0
+
+**[Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) is now required.** This plugin used to suggest it; it now waits for it. Until it is installed, this plugin shows a notice that installs it in one click and finishes loading the moment it arrives. Its defaults change nothing in your vault until you turn renames or deletions on.
+
+**Delete empty folders has moved to Advanced Rename and Delete Handler**, under the same name and the same command id, so your hotkey and your command-palette habit keep working.
+
+The consistency report gains a **Misplaced attachments** section, naming every attachment that sits outside the attachment folder configured for the note that uses it.
+
+Fixed:
+
+- **Move attachment to proper folder** did nothing for an attachment used by exactly one note (#160).
+- The offer to hand your old rename and delete settings to Advanced Rename and Delete Handler came back on every start, even after you had answered it (#159).
+
+- fix(settings): merge the one-shot rename/delete handover
+- chore(deps): merge obsidian-test-mocks ^7.0.0
+- style(comments): stop capitalizing the middle of a wrapped comment
+- fix(test): merge the headless demo-vault toolkit install
+- fix(deps): restore the lockfile's missing resolved and integrity fields
+- chore: merge the sharp no-named-as-default silencing
+- chore: merge the no-soft-break-in-paragraph rollout
+- docs: record that the rename is the repair's earliest effect, not its last
+- test: settle the path-compatibility suite on the write it asserts, not the rename that precedes it
+- feat(report): name attachments sitting outside their configured folder
+- test: settle the source-note-skip suite on a declared walk order, not a name coincidence
+- fix: move an attachment used by exactly one note to its proper folder (re #160)
+- test: size the three remaining over-cap wait closures by call site
+- refactor(plugin): scope onloadImpl commands through the library, not a local disposal
+- test: settle the excalidraw collecting suite on a trailing image, not the leading one
+- chore(spellcheck): teach cspell the word lintable
+- feat!: hand Delete empty folders to Advanced Rename and Delete Handler
+- fix(deps): float devalue to 5.9.4, clearing GHSA-9rgm-9g3h-6x36
+- chore(deps): drop four dead overrides and justify the one that is not
+- chore(deps): drop the dead markdown-it override
+- chore(deps): drop the dead js-yaml override
+- docs: replace the private rule-id citations with what they assert
+- test: run the mobile file-drawer retry from Node, so its own diagnostic can fire
+- docs: name the library and the sibling plugins so a reader can resolve them
+- docs: replace the private tracker references with what they pointed at
+- test: bring the in-closure wait ceilings under the transport's per-eval cap
+- feat!: require Advanced Rename and Delete Handler instead of suggesting it
+
 ## 4.0.1
 
 - refactor: replace the hand-rolled settings-migration copy with the shared component

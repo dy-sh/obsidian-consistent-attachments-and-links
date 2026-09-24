@@ -27,7 +27,7 @@ Acting on the finding is a separate step and always yours to take. Since 5.0.0 m
 ---
 caption: Check Vault Consistency
 ---
-require('/demoSetup.ts').runCommand(app, 'check-consistency');
+await require('/demoSetup.ts').checkConsistency(app);
 ```
 
 Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ctrl/Cmd-P`).

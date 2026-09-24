@@ -1,6 +1,6 @@
 {
   "name": "consistent-attachments-and-links",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "Audits a vault for links and paths that break outside Obsidian, and repairs what it finds. Reports every broken link and misplaced attachment, and repairs names that other platforms reject.",
   "keywords": [],
   "homepage": "https://github.com/dy-sh/obsidian-consistent-attachments-and-links#readme",

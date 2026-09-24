@@ -197,6 +197,84 @@ describe('PluginSettingsComponent', () => {
       expect(component.settings.proposedCollectSettings).toBeNull();
     });
 
+    // Issue #159: the three keys below are still declared, so every saved record carries them. Alone, they are
+    // not a 3.x record and must not re-open the handover.
+    it('should propose nothing for a record that carries only the still-declared keys', async () => {
+      const component = createComponent({
+        excludePaths: [String.raw`/\_*`],
+        includePaths: [],
+        treatAsAttachmentExtensions: ['.excalidraw.md']
+      });
+      await component.loadWithPromises();
+      expect(component.settings.proposedRenameDeleteSettings).toBeNull();
+    });
+
+    it('should not re-offer a retired proposal after a reload', async () => {
+      const dataHandler = new MockDataHandler({
+        excludePaths: ['private'],
+        shouldUpdateLinks: false
+      });
+      const pluginEventSource = new AsyncEvents<PluginEventMap>();
+      const firstLoad = new PluginSettingsComponent({ dataHandler, pluginEventSource });
+      await firstLoad.loadWithPromises();
+      expect(firstLoad.settings.proposedRenameDeleteSettings).toStrictEqual({
+        excludePaths: ['private'],
+        shouldHandleRenames: false
+      });
+
+      await firstLoad.editAndSave((settings) => {
+        settings.proposedRenameDeleteSettings = null;
+      });
+
+      const secondLoad = new PluginSettingsComponent({ dataHandler, pluginEventSource });
+      await secondLoad.loadWithPromises();
+      expect(secondLoad.settings.proposedRenameDeleteSettings).toBeNull();
+      expect(secondLoad.settings.excludePaths).toStrictEqual(['private']);
+    });
+
+    it('should keep a pending proposal across a reload', async () => {
+      const dataHandler = new MockDataHandler({ shouldUpdateLinks: false });
+      const pluginEventSource = new AsyncEvents<PluginEventMap>();
+      const firstLoad = new PluginSettingsComponent({ dataHandler, pluginEventSource });
+      await firstLoad.loadWithPromises();
+      await firstLoad.editAndSave(() => {
+        // Nothing to change; the save that drops the legacy keys is the subject.
+      });
+
+      const secondLoad = new PluginSettingsComponent({ dataHandler, pluginEventSource });
+      await secondLoad.loadWithPromises();
+      expect(secondLoad.settings.proposedRenameDeleteSettings).toStrictEqual({ shouldHandleRenames: false });
+    });
+
+    // What an affected data.json looks like today: the defect saved the re-parked proposal to disk.
+    it('should discard a saved proposal the defect wrote', async () => {
+      const component = createComponent({
+        excludePaths: [String.raw`/\_*`],
+        proposedRenameDeleteSettings: {
+          excludePaths: [String.raw`/\_*`],
+          includePaths: [],
+          treatAsAttachmentExtensions: ['.excalidraw.md']
+        },
+        treatAsAttachmentExtensions: ['.excalidraw.md']
+      });
+      await component.loadWithPromises();
+      expect(component.settings.proposedRenameDeleteSettings).toBeNull();
+    });
+
+    it('should keep a saved proposal that carries a handed-over key', async () => {
+      const component = createComponent({
+        proposedRenameDeleteSettings: {
+          excludePaths: ['private'],
+          shouldHandleRenames: false
+        }
+      });
+      await component.loadWithPromises();
+      expect(component.settings.proposedRenameDeleteSettings).toStrictEqual({
+        excludePaths: ['private'],
+        shouldHandleRenames: false
+      });
+    });
+
     it('should append legacy ignore paths to existing excludePaths', async () => {
       const component = createComponent({
         excludePaths: ['existing'],

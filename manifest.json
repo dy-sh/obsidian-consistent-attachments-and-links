@@ -1,7 +1,7 @@
 {
   "id": "consistent-attachments-and-links",
   "name": "Consistent Attachments and Links",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "minAppVersion": "1.13.7",
   "description": "Audits a vault for links and paths that break outside the app, and repairs what it finds. Reports every broken link and misplaced attachment, and repairs names that other platforms reject.",
   "author": "Dmitry Savosh",

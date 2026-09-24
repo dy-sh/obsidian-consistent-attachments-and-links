@@ -35,7 +35,7 @@ Manual equivalent: create a note with a very long non-Latin name, link to it fro
 ---
 caption: Check Vault Consistency (read-only)
 ---
-require('/demoSetup.ts').runCommand(app, 'check-consistency');
+await require('/demoSetup.ts').checkConsistency(app);
 ```
 
 **Step 3 - repair it.**

@@ -24,6 +24,24 @@ type Mutable<T> = {
   -readonly [Key in keyof T]: T[Key];
 };
 
+// The rename and delete keys this plugin stopped declaring in 4.0.0, under the names it used until then. A
+// record that still carries one has not been handed over yet.
+const DROPPED_RENAME_DELETE_KEYS = [
+  'emptyFolderBehavior',
+  'shouldChangeNoteBacklinksDisplayText',
+  'shouldDeleteAttachmentsWithNote',
+  'shouldDeleteExistingFilesWhenMovingNote',
+  'shouldMoveAttachmentsWithNote',
+  'shouldUpdateLinks'
+] as const satisfies readonly (keyof LegacySettings)[];
+
+// The proposal keys whose source settings this plugin still declares, so every saved record carries them.
+const STILL_DECLARED_PROPOSAL_KEYS = [
+  'excludePaths',
+  'includePaths',
+  'treatAsAttachmentExtensions'
+] as const satisfies readonly (keyof MigratableSettings)[];
+
 interface PluginSettingsComponentConstructorParams {
   readonly dataHandler: DataHandler;
   readonly pluginEventSource: PluginEventSource;
@@ -152,13 +170,35 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 }
 
 /**
+ * Clears a proposal that issue #159 wrote, rather than one made of the user's own 3.x settings.
+ *
+ * Before the fix, every load re-parked the three still-declared keys and saved them, so an affected
+ * `data.json` holds a proposal made of those keys alone — and it would be offered once more even with the
+ * re-parking stopped. A genuine proposal always carries a dropped key as well, because 3.x saved the whole
+ * record, so a proposal with none of them can only be the defect's.
+ *
+ * @param legacySettings - The saved record, mid-conversion, which carries no dropped key.
+ */
+function discardDefectProposal(legacySettings: LegacySettingsRecord): void {
+  const proposal = legacySettings.proposedRenameDeleteSettings;
+  if (!proposal) {
+    return;
+  }
+
+  const stillDeclaredKeys: readonly string[] = STILL_DECLARED_PROPOSAL_KEYS;
+  if (Object.keys(proposal).every((key) => stillDeclaredKeys.includes(key))) {
+    legacySettings.proposedRenameDeleteSettings = null;
+  }
+}
+
+/**
  * Parks the collect values the saved record carries, for Custom Attachment Location — which owns them from
  * 5.0.0 on — so the migration component can offer them once.
  *
  * Same rules as {@link parkRenameDeleteSettings}: it runs after the ancient key names are mapped, and only a
  * key the record ACTUALLY carries is proposed.
  *
- * It is one-shot by construction, which the rename/delete parking is not: every key read here has left
+ * It is one-shot by construction, where the rename/delete parking needs a signal to be: every key read here has left
  * {@link PluginSettings}, so the converter strips it from the record and the next load finds nothing to park.
  * A key that stayed would be re-parked on every load and bring a retired offer back.
  *
@@ -203,9 +243,23 @@ function parkCollectSettings(legacySettings: LegacySettingsRecord): void {
  * never expressed a preference, so there is nothing of theirs to carry over. That is also what keeps a fresh
  * install — whose record has none of these — from being told it has a migration waiting.
  *
+ * The converter runs on EVERY load, not once, so the parking has to be one-shot by itself. The signal is the
+ * six rename and delete keys this plugin no longer declares: the first save rebuilds the record from the
+ * declared keys alone, so they are gone from the second load on. `excludePaths`, `includePaths` and
+ * `treatAsAttachmentExtensions` are still declared — other features here read them — so they sit in every
+ * saved record and are proposed only alongside a dropped key. Parking them on their own re-offered the
+ * migration on every start, after the user had already applied or dismissed it (issue #159).
+ *
  * @param legacySettings - The saved record, mid-conversion.
  */
 function parkRenameDeleteSettings(legacySettings: LegacySettingsRecord): void {
+  const hasDroppedKey = DROPPED_RENAME_DELETE_KEYS.some((key) => legacySettings[key] !== undefined);
+
+  if (!hasDroppedKey) {
+    discardDefectProposal(legacySettings);
+    return;
+  }
+
   const proposedRenameDeleteSettings: Mutable<MigratableSettings> = {};
 
   if (legacySettings.emptyFolderBehavior !== undefined) {
@@ -244,9 +298,8 @@ function parkRenameDeleteSettings(legacySettings: LegacySettingsRecord): void {
     proposedRenameDeleteSettings.treatAsAttachmentExtensions = legacySettings.treatAsAttachmentExtensions;
   }
 
-  if (Object.keys(proposedRenameDeleteSettings).length > 0) {
-    legacySettings.proposedRenameDeleteSettings = proposedRenameDeleteSettings;
-  }
+  // Never empty: the dropped key that let this run is always one of the keys proposed above.
+  legacySettings.proposedRenameDeleteSettings = proposedRenameDeleteSettings;
 }
 
 function pathsValidator(paths: string[]): MaybeReturn<string> {
