@@ -112,17 +112,17 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface AttachmentExtensionSettings {
-          isTreatedAsAttachment(path: string): boolean;
+          isTreatedAsAttachment: (path: string) => boolean;
           treatAsAttachmentExtensions: string[];
         }
 
         interface AvailabilityCheckableCommand {
-          checkCallback?(isChecking: boolean): boolean | undefined;
+          checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 
         interface VaultConfigAccess {
-          getConfig(key: string): unknown;
-          setConfig(key: string, value: unknown): void;
+          getConfig: (key: string) => unknown;
+          setConfig: (key: string, value: unknown) => void;
         }
 
         function isAttachmentExtensionSettings(value: unknown): value is AttachmentExtensionSettings {

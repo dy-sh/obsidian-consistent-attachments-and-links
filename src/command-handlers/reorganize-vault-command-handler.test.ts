@@ -13,7 +13,7 @@ import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attac
 import { ReorganizeVaultCommandHandler } from './reorganize-vault-command-handler.ts';
 
 interface CommandHandlerPrivate {
-  execute(): Promise<void>;
+  execute: () => Promise<void>;
 }
 
 function asPrivate(handler: ReorganizeVaultCommandHandler): CommandHandlerPrivate {

@@ -22,12 +22,12 @@ vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
 import { CollectAttachmentsInFileCommandHandler } from './collect-attachments-in-file-command-handler.ts';
 
 interface CommandHandlerPrivate {
-  canExecuteAbstractFile(abstractFile: TAbstractFile): boolean;
-  canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean;
-  executeAbstractFile(abstractFile: TAbstractFile): void;
-  executeAbstractFiles(abstractFiles: TAbstractFile[]): void;
-  shouldAddToAbstractFileMenu(): boolean;
-  shouldAddToAbstractFilesMenu(): boolean;
+  canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
+  canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
+  executeAbstractFile: (abstractFile: TAbstractFile) => void;
+  executeAbstractFiles: (abstractFiles: TAbstractFile[]) => void;
+  shouldAddToAbstractFileMenu: () => boolean;
+  shouldAddToAbstractFilesMenu: () => boolean;
 }
 
 interface PluginSettingsLike {

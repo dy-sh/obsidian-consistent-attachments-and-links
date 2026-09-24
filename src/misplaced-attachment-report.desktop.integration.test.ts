@@ -101,8 +101,8 @@ describe('Consistency report: misplaced attachments', () => {
         }
 
         interface VaultConfigAccess {
-          getConfig(key: string): unknown;
-          setConfig(key: string, value: unknown): void;
+          getConfig: (key: string) => unknown;
+          setConfig: (key: string, value: unknown) => void;
         }
 
         function isReportSettings(value: unknown): value is ReportSettings {

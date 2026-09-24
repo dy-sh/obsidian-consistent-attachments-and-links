@@ -41,18 +41,18 @@ interface EventRef {
 
 // `getPluginDependencies` is protected on the base, so a test reads it through a probe.
 interface PluginDependenciesProbe {
-  getPluginDependencies(): PluginDependency[];
+  getPluginDependencies: () => PluginDependency[];
 }
 
 interface PluginPrivate {
-  createTranslationsMap(): TranslationsMap;
+  createTranslationsMap: () => TranslationsMap;
 }
 
 interface SettingsMigrationComponentParams {
   readonly apiVersionRange: string;
-  getProposedSettings(this: void): MigratableSettings | null;
+  readonly getProposedSettings: (this: void) => MigratableSettings | null;
   readonly providerPluginId: string;
-  retireProposedSettings(this: void): Promise<void>;
+  readonly retireProposedSettings: (this: void) => Promise<void>;
   readonly sourcePluginId: string;
 }
 

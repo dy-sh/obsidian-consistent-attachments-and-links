@@ -84,26 +84,26 @@ vi.mock('../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal
 }));
 
 interface CommandHandlerPrivate {
-  canExecuteAbstractFile(abstractFile: TAbstractFile): boolean;
-  canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean;
-  executeAbstractFile(abstractFile: TAbstractFile): Promise<void>;
-  executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void>;
-  shouldAddToAbstractFileMenu(): boolean;
-  shouldAddToAbstractFilesMenu(): boolean;
+  canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
+  canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
+  executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
+  executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
+  shouldAddToAbstractFileMenu: () => boolean;
+  shouldAddToAbstractFilesMenu: () => boolean;
 }
 
 interface LoopParams {
   readonly abortSignal: AbortSignal;
-  buildNoticeMessage(params: LoopBuildNoticeMessageParams<TFile>): string;
+  readonly buildNoticeMessage: (params: LoopBuildNoticeMessageParams<TFile>) => string;
   readonly items: TFile[];
-  processItem(item: TFile): Promise<void>;
+  readonly processItem: (item: TFile) => Promise<void>;
   readonly progressBarTitle: string;
   readonly shouldContinueOnError: boolean;
   readonly shouldShowProgressBar: boolean;
 }
 
 interface PluginSettingsLike {
-  isPathIgnored(path: string): boolean;
+  isPathIgnored: (path: string) => boolean;
   moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
   shouldAddCommandsToFileMenu: boolean;
 }

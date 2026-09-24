@@ -66,12 +66,12 @@ describe('Attachment unit folders travel whole', () => {
       }): Promise<ProbeResult> {
         interface UnitFolderSettings {
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder(path: string): boolean;
+          isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         interface VaultConfigAccess {
-          getConfig(key: string): unknown;
-          setConfig(key: string, value: unknown): void;
+          getConfig: (key: string) => unknown;
+          setConfig: (key: string, value: unknown) => void;
         }
 
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {

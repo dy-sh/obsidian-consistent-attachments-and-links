@@ -75,7 +75,7 @@ import {
 } from './links-handler.ts';
 
 interface LinksHandlerPrivate {
-  resolveValidReferenceTarget(link: Reference, notePath: string): Promise<null | TFile>;
+  resolveValidReferenceTarget: (link: Reference, notePath: string) => Promise<null | TFile>;
 }
 
 interface MisplacedParams {
@@ -88,7 +88,7 @@ interface ParentLike {
 }
 
 interface SettingsLike {
-  isPathIgnored(path: string): boolean;
+  isPathIgnored: (path: string) => boolean;
 }
 
 const mockIsFrontmatterLinkCache = vi.mocked(isFrontmatterLinkCache);

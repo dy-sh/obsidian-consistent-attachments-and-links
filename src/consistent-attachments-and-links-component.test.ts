@@ -32,13 +32,13 @@ import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments
 import { MisplacedAttachmentCheckResult } from './misplaced-attachment-handler.ts';
 
 interface ComponentPrivate {
-  handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void;
-  saveAllOpenNotes(): Promise<void>;
-  showBackupWarning(): Promise<void>;
+  handleMetadataCacheChanged: (file: TFile, abortSignal: AbortSignal) => void;
+  saveAllOpenNotes: () => Promise<void>;
+  showBackupWarning: () => Promise<void>;
 }
 
 interface DisplayTextLeaf {
-  getDisplayText(): string;
+  getDisplayText: () => string;
 }
 
 interface GlobalAppHolder {
@@ -46,7 +46,7 @@ interface GlobalAppHolder {
 }
 
 interface LayoutReadyWorkspace {
-  setLayoutReady__(): void;
+  setLayoutReady__: () => void;
 }
 
 interface ObsidianDevUtilsStateHolder {
@@ -54,7 +54,7 @@ interface ObsidianDevUtilsStateHolder {
 }
 
 interface SavableView {
-  save(): Promise<void>;
+  save: () => Promise<void>;
 }
 
 // --- Hoisted shared state ---

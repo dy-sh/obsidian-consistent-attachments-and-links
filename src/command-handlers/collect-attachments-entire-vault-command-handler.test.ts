@@ -13,7 +13,7 @@ import type { AttachmentCollector } from '../attachment-collector.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './collect-attachments-entire-vault-command-handler.ts';
 
 interface CommandHandlerPrivate {
-  execute(): void;
+  execute: () => void;
 }
 
 function asPrivate(handler: CollectAttachmentsEntireVaultCommandHandler): CommandHandlerPrivate {

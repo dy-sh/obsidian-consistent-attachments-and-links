@@ -162,9 +162,9 @@ interface CollectAttachmentsParamsLike {
 }
 
 interface LoopOptionsLike {
-  buildNoticeMessage(params: LoopBuildNoticeMessageParams<TFile>): string;
+  buildNoticeMessage: (params: LoopBuildNoticeMessageParams<TFile>) => string;
   items: TFile[];
-  processItem(item: TFile): Promise<void>;
+  processItem: (item: TFile) => Promise<void>;
 }
 
 interface NoticeMockLike {
@@ -176,20 +176,20 @@ interface NoticeStaticLike {
 }
 
 interface PrivateAttachmentCollector {
-  collectAttachments(params: CollectAttachmentsParamsLike): Promise<void>;
+  collectAttachments: (params: CollectAttachmentsParamsLike) => Promise<void>;
 }
 
 interface QueueParamsLike {
-  operationFunction(abortSignal: AbortSignal): Promise<void>;
+  operationFunction: (abortSignal: AbortSignal) => Promise<void>;
   operationName: string;
 }
 
 interface SettingsLike {
   collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode;
-  isAttachmentUnitFolder(path: string): boolean;
-  isExcludedFromAttachmentCollecting(path: string): boolean;
-  isPathIgnored(path: string): boolean;
-  isTreatedAsAttachment(path: string): boolean;
+  isAttachmentUnitFolder: (path: string) => boolean;
+  isExcludedFromAttachmentCollecting: (path: string) => boolean;
+  isPathIgnored: (path: string) => boolean;
+  isTreatedAsAttachment: (path: string) => boolean;
 }
 
 const mockAbortSignalAny = vi.mocked(abortSignalAny);
