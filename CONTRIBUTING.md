@@ -66,8 +66,7 @@ npm run test:coverage
 
 ### Branch Gate
 
-Before you open a pull request, run the branch gate. It is the release preflight itself, so it catches
-the checks that `lint` and `test` do not reach - and catches them in seconds rather than at release time:
+Before you open a pull request, run the branch gate. It is the release preflight itself, so it catches the checks that `lint` and `test` do not reach - and catches them in seconds rather than at release time:
 
 ```bash
 npm run gate
