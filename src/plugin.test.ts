@@ -26,6 +26,7 @@ import {
 } from 'vitest';
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
+import type { MigratableCollectSettings } from './custom-attachment-location.ts';
 
 interface AppGlobal {
   app: AppOriginal;
@@ -48,9 +49,17 @@ interface PluginPrivate {
   createTranslationsMap: () => TranslationsMap;
 }
 
+interface PluginSuggestionComponentParams {
+  readonly isSuggestionDeclined: (this: void) => boolean;
+  readonly reason: string;
+  readonly setSuggestionDeclined: (this: void, isDeclined: boolean) => Promise<void>;
+  readonly suggestedPluginId: string;
+  readonly suggestedPluginName: string;
+}
+
 interface SettingsMigrationComponentParams {
   readonly apiVersionRange: string;
-  readonly getProposedSettings: (this: void) => MigratableSettings | null;
+  readonly getProposedSettings: (this: void) => MigratableCollectSettings | MigratableSettings | null;
   readonly providerPluginId: string;
   readonly retireProposedSettings: (this: void) => Promise<void>;
   readonly sourcePluginId: string;
@@ -66,7 +75,9 @@ const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
 const hoisted = vi.hoisted(() => {
   const mockSettings = {
+    isCustomAttachmentLocationSuggestionDeclined: false,
     isPathIgnored: vi.fn((): boolean => false),
+    proposedCollectSettings: null as MigratableCollectSettings | null,
     proposedRenameDeleteSettings: null as MigratableSettings | null
   };
   return {
@@ -85,14 +96,6 @@ const hoisted = vi.hoisted(() => {
 
 vi.mock('./links-handler.ts', () => ({
   LinksHandler: class {
-    public constructor(_params: unknown) {
-      // No-op.
-    }
-  }
-}));
-
-vi.mock('./attachment-collector.ts', () => ({
-  AttachmentCollector: class {
     public constructor(_params: unknown) {
       // No-op.
     }
@@ -151,6 +154,24 @@ vi.mock('obsidian-dev-utils/obsidian/components/settings-migration-component', a
   };
 });
 
+// And for the suggestion component: its notice and banner are dev-utils' and tested there. What is this
+// plugin's own is when it counts as declined, and how a decline is persisted.
+const { pluginSuggestionStub } = vi.hoisted(() => ({
+  pluginSuggestionStub: vi.fn<(params: PluginSuggestionComponentParams) => object>()
+}));
+
+vi.mock('obsidian-dev-utils/obsidian/components/plugin-suggestion-component', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/plugin-suggestion-component')>();
+  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn used with `new` must be a non-arrow function returning a fresh real Component.
+  pluginSuggestionStub.mockImplementation(function NamedStub() {
+    return new Component();
+  });
+  return {
+    ...actual,
+    PluginSuggestionComponent: pluginSuggestionStub
+  };
+});
+
 // --- Command handler mocks (the plugin's own modules) ---
 
 let nextCommandHandlerIndex = 0;
@@ -176,13 +197,6 @@ const { CommandHandlerMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('./command-handlers/check-consistency-command-handler.ts', () => ({ CheckConsistencyCommandHandler: CommandHandlerMock }));
-vi.mock('./command-handlers/collect-attachments-entire-vault-command-handler.ts', () => ({ CollectAttachmentsEntireVaultCommandHandler: CommandHandlerMock }));
-vi.mock(
-  './command-handlers/collect-attachments-in-current-folder-command-handler.ts',
-  () => ({ CollectAttachmentsInCurrentFolderCommandHandler: CommandHandlerMock })
-);
-vi.mock('./command-handlers/collect-attachments-in-file-command-handler.ts', () => ({ CollectAttachmentsInFileCommandHandler: CommandHandlerMock }));
-vi.mock('./command-handlers/move-attachment-to-proper-folder-command-handler.ts', () => ({ MoveAttachmentToProperFolderCommandHandler: CommandHandlerMock }));
 vi.mock('./command-handlers/reorganize-vault-command-handler.ts', () => ({ ReorganizeVaultCommandHandler: CommandHandlerMock }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
@@ -223,8 +237,14 @@ function hasRegisteredRenameDeleteHandler(): boolean {
   return getObsidianDevUtilsState('renameDeleteHandlersMap', new Map<string>()).value.has(PLUGIN_ID);
 }
 
-function migrationParams(): SettingsMigrationComponentParams {
-  const call = settingsMigrationStub.mock.calls[0];
+/**
+ * The parameters of one of the two settings migrations, found by the plugin they are offered to.
+ *
+ * @param providerPluginId - The plugin that owns those settings now.
+ * @returns The parameters that migration was constructed with.
+ */
+function migrationParams(providerPluginId = 'advanced-rename-and-delete-handler'): SettingsMigrationComponentParams {
+  const call = settingsMigrationStub.mock.calls.find(([params]) => params.providerPluginId === providerPluginId);
   if (!call) {
     throw new Error('SettingsMigrationComponent was not constructed.');
   }
@@ -235,6 +255,14 @@ function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknow
   const proxyWithTarget = castTo<Partial<Record<symbol, object>>>(strictProxiedObject);
   const rawTarget = proxyWithTarget[STRICT_PROXY_TARGET_SYMBOL] ?? strictProxiedObject;
   castTo<Record<string, unknown>>(rawTarget)[key] = value;
+}
+
+function suggestionParams(): PluginSuggestionComponentParams {
+  const call = pluginSuggestionStub.mock.calls[0];
+  if (!call) {
+    throw new Error('PluginSuggestionComponent was not constructed.');
+  }
+  return call[0];
 }
 
 /**
@@ -252,6 +280,8 @@ describe('Plugin', () => {
     // The settings object is shared across tests, and `editAndSave` really writes to it, so the pending value
     // has to be put back or a later test inherits an earlier one's.
     hoisted.mockSettings.proposedRenameDeleteSettings = null;
+    hoisted.mockSettings.proposedCollectSettings = null;
+    hoisted.mockSettings.isCustomAttachmentLocationSuggestionDeclined = false;
     hoisted.mockSettings.isPathIgnored.mockReturnValue(false);
     nextCommandHandlerIndex = 0;
 
@@ -302,8 +332,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 7 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 9 total.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(9);
+      // The plugin wires the OpenDemoVault handler plus 3 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 5 total. The four collect and move commands left for Custom Attachment Location in 5.0.0.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(5);
     });
 
     it('should register the open demo vault command', async () => {
@@ -356,7 +386,7 @@ describe('Plugin', () => {
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
-      expect(commands.size).toBe(9);
+      expect(commands.size).toBe(5);
 
       unpublishProviderApi();
       await waitForAllAsyncOperations();
@@ -368,7 +398,6 @@ describe('Plugin', () => {
 
     it('should offer the legacy rename and delete settings to the new owner', async () => {
       await createLoadedPlugin();
-      expect(settingsMigrationStub).toHaveBeenCalledOnce();
       expect(migrationParams().providerPluginId).toBe('advanced-rename-and-delete-handler');
       expect(migrationParams().sourcePluginId).toBe(PLUGIN_ID);
       expect(migrationParams().apiVersionRange).toBe('^1');
@@ -398,6 +427,71 @@ describe('Plugin', () => {
 
       expect(hoisted.editAndSave).toHaveBeenCalledOnce();
       expect(migrationParams().getProposedSettings()).toBeNull();
+    });
+  });
+
+  describe('attachment collecting', () => {
+    it('should offer the legacy collect settings to Custom Attachment Location', async () => {
+      await createLoadedPlugin();
+      const params = migrationParams('obsidian-custom-attachment-location');
+      expect(params.sourcePluginId).toBe(PLUGIN_ID);
+      // `migrateSettings` arrived in that plugin's contract 1.1.0.
+      expect(params.apiVersionRange).toBe('^1.1.0');
+    });
+
+    it('should offer the pending collect values once the settings carry them', async () => {
+      await createLoadedPlugin();
+      expect(migrationParams('obsidian-custom-attachment-location').getProposedSettings()).toBeNull();
+      const proposal = { shouldCollectAttachmentsAutomatically: true };
+      hoisted.mockSettings.proposedCollectSettings = proposal;
+
+      expect(migrationParams('obsidian-custom-attachment-location').getProposedSettings()).toBe(proposal);
+    });
+
+    it('should retire the pending collect values to disk once the migration is applied', async () => {
+      await createLoadedPlugin();
+      hoisted.mockSettings.proposedCollectSettings = { shouldCollectAttachmentsAutomatically: true };
+      hoisted.editAndSave.mockClear();
+
+      await migrationParams('obsidian-custom-attachment-location').retireProposedSettings();
+
+      expect(hoisted.editAndSave).toHaveBeenCalledOnce();
+      expect(hoisted.mockSettings.proposedCollectSettings).toBeNull();
+    });
+
+    // A suggestion, not a dependency: every feature left here works without it.
+    it('should suggest Custom Attachment Location rather than depend on it', async () => {
+      const plugin = await createLoadedPlugin();
+      expect(suggestionParams().suggestedPluginId).toBe('obsidian-custom-attachment-location');
+      expect(suggestionParams().suggestedPluginName).toBe('Custom Attachment Location');
+      expect(suggestionParams().reason).toContain('no longer collects attachments');
+      const dependencyIds = castTo<PluginDependenciesProbe>(plugin).getPluginDependencies().map((dependency) => dependency.pluginId);
+      expect(dependencyIds).not.toContain('obsidian-custom-attachment-location');
+    });
+
+    // A fresh install never collected here, so it is not asked on load.
+    it('should not ask on load while no collect settings are pending', async () => {
+      await createLoadedPlugin();
+      expect(suggestionParams().isSuggestionDeclined()).toBe(true);
+    });
+
+    it('should ask on load while collect settings are pending and the suggestion was not declined', async () => {
+      await createLoadedPlugin();
+      hoisted.mockSettings.proposedCollectSettings = { collectAttachmentUsedByMultipleNotesMode: 'Copy' };
+      expect(suggestionParams().isSuggestionDeclined()).toBe(false);
+
+      hoisted.mockSettings.isCustomAttachmentLocationSuggestionDeclined = true;
+      expect(suggestionParams().isSuggestionDeclined()).toBe(true);
+    });
+
+    it('should persist a decline', async () => {
+      await createLoadedPlugin();
+      hoisted.editAndSave.mockClear();
+
+      await suggestionParams().setSuggestionDeclined(true);
+
+      expect(hoisted.editAndSave).toHaveBeenCalledOnce();
+      expect(hoisted.mockSettings.isCustomAttachmentLocationSuggestionDeclined).toBe(true);
     });
   });
 });

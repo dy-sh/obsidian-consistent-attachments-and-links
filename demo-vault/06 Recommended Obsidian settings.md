@@ -20,9 +20,9 @@ A relative path resolves from the note itself, so a folder you copy elsewhere ke
 
 Since [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) this plugin does **not** manage an attachment-subfolder setting of its own. It follows Obsidian's built-in [`Default location for new attachments`](https://help.obsidian.md/Editing+and+formatting/Attachments#Change+default+attachment+location).
 
-Ideally an attachment lives in the note's own folder or a subfolder of it. Then exporting a note means copying one folder, and deleting a note cannot strand files or take someone else's with it — which is the property `Collect All Attachments` exists to establish, see [07 Commands](<./07 Commands.md>).
+Ideally an attachment lives in the note's own folder or a subfolder of it. Then exporting a note means copying one folder, and deleting a note cannot strand files or take someone else's with it — which is the property the report's **Misplaced attachments** section checks, see [03 Check vault consistency](<./03 Check vault consistency.md>).
 
-For finer control than Obsidian's single setting offers — a folder per note, names built from tokens — install [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location).
+For finer control than Obsidian's single setting offers — a folder per note, names built from tokens — install [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location). It is also what moves attachments into place since this plugin's 5.0.0.
 
 ## Speed
 

@@ -13,7 +13,7 @@ registerDemoVaultCoverageSuite({
   interfaces: [],
   nonTrivialGuard: {
     expectDemoNote: '05 Settings.md',
-    expectMember: 'shouldCollectAttachmentsAutomatically',
+    expectMember: 'shouldEnsurePathCompatibilityOnEveryPlatform',
     interfaceName: 'PluginSettings',
     sourcePath: 'src/plugin-settings.ts'
   },

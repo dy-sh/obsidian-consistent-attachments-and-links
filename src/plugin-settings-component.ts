@@ -7,6 +7,11 @@ import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rena
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
+import type {
+  CollectAttachmentUsedByMultipleNotesMode,
+  MigratableCollectSettings,
+  MoveAttachmentToProperFolderUsedByMultipleNotesMode
+} from './custom-attachment-location.ts';
 
 import { PluginSettings } from './plugin-settings.ts';
 
@@ -14,9 +19,9 @@ import { PluginSettings } from './plugin-settings.ts';
 // now, all optional because a record carries only what was actually saved.
 type LegacySettingsRecord = Partial<LegacySettings> & Partial<PluginSettings>;
 
-// The proposal is assembled key by key, so it needs a mutable view of the readonly contract it produces.
-type MutableMigratableSettings = {
-  -readonly [Key in keyof MigratableSettings]: MigratableSettings[Key];
+// Each proposal is assembled key by key, so it needs a mutable view of the readonly contract it produces.
+type Mutable<T> = {
+  -readonly [Key in keyof T]: T[Key];
 };
 
 // The rename and delete keys this plugin stopped declaring in 4.0.0, under the names it used until then. A
@@ -42,9 +47,27 @@ interface PluginSettingsComponentConstructorParams {
   readonly pluginEventSource: PluginEventSource;
 }
 
+/**
+ * Every key this plugin's `data.json` used to carry and no longer declares.
+ *
+ * Two groups here are declared so the converter can read them off the saved record and park them for the plugin
+ * that owns them now: the record is rebuilt from the declared properties alone, so the first save after a
+ * property was dropped would otherwise strip it from `data.json` before it could ever be offered.
+ *
+ * - Until 4.0.0, rename/delete handling, now Advanced Rename and Delete Handler's: `emptyFolderBehavior`,
+ *   `shouldChangeNoteBacklinksDisplayText`, `shouldDeleteAttachmentsWithNote`,
+ *   `shouldDeleteExistingFilesWhenMovingNote`, `shouldMoveAttachmentsWithNote` and `shouldUpdateLinks`.
+ * - Until 5.0.0, attachment collecting, now Custom Attachment Location's: `attachmentUnitFolderPaths`,
+ *   `collectAttachmentUsedByMultipleNotesMode`, `excludePathsFromAttachmentCollecting`,
+ *   `moveAttachmentToProperFolderUsedByMultipleNotesMode` and `shouldCollectAttachmentsAutomatically`. The sixth
+ *   collect key, `shouldAddCommandsToFileMenu`, is NOT declared: that plugin has no toggle for it, so there is
+ *   nothing to park, and an undeclared key is dropped by the rebuild on its own.
+ */
 class LegacySettings {
+  public attachmentUnitFolderPaths: string[] = [];
   public autoCollectAttachments = false;
   public changeNoteBacklinksAlt = false;
+  public collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode = 'Skip';
   // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing data.json.
   public deleteAttachmentsWithNote = false;
   // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing data.json.
@@ -52,19 +75,14 @@ class LegacySettings {
   // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing data.json.
   public deleteExistFilesWhenMoveNote = false;
   public emptyAttachmentFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
-
-  /*
-   * The six settings below were owned by this plugin until 4.0.0, when rename/delete handling moved to
-   * Advanced Rename and Delete Handler. They are declared here so the converter can read them off the saved
-   * record and park them for that plugin: the record is rebuilt from the declared properties alone, so the
-   * first save after a property was dropped would otherwise strip it from `data.json` before it could ever
-   * be offered.
-   */
   public emptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
+  public excludePathsFromAttachmentCollecting: string[] = [];
   public ignoreFiles: string[] = [];
   public ignoreFolders: string[] = [];
   public moveAttachmentsWithNote = false;
+  public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = 'CopyAll';
   public shouldChangeNoteBacklinksDisplayText = true;
+  public shouldCollectAttachmentsAutomatically = false;
   public shouldDeleteAttachmentsWithNote = false;
   public shouldDeleteExistingFilesWhenMovingNote = false;
   public shouldMoveAttachmentsWithNote = false;
@@ -140,6 +158,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       }
 
       parkRenameDeleteSettings(legacySettings);
+      parkCollectSettings(legacySettings);
     });
   }
 
@@ -173,6 +192,47 @@ function discardDefectProposal(legacySettings: LegacySettingsRecord): void {
 }
 
 /**
+ * Parks the collect values the saved record carries, for Custom Attachment Location — which owns them from
+ * 5.0.0 on — so the migration component can offer them once.
+ *
+ * Same rules as {@link parkRenameDeleteSettings}: it runs after the ancient key names are mapped, and only a
+ * key the record ACTUALLY carries is proposed.
+ *
+ * It is one-shot by construction, where the rename/delete parking needs a signal to be: every key read here has left
+ * {@link PluginSettings}, so the converter strips it from the record and the next load finds nothing to park.
+ * A key that stayed would be re-parked on every load and bring a retired offer back.
+ *
+ * @param legacySettings - The saved record, mid-conversion.
+ */
+function parkCollectSettings(legacySettings: LegacySettingsRecord): void {
+  const proposedCollectSettings: Mutable<MigratableCollectSettings> = {};
+
+  if (legacySettings.attachmentUnitFolderPaths !== undefined) {
+    proposedCollectSettings.attachmentUnitFolderPaths = legacySettings.attachmentUnitFolderPaths;
+  }
+
+  if (legacySettings.collectAttachmentUsedByMultipleNotesMode !== undefined) {
+    proposedCollectSettings.collectAttachmentUsedByMultipleNotesMode = legacySettings.collectAttachmentUsedByMultipleNotesMode;
+  }
+
+  if (legacySettings.excludePathsFromAttachmentCollecting !== undefined) {
+    proposedCollectSettings.excludePathsFromAttachmentCollecting = legacySettings.excludePathsFromAttachmentCollecting;
+  }
+
+  if (legacySettings.moveAttachmentToProperFolderUsedByMultipleNotesMode !== undefined) {
+    proposedCollectSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode = legacySettings.moveAttachmentToProperFolderUsedByMultipleNotesMode;
+  }
+
+  if (legacySettings.shouldCollectAttachmentsAutomatically !== undefined) {
+    proposedCollectSettings.shouldCollectAttachmentsAutomatically = legacySettings.shouldCollectAttachmentsAutomatically;
+  }
+
+  if (Object.keys(proposedCollectSettings).length > 0) {
+    legacySettings.proposedCollectSettings = proposedCollectSettings;
+  }
+}
+
+/**
  * Parks the rename and delete values the saved record carries, for Advanced Rename and Delete Handler — which
  * owns them from 4.0.0 on — so the migration component can offer them once.
  *
@@ -200,7 +260,7 @@ function parkRenameDeleteSettings(legacySettings: LegacySettingsRecord): void {
     return;
   }
 
-  const proposedRenameDeleteSettings: MutableMigratableSettings = {};
+  const proposedRenameDeleteSettings: Mutable<MigratableSettings> = {};
 
   if (legacySettings.emptyFolderBehavior !== undefined) {
     proposedRenameDeleteSettings.emptyFolderBehavior = legacySettings.emptyFolderBehavior;

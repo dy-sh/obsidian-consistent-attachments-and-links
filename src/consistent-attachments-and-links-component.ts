@@ -4,22 +4,19 @@ import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/componen
 
 import {
   MarkdownView,
-  setIcon,
-  TFile
+  setIcon
 } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
 import { getOrCreateFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
-import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import {
   createFolderSafe,
   getMarkdownFilesSorted
 } from 'obsidian-dev-utils/obsidian/vault';
 import { dirname } from 'obsidian-dev-utils/path';
 
-import type { AttachmentCollector } from './attachment-collector.ts';
 import type { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
 import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -34,7 +31,6 @@ import { PathCompatibilityCheckResult } from './path-compatibility-handler.ts';
 interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
-  readonly attachmentCollector: AttachmentCollector;
   readonly linksHandler: LinksHandler;
   readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
   readonly pathCompatibilityHandler: PathCompatibilityHandler;
@@ -44,7 +40,6 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
 
 export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent {
   private readonly abortSignalComponent: AbortSignalComponent;
-  private readonly attachmentCollector: AttachmentCollector;
   private readonly linksHandler: LinksHandler;
   private readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
   private readonly pathCompatibilityHandler: PathCompatibilityHandler;
@@ -54,7 +49,6 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public constructor(params: ConsistentAttachmentsAndLinksComponentConstructorParams) {
     super(params.app);
     this.abortSignalComponent = params.abortSignalComponent;
-    this.attachmentCollector = params.attachmentCollector;
     this.linksHandler = params.linksHandler;
     this.misplacedAttachmentHandler = params.misplacedAttachmentHandler;
     this.pathCompatibilityHandler = params.pathCompatibilityHandler;
@@ -125,38 +119,14 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public async reorganizeVault(): Promise<void> {
     await this.saveAllOpenNotes();
 
-    this.attachmentCollector.collectAttachmentsEntireVault();
-    // Last: it renames files, and every step above resolves links against the names they had.
+    // Collecting attachments, the step that used to come first, left with the rest of collecting for Custom
+    // Attachment Location in 5.0.0.
     await this.fixIncompatiblePaths();
     this.pluginNoticeComponent.showNotice('Reorganization of the vault completed');
   }
 
   protected override onLayoutReady(): void {
     invokeAsyncSafely(() => this.showBackupWarning());
-
-    this.registerEvent(this.app.metadataCache.on('changed', (file) => {
-      addToQueue({
-        abortSignal: this.abortSignalComponent.abortSignal,
-        operationFunction: (abortSignal) => {
-          this.handleMetadataCacheChanged(file, abortSignal);
-        },
-        operationName: 'handleMetadataCacheChanged'
-      });
-    }));
-  }
-
-  private handleMetadataCacheChanged(file: TFile, abortSignal: AbortSignal): void {
-    abortSignal.throwIfAborted();
-    if (!this.pluginSettingsComponent.settings.shouldCollectAttachmentsAutomatically) {
-      return;
-    }
-
-    const suggestionContainer = activeDocument.querySelector<HTMLDivElement>('.suggestion-container');
-    if (suggestionContainer?.isShown()) {
-      return;
-    }
-
-    this.attachmentCollector.collectAttachmentsInAbstractFiles([file]);
   }
 
   private async saveAllOpenNotes(): Promise<void> {
@@ -172,26 +142,18 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       return;
     }
 
-    await this.pluginSettingsComponent.editAndSave((settings) => {
-      settings.revertDangerousSettings();
-    });
-
     await alert({
       app: this.app,
       message: createFragment((f) => {
         f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
           wrapper.appendText(
-            'Using \'Consistent Attachments and Links\' plugin without proper configuration might lead to inconvenient attachment rearrangements or even data loss in your vault.'
+            'The \'Fix incompatible paths\' and \'Reorganize vault\' commands of \'Consistent Attachments and Links\' rename files and folders across your whole vault.'
           );
           wrapper.createEl('br');
           wrapper.appendText('It is ');
           wrapper.createEl('strong', { text: 'STRONGLY' });
-          wrapper.appendText(' recommended to backup your vault before using the plugin.');
+          wrapper.appendText(' recommended to backup your vault before running them.');
           wrapper.createEl('br');
-          if (this.pluginSettingsComponent.settings.hadDangerousSettingsReverted) {
-            wrapper.appendText('Some of your plugin settings has been changed to their safe values.');
-            wrapper.createEl('br');
-          }
           wrapper.createEl('a', { href: 'https://github.com/dy-sh/obsidian-consistent-attachments-and-links?tab=readme-ov-file', text: 'Read more' });
           wrapper.appendText(' about how to use the plugin.');
           wrapper.createEl('br');

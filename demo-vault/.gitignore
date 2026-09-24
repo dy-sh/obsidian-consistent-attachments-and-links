@@ -12,9 +12,7 @@
 .obsidian/plugins/consistent-attachments-and-links/*
 !.obsidian/plugins/consistent-attachments-and-links/data.json
 
-# Created by the Trip demo buttons in `01 Collect attachments into the note's folder.md`.
-Materials/01 Collect attachments into the note's folder/
-Materials/_shared-attachments/
+# Written by the Check Vault Consistency buttons.
 consistency-report.md
 
 # Created by the buttons in `08 Keep paths valid on every platform.md`. Deliberately not committed: the

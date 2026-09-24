@@ -21,7 +21,6 @@ import {
   vi
 } from 'vitest';
 
-import type { AttachmentCollector } from './attachment-collector.ts';
 import type { LinksHandler } from './links-handler.ts';
 import type { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
 import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
@@ -32,7 +31,6 @@ import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments
 import { MisplacedAttachmentCheckResult } from './misplaced-attachment-handler.ts';
 
 interface ComponentPrivate {
-  handleMetadataCacheChanged: (file: TFile, abortSignal: AbortSignal) => void;
   saveAllOpenNotes: () => Promise<void>;
   showBackupWarning: () => Promise<void>;
 }
@@ -117,20 +115,12 @@ let previousGlobalApp: unknown;
 
 const mockSettings = {
   consistencyReportFile: 'report.md',
-  hadDangerousSettingsReverted: false,
   isPathIgnored: vi.fn((_path: string): boolean => false),
-  revertDangerousSettings: vi.fn((): void => undefined),
-  shouldCollectAttachmentsAutomatically: false,
   shouldShowBackupWarning: true
 };
 
 const mockAbortSignalComponent = strictProxy<AbortSignalComponent>({
   abortSignal: new AbortController().signal
-});
-
-const mockAttachmentCollector = strictProxy<AttachmentCollector>({
-  collectAttachmentsEntireVault: vi.fn((): void => undefined),
-  collectAttachmentsInAbstractFiles: vi.fn((): void => undefined)
 });
 
 const mockLinksHandler = strictProxy<LinksHandler>({
@@ -166,7 +156,6 @@ function createComponent(): ConsistentAttachmentsAndLinksComponent {
   return new ConsistentAttachmentsAndLinksComponent({
     abortSignalComponent: mockAbortSignalComponent,
     app,
-    attachmentCollector: mockAttachmentCollector,
     linksHandler: mockLinksHandler,
     misplacedAttachmentHandler: mockMisplacedAttachmentHandler,
     pathCompatibilityHandler: mockPathCompatibilityHandler,
@@ -202,8 +191,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     hoisted.mockGetMarkdownFilesSorted.mockReturnValue([]);
     mockSettings.isPathIgnored.mockReturnValue(false);
     mockSettings.shouldShowBackupWarning = true;
-    mockSettings.shouldCollectAttachmentsAutomatically = false;
-    mockSettings.hadDangerousSettingsReverted = false;
   });
 
   afterEach(() => {
@@ -287,7 +274,6 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     it('should run the full reorganization pipeline', async () => {
       const component = createComponent();
       await component.reorganizeVault();
-      expect(mockAttachmentCollector.collectAttachmentsEntireVault).toHaveBeenCalled();
       expect(mockPathCompatibilityHandler.fix).toHaveBeenCalled();
       expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith('Reorganization of the vault completed');
     });
@@ -312,54 +298,13 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
     });
   });
 
-  describe('handleMetadataCacheChanged', () => {
-    it('should collect attachments when automatic collecting is enabled', () => {
-      const component = createComponent();
-      mockSettings.shouldCollectAttachmentsAutomatically = true;
-      const file = strictProxy<TFile>({ path: 'note.md' });
-      asPrivate(component).handleMetadataCacheChanged(file, new AbortController().signal);
-      expect(mockAttachmentCollector.collectAttachmentsInAbstractFiles).toHaveBeenCalledWith([file]);
-    });
-
-    it('should do nothing when automatic collecting is disabled', () => {
-      const component = createComponent();
-      mockSettings.shouldCollectAttachmentsAutomatically = false;
-      asPrivate(component).handleMetadataCacheChanged(strictProxy<TFile>({ path: 'note.md' }), new AbortController().signal);
-      expect(mockAttachmentCollector.collectAttachmentsInAbstractFiles).not.toHaveBeenCalled();
-    });
-
-    it('should skip collecting when a suggestion container is shown', () => {
-      const component = createComponent();
-      mockSettings.shouldCollectAttachmentsAutomatically = true;
-      const container = activeWindow.createDiv();
-      container.addClass('suggestion-container');
-      activeDocument.body.append(container);
-      vi.spyOn(container, 'isShown').mockReturnValue(true);
-      asPrivate(component).handleMetadataCacheChanged(strictProxy<TFile>({ path: 'note.md' }), new AbortController().signal);
-      container.remove();
-      expect(mockAttachmentCollector.collectAttachmentsInAbstractFiles).not.toHaveBeenCalled();
-    });
-
-    it('should throw when the abort signal is aborted', () => {
-      const component = createComponent();
-      const controller = new AbortController();
-      controller.abort();
-      expect(() => {
-        asPrivate(component).handleMetadataCacheChanged(strictProxy<TFile>({ path: 'note.md' }), controller.signal);
-      }).toThrow();
-    });
-  });
-
   describe('onLayoutReady', () => {
-    it('should enqueue handling for the changed event', async () => {
+    it('should show the backup warning', async () => {
       const component = createComponent();
-      mockSettings.shouldShowBackupWarning = false;
-      mockSettings.shouldCollectAttachmentsAutomatically = true;
+      mockSettings.shouldShowBackupWarning = true;
       await loadAndFireLayoutReady(component);
-      const file = strictProxy<TFile>({ path: 'note.md' });
-      app.metadataCache.trigger('changed', file);
       await vi.waitFor(() => {
-        expect(mockAttachmentCollector.collectAttachmentsInAbstractFiles).toHaveBeenCalledWith([file]);
+        expect(mockAlert).toHaveBeenCalled();
       });
     });
   });
@@ -372,20 +317,12 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(mockAlert).not.toHaveBeenCalled();
     });
 
-    it('should warn, revert dangerous settings and disable the warning', async () => {
+    it('should warn once and then disable the warning', async () => {
       const component = createComponent();
       mockSettings.shouldShowBackupWarning = true;
       await asPrivate(component).showBackupWarning();
-      expect(mockSettings.revertDangerousSettings).toHaveBeenCalled();
       expect(mockAlert).toHaveBeenCalled();
-    });
-
-    it('should mention reverted settings in the warning when they were reverted', async () => {
-      const component = createComponent();
-      mockSettings.shouldShowBackupWarning = true;
-      mockSettings.hadDangerousSettingsReverted = true;
-      await asPrivate(component).showBackupWarning();
-      expect(mockAlert).toHaveBeenCalled();
+      expect(mockSettings.shouldShowBackupWarning).toBe(false);
     });
   });
 });

@@ -3,26 +3,27 @@ import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
+import { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { SettingsMigrationComponent } from 'obsidian-dev-utils/obsidian/components/settings-migration-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
+import type { MigratableCollectSettings } from './custom-attachment-location.ts';
 
 import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
 } from './advanced-rename-and-delete-handler.ts';
-import { AttachmentCollector } from './attachment-collector.ts';
 import { CheckConsistencyCommandHandler } from './command-handlers/check-consistency-command-handler.ts';
-import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
-import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
-import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
-import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { ReorganizeVaultCommandHandler } from './command-handlers/reorganize-vault-command-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
+import {
+  CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID,
+  CUSTOM_ATTACHMENT_LOCATION_PLUGIN_NAME
+} from './custom-attachment-location.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { LinksHandler } from './links-handler.ts';
 import { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
@@ -39,6 +40,16 @@ const DEPENDENCY_REASON = 'Consistent Attachments and Links no longer handles re
  * `migrateSettings`, which every `1.x` contract publishes.
  */
 const DEPENDENCY_API_VERSION_RANGE = '^1';
+
+/**
+ * The contract range of Custom Attachment Location the collect handover needs: `migrateSettings` arrived in
+ * its contract `1.1.0`, the one its 13.0.0 publishes.
+ */
+const COLLECT_MIGRATION_API_VERSION_RANGE = '^1.1.0';
+
+const SUGGESTION_REASON = 'Consistent Attachments and Links no longer collects attachments.'
+  + ' Custom Attachment Location does: it collects a note\'s attachments into the note\'s attachment folder, on'
+  + ' command or as you edit, and moves a misplaced attachment to its proper folder.';
 
 export class Plugin extends PluginBase {
   protected override createTranslationsMap(): TranslationsMap {
@@ -79,9 +90,35 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
+    // A suggestion, not a dependency like Advanced Rename and Delete Handler: every feature left here works
+    // without Custom Attachment Location, which only takes over what this plugin no longer does.
+    const pluginSuggestionComponent = this.addChild(
+      new PluginSuggestionComponent({
+        app: this.app,
+        // Only a user who had collect settings to hand over is asked on load. A fresh install never used
+        // collecting here, so it gets the settings-tab banner and no notice.
+        isSuggestionDeclined: (): boolean =>
+          pluginSettingsComponent.settings.isCustomAttachmentLocationSuggestionDeclined
+          || pluginSettingsComponent.settings.proposedCollectSettings === null,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent,
+        reason: SUGGESTION_REASON,
+        // `editAndSave`, not `setProperty`: a decline has to outlive a reload, and `setProperty` only edits
+        // the in-memory state.
+        setSuggestionDeclined: async (isDeclined): Promise<void> => {
+          await pluginSettingsComponent.editAndSave((settings) => {
+            settings.isCustomAttachmentLocationSuggestionDeclined = isDeclined;
+          });
+        },
+        suggestedPluginId: CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID,
+        suggestedPluginName: CUSTOM_ATTACHMENT_LOCATION_PLUGIN_NAME
+      })
+    );
+
     const pluginSettingsTab = new PluginSettingsTab({
       plugin: this,
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      pluginSuggestionComponent
     });
 
     this.addChild(
@@ -107,18 +144,24 @@ export class Plugin extends PluginBase {
       })
     );
 
-    const attachmentCollector = new AttachmentCollector({
-      abortSignalComponent: this.abortSignalComponent,
-      app: this.app,
-      pluginName: this.manifest.name,
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      pluginSettingsComponent,
-      resourceLockComponent: this.resourceLockComponent
-    });
+    this.addChild(
+      new SettingsMigrationComponent<MigratableCollectSettings>({
+        apiVersionRange: COLLECT_MIGRATION_API_VERSION_RANGE,
+        app: this.app,
+        getProposedSettings: (): MigratableCollectSettings | null => pluginSettingsComponent.settings.proposedCollectSettings,
+        pluginSettingsComponent,
+        providerPluginId: CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID,
+        retireProposedSettings: async (): Promise<void> => {
+          await pluginSettingsComponent.editAndSave((settings) => {
+            settings.proposedCollectSettings = null;
+          });
+        },
+        sourcePluginId: this.manifest.id
+      })
+    );
 
     const misplacedAttachmentHandler = new MisplacedAttachmentHandler({
       app: this.app,
-      attachmentCollector,
       pluginSettingsComponent
     });
 
@@ -134,7 +177,6 @@ export class Plugin extends PluginBase {
       new ConsistentAttachmentsAndLinksComponent({
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
-        attachmentCollector,
         linksHandler,
         misplacedAttachmentHandler,
         pathCompatibilityHandler,
@@ -149,21 +191,6 @@ export class Plugin extends PluginBase {
         pluginId: this.manifest.id,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginVersion: this.manifest.version
-      }),
-      new CollectAttachmentsInFileCommandHandler({
-        attachmentCollector,
-        pluginSettingsComponent
-      }),
-      new CollectAttachmentsInCurrentFolderCommandHandler(attachmentCollector),
-      new CollectAttachmentsEntireVaultCommandHandler(attachmentCollector),
-      new MoveAttachmentToProperFolderCommandHandler({
-        abortSignalComponent: this.abortSignalComponent,
-        app: this.app,
-        attachmentCollector,
-        pluginName: this.manifest.name,
-        pluginNoticeComponent: this.pluginNoticeComponent,
-        pluginSettingsComponent,
-        resourceLockComponent: this.resourceLockComponent
       }),
       new ReorganizeVaultCommandHandler(consistentAttachmentsAndLinksComponent),
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),

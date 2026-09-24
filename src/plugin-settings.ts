@@ -2,6 +2,7 @@ import { isTreatedAsAttachment } from 'obsidian-dev-utils/obsidian/file-system';
 import { PathSettings } from 'obsidian-dev-utils/obsidian/path-settings';
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
+import type { MigratableCollectSettings } from './custom-attachment-location.ts';
 
 import {
   getCurrentPathCompatibilityPlatform,
@@ -9,24 +10,16 @@ import {
   PathCompatibilityPlatform
 } from './path-compatibility.ts';
 
-export enum CollectAttachmentUsedByMultipleNotesMode {
-  Cancel = 'Cancel',
-  Copy = 'Copy',
-  Move = 'Move',
-  Prompt = 'Prompt',
-  Skip = 'Skip'
-}
-
-export enum MoveAttachmentToProperFolderUsedByMultipleNotesMode {
-  Cancel = 'Cancel',
-  CopyAll = 'CopyAll',
-  Prompt = 'Prompt',
-  Skip = 'Skip'
-}
-
 export class PluginSettings {
-  public collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
   public consistencyReportFile = 'consistency-report.md';
+
+  /**
+   * Whether the user has already declined the suggestion to install Custom Attachment Location.
+   *
+   * Only the load-time notice honours it — the settings-tab banner is shown regardless, because a user
+   * looking at these settings right now is a fresher signal than an answer they gave earlier.
+   */
+  public isCustomAttachmentLocationSuggestionDeclined = false;
 
   /**
    * The length, in characters, of the longest vault root path this vault is expected to live under.
@@ -39,7 +32,12 @@ export class PluginSettings {
    */
   public maxVaultRootPathLength = 0;
 
-  public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+  /**
+   * The collect values this plugin used to own, waiting to be offered to Custom Attachment Location, which
+   * owns attachment collecting from 5.0.0 on. The same one-nullable-object shape as
+   * {@link proposedRenameDeleteSettings}, for the same reasons.
+   */
+  public proposedCollectSettings: MigratableCollectSettings | null = null;
 
   /**
    * The rename/delete values this plugin used to own, waiting to be offered to Advanced Rename and Delete
@@ -50,10 +48,6 @@ export class PluginSettings {
    * it has a migration waiting and an applied migration is retired with a single write.
    */
   public proposedRenameDeleteSettings: MigratableSettings | null = null;
-
-  public shouldAddCommandsToFileMenu = true;
-
-  public shouldCollectAttachmentsAutomatically = false;
 
   /**
    * Whether a missing note may be CREATED to hold the original name of a repaired file or folder.
@@ -92,39 +86,12 @@ export class PluginSettings {
   public sidecarNoteNamePattern = '{{fileName}}.md';
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
 
-  /**
-   * Folders whose whole hierarchy travels as one attachment.
-   *
-   * Same vocabulary as the include / exclude path settings: a plain entry is a path from the vault
-   * root, and an entry wrapped in `/` is a regular expression. Matching a folder *name* wherever it
-   * appears therefore needs the regular-expression form, e.g. `/(^|\/)[^/]+_files(\/|$)/`.
-   */
-  public get attachmentUnitFolderPaths(): string[] {
-    return this._attachmentUnitFolderPaths.excludePaths;
-  }
-
-  public set attachmentUnitFolderPaths(value: string[]) {
-    this._attachmentUnitFolderPaths.excludePaths = value;
-  }
-
   public get excludePaths(): string[] {
     return this._pathSettings.excludePaths;
   }
 
   public set excludePaths(value: string[]) {
     this._pathSettings.excludePaths = value;
-  }
-
-  public get excludePathsFromAttachmentCollecting(): string[] {
-    return this._attachmentCollectingPaths.excludePaths;
-  }
-
-  public set excludePathsFromAttachmentCollecting(value: string[]) {
-    this._attachmentCollectingPaths.excludePaths = value;
-  }
-
-  public get hadDangerousSettingsReverted(): boolean {
-    return this._hadDangerousSettingsReverted;
   }
 
   public get includePaths(): string[] {
@@ -134,14 +101,6 @@ export class PluginSettings {
   public set includePaths(value: string[]) {
     this._pathSettings.includePaths = value;
   }
-
-  private readonly _attachmentCollectingPaths = new PathSettings();
-
-  // Only the exclude half is exposed: `isPathIgnored` then reduces to "matches one of these
-  // patterns", which is what a designation list needs. Same shape as `_attachmentCollectingPaths`.
-  private readonly _attachmentUnitFolderPaths = new PathSettings();
-
-  private _hadDangerousSettingsReverted = false;
 
   private readonly _pathSettings = new PathSettings();
 
@@ -167,14 +126,6 @@ export class PluginSettings {
     return PATH_COMPATIBILITY_PLATFORMS.filter((platform) => flags[platform]);
   }
 
-  public isAttachmentUnitFolder(path: string): boolean {
-    return this._attachmentUnitFolderPaths.isPathIgnored(path);
-  }
-
-  public isExcludedFromAttachmentCollecting(path: string): boolean {
-    return this._attachmentCollectingPaths.isPathIgnored(path);
-  }
-
   public isPathIgnored(path: string): boolean {
     return this._pathSettings.isPathIgnored(path);
   }
@@ -184,15 +135,5 @@ export class PluginSettings {
       attachmentExtensions: this.treatAsAttachmentExtensions,
       pathOrFile: path
     });
-  }
-
-  public revertDangerousSettings(): void {
-    if (!this.shouldShowBackupWarning) {
-      return;
-    }
-    // Three of the four settings this used to revert moved to Advanced Rename and Delete Handler in 4.0.0,
-    // which reverts its own. Auto-collecting is the one destructive setting still owned here.
-    this._hadDangerousSettingsReverted = this.shouldCollectAttachmentsAutomatically;
-    this.shouldCollectAttachmentsAutomatically = false;
   }
 }
