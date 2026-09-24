@@ -25,7 +25,17 @@
  * would pass whenever the collect silently did nothing.
  *
  * The sibling note's own image is asserted in both phases, so a run where the collect never happened
- * fails loudly rather than reading as "the drawing was correctly skipped". Each phase also probes the
+ * fails loudly rather than reading as "the drawing was correctly skipped". It is also the suite's SETTLE
+ * POINT, and the staged names are ordered to make it one: the collector walks the folder's notes in path
+ * order and awaits each one's collect before starting the next (`attachment-collector.ts` sorts `noteFiles`
+ * with `path.localeCompare` before handing them to `loop`, whose `for ... of` awaits every `processItem`),
+ * so a sibling that sorts AFTER the drawing cannot have its image moved until the drawing's turn is over.
+ * That is why the two notes carry `-1-` and `-2-` in their names rather than being named for their roles
+ * alone, and why `isDrawingSortedBeforeSibling` asserts the ordering with the collector's own comparator: a
+ * rename that flips it must fail loudly rather than quietly go back to proving nothing. Waiting on the
+ * sibling's image while the drawing sorted second is what the ordering guards against — the control phase
+ * would read a drawing the walk had not yet reached as "its image was not collected", and the fix phase's
+ * two negatives would be satisfied vacuously by a walk that had not started. Each phase also probes the
  * command handler's half of the fix, by asking `Collect attachments in current note` whether it is
  * available with the drawing active: offered in the control phase, refused in the fix phase, rather
  * than being offered and then silently doing nothing. That is `checkCallback(true)` — the same question
@@ -74,6 +84,12 @@ const WAIT_TIMEOUT_IN_MILLISECONDS = 3000;
 interface PhaseResult {
   readonly isDrawingContentUnchanged: boolean;
   readonly isDrawingImageCollected: boolean;
+
+  /**
+   * Whether the staged names really put the drawing ahead of the sibling in the collector's own ordering,
+   * which is what makes the sibling's image a barrier for the drawing's turn rather than a coincidence.
+   */
+  readonly isDrawingSortedBeforeSibling: boolean;
   readonly isFileCommandOfferedOnDrawing: boolean;
   readonly isSiblingImageCollected: boolean;
 }
@@ -155,6 +171,7 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
         const EMPTY_PHASE: PhaseResult = {
           isDrawingContentUnchanged: false,
           isDrawingImageCollected: false,
+          isDrawingSortedBeforeSibling: false,
           isFileCommandOfferedOnDrawing: false,
           isSiblingImageCollected: false
         };
@@ -180,7 +197,9 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
 
         /*
          * Stages a scanned folder holding a drawing and an ordinary sibling note, each embedding its own
-         * image from a folder OUTSIDE the scanned one, so a collect has somewhere to move them from.
+         * image from a folder OUTSIDE the scanned one, so a collect has somewhere to move them from. The
+         * `-1-` / `-2-` in the two note names is load-bearing: see the settle-point paragraph in this
+         * file's header.
          */
         async function runPhase(shouldTreatDrawingAsAttachment: boolean): Promise<PhaseResult> {
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
@@ -189,9 +208,17 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
           const outsideFolder = `excl-src-out-${stamp}`;
           const drawingImagePath = `${outsideFolder}/excl-src-drawing-image-${stamp}.png`;
           const siblingImagePath = `${outsideFolder}/excl-src-sibling-image-${stamp}.png`;
-          const drawingPath = `${scanFolder}/excl-src-drawing-${stamp}.excalidraw.md`;
-          const siblingPath = `${scanFolder}/excl-src-sibling-${stamp}.md`;
+          const drawingPath = `${scanFolder}/excl-src-1-drawing-${stamp}.excalidraw.md`;
+          const siblingPath = `${scanFolder}/excl-src-2-sibling-${stamp}.md`;
           const drawingContent = `# drawing\n\n![[${drawingImagePath}]]\n`;
+
+          /*
+           * The collector's own comparator, applied to the two staged paths. Asserting it is what keeps the
+           * wait below a barrier rather than a coincidence of naming, and it is a property of the staged
+           * names alone, so it holds in the fix phase too — where the drawing never enters the walk at all
+           * and the sibling's image landing therefore means the whole walk is over.
+           */
+          const isDrawingSortedBeforeSibling = drawingPath.localeCompare(siblingPath) < 0;
 
           try {
             vaultConfig.setConfig('attachmentFolderPath', properFolder);
@@ -245,9 +272,14 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
               confirmButton.click();
             }
 
-            // The sibling's image travels in BOTH phases, so it is the signal that the collect ran at all.
+            /*
+             * The sibling's image travels in BOTH phases, so it is the signal that the collect ran at all —
+             * and, because the sibling sorts AFTER the drawing and the walk awaits each note's collect
+             * before starting the next, that the drawing's turn is already over. Only then is the snapshot
+             * below a verdict on the drawing rather than on how far the walk happened to have got.
+             */
             await waitUntil({
-              message: 'the sibling note\'s image was not collected, so the flow never ran',
+              message: 'the sibling note\'s image was not collected, so the walk never ran or never got past the drawing',
               predicate: () => Boolean(app.vault.getAbstractFileByPath(`${properFolder}/${siblingImagePath.split('/', 2)[1] ?? ''}`)),
               timeoutInMilliseconds: waitTimeoutInMilliseconds
             });
@@ -256,6 +288,7 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
             return {
               isDrawingContentUnchanged: (await app.vault.read(drawing)) === drawingContent,
               isDrawingImageCollected: collectedPaths.some((path) => path.includes('-drawing-image-')),
+              isDrawingSortedBeforeSibling,
               isFileCommandOfferedOnDrawing,
               isSiblingImageCollected: collectedPaths.some((path) => path.includes('-sibling-image-'))
             };
@@ -294,7 +327,14 @@ describe('A .excalidraw.md is never scanned as a source note', () => {
     // A settings object that could not be found would make every assertion below vacuous.
     expect(result.settingsFound).toBe(true);
 
-    // Both phases really collected, so the difference between them is the setting and nothing else.
+    // The sibling is a barrier for the drawing's turn only while it sorts after the drawing. A rename that
+    // Flipped that would leave the drawing assertions reading a walk that had not reached it yet, so the
+    // Ordering is asserted rather than assumed.
+    expect(result.control.isDrawingSortedBeforeSibling).toBe(true);
+    expect(result.fix.isDrawingSortedBeforeSibling).toBe(true);
+
+    // Both phases really collected — and got past the drawing, the sibling sorting after it being the
+    // Proof — so the difference between them is the setting and nothing else.
     expect(result.control.isSiblingImageCollected).toBe(true);
     expect(result.fix.isSiblingImageCollected).toBe(true);
 
