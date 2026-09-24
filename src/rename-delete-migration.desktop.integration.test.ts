@@ -127,3 +127,81 @@ describe('The 3.x rename/delete settings hand-over', () => {
     expect(result.treatAsAttachmentExtensionsOnDisk).toStrictEqual(['.foo.md']);
   });
 });
+
+// Issue #159: the converter runs on every load, and the three proposal keys this plugin still declares sit in
+// every saved record. Parking them alone re-opened a handover the user had already applied or dismissed, on
+// every start, and wrote the proposal back to disk.
+describe('A finished rename/delete hand-over', () => {
+  // The reporter's settings, as a 4.x save leaves them once the offer was retired.
+  const HANDED_OVER_RECORD = {
+    excludePaths: [String.raw`/\_*`],
+    includePaths: [],
+    proposedRenameDeleteSettings: null,
+    treatAsAttachmentExtensions: ['.excalidraw.md']
+  };
+
+  it('stays finished across a reload', async () => {
+    expect(await reloadWithRecord(HANDED_OVER_RECORD)).toStrictEqual({ inMemory: null, onDisk: null });
+  });
+
+  it('clears the proposal the defect saved to disk', async () => {
+    // The defect's own leftover: the three still-declared keys, parked and saved on a later start.
+    const defectRecord = {
+      ...HANDED_OVER_RECORD,
+      proposedRenameDeleteSettings: {
+        excludePaths: [String.raw`/\_*`],
+        includePaths: [],
+        treatAsAttachmentExtensions: ['.excalidraw.md']
+      }
+    };
+    expect(await reloadWithRecord(defectRecord)).toStrictEqual({ inMemory: null, onDisk: null });
+  });
+});
+
+interface ProposalAfterReload {
+  readonly inMemory: unknown;
+  readonly onDisk: unknown;
+}
+
+/**
+ * Writes `record` as this plugin's `data.json`, reloads the plugin, and reads the pending proposal back from
+ * both the loaded settings and the file the load may have rewritten.
+ *
+ * @param record - The saved record to load.
+ * @returns The proposal after the reload, in memory and on disk.
+ */
+async function reloadWithRecord(record: Record<string, unknown>): Promise<ProposalAfterReload> {
+  return await evalInObsidian({
+    async callback({ app, lib: { waitUntil }, pluginId, savedRecord }) {
+      interface PluginSettingsComponentLike {
+        readonly settings: Record<string, unknown>;
+      }
+
+      interface PluginWithSettingsComponent {
+        readonly pluginSettingsComponent: PluginSettingsComponentLike;
+      }
+
+      const RELOAD_TIMEOUT_IN_MILLISECONDS = 20_000;
+      const dataPath = `.obsidian/plugins/${pluginId}/data.json`;
+
+      await app.vault.adapter.write(dataPath, JSON.stringify(savedRecord));
+      await app.plugins.disablePlugin(pluginId);
+      await app.plugins.enablePlugin(pluginId);
+
+      await waitUntil({
+        message: 'the plugin to register its commands again',
+        predicate: () => Object.hasOwn(app.commands.commands, `${pluginId}:check-consistency`),
+        timeoutInMilliseconds: RELOAD_TIMEOUT_IN_MILLISECONDS
+      });
+
+      const pluginHandle: unknown = app.plugins.getPlugin(pluginId);
+      if (!pluginHandle) {
+        throw new Error(`Plugin is not loaded: ${pluginId}`);
+      }
+      const inMemory = (pluginHandle as PluginWithSettingsComponent).pluginSettingsComponent.settings['proposedRenameDeleteSettings'];
+      const recordOnDisk = JSON.parse(await app.vault.adapter.read(dataPath)) as Record<string, unknown>;
+      return { inMemory, onDisk: recordOnDisk['proposedRenameDeleteSettings'] ?? null };
+    },
+    input: { pluginId: PLUGIN_ID, savedRecord: record }
+  });
+}
