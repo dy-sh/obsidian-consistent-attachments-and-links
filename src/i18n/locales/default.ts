@@ -40,6 +40,13 @@ export const defaultTranslations = {
     collectAttachmentsInFile: 'Collect attachments in file',
     collectAttachmentsInFiles: 'Collect attachments in files'
   },
+  misplacedAttachment: {
+    report: {
+      noProblems: 'No problems found',
+      shouldBeIn: 'Attachment `{{attachmentPath}}` should be in `{{properAttachmentFolderPath}}`',
+      title: 'Misplaced attachments'
+    }
+  },
   moveAttachmentToProperFolder: {
     progressBar: {
       message: 'Moving attachment to proper folder {{iterationString}} - \'{{attachmentFilePath}}\'.',

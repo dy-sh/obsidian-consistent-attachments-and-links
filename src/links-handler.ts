@@ -25,13 +25,27 @@ import {
 } from 'obsidian-dev-utils/path';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
+import type {
+  MisplacedAttachmentCheckResult,
+  MisplacedAttachmentHandler
+} from './misplaced-attachment-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 interface LinksHandlerCheckConsistencyParams {
   readonly badEmbeds: ConsistencyCheckResult;
   readonly badFrontmatterLinks: ConsistencyCheckResult;
   readonly badLinks: ConsistencyCheckResult;
+  readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
+  readonly misplacedAttachments: MisplacedAttachmentCheckResult;
   readonly note: TFile;
+}
+
+interface LinksHandlerCheckReferencesParams {
+  readonly badReferences: ConsistencyCheckResult;
+  readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
+  readonly misplacedAttachments: MisplacedAttachmentCheckResult;
+  readonly notePath: string;
+  readonly references: readonly Reference[];
 }
 
 interface LinksHandlerConstructorParams {
@@ -91,7 +105,14 @@ export class LinksHandler {
   }
 
   public async checkConsistency(params: LinksHandlerCheckConsistencyParams): Promise<void> {
-    const { badEmbeds, badFrontmatterLinks, badLinks, note } = params;
+    const {
+      badEmbeds,
+      badFrontmatterLinks,
+      badLinks,
+      misplacedAttachmentHandler,
+      misplacedAttachments,
+      note
+    } = params;
     if (this.pluginSettingsComponent.settings.isPathIgnored(note.path)) {
       return;
     }
@@ -100,30 +121,62 @@ export class LinksHandler {
     if (!cache) {
       return;
     }
-    const links = cache.links ?? [];
-    const embeds = cache.embeds ?? [];
-    const frontmatterLinks = cache.frontmatterLinks ?? [];
 
-    for (const link of links) {
-      if (!(await this.isValidLink(link, note.path))) {
-        badLinks.add(note.path, link);
-      }
-    }
-
-    for (const embed of embeds) {
-      if (!(await this.isValidLink(embed, note.path))) {
-        badEmbeds.add(note.path, embed);
-      }
-    }
-
-    for (const frontmatterLink of frontmatterLinks) {
-      if (!(await this.isValidLink(frontmatterLink, note.path))) {
-        badFrontmatterLinks.add(note.path, frontmatterLink);
-      }
+    for (
+      const [references, badReferences] of [
+        [cache.links ?? [], badLinks],
+        [cache.embeds ?? [], badEmbeds],
+        [cache.frontmatterLinks ?? [], badFrontmatterLinks]
+      ] as const
+    ) {
+      await this.checkReferences({
+        badReferences,
+        misplacedAttachmentHandler,
+        misplacedAttachments,
+        notePath: note.path,
+        references
+      });
     }
   }
 
-  private async isValidLink(link: Reference, notePath: string): Promise<boolean> {
+  /**
+   * One pass per reference kind: a reference that does not resolve is a bad one and goes no further, and
+   * everything that DID resolve is offered to the misplaced-attachment check. Keeping the two in one walk is
+   * what makes "a reference already reported as a bad link is never reported twice" structural.
+   */
+  private async checkReferences(params: LinksHandlerCheckReferencesParams): Promise<void> {
+    const {
+      badReferences,
+      misplacedAttachmentHandler,
+      misplacedAttachments,
+      notePath,
+      references
+    } = params;
+
+    for (const reference of references) {
+      const attachmentFile = await this.resolveValidReferenceTarget(reference, notePath);
+
+      if (!attachmentFile) {
+        badReferences.add(notePath, reference);
+        continue;
+      }
+
+      await misplacedAttachmentHandler.check({
+        attachmentFile,
+        misplacedAttachments,
+        notePath,
+        reference
+      });
+    }
+  }
+
+  /**
+   * The file a reference resolves to, or `null` when it resolves to nothing — which is this plugin's
+   * definition of a bad link. The resolution is deliberately LITERAL: no extension inference, no vault-wide
+   * name search, no fuzzy match, so it is stricter than Obsidian's own resolver. See the scope line in
+   * `AGENTS.md`.
+   */
+  private async resolveValidReferenceTarget(link: Reference, notePath: string): Promise<null | TFile> {
     const { linkPath, subpath } = splitSubpath(link.link);
 
     let fullLinkPath: string;
@@ -139,29 +192,29 @@ export class LinksHandler {
     const file = getFileOrNull({ app: this.app, pathOrFile: fullLinkPath });
 
     if (!file) {
-      return false;
+      return null;
     }
 
     if (!subpath) {
-      return true;
+      return file;
     }
 
     const extension = file.extension.toLocaleLowerCase();
 
     if (extension === 'pdf') {
-      return subpath.startsWith('#page=');
+      return subpath.startsWith('#page=') ? file : null;
     }
 
     if (extension !== MARKDOWN_FILE_EXTENSION) {
-      return false;
+      return null;
     }
 
     const cache = await getCacheSafe(this.app, file);
 
     if (!cache) {
-      return false;
+      return null;
     }
 
-    return !!resolveSubpath(cache, subpath);
+    return resolveSubpath(cache, subpath) ? file : null;
   }
 }

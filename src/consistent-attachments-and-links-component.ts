@@ -20,6 +20,7 @@ import {
 import { dirname } from 'obsidian-dev-utils/path';
 
 import type { AttachmentCollector } from './attachment-collector.ts';
+import type { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
 import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
@@ -27,6 +28,7 @@ import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
+import { MisplacedAttachmentCheckResult } from './misplaced-attachment-handler.ts';
 import { PathCompatibilityCheckResult } from './path-compatibility-handler.ts';
 
 interface ConsistentAttachmentsAndLinksComponentConstructorParams {
@@ -34,6 +36,7 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly app: App;
   readonly attachmentCollector: AttachmentCollector;
   readonly linksHandler: LinksHandler;
+  readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
   readonly pathCompatibilityHandler: PathCompatibilityHandler;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -43,6 +46,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly attachmentCollector: AttachmentCollector;
   private readonly linksHandler: LinksHandler;
+  private readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
   private readonly pathCompatibilityHandler: PathCompatibilityHandler;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -52,6 +56,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     this.abortSignalComponent = params.abortSignalComponent;
     this.attachmentCollector = params.attachmentCollector;
     this.linksHandler = params.linksHandler;
+    this.misplacedAttachmentHandler = params.misplacedAttachmentHandler;
     this.pathCompatibilityHandler = params.pathCompatibilityHandler;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -63,13 +68,23 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const badLinks = new ConsistencyCheckResult('Bad links');
     const badEmbeds = new ConsistencyCheckResult('Bad embeds');
     const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
+    // Filled by the same walk as the three buckets above: it judges references, and only the ones that
+    // Resolved, so `LinksHandler` is the one place that has both the reference and its target.
+    const misplacedAttachments = new MisplacedAttachmentCheckResult();
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: ({ item, iterationString }) => `Checking note ${iterationString} - ${item.path}`,
       items: getMarkdownFilesSorted(this.app),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
-        await this.linksHandler.checkConsistency({ badEmbeds, badFrontmatterLinks, badLinks, note });
+        await this.linksHandler.checkConsistency({
+          badEmbeds,
+          badFrontmatterLinks,
+          badLinks,
+          misplacedAttachmentHandler: this.misplacedAttachmentHandler,
+          misplacedAttachments,
+          note
+        });
       },
       progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
       shouldContinueOnError: true,
@@ -83,7 +98,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const pathCompatibility = new PathCompatibilityCheckResult();
     this.pathCompatibilityHandler.check(pathCompatibility);
 
-    const text = [badLinks, badEmbeds, badFrontmatterLinks, pathCompatibility]
+    const text = [badLinks, badEmbeds, badFrontmatterLinks, pathCompatibility, misplacedAttachments]
       .map((result) => result.toString(this.app, notePath))
       .join('');
     await createFolderSafe(this.app, dirname(notePath));

@@ -25,6 +25,7 @@ import { ReorganizeVaultCommandHandler } from './command-handlers/reorganize-vau
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { LinksHandler } from './links-handler.ts';
+import { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
 import { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -115,6 +116,12 @@ export class Plugin extends PluginBase {
       resourceLockComponent: this.resourceLockComponent
     });
 
+    const misplacedAttachmentHandler = new MisplacedAttachmentHandler({
+      app: this.app,
+      attachmentCollector,
+      pluginSettingsComponent
+    });
+
     const pathCompatibilityHandler = new PathCompatibilityHandler({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
@@ -129,6 +136,7 @@ export class Plugin extends PluginBase {
         app: this.app,
         attachmentCollector,
         linksHandler,
+        misplacedAttachmentHandler,
         pathCompatibilityHandler,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent

@@ -14,6 +14,7 @@ import {
   normalizePath,
   resolveSubpath
 } from 'obsidian';
+import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
 import {
@@ -30,6 +31,10 @@ import {
   vi
 } from 'vitest';
 
+import type {
+  MisplacedAttachmentCheckResult,
+  MisplacedAttachmentHandler
+} from './misplaced-attachment-handler.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 vi.mock('obsidian', async (importOriginal) => {
@@ -70,7 +75,12 @@ import {
 } from './links-handler.ts';
 
 interface LinksHandlerPrivate {
-  isValidLink(link: Reference, notePath: string): Promise<boolean>;
+  resolveValidReferenceTarget(link: Reference, notePath: string): Promise<null | TFile>;
+}
+
+interface MisplacedParams {
+  readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
+  readonly misplacedAttachments: MisplacedAttachmentCheckResult;
 }
 
 interface ParentLike {
@@ -100,6 +110,19 @@ function createFile(path: string, extension = 'md', parent?: null | ParentLike):
     parent: parent === null ? null : strictProxy<TFile['parent']>(parent ?? { path: '' }),
     path
   });
+}
+
+/**
+ * A stand-in misplaced-attachment check plus the bucket it fills. The real judgement has its own suite in
+ * `misplaced-attachment-handler.test.ts`; what matters here is WHICH references reach it.
+ */
+function createMisplacedParams(): MisplacedParams {
+  return {
+    misplacedAttachmentHandler: strictProxy<MisplacedAttachmentHandler>({
+      check: vi.fn((): Promise<void> => noopAsync())
+    }),
+    misplacedAttachments: castTo<MisplacedAttachmentCheckResult>(new Map())
+  };
 }
 
 function createRef(overrides: Partial<Reference> = {}): Reference {
@@ -158,6 +181,7 @@ describe('LinksHandler', () => {
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
+        ...createMisplacedParams(),
         note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
@@ -170,6 +194,7 @@ describe('LinksHandler', () => {
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
+        ...createMisplacedParams(),
         note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
@@ -194,6 +219,7 @@ describe('LinksHandler', () => {
         badEmbeds,
         badFrontmatterLinks,
         badLinks,
+        ...createMisplacedParams(),
         note: createFile('note.md')
       });
 
@@ -217,6 +243,7 @@ describe('LinksHandler', () => {
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
+        ...createMisplacedParams(),
         note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
@@ -239,6 +266,7 @@ describe('LinksHandler', () => {
         badEmbeds,
         badFrontmatterLinks,
         badLinks: createResult(),
+        ...createMisplacedParams(),
         note: createFile('note.md')
       });
       expect(badEmbeds.size).toBe(0);
@@ -252,83 +280,151 @@ describe('LinksHandler', () => {
         badEmbeds: createResult(),
         badFrontmatterLinks: createResult(),
         badLinks,
+        ...createMisplacedParams(),
         note: createFile('note.md')
       });
       expect(badLinks.size).toBe(0);
     });
+
+    it('should offer every reference that RESOLVED to the misplaced-attachment check, across all three kinds', async () => {
+      const link = createReferenceCache({ link: 'good', original: '[good](good)' });
+      const embed = createReferenceCache({ link: 'good-embed', original: '![[good-embed]]' });
+      const fmLink = createReferenceCache({ key: 'prop', link: 'good-fm', original: 'good-fm' });
+      const target = createFile('good.md');
+      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({
+        embeds: [embed],
+        frontmatterLinks: [fmLink],
+        links: [link]
+      }));
+      mockSplitSubpath.mockReturnValue({ linkPath: 'good', subpath: '' });
+      mockGetFileOrNull.mockReturnValue(target);
+
+      const misplacedParams = createMisplacedParams();
+      await handler.checkConsistency({
+        badEmbeds: createResult(),
+        badFrontmatterLinks: createResult(),
+        badLinks: createResult(),
+        ...misplacedParams,
+        note: createFile('note.md')
+      });
+
+      const check = vi.mocked(misplacedParams.misplacedAttachmentHandler.check);
+      expect(check).toHaveBeenCalledTimes(3);
+      expect(check.mock.calls.map(([callParams]) => callParams.reference)).toEqual([link, embed, fmLink]);
+      expect(check).toHaveBeenCalledWith(expect.objectContaining({
+        attachmentFile: target,
+        misplacedAttachments: misplacedParams.misplacedAttachments,
+        notePath: 'note.md'
+      }));
+    });
+
+    // The whole point of resolving once: a reference the report has already called bad must never reach the
+    // Misplaced-attachment section too.
+    it('should NOT offer a reference that failed to resolve to the misplaced-attachment check', async () => {
+      const link = createReferenceCache({ link: 'bad', original: '[[bad]]' });
+      mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({
+        embeds: [],
+        frontmatterLinks: [],
+        links: [link]
+      }));
+      mockSplitSubpath.mockReturnValue({ linkPath: 'bad', subpath: '' });
+      mockGetFileOrNull.mockReturnValue(null);
+
+      const misplacedParams = createMisplacedParams();
+      const badLinks = createResult();
+      await handler.checkConsistency({
+        badEmbeds: createResult(),
+        badFrontmatterLinks: createResult(),
+        badLinks,
+        ...misplacedParams,
+        note: createFile('note.md')
+      });
+
+      expect(badLinks.get('note.md')).toEqual([link]);
+      expect(misplacedParams.misplacedAttachmentHandler.check).not.toHaveBeenCalled();
+    });
   });
 
-  describe('isValidLink', () => {
+  // The resolution half of the old `isValidLink`. It now returns the resolved file rather than a boolean,
+  // Because the misplaced-attachment check needs the very file the reference reached — so every case below
+  // Asserts the IDENTITY of what came back, not merely that something did.
+  describe('resolveValidReferenceTarget', () => {
     it('should resolve to the note itself when linkPath is empty', async () => {
+      const note = createFile('note.md');
       mockSplitSubpath.mockReturnValue({ linkPath: '', subpath: '' });
-      mockGetFileOrNull.mockReturnValue(createFile('note.md'));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(true);
+      mockGetFileOrNull.mockReturnValue(note);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBe(note);
     });
 
     it('should normalize an absolute linkPath', async () => {
+      const target = createFile('abs/img.png');
       mockSplitSubpath.mockReturnValue({ linkPath: '/abs/img.png', subpath: '' });
-      mockGetFileOrNull.mockReturnValue(createFile('abs/img.png'));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(true);
+      mockGetFileOrNull.mockReturnValue(target);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBe(target);
       expect(mockNormalizePath).toHaveBeenCalledWith('/abs/img.png');
     });
 
     it('should join a relative linkPath with the note dir', async () => {
+      const target = createFile('folder/img.png');
       mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockGetFileOrNull.mockReturnValue(createFile('folder/img.png'));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'folder/note.md')).toBe(true);
+      mockGetFileOrNull.mockReturnValue(target);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'folder/note.md')).toBe(target);
     });
 
-    it('should return false when the file does not exist', async () => {
+    it('should return null when the file does not exist', async () => {
       mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
       mockGetFileOrNull.mockReturnValue(null);
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(false);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
     });
 
-    it('should return true when there is no subpath', async () => {
+    it('should return the file when there is no subpath', async () => {
+      const target = createFile('img.png');
       mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '' });
-      mockGetFileOrNull.mockReturnValue(createFile('img.png'));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(true);
+      mockGetFileOrNull.mockReturnValue(target);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBe(target);
     });
 
     it('should accept #page= subpath for a pdf', async () => {
+      const target = createFile('doc.pdf', 'PDF');
       mockSplitSubpath.mockReturnValue({ linkPath: 'doc.pdf', subpath: '#page=2' });
-      mockGetFileOrNull.mockReturnValue(createFile('doc.pdf', 'PDF'));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(true);
+      mockGetFileOrNull.mockReturnValue(target);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBe(target);
     });
 
     it('should reject non-page subpath for a pdf', async () => {
       mockSplitSubpath.mockReturnValue({ linkPath: 'doc.pdf', subpath: '#heading' });
       mockGetFileOrNull.mockReturnValue(createFile('doc.pdf', 'pdf'));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(false);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
     });
 
-    it('should return false when subpath used on a non-markdown, non-pdf file', async () => {
+    it('should return null when subpath used on a non-markdown, non-pdf file', async () => {
       mockSplitSubpath.mockReturnValue({ linkPath: 'img.png', subpath: '#x' });
       mockGetFileOrNull.mockReturnValue(createFile('img.png', 'png'));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(false);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
     });
 
-    it('should return false when the markdown file has no cache', async () => {
+    it('should return null when the markdown file has no cache', async () => {
       mockSplitSubpath.mockReturnValue({ linkPath: 'other.md', subpath: '#heading' });
       mockGetFileOrNull.mockReturnValue(createFile('other.md', 'md'));
       mockGetCacheSafe.mockResolvedValue(null);
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(false);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
     });
 
-    it('should return true when the subpath resolves in the markdown cache', async () => {
+    it('should return the file when the subpath resolves in the markdown cache', async () => {
+      const target = createFile('other.md', 'md');
       mockSplitSubpath.mockReturnValue({ linkPath: 'other.md', subpath: '#heading' });
-      mockGetFileOrNull.mockReturnValue(createFile('other.md', 'md'));
+      mockGetFileOrNull.mockReturnValue(target);
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       mockResolveSubpath.mockReturnValue(strictProxy<ReturnType<typeof resolveSubpath>>({}));
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(true);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBe(target);
     });
 
-    it('should return false when the subpath does not resolve in the markdown cache', async () => {
+    it('should return null when the subpath does not resolve in the markdown cache', async () => {
       mockSplitSubpath.mockReturnValue({ linkPath: 'other.md', subpath: '#missing' });
       mockGetFileOrNull.mockReturnValue(createFile('other.md', 'md'));
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       mockResolveSubpath.mockReturnValue(null);
-      expect(await asPrivate(handler).isValidLink(createRef(), 'note.md')).toBe(false);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
     });
   });
 });

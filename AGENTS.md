@@ -242,6 +242,58 @@ consumed here on the `obsidian-dev-utils@99.0.0` bump. Two cases stay deliberate
 there, so do not "fix" them here either: `CONIN$` / `CONOUT$` and the superscript `COM²` forms, which every
 Windows version that runs Obsidian accepts — matching them would rename files that work.
 
+## Misplaced attachments — the report's fifth section
+
+`Misplaced attachments` names every reference that reaches an attachment sitting outside the attachment
+folder configured for the note that references it. It is the section that justifies "Attachments" staying in
+the plugin's name once collecting left for Custom Attachment Location (owner, 2026-09-02). **It only
+reports** — the first third of the scope line — and points the user at `Move attachment to proper folder` or
+at that plugin.
+
+`src/misplaced-attachment-handler.ts` holds the judgement and the report shape; `LinksHandler` feeds it.
+
+**The per-note seam is NOT the hard part, contrary to the obvious reading, and re-deriving that costs a
+sitting.** The fear was that `app.vault.getConfig('attachmentFolderPath')` is the only available read and
+that Custom Attachment Location patches it against the *currently open* file, so a vault-wide walk would
+give every note the active note's folder — wrongly, silently. Nothing here asks that way.
+obsidian-dev-utils' `getAttachmentFilePath` dispatches to **`app.vault.getAvailablePathForAttachments.extended`**,
+which takes `notePathOrFile` as an argument and so has no ambient state to leak, and falls back to
+Obsidian's own three modes when no plugin installed one. Two consequences worth writing down:
+
+- **Do not reach for Custom Attachment Location's `CustomAttachmentLocationApi` here.** That registry API is
+  for callers that need that plugin specifically. The extended function is the vault-wide seam every
+  obsidian-dev-utils attachment helper honours, and it is what `move-attachment-to-proper-folder` resolves
+  through — so asking any other way makes the report disagree with this plugin's own repair for the very
+  finding it produces.
+- **A cross-plugin proof needs no released Custom Attachment Location and no API stub.** The seam is a
+  property on a function, so `misplaced-attachment-report.desktop.integration.test.ts` installs its own
+  `extended` that answers a different folder per note and asserts the report names both. That phase is the
+  falsifying test for the ambient-state failure above, and it runs with nothing installed.
+
+Three decisions that look arbitrary and are not:
+
+- **It judges the FOLDER, never the path.** `AttachmentCollector.getProperAttachmentPath` answers about the
+  proper *path* — folder and templated base name both — so judging on it raw reports every attachment whose
+  name does not match the rename template. This plugin does not rename attachments, and reporting what it
+  does not offer to fix is precisely the mistake the wikilink buckets' removal settled. An attachment in the
+  right folder under a "wrong" name is deliberately silent.
+- **The folder comes from `parentFolderPath`, not `dirname`.** It answers `/` for the vault root where
+  `dirname` answers `.`, and it is what obsidian-dev-utils' own `getAttachmentFolderPath` returns — so the
+  folder this report names is byte-identical to the one that function gives for the same note. The
+  comparison folds case when the data adapter is insensitive, matching `isAtProperAttachmentPath` rather
+  than inventing a second standard.
+- **A markdown file the user has declared an attachment (`isTreatedAsAttachment`, `.excalidraw.md` by
+  default) IS judged.** The predicate is `AttachmentCollector.isNoteEx`, the same one `prepareAttachmentToMove`
+  uses to make such a file travel as an attachment. Answering differently would leave the report and the
+  collector disagreeing about what an attachment is. This is orthogonal to issue #151, which forbids
+  *rewriting* a drawing's contents, not reporting one.
+
+**A reference is never reported twice, and that is structural rather than a filter.** `LinksHandler` resolves
+each reference exactly once through `resolveValidReferenceTarget` (the resolution half of what used to be
+`isValidLink`); a reference that resolves to nothing is added to its bad bucket and goes no further, and only
+the ones that resolved are offered to this check. Do not "restore" a second filter — the guarantee holds
+because there is one resolution, and a second one is what would let the two drift apart.
+
 ## Pinned versions
 
 An **exact** version (no `^`) is how a dependency is held back here, and it is also what makes it invisible
