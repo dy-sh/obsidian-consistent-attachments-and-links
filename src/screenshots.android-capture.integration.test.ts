@@ -229,13 +229,6 @@ beforeAll(async () => {
       // to use, so the folder shot 3 names as proper is this setting's doing.
       app.vault.setConfig('attachmentFolderPath', './assets');
 
-      // Shot 2 renames a note another note still links to, and Obsidian asks
-      // "Update links?" before it will. The prompt is a dialog, so it covers the frame AND
-      // blocks everything after it. The CDP transport writes this into `app.json`
-      // itself ("Enabled alwaysUpdateLinks — headless rename support"); the Appium
-      // transport does not, so the mobile leg has to set it here.
-      app.vault.setConfig('alwaysUpdateLinks', true);
-
       // The two settings the plugin's own "Recommended Obsidian settings" note
       // asks for. They decide what Obsidian WRITES when shot 2's rename rewrites
       // the link to the repaired note: left at Obsidian's defaults, that is a bare
@@ -437,12 +430,14 @@ async function openNote(notePath: string, shouldShowTree = false): Promise<strin
       // and every claim here is about where a file sits. Expanded on every shot,
       // because the commands create folders that arrive collapsed.
       const fileExplorerLeaf = app.workspace.getLeavesOfType('file-explorer')[0];
-      if (fileExplorerLeaf) {
-        const view: unknown = fileExplorerLeaf.view;
-        for (const item of Object.values((view as FileExplorerView).fileItems)) {
-          if (item.collapsed === true) {
-            await item.setCollapsed?.(false);
-          }
+      if (!fileExplorerLeaf) {
+        return;
+      }
+
+      const view: unknown = fileExplorerLeaf.view;
+      for (const item of Object.values((view as FileExplorerView).fileItems)) {
+        if (item.collapsed === true) {
+          await item.setCollapsed?.(false);
         }
       }
     },

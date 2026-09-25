@@ -241,9 +241,5 @@ function describeReference(reference: Reference): string {
     return `(line ${String(reference.position.start.line + 1)}): \`${reference.link}\``;
   }
 
-  if (isFrontmatterLinkCache(reference)) {
-    return `(key ${reference.key}): \`${reference.link}\``;
-  }
-
-  return `\`${reference.link}\``;
+  return isFrontmatterLinkCache(reference) ? `(key ${reference.key}): \`${reference.link}\`` : `\`${reference.link}\``;
 }
