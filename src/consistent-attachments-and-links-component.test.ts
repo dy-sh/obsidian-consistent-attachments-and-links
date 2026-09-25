@@ -5,9 +5,13 @@ import type {
   WorkspaceLeaf
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { PluginNoticeComponentDelayedNotice } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 
 import { MarkdownView } from 'obsidian';
-import { noopAsync } from 'obsidian-dev-utils/function';
+import {
+  noop,
+  noopAsync
+} from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -137,7 +141,12 @@ const mockPathCompatibilityHandler = strictProxy<PathCompatibilityHandler>({
 });
 
 const mockPluginNoticeComponent = strictProxy<PluginNoticeComponent>({
-  showNotice: vi.fn((_message: DocumentFragment | string): Notice => castTo<Notice>({}))
+  showNotice: vi.fn((_message: DocumentFragment | string): Notice => castTo<Notice>({})),
+  // `checkConsistency`'s `loop` asks for its progress notice through this.
+  showNoticeAfterDelay: vi.fn((): PluginNoticeComponentDelayedNotice => ({
+    setContent: noop,
+    [Symbol.dispose]: noop
+  }))
 });
 
 const mockPluginSettingsComponent = strictProxy<PluginSettingsComponent>({

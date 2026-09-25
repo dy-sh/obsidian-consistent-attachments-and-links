@@ -296,14 +296,16 @@ export function findPathCompatibilityViolations(params: FindPathCompatibilityVio
       violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.ForbiddenCharacter });
     }
 
-    if (profile.hasWindowsNamingRules) {
-      if (isWindowsReservedName(name)) {
-        violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.ReservedName });
-      }
+    if (!profile.hasWindowsNamingRules) {
+      continue;
+    }
 
-      if (hasWindowsTrailingChars(name)) {
-        violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.TrailingCharacter });
-      }
+    if (isWindowsReservedName(name)) {
+      violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.ReservedName });
+    }
+
+    if (hasWindowsTrailingChars(name)) {
+      violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.TrailingCharacter });
     }
   }
 
@@ -335,11 +337,7 @@ export function getCurrentPathCompatibilityPlatform(): null | PathCompatibilityP
     return PathCompatibilityPlatform.MacOs;
   }
 
-  if (Platform.isLinux) {
-    return PathCompatibilityPlatform.Linux;
-  }
-
-  return null;
+  return Platform.isLinux ? PathCompatibilityPlatform.Linux : null;
 }
 
 /**

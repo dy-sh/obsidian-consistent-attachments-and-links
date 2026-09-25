@@ -272,19 +272,11 @@ export class PathCompatibilityHandler {
     const configured = this.pluginSettingsComponent.settings.maxVaultRootPathLength;
     const real = this.getRealVaultRootPathLength();
 
-    if (configured === 0 || real <= configured) {
-      return null;
-    }
-
-    return t(($) => $.pathCompatibility.report.vaultRootWarning, { maxLength: configured, realLength: real });
+    return configured === 0 || real <= configured ? null : t(($) => $.pathCompatibility.report.vaultRootWarning, { maxLength: configured, realLength: real });
   }
 
   private findViolations(file: TAbstractFile, scope: PathCompatibilityScope): PathCompatibilityViolation[] {
-    if (this.pluginSettingsComponent.settings.isPathIgnored(file.path)) {
-      return [];
-    }
-
-    return this.findViolationsAt(file, scope, file.path);
+    return this.pluginSettingsComponent.settings.isPathIgnored(file.path) ? [] : this.findViolationsAt(file, scope, file.path);
   }
 
   private findViolationsAt(file: TAbstractFile, scope: PathCompatibilityScope, path: string): PathCompatibilityViolation[] {
