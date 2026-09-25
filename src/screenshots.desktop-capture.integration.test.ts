@@ -296,36 +296,6 @@ describe('desktop store screenshots', () => {
 });
 
 /**
- * Takes focus off the editor immediately before a capture, so no caret is in the frame.
- *
- * Every frame opens a note in source mode, and the editor keeps focus with its caret at the start of the
- * first line. The caret blinks, so whether a frame caught it was pure timing: frame 1 came back differing
- * from its committed bytes in exactly one 1px-wide column at x=415, rows 110-143 — the caret beside
- * `# Meeting`, visible in one capture and hidden in the next.
- *
- * Blurring rather than hiding the caret with injected CSS: an unfocused editor is a state Obsidian really
- * renders, and source mode shows the same raw Markdown with or without focus, so nothing else in any frame
- * depends on it.
- *
- * @returns A {@link Promise} that resolves once focus is gone and the window has repainted.
- */
-async function blurEditor(): Promise<void> {
-  await evalInObsidian({
-    async callback(): Promise<void> {
-      const REPAINT_DELAY_IN_MILLISECONDS = 500;
-
-      const focusedEl: unknown = document.activeElement;
-      if (focusedEl instanceof HTMLElement) {
-        focusedEl.blur();
-      }
-
-      await sleep(REPAINT_DELAY_IN_MILLISECONDS);
-    },
-    vaultPath: vaultPath()
-  });
-}
-
-/**
  * Builds the image the staged note embeds.
  *
  * Drawn as shapes rather than text: sharp renders SVG text through whatever
@@ -492,12 +462,13 @@ async function runCommand(commandId: string): Promise<void> {
  * Captures the window, captions it, and writes it as
  * `images/screenshots/screenshot-desktop-<index>.png`.
  *
+ * The focused editor's caret blinks, so a frame would alternate between two blink phases; the harness
+ * hides it for the capture itself (`captureObsidianScreenshot`'s `shouldHideCaret`, on by default).
+ *
  * @param index - The 1-based listing position.
  * @param caption - The caption drawn across the bottom of the frame.
  */
 async function shoot(index: number, caption: string): Promise<void> {
-  await blurEditor();
-
   const bytes = await captureObsidianScreenshot({
     heightInPixels: HEIGHT_IN_PIXELS,
     vaultPath: vaultPath(),
