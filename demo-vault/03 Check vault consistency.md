@@ -14,9 +14,12 @@ The last section answers a different question from the others: the link works, t
 
 It is asked **per note**, so it is correct in a vault where different notes have different attachment folders - including when [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location) is installed and computing the folder from a template. Nothing has to be configured for that to work.
 
-Two things it deliberately does **not** report:
+Each note is judged against **its own** folder. With the template `./!!files/${noteFileName}`, an image that `A.md` embeds from `!!files/B/` is misplaced for `A.md`, because `A.md`'s attachments belong in `!!files/A/`, and the report says so.
+
+Three things it deliberately does **not** report:
 
 - An attachment that is in the right folder under a name your rename template would not have produced. That is a name, not a place, and this plugin does not rename attachments.
+- An attachment shared by several notes that sits in the folder of **one of them**. If `B.md` embeds that image too, the image is at home in `!!files/B/`, and `A.md`'s reference to it is not reported. No single folder can satisfy both notes, so reporting it would leave a finding you could never clear. A shared attachment that sits in **none** of its notes' folders is still reported, once for each note.
 - Anything already listed above as a bad link, embed or frontmatter link. A reference that does not resolve has no attachment to judge, so it is reported once, as the broken link it is.
 
 Acting on the finding is a separate step and always yours to take. Since 5.0.0 moving attachments belongs to [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location): run its **Move attachment to proper folder** on the named file, or its **Collect attachments** on the note.

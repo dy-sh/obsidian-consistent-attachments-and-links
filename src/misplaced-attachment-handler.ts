@@ -8,7 +8,8 @@
  * Attachment Location in 5.0.0; a user who wants the finding acted on runs that plugin's `Collect attachments`
  * or `Move attachment to proper folder`. See the scope line in `AGENTS.md`.
  *
- * Two things here are easy to get wrong, and both were:
+ * Three things here are easy to get wrong, and all three were. The third, an attachment shared by several
+ * notes, is on {@link MisplacedAttachmentCheckResult}. The first two:
  *
  * - **The judgement is about the FOLDER, not the path.** obsidian-dev-utils' `getAttachmentFilePath`
  *   answers about the proper *path* — folder and templated base name both — so judging on it raw reports
@@ -59,7 +60,8 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
  *
  * The same attachment referenced from two notes is two entries, because the two notes can configure
  * different attachment folders — which is the whole reason the entry is keyed by the reference rather than
- * by the attachment.
+ * by the attachment. Whether an entry reaches the report is decided only once the whole vault has been
+ * walked: see {@link MisplacedAttachmentCheckResult}.
  */
 export interface MisplacedAttachmentEntry {
   /**
@@ -97,8 +99,19 @@ interface MisplacedAttachmentHandlerConstructorParams {
  * grouped by note like the first, because the finding is about a note's references, but an entry carries
  * two paths — where the attachment is and where that note's configuration wants it — which a
  * `Map<string, Reference[]>` cannot express.
+ *
+ * **An attachment filed in the folder of ANY note that references it is at home, and none of its references
+ * is reported.** The map holds every candidate — a reference whose target is outside that one note's folder —
+ * and {@link markHomed} records the attachments that some referencing note's folder already holds. The two
+ * meet only in {@link getReported}, after the walk, because the note that makes an attachment at home can be
+ * walked after the note that made it look misplaced. Without this, an image embedded by `A.md` and `B.md` and
+ * filed under B's folder reported A for ever: no single folder satisfies both notes, so the report could never
+ * be brought to clean — and Custom Attachment Location's `Move attachment to proper folder`, which the report
+ * points at, leaves an attachment used by several notes where it is by default.
  */
 export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachmentEntry[]> {
+  private readonly homedAttachmentPaths = new Set<string>();
+
   public add(notePath: string, entry: MisplacedAttachmentEntry): void {
     let entries = this.get(notePath);
     if (!entries) {
@@ -108,16 +121,44 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
     entries.push(entry);
   }
 
+  /**
+   * The candidates that survive the walk: every entry whose attachment no referencing note's folder holds,
+   * grouped by note, with a note left out once none of its entries survive.
+   *
+   * @returns The entries the report names.
+   */
+  public getReported(): Map<string, MisplacedAttachmentEntry[]> {
+    const reported = new Map<string, MisplacedAttachmentEntry[]>();
+    for (const [notePath, entries] of this) {
+      const surviving = entries.filter((entry) => !this.homedAttachmentPaths.has(entry.attachmentPath));
+      if (surviving.length > 0) {
+        reported.set(notePath, surviving);
+      }
+    }
+    return reported;
+  }
+
+  /**
+   * Records that an attachment sits in the folder configured for a note that references it, which clears
+   * every other note's reference to it.
+   *
+   * @param attachmentPath - The attachment's vault-relative path.
+   */
+  public markHomed(attachmentPath: string): void {
+    this.homedAttachmentPaths.add(attachmentPath);
+  }
+
   public override toString(app: App, reportPath: string): string {
     const title = t(($) => $.misplacedAttachment.report.title);
+    const reported = this.getReported();
 
-    if (this.size === 0) {
+    if (reported.size === 0) {
       return `# ${title}\n${t(($) => $.misplacedAttachment.report.noProblems)}\n\n`;
     }
 
-    let $string = `# ${title} (${String(this.size)} files)\n`;
+    let $string = `# ${title} (${String(reported.size)} files)\n`;
 
-    for (const [notePath, entries] of this) {
+    for (const [notePath, entries] of reported) {
       const note = getFileOrNull({ app, pathOrFile: notePath });
       if (!note) {
         continue;
@@ -194,6 +235,7 @@ export class MisplacedAttachmentHandler {
         notePathOrFile: notePath
       })
     ) {
+      misplacedAttachments.markHomed(attachmentFile.path);
       return;
     }
 
@@ -217,8 +259,12 @@ export class MisplacedAttachmentHandler {
     // Only the base name differs: the attachment IS in its configured folder, and renaming it is not this
     // plugin's to report.
     if (fold(parentFolderPath(attachmentFile.path)) === fold(properAttachmentFolderPath)) {
+      misplacedAttachments.markHomed(attachmentFile.path);
       return;
     }
+
+    // A candidate only: another note referencing the same attachment may turn out to be the one whose folder
+    // holds it, which clears this entry when the report is written.
 
     misplacedAttachments.add(notePath, {
       attachmentPath: attachmentFile.path,

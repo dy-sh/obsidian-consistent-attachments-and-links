@@ -264,6 +264,62 @@ describe('MisplacedAttachmentHandler', () => {
     expect(misplacedAttachments.size).toBe(0);
   });
 
+  /*
+   * The owner's case: `./!!files/${noteFileName}`, and `A.md` embeds `!!files/B/image.png`. A's own folder is
+   * `!!files/A`, so the image is misplaced for A — whether or not a `B.md` exists, as long as B does not embed it.
+   */
+  it('should report an attachment filed in ANOTHER note\'s folder when only this note references it', async () => {
+    whenProperPathIs('!!files/A/image.png');
+    await check('!!files/B/image.png', 'A.md');
+
+    expect(misplacedAttachments.getReported().get('A.md')).toStrictEqual([expect.objectContaining({
+      attachmentPath: '!!files/B/image.png',
+      properAttachmentFolderPath: '!!files/A'
+    })]);
+  });
+
+  // The shared case: B embeds it too, and B's folder holds it, so it is at home and A is not reported.
+  it('should NOT report an attachment that another referencing note\'s folder holds, whichever note comes first', async () => {
+    whenProperPathIs('!!files/A/image.png');
+    await check('!!files/B/image.png', 'A.md');
+    whenProperPathIs('!!files/B/image.png');
+    await check('!!files/B/image.png', 'B.md');
+
+    expect(misplacedAttachments.getReported().size).toBe(0);
+
+    const reversed = new MisplacedAttachmentCheckResult();
+    misplacedAttachments = reversed;
+    whenProperPathIs('!!files/B/image.png');
+    await check('!!files/B/image.png', 'B.md');
+    whenProperPathIs('!!files/A/image.png');
+    await check('!!files/B/image.png', 'A.md');
+
+    expect(reversed.getReported().size).toBe(0);
+  });
+
+  // At home by FOLDER is enough, the same standard the per-note judgement uses: a name the rename template
+  // would not produce does not make B's folder any less B's.
+  it('should count an attachment in a referencing note\'s folder under another name as at home', async () => {
+    whenProperPathIs('!!files/A/image.png');
+    await check('!!files/B/image.png', 'A.md');
+    whenProperPathIs('!!files/B/B 2026-01-01.png');
+    await check('!!files/B/image.png', 'B.md');
+
+    expect(misplacedAttachments.getReported().size).toBe(0);
+  });
+
+  // Shared, but in NO referencing note's folder: every reference is reported, each against its own folder.
+  it('should report every reference to a shared attachment that no referencing note\'s folder holds', async () => {
+    whenProperPathIs('!!files/A/image.png');
+    await check('!!files/C/image.png', 'A.md');
+    whenProperPathIs('!!files/B/image.png');
+    await check('!!files/C/image.png', 'B.md');
+
+    const reported = misplacedAttachments.getReported();
+    expect(reported.get('A.md')?.[0]?.properAttachmentFolderPath).toBe('!!files/A');
+    expect(reported.get('B.md')?.[0]?.properAttachmentFolderPath).toBe('!!files/B');
+  });
+
   it('should group several misplaced attachments under their note', async () => {
     whenProperPathIs('Files/note/a.png');
     await check('attachments/a.png');
@@ -333,6 +389,45 @@ describe('MisplacedAttachmentCheckResult', () => {
     });
 
     expect(result.toString(app, 'report.md')).toContain('- `attachments/img.png`');
+  });
+
+  it('should leave out an entry whose attachment is at home, and a note with nothing left', () => {
+    mockIsReferenceCache.mockReturnValue(true);
+    const result = new MisplacedAttachmentCheckResult();
+    result.add('note.md', {
+      attachmentPath: 'Files/other/shared.png',
+      properAttachmentFolderPath: 'Files/note',
+      reference: createReferenceCache(0, 'Files/other/shared.png')
+    });
+    result.add('note.md', {
+      attachmentPath: 'attachments/img.png',
+      properAttachmentFolderPath: 'Files/note',
+      reference: createReferenceCache(1, 'attachments/img.png')
+    });
+    result.add('only-shared.md', {
+      attachmentPath: 'Files/other/shared.png',
+      properAttachmentFolderPath: 'Files/only-shared',
+      reference: createReferenceCache(0, 'Files/other/shared.png')
+    });
+    result.markHomed('Files/other/shared.png');
+
+    expect([...result.getReported().keys()]).toStrictEqual(['note.md']);
+    const text = result.toString(app, 'report.md');
+    expect(text).toContain('# Misplaced attachments (1 files)');
+    expect(text).toContain('attachments/img.png');
+    expect(text).not.toContain('shared.png');
+  });
+
+  it('should say there is nothing to report when every candidate is at home', () => {
+    const result = new MisplacedAttachmentCheckResult();
+    result.add('note.md', {
+      attachmentPath: 'Files/other/shared.png',
+      properAttachmentFolderPath: 'Files/note',
+      reference: castTo<Reference>({ link: 'Files/other/shared.png', original: 'Files/other/shared.png' })
+    });
+    result.markHomed('Files/other/shared.png');
+
+    expect(result.toString(app, 'report.md')).toBe('# Misplaced attachments\nNo problems found\n\n');
   });
 
   it('should skip a note that no longer exists', () => {
