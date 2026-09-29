@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## 5.0.0
+
+**Breaking: this plugin no longer collects attachments.**
+
+[Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) now owns it: **Collect attachments** for a note, a folder or the whole vault, **Move attachment to proper folder**, and collecting as you edit. Install it to keep those commands. This plugin does not require it. The consistency report and **Fix incompatible paths** work without it, and the report still names every attachment sitting outside its note's attachment folder.
+
+Why the change: this plugin carried a copy of that plugin's collector, kept deliberately identical, and a user with both installed got two sets of collect commands. One owner is the fix, as it was for renames and deletions in 4.0.0.
+
+**Your collect settings are not lost.** The first time both plugins are installed, this one offers that plugin your old collect settings: what to do with an attachment several notes share, the paths collecting skips, the attachment unit folders, and whether collecting ran as you edited. It shows you what would change and writes nothing unless you approve. Cancelling leaves the offer pending, so it comes back. **Add commands to file menu** is not carried over: that plugin always shows its collect and move commands in the file menu.
+
+The settings that **stay here** (the include and exclude paths, and the treat-as-attachment extensions) are still read by the report and the path repair.
+
+**Reorganize vault is gone.** Every step it ran but one has left this plugin (link rewriting in 4.0.1, empty-folder cleanup to Advanced Rename and Delete Handler in 4.1.0, and collecting now), so it had become another name for **Fix incompatible paths**. Run that command instead.
+
+- chore: merge dropping the local desktop caret blur
+- chore: merge the desktop capture caret fix
+- chore: merge the obsidian-integration-testing 17 float
+- chore: merge the Reorganize vault retirement
+- feat!: hand attachment collecting to Custom Attachment Location
+- fix(demo-vault): merge the awaited consistency-check buttons
+
 ## 4.1.0
 
 **[Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) is now required.** This plugin used to suggest it; it now waits for it. Until it is installed, this plugin shows a notice that installs it in one click and finishes loading the moment it arrives. Its defaults change nothing in your vault until you turn renames or deletions on.
