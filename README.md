@@ -68,7 +68,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## Where the old features went
 
-Versions 4.0.0 and 5.0.0 cut this plugin down to reporting and path repair. Everything else it used to do has a single owner now, so two plugins no longer carry copies of the same feature.
+This plugin has been cut down over time to reporting and path repair. Each feature it used to have now has a single owner, so two plugins no longer carry copies of the same feature. The [changelog](CHANGELOG.md) says which release moved each one.
 
 <!-- The span keeps #attachment-subfolder-setting resolving: plugin versions before 3.0.0 link to it. -->
 <!-- markdownlint-disable MD033 -->
