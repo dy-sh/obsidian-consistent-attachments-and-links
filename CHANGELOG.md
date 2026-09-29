@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.0.2
+
+- fix(report): stop reporting a shared attachment filed in one of its notes' folders
+
 ## 5.0.1
 
 - docs(readme): make the moved-features intro release-agnostic
