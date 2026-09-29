@@ -70,6 +70,8 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 Versions 4.0.0 and 5.0.0 cut this plugin down to reporting and path repair. Everything else it used to do has a single owner now, so two plugins no longer carry copies of the same feature.
 
+<!-- The span keeps #attachment-subfolder-setting resolving: plugin versions before 3.0.0 link to it. -->
+<!-- markdownlint-disable MD033 -->
 | What you used | Where it lives now | What to do |
 | --- | --- | --- |
 | Rewriting links and moving attachments on rename, move and delete (until 4.0.0) | [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) | Nothing to install: this plugin requires it. Turn on its rename and delete handling; this plugin offers your old settings to it. |
@@ -78,16 +80,11 @@ Versions 4.0.0 and 5.0.0 cut this plugin down to reporting and path repair. Ever
 | The four `Convert all … paths to relative` commands | [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) | It owns link paths as well as link style. The report still lists a path that does not resolve. |
 | **Collect attachments**, **Move attachment to proper folder** and collecting as you edit (until 5.0.0) | [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) | Optional: this plugin suggests it, and the first time both are installed it offers your old collect settings, showing what would change and writing nothing unless you approve. This plugin still reports a misplaced attachment. |
 | `Reorganize vault` | Retired | Every step but the last moved to the plugins above, so run **Fix incompatible paths** — it does exactly what `Reorganize vault` still did. |
+| <span id="attachment-subfolder-setting"></span>The `Attachment Subfolder` setting (until [3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0)) | [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) | It chooses the folder each new attachment goes into, per note or per anything a pattern can express, and it is what this plugin's report checks attachments against. Without it, this plugin follows Obsidian's built-in [`Default location for new attachments`](https://help.obsidian.md/Editing+and+formatting/Attachments#Change+default+attachment+location). See [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>). |
 
-Every command, and the full story of each one that left, is in [07 Commands](<./demo-vault/07 Commands.md>).
-
-<!-- markdownlint-disable MD033 -->
-## `Attachment Subfolder` setting <span id="attachment-subfolder-setting"></span>
 <!-- markdownlint-enable MD033 -->
 
-Moved to [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>).
-
-Since [v3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0) this setting is no longer managed by the plugin; it follows Obsidian's built-in [`Default location for new attachments`](https://help.obsidian.md/Editing+and+formatting/Attachments#Change+default+attachment+location). This heading stays so links already pointing at it keep resolving.
+Every command, and the full story of each one that left, is in [07 Commands](<./demo-vault/07 Commands.md>).
 
 ## Installation
 
