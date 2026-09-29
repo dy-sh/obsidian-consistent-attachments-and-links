@@ -1,6 +1,6 @@
 {
   "name": "consistent-attachments-and-links",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Reports every link whose written path does not lead to its target and every misplaced attachment, and repairs names and paths that a platform your vault syncs to would reject.",
   "keywords": [],
   "homepage": "https://github.com/dy-sh/obsidian-consistent-attachments-and-links#readme",

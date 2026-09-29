@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 5.0.1
+
+- docs(readme): make the moved-features intro release-agnostic
+- docs(readme): fold the Attachment Subfolder note into the moved-features table
+- docs: merge leading the README with what the plugin still does
+
 ## 5.0.0
 
 **Breaking: this plugin no longer collects attachments.**
