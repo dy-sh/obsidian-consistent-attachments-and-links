@@ -1,6 +1,9 @@
 # Start here
 
-Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/) demo vault. This plugin audits a vault for what breaks outside Obsidian: it reports every link whose written path does not itself lead to its target, every attachment sitting outside its note's attachment folder, and every name a platform you sync to would reject - and it repairs those names.
+Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/) demo vault. This plugin audits a vault for what breaks outside Obsidian, and it does two things:
+
+- **Check Vault Consistency** reports, changing nothing, every link whose written path does not itself lead to its target, every attachment sitting outside its note's attachment folder, and every name a platform you sync to would reject - see [03 Check vault consistency](<./03 Check vault consistency.md>).
+- **Fix Incompatible Paths** repairs those names - see [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
 > [!IMPORTANT] Renaming and deleting moved out
 >
@@ -8,9 +11,9 @@ Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsid
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
-> [!IMPORTANT] Collecting attachments moved out
+> [!NOTE] Other features moved out
 >
-> Since 5.0.0 this plugin no longer collects attachments. [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) owns **Collect attachments**, **Move attachment to proper folder** and collecting as you edit - see [01 Collect attachments into the note's folder](<./01 Collect attachments into the note's folder.md>). This plugin still reports a misplaced attachment.
+> Collecting attachments, link conversion, `Delete Empty Folders` and `Reorganize Vault` moved to other plugins or were retired. [07 Commands](<./07 Commands.md>) says where each one went, under **Commands that moved**.
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
