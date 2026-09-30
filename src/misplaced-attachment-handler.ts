@@ -55,6 +55,8 @@ import { generateMarkdownLink } from 'obsidian-dev-utils/obsidian/link';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
+
 /**
  * One misplaced attachment, as one reference in one note sees it.
  *
@@ -95,22 +97,29 @@ interface MisplacedAttachmentHandlerConstructorParams {
 /**
  * The `Misplaced attachments` section of the consistency report.
  *
- * A third result shape beside `ConsistencyCheckResult` and `PathCompatibilityCheckResult`: it is
- * grouped by note like the first, because the finding is about a note's references, but an entry carries
+ * A third result shape beside `ConsistencyCheckResult` and `PathCompatibilityCheckResult`: an entry carries
  * two paths — where the attachment is and where that note's configuration wants it — which a
- * `Map<string, Reference[]>` cannot express.
+ * `Map<string, Reference[]>` cannot express, and each line also names the OTHER notes that use the attachment.
  *
- * **An attachment filed in the folder of ANY note that references it is at home, and none of its references
- * is reported.** The map holds every candidate — a reference whose target is outside that one note's folder —
- * and {@link markHomed} records the attachments that some referencing note's folder already holds. The two
- * meet only in {@link getReported}, after the walk, because the note that makes an attachment at home can be
- * walked after the note that made it look misplaced. Without this, an image embedded by `A.md` and `B.md` and
- * filed under B's folder reported A for ever: no single folder satisfies both notes, so the report could never
- * be brought to clean — and Custom Attachment Location's `Move attachment to proper folder`, which the report
- * points at, leaves an attachment used by several notes where it is by default.
+ * **A reference is judged from the note that makes it (owner, 2026-09-29).** `A.md` linking
+ * `!!files/B/image.png` under `./!!files/${noteFileName}` is A linking an EXTERNAL attachment, even when `B.md`
+ * uses it too and it sits in B's folder. So the map holds every such reference, and the walk also records every
+ * note that uses each attachment ({@link addUser}) and the ones whose own folder holds it ({@link markHomed}) —
+ * its *proper notes*. Those feed the `also used by` clause, and the `ReportUnowned` mode, which reports a
+ * reference only when the attachment has no proper note. Both are known only after the whole walk, because the
+ * note that owns an attachment can be walked after the note that links it from outside, so the mode is applied
+ * in {@link getReported}, never inside the check.
+ *
+ * 5.0.2 treated an attachment in ANY referencing note's folder as at home and reported none of its references.
+ * The owner rejected that as the default, and it survives only as `ReportUnowned`.
  */
 export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachmentEntry[]> {
-  private readonly homedAttachmentPaths = new Set<string>();
+  private readonly properNotePathsByAttachment = new Map<string, Set<string>>();
+  private readonly userNotePathsByAttachment = new Map<string, Set<string>>();
+
+  public constructor(private readonly mode = ExternalAttachmentLinkMode.Report) {
+    super();
+  }
 
   public add(notePath: string, entry: MisplacedAttachmentEntry): void {
     let entries = this.get(notePath);
@@ -119,18 +128,48 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
       this.set(notePath, entries);
     }
     entries.push(entry);
+    this.addUser(entry.attachmentPath, notePath);
   }
 
   /**
-   * The candidates that survive the walk: every entry whose attachment no referencing note's folder holds,
-   * grouped by note, with a note left out once none of its entries survive.
+   * Records that a note references an attachment, wherever the attachment sits.
+   *
+   * @param attachmentPath - The attachment's vault-relative path.
+   * @param notePath - The referencing note's vault-relative path.
+   */
+  public addUser(attachmentPath: string, notePath: string): void {
+    addToSetMap(this.userNotePathsByAttachment, attachmentPath, notePath);
+  }
+
+  /**
+   * The notes that use an attachment besides the given one, its proper notes first, each group in walk order.
+   *
+   * @param attachmentPath - The attachment's vault-relative path.
+   * @param notePath - The note to leave out: the one whose reference is being reported.
+   * @returns The other notes' paths.
+   */
+  public getOtherUserNotePaths(attachmentPath: string, notePath: string): string[] {
+    const properNotePaths = [...this.properNotePathsByAttachment.get(attachmentPath) ?? []];
+    const userNotePaths = [...this.userNotePathsByAttachment.get(attachmentPath) ?? []];
+    return [...properNotePaths, ...userNotePaths.filter((path) => !properNotePaths.includes(path))].filter((path) => path !== notePath);
+  }
+
+  /**
+   * The entries the report names, after the mode is applied, grouped by note, with a note left out once none of
+   * its entries survive.
    *
    * @returns The entries the report names.
    */
   public getReported(): Map<string, MisplacedAttachmentEntry[]> {
     const reported = new Map<string, MisplacedAttachmentEntry[]>();
+    if (this.mode === ExternalAttachmentLinkMode.Ignore) {
+      return reported;
+    }
+
     for (const [notePath, entries] of this) {
-      const surviving = entries.filter((entry) => !this.homedAttachmentPaths.has(entry.attachmentPath));
+      const surviving = this.mode === ExternalAttachmentLinkMode.ReportUnowned
+        ? entries.filter((entry) => !this.properNotePathsByAttachment.has(entry.attachmentPath))
+        : entries;
       if (surviving.length > 0) {
         reported.set(notePath, surviving);
       }
@@ -139,17 +178,35 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
   }
 
   /**
-   * Records that an attachment sits in the folder configured for a note that references it, which clears
-   * every other note's reference to it.
+   * Whether a note is a proper note of an attachment: it references it, and its own folder holds it.
    *
    * @param attachmentPath - The attachment's vault-relative path.
+   * @param notePath - The note's vault-relative path.
+   * @returns `true` when the note's own attachment folder holds the attachment.
    */
-  public markHomed(attachmentPath: string): void {
-    this.homedAttachmentPaths.add(attachmentPath);
+  public isProperNote(attachmentPath: string, notePath: string): boolean {
+    return this.properNotePathsByAttachment.get(attachmentPath)?.has(notePath) ?? false;
+  }
+
+  /**
+   * Records that an attachment sits in the folder configured for a note that references it, which makes that
+   * note its proper note.
+   *
+   * @param attachmentPath - The attachment's vault-relative path.
+   * @param notePath - The referencing note whose folder holds it.
+   */
+  public markHomed(attachmentPath: string, notePath: string): void {
+    addToSetMap(this.properNotePathsByAttachment, attachmentPath, notePath);
+    this.addUser(attachmentPath, notePath);
   }
 
   public override toString(app: App, reportPath: string): string {
     const title = t(($) => $.misplacedAttachment.report.title);
+
+    if (this.mode === ExternalAttachmentLinkMode.Ignore) {
+      return `# ${title}\n${t(($) => $.misplacedAttachment.report.skipped)}\n\n`;
+    }
+
     const reported = this.getReported();
 
     if (reported.size === 0) {
@@ -159,32 +216,53 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
     let $string = `# ${title} (${String(reported.size)} files)\n`;
 
     for (const [notePath, entries] of reported) {
-      const note = getFileOrNull({ app, pathOrFile: notePath });
-      if (!note) {
+      const noteLink = generateNoteLink(app, reportPath, notePath);
+      if (noteLink === null) {
         continue;
       }
 
-      const linkString = generateMarkdownLink({
-        app,
-        sourcePathOrFile: reportPath,
-        targetPathOrFile: note
-      });
-      $string += `${linkString}:\n`;
-
       for (const entry of entries) {
-        $string += `- ${describeReference(entry.reference)}\n`;
+        const attachmentLink = getFileOrNull({ app, pathOrFile: entry.attachmentPath })
+          ? generateMarkdownLink({
+            app,
+            isEmbed: false,
+            sourcePathOrFile: reportPath,
+            targetPathOrFile: entry.attachmentPath
+          })
+          : `\`${entry.attachmentPath}\``;
+        $string += `- ${t(($) => $.misplacedAttachment.report.linksToExternal, { attachmentLink, noteLink })}${this.describeOtherUsers(app, reportPath, entry.attachmentPath, notePath)}\n`;
+        $string += `  - ${describeReference(entry.reference)}\n`;
         $string += `  - ${
-          t(($) => $.misplacedAttachment.report.shouldBeIn, {
-            attachmentPath: entry.attachmentPath,
+          t(($) => $.misplacedAttachment.report.noteAttachmentFolder, {
             properAttachmentFolderPath: entry.properAttachmentFolderPath
           })
         }\n`;
       }
 
-      $string += '\n\n';
+      $string += '\n';
     }
 
-    return $string;
+    return `${$string}\n`;
+  }
+
+  /**
+   * The ` (also used by …)` clause, or nothing when no other note uses the attachment.
+   */
+  private describeOtherUsers(app: App, reportPath: string, attachmentPath: string, notePath: string): string {
+    const links: string[] = [];
+    for (const otherNotePath of this.getOtherUserNotePaths(attachmentPath, notePath)) {
+      const link = generateNoteLink(app, reportPath, otherNotePath);
+      if (link === null) {
+        continue;
+      }
+      links.push(
+        this.isProperNote(attachmentPath, otherNotePath)
+          ? t(($) => $.misplacedAttachment.report.properNote, { noteLink: link })
+          : link
+      );
+    }
+
+    return links.length === 0 ? '' : t(($) => $.misplacedAttachment.report.alsoUsedBy, { notes: links.join(', ') });
   }
 }
 
@@ -212,16 +290,27 @@ export class MisplacedAttachmentHandler {
       notePath,
       reference
     } = params;
+    const settings = this.pluginSettingsComponent.settings;
+
+    // Nothing is reported, so there is nothing to ask the attachment-path seam for.
+    if (settings.externalAttachmentLinkMode === ExternalAttachmentLinkMode.Ignore) {
+      return;
+    }
 
     // A note is not an attachment — unless the user declared its extension one (`.excalidraw.md` by
     // default), in which case it IS judged here. That is the same rule a collector uses to make such a file
     // travel as an attachment, and answering differently would leave the report and the repair disagreeing
     // about what an attachment is.
-    if (isNote(attachmentFile) && !this.pluginSettingsComponent.settings.isTreatedAsAttachment(attachmentFile.path)) {
+    if (isNote(attachmentFile) && !settings.isTreatedAsAttachment(attachmentFile.path)) {
       return;
     }
 
-    if (this.pluginSettingsComponent.settings.isPathIgnored(attachmentFile.path)) {
+    if (settings.isPathIgnored(attachmentFile.path)) {
+      return;
+    }
+
+    // A shared location is anybody's folder, so no reference into it is external.
+    if (settings.isSharedAttachmentPath(attachmentFile.path)) {
       return;
     }
 
@@ -235,7 +324,7 @@ export class MisplacedAttachmentHandler {
         notePathOrFile: notePath
       })
     ) {
-      misplacedAttachments.markHomed(attachmentFile.path);
+      misplacedAttachments.markHomed(attachmentFile.path, notePath);
       return;
     }
 
@@ -259,12 +348,9 @@ export class MisplacedAttachmentHandler {
     // Only the base name differs: the attachment IS in its configured folder, and renaming it is not this
     // plugin's to report.
     if (fold(parentFolderPath(attachmentFile.path)) === fold(properAttachmentFolderPath)) {
-      misplacedAttachments.markHomed(attachmentFile.path);
+      misplacedAttachments.markHomed(attachmentFile.path, notePath);
       return;
     }
-
-    // A candidate only: another note referencing the same attachment may turn out to be the one whose folder
-    // holds it, which clears this entry when the report is written.
 
     misplacedAttachments.add(notePath, {
       attachmentPath: attachmentFile.path,
@@ -278,6 +364,15 @@ export class MisplacedAttachmentHandler {
   }
 }
 
+function addToSetMap(map: Map<string, Set<string>>, key: string, value: string): void {
+  let set = map.get(key);
+  if (!set) {
+    set = new Set<string>();
+    map.set(key, set);
+  }
+  set.add(value);
+}
+
 /**
  * The same per-reference line the first three buckets print, so one report does not describe a line number
  * two ways.
@@ -288,4 +383,17 @@ function describeReference(reference: Reference): string {
   }
 
   return isFrontmatterLinkCache(reference) ? `(key ${reference.key}): \`${reference.link}\`` : `\`${reference.link}\``;
+}
+
+function generateNoteLink(app: App, reportPath: string, notePath: string): null | string {
+  const note = getFileOrNull({ app, pathOrFile: notePath });
+  if (!note) {
+    return null;
+  }
+
+  return generateMarkdownLink({
+    app,
+    sourcePathOrFile: reportPath,
+    targetPathOrFile: note
+  });
 }

@@ -13,6 +13,7 @@ import {
   PATH_COMPATIBILITY_PLATFORMS,
   PathCompatibilityPlatform
 } from './path-compatibility.ts';
+import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
 
 interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
   readonly pluginSuggestionComponent: PluginSuggestionComponent;
@@ -130,6 +131,51 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         render: (setting) => {
           setting.addMultipleText((multipleText) => {
             this.bind({ propertyName: 'treatAsAttachmentExtensions', valueComponent: multipleText });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('What the consistency report does when a note links an attachment outside its own attachment folder.');
+          f.createEl('br');
+          appendCodeBlock(f, 'Report');
+          f.appendText(' - list every such link, even when the attachment sits in the folder of another note that uses it too.');
+          f.createEl('br');
+          appendCodeBlock(f, 'Report unowned');
+          f.appendText(' - list it only when no note that uses the attachment has it in its own folder.');
+          f.createEl('br');
+          appendCodeBlock(f, 'Ignore');
+          f.appendText(' - never list it; the misplaced-attachments section is skipped.');
+        }),
+        name: 'Links to attachments outside the note\'s folder',
+        render: (setting) => {
+          setting.addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep order. */
+              [ExternalAttachmentLinkMode.Report]: 'Report',
+              [ExternalAttachmentLinkMode.ReportUnowned]: 'Report unowned',
+              [ExternalAttachmentLinkMode.Ignore]: 'Ignore'
+              /* eslint-enable perfectionist/sort-objects -- Need to keep order. */
+            });
+            this.bind({ propertyName: 'externalAttachmentLinkMode', valueComponent: dropdown });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('Folders where any note may keep attachments, e.g. ');
+          appendCodeBlock(f, '_assets/common');
+          f.appendText('. A link into one of them, or anything under it, is never reported as misplaced.');
+          f.createEl('br');
+          f.appendText('Insert each path on a new line');
+          f.createEl('br');
+          f.appendText('You can use path string or ');
+          appendCodeBlock(f, '/regular expression/');
+        }),
+        name: 'Shared attachment locations',
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({ propertyName: 'sharedAttachmentPaths', valueComponent: multipleText });
           });
         }
       }),

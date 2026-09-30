@@ -6,8 +6,12 @@ export const defaultTranslations = {
   ...obsidianDevUtilsEn,
   misplacedAttachment: {
     report: {
+      alsoUsedBy: ' (also used by {{notes}})',
+      linksToExternal: '{{noteLink}} links to external {{attachmentLink}}',
       noProblems: 'No problems found',
-      shouldBeIn: 'Attachment `{{attachmentPath}}` should be in `{{properAttachmentFolderPath}}`',
+      noteAttachmentFolder: 'This note\'s attachment folder is `{{properAttachmentFolderPath}}`',
+      properNote: '{{noteLink}} (its proper note)',
+      skipped: 'Not checked: \'Links to attachments outside the note\'s folder\' is set to \'Ignore\'.',
       title: 'Misplaced attachments'
     }
   },

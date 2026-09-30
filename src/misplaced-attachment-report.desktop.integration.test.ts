@@ -277,7 +277,7 @@ describe('Consistency report: misplaced attachments', () => {
 
     // Phase 1: both notes reported, against Obsidian's own configured folder.
     expect(result.vaultDefault.section).toContain(result.attachmentPath);
-    expect(result.vaultDefault.section).toContain(`should be in \`${result.properFolder}\``);
+    expect(result.vaultDefault.section).toContain(`attachment folder is \`${result.properFolder}\``);
     expect(result.vaultDefault.section).toContain(result.noteOnePath.replace(/\.md$/, ''));
     expect(result.vaultDefault.section).toContain(result.noteTwoPath.replace(/\.md$/, ''));
 
@@ -287,7 +287,7 @@ describe('Consistency report: misplaced attachments', () => {
      */
     const noteOneBaseName = result.noteOnePath.replace(/\.md$/, '');
     const noteTwoBaseName = result.noteTwoPath.replace(/\.md$/, '');
-    expect(result.perNote.section).toContain('should be in `mar-extended-');
+    expect(result.perNote.section).toContain('attachment folder is `mar-extended-');
     expect(result.perNote.section).toContain(`/${noteOneBaseName}\``);
     expect(result.perNote.section).toContain(`/${noteTwoBaseName}\``);
 

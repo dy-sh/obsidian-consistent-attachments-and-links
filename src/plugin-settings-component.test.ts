@@ -64,7 +64,8 @@ describe('PluginSettingsComponent', () => {
       // is used to feed the validator an invalid pattern directly.
       const settings = strictProxy<PluginSettings>({
         excludePaths: [],
-        includePaths: ['/[/']
+        includePaths: ['/[/'],
+        sharedAttachmentPaths: []
       });
       const result = await component.validate(settings);
       expect(result.includePaths).toBe('Invalid regular expression /[/');
@@ -74,10 +75,27 @@ describe('PluginSettingsComponent', () => {
       const component = createComponent();
       const settings = strictProxy<PluginSettings>({
         excludePaths: ['/(/'],
-        includePaths: []
+        includePaths: [],
+        sharedAttachmentPaths: []
       });
       const result = await component.validate(settings);
       expect(result.excludePaths).toBe('Invalid regular expression /(/');
+    });
+
+    it('should reject an invalid regular expression in sharedAttachmentPaths, and accept a valid one', async () => {
+      const component = createComponent();
+      const invalid = strictProxy<PluginSettings>({
+        excludePaths: [],
+        includePaths: [],
+        sharedAttachmentPaths: ['Shared', '/(/']
+      });
+      const invalidResult = await component.validate(invalid);
+      expect(invalidResult.sharedAttachmentPaths).toBe('Invalid regular expression /(/');
+
+      const valid = new PluginSettings();
+      valid.sharedAttachmentPaths = ['Shared', String.raw`/^_assets\//`];
+      const validResult = await component.validate(valid);
+      expect(validResult.sharedAttachmentPaths).toBeUndefined();
     });
 
     it('should not treat plain path strings as regular expressions', async () => {

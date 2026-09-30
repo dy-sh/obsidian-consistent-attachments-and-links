@@ -294,7 +294,8 @@ describe('desktop store screenshots', () => {
     expect(report).toContain(MISSING_NOTE_NAME);
     // The attachment still sits in the shared root folder, and the report says where it belongs instead of
     // moving it.
-    expect(report).toContain(`Attachment \`${ORIGINAL_ATTACHMENT_PATH}\` should be in \`${PROPER_ATTACHMENT_FOLDER_PATH}\``);
+    expect(report).toContain('links to external');
+    expect(report).toContain(`This note's attachment folder is \`${PROPER_ATTACHMENT_FOLDER_PATH}\``);
     const paths = await listFiles();
     expect(paths).toContain(ORIGINAL_ATTACHMENT_PATH);
     await shoot(3, 'What is broken or misplaced, changing nothing');
