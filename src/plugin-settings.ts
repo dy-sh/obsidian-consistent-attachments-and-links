@@ -10,8 +10,34 @@ import {
   PathCompatibilityPlatform
 } from './path-compatibility.ts';
 
+/**
+ * What the report does with a note's reference to an attachment outside that note's own attachment folder.
+ */
+export enum ExternalAttachmentLinkMode {
+  /**
+   * Never report it: the `Misplaced attachments` section is skipped, and says so.
+   */
+  Ignore = 'Ignore',
+
+  /**
+   * Report every such reference — including one to an attachment filed in the folder of another note that
+   * references it too.
+   */
+  Report = 'Report',
+
+  /**
+   * Report it only when no note that references the attachment has it in its own folder.
+   */
+  ReportUnowned = 'ReportUnowned'
+}
+
 export class PluginSettings {
   public consistencyReportFile = 'consistency-report.md';
+
+  /**
+   * What the report does when a note references an attachment outside that note's own attachment folder.
+   */
+  public externalAttachmentLinkMode = ExternalAttachmentLinkMode.Report;
 
   /**
    * Whether the user has already declined the suggestion to install Custom Attachment Location.
@@ -102,7 +128,23 @@ export class PluginSettings {
     this._pathSettings.includePaths = value;
   }
 
+  /**
+   * Folders, or `/regular expressions/`, where any note may keep attachments. A reference into one of them is
+   * never reported as misplaced.
+   */
+  public get sharedAttachmentPaths(): string[] {
+    return this._sharedAttachmentPathSettings.excludePaths;
+  }
+
+  public set sharedAttachmentPaths(value: string[]) {
+    this._sharedAttachmentPathSettings.excludePaths = value;
+  }
+
   private readonly _pathSettings = new PathSettings();
+
+  // Only the EXCLUDE half is used: it matches nothing while empty, and a plain folder matches itself and
+  // everything under it — the shared-location rule, in the same syntax as `Exclude paths`.
+  private readonly _sharedAttachmentPathSettings = new PathSettings();
 
   /**
    * The platforms whose naming rules are currently enforced.
@@ -128,6 +170,10 @@ export class PluginSettings {
 
   public isPathIgnored(path: string): boolean {
     return this._pathSettings.isPathIgnored(path);
+  }
+
+  public isSharedAttachmentPath(path: string): boolean {
+    return this._sharedAttachmentPathSettings.isPathIgnored(path);
   }
 
   public isTreatedAsAttachment(path: string): boolean {

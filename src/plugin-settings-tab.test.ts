@@ -34,6 +34,7 @@ import type { Plugin } from './plugin.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
 
 interface CreatedTab {
   pluginSettingsComponent: PluginSettingsComponent;
@@ -195,6 +196,20 @@ describe('PluginSettingsTab', () => {
     suggestedPluginState = SuggestedPluginState.Enabled;
     const { tab } = await createTab();
     expect(isBannerVisible(tab)).toBe(false);
+  });
+
+  it('should render the external-attachment settings, with the three modes in order', async () => {
+    const addOptionsSpy = vi.spyOn(DropdownComponentClass.prototype, 'addOptions');
+    const { tab } = await createTab();
+    const names = getSettingNames(tab);
+    expect(names).toContain('Links to attachments outside the note\'s folder');
+    expect(names).toContain('Shared attachment locations');
+    expect(addOptionsSpy).toHaveBeenCalledTimes(1);
+    expect(Object.entries(addOptionsSpy.mock.calls[0]?.[0] ?? {})).toStrictEqual([
+      [ExternalAttachmentLinkMode.Report, 'Report'],
+      [ExternalAttachmentLinkMode.ReportUnowned, 'Report unowned'],
+      [ExternalAttachmentLinkMode.Ignore, 'Ignore']
+    ]);
   });
 
   it('should bind its toggles', async () => {

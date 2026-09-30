@@ -8,7 +8,10 @@ import {
   PATH_COMPATIBILITY_PLATFORMS,
   PathCompatibilityPlatform
 } from './path-compatibility.ts';
-import { PluginSettings } from './plugin-settings.ts';
+import {
+  ExternalAttachmentLinkMode,
+  PluginSettings
+} from './plugin-settings.ts';
 
 describe('PluginSettings', () => {
   describe('defaults', () => {
@@ -23,6 +26,33 @@ describe('PluginSettings', () => {
       expect(settings.proposedRenameDeleteSettings).toBeNull();
       // Nor anything to hand to Custom Attachment Location.
       expect(settings.proposedCollectSettings).toBeNull();
+      // A note linking an attachment outside its own folder is reported, even when another note owns it.
+      expect(settings.externalAttachmentLinkMode).toBe(ExternalAttachmentLinkMode.Report);
+      expect(settings.sharedAttachmentPaths).toStrictEqual([]);
+    });
+  });
+
+  describe('isSharedAttachmentPath', () => {
+    it('should match nothing while the list is empty', () => {
+      const settings = new PluginSettings();
+      expect(settings.isSharedAttachmentPath('Shared/image.png')).toBe(false);
+      expect(settings.isSharedAttachmentPath('image.png')).toBe(false);
+    });
+
+    it('should match a plain folder, everything under it, and nothing that merely shares its prefix', () => {
+      const settings = new PluginSettings();
+      settings.sharedAttachmentPaths = ['Shared/'];
+      expect(settings.isSharedAttachmentPath('Shared/image.png')).toBe(true);
+      expect(settings.isSharedAttachmentPath('Shared/deep/image.png')).toBe(true);
+      expect(settings.isSharedAttachmentPath('Shared stuff/image.png')).toBe(false);
+      expect(settings.isSharedAttachmentPath('notes/Shared/image.png')).toBe(false);
+    });
+
+    it('should match a regular expression anywhere in the path', () => {
+      const settings = new PluginSettings();
+      settings.sharedAttachmentPaths = [String.raw`/_assets\/common\//`];
+      expect(settings.isSharedAttachmentPath('projects/_assets/common/logo.png')).toBe(true);
+      expect(settings.isSharedAttachmentPath('projects/_assets/logo.png')).toBe(false);
     });
   });
 

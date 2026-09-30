@@ -6,7 +6,7 @@
 
 This plugin makes that visible. It does two things:
 
-- **Check vault consistency** audits the whole vault and writes a report, changing nothing: bad links, bad embeds and bad frontmatter links (every link whose written path does not itself lead to its target), attachments sitting outside their note's attachment folder, and names and paths a platform you sync to would reject.
+- **Check vault consistency** audits the whole vault and writes a report, changing nothing: bad links, bad embeds and bad frontmatter links (every link whose written path does not itself lead to its target), attachments sitting outside their note's attachment folder (each named with the other notes that use it, and with configurable handling and shared locations), and names and paths a platform you sync to would reject.
 - **Fix incompatible paths** repairs those names and paths — not because Obsidian cannot open them, but because that platform's filesystem cannot store them. Links follow the rename, and the original name is kept.
 
 It never rewrites a link into a style, moves an attachment or cleans up folders: where those matter, it reports and leaves the change to you.

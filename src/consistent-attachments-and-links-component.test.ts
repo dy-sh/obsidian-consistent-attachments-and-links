@@ -52,6 +52,10 @@ interface LayoutReadyWorkspace {
   setLayoutReady__: () => void;
 }
 
+interface ModeHolder {
+  readonly mode: unknown;
+}
+
 interface ObsidianDevUtilsStateHolder {
   obsidianDevUtilsState: Record<string, unknown>;
 }
@@ -87,6 +91,8 @@ vi.mock('./links-handler.ts', () => ({
 
 vi.mock('./misplaced-attachment-handler.ts', () => ({
   MisplacedAttachmentCheckResult: class {
+    public constructor(public readonly mode?: unknown) {}
+
     public toString(): string {
       return 'Misplaced attachments\n';
     }
@@ -119,6 +125,7 @@ let previousGlobalApp: unknown;
 
 const mockSettings = {
   consistencyReportFile: 'report.md',
+  externalAttachmentLinkMode: 'ReportUnowned',
   isPathIgnored: vi.fn((_path: string): boolean => false),
   shouldShowBackupWarning: true
 };
@@ -254,6 +261,8 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       const [checkParams] = vi.mocked(mockLinksHandler.checkConsistency).mock.calls[0] ?? [];
       expect(checkParams?.misplacedAttachmentHandler).toBe(mockMisplacedAttachmentHandler);
       expect(checkParams?.misplacedAttachments).toBeInstanceOf(MisplacedAttachmentCheckResult);
+      // The bucket applies the configured mode once the walk is over, so it must be built with it.
+      expect(castTo<ModeHolder>(checkParams?.misplacedAttachments).mode).toBe('ReportUnowned');
     });
 
     it('should not reopen the report when it is already open', async () => {

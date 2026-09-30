@@ -77,9 +77,13 @@ import {
   MisplacedAttachmentCheckResult,
   MisplacedAttachmentHandler
 } from './misplaced-attachment-handler.ts';
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
 
 interface SettingsLike {
+  externalAttachmentLinkMode: ExternalAttachmentLinkMode;
   isPathIgnored: (path: string) => boolean;
+  isSharedAttachmentPath: (path: string) => boolean;
   isTreatedAsAttachment: (path: string) => boolean;
 }
 
@@ -107,6 +111,10 @@ function createReferenceCache(line: number, link: string): Reference {
   });
 }
 
+function toPath(pathOrFile: string | TFile): string {
+  return typeof pathOrFile === 'string' ? pathOrFile : pathOrFile.path;
+}
+
 describe('MisplacedAttachmentHandler', () => {
   let app: App;
   let handler: MisplacedAttachmentHandler;
@@ -122,7 +130,9 @@ describe('MisplacedAttachmentHandler', () => {
     hoisted.insensitive = false;
     app = strictProxy<App>({});
     settings = {
+      externalAttachmentLinkMode: ExternalAttachmentLinkMode.Report,
       isPathIgnored: vi.fn().mockReturnValue(false),
+      isSharedAttachmentPath: vi.fn().mockReturnValue(false),
       isTreatedAsAttachment: vi.fn().mockReturnValue(false)
     };
     mockIsNote.mockReturnValue(false);
@@ -152,11 +162,20 @@ describe('MisplacedAttachmentHandler', () => {
     return { attachmentFile, reference };
   }
 
+  /**
+   * The owner's setup: each note is judged against its own folder under `./!!files/${noteFileName}`.
+   */
+  async function judgeAsNote(attachmentPath: string, noteName: string): Promise<void> {
+    whenProperPathIs(`!!files/${noteName}/image.png`);
+    await check(attachmentPath, `${noteName}.md`);
+  }
+
   function whenProperPathIs(properPath: null | string): void {
     if (properPath === null) {
       mockIsAtProperAttachmentPath.mockResolvedValue(true);
       return;
     }
+    mockIsAtProperAttachmentPath.mockResolvedValue(false);
     mockGetAttachmentFilePath.mockResolvedValue(properPath);
   }
 
@@ -215,12 +234,35 @@ describe('MisplacedAttachmentHandler', () => {
     expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
   });
 
-  it('should skip an attachment already at its proper path', async () => {
+  it('should skip an attachment in a shared location, asked about the attachment\'s own path', async () => {
+    castTo<ReturnType<typeof vi.fn>>(settings.isSharedAttachmentPath).mockImplementation((path: string) => path.startsWith('Shared/'));
+    whenProperPathIs('Files/note/img.png');
+    await check('Shared/img.png');
+
+    expect(misplacedAttachments.size).toBe(0);
+    expect(settings.isSharedAttachmentPath).toHaveBeenCalledWith('Shared/img.png');
+    expect(mockIsAtProperAttachmentPath).not.toHaveBeenCalled();
+
+    await check('Elsewhere/img.png');
+    expect(misplacedAttachments.get('note.md')).toHaveLength(1);
+  });
+
+  it('should ask nothing and record nothing when the mode is Ignore', async () => {
+    settings.externalAttachmentLinkMode = ExternalAttachmentLinkMode.Ignore;
+    whenProperPathIs('Files/note/img.png');
+    await check('attachments/img.png');
+
+    expect(misplacedAttachments.size).toBe(0);
+    expect(mockIsAtProperAttachmentPath).not.toHaveBeenCalled();
+  });
+
+  it('should skip an attachment already at its proper path, and make its note the proper note', async () => {
     whenProperPathIs(null);
     await check('Files/note/img.png');
 
     expect(misplacedAttachments.size).toBe(0);
     expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
+    expect(misplacedAttachments.isProperNote('Files/note/img.png', 'note.md')).toBe(true);
   });
 
   // The judgement is about the FOLDER. An attachment sitting in the right folder under a name the rename
@@ -230,6 +272,7 @@ describe('MisplacedAttachmentHandler', () => {
     await check('Files/note/img.png');
 
     expect(misplacedAttachments.size).toBe(0);
+    expect(misplacedAttachments.isProperNote('Files/note/img.png', 'note.md')).toBe(true);
   });
 
   // The vault root reads as `/`, Obsidian's own convention and what `getAttachmentFolderPath` returns —
@@ -266,58 +309,84 @@ describe('MisplacedAttachmentHandler', () => {
 
   /*
    * The owner's case: `./!!files/${noteFileName}`, and `A.md` embeds `!!files/B/image.png`. A's own folder is
-   * `!!files/A`, so the image is misplaced for A — whether or not a `B.md` exists, as long as B does not embed it.
+   * `!!files/A`, so A links an external attachment — whether or not B uses it too.
    */
   it('should report an attachment filed in ANOTHER note\'s folder when only this note references it', async () => {
-    whenProperPathIs('!!files/A/image.png');
-    await check('!!files/B/image.png', 'A.md');
+    await judgeAsNote('!!files/B/image.png', 'A');
 
     expect(misplacedAttachments.getReported().get('A.md')).toStrictEqual([expect.objectContaining({
       attachmentPath: '!!files/B/image.png',
       properAttachmentFolderPath: '!!files/A'
     })]);
+    expect(misplacedAttachments.getOtherUserNotePaths('!!files/B/image.png', 'A.md')).toStrictEqual([]);
   });
 
-  // The shared case: B embeds it too, and B's folder holds it, so it is at home and A is not reported.
-  it('should NOT report an attachment that another referencing note\'s folder holds, whichever note comes first', async () => {
-    whenProperPathIs('!!files/A/image.png');
-    await check('!!files/B/image.png', 'A.md');
-    whenProperPathIs('!!files/B/image.png');
-    await check('!!files/B/image.png', 'B.md');
+  // The shared case, which 5.0.2 hid: B embeds it too and B's folder holds it. A is still reported, and B is
+  // named as its proper note, whichever note is walked first.
+  it('should report A and name B as the proper note when B uses it too, whichever note comes first', async () => {
+    await judgeAsNote('!!files/B/image.png', 'A');
+    await judgeAsNote('!!files/B/image.png', 'B');
+
+    expect([...misplacedAttachments.getReported().keys()]).toStrictEqual(['A.md']);
+    expect(misplacedAttachments.getOtherUserNotePaths('!!files/B/image.png', 'A.md')).toStrictEqual(['B.md']);
+    expect(misplacedAttachments.isProperNote('!!files/B/image.png', 'B.md')).toBe(true);
+
+    misplacedAttachments = new MisplacedAttachmentCheckResult();
+    await judgeAsNote('!!files/B/image.png', 'B');
+    await judgeAsNote('!!files/B/image.png', 'A');
+
+    expect([...misplacedAttachments.getReported().keys()]).toStrictEqual(['A.md']);
+    expect(misplacedAttachments.getOtherUserNotePaths('!!files/B/image.png', 'A.md')).toStrictEqual(['B.md']);
+  });
+
+  it('should list the proper note first, then the other users in walk order', async () => {
+    await judgeAsNote('!!files/B/image.png', 'A');
+    await judgeAsNote('!!files/B/image.png', 'C');
+    await judgeAsNote('!!files/B/image.png', 'D');
+    await judgeAsNote('!!files/B/image.png', 'B');
+
+    expect(misplacedAttachments.getOtherUserNotePaths('!!files/B/image.png', 'A.md')).toStrictEqual(['B.md', 'C.md', 'D.md']);
+    expect([...misplacedAttachments.getReported().keys()]).toStrictEqual(['A.md', 'C.md', 'D.md']);
+  });
+
+  it('should report nothing of an owned attachment under ReportUnowned, whichever note comes first', async () => {
+    misplacedAttachments = new MisplacedAttachmentCheckResult(ExternalAttachmentLinkMode.ReportUnowned);
+    await judgeAsNote('!!files/B/image.png', 'A');
+    await judgeAsNote('!!files/B/image.png', 'B');
 
     expect(misplacedAttachments.getReported().size).toBe(0);
 
-    const reversed = new MisplacedAttachmentCheckResult();
-    misplacedAttachments = reversed;
-    whenProperPathIs('!!files/B/image.png');
-    await check('!!files/B/image.png', 'B.md');
-    whenProperPathIs('!!files/A/image.png');
-    await check('!!files/B/image.png', 'A.md');
+    misplacedAttachments = new MisplacedAttachmentCheckResult(ExternalAttachmentLinkMode.ReportUnowned);
+    await judgeAsNote('!!files/B/image.png', 'B');
+    await judgeAsNote('!!files/B/image.png', 'A');
 
-    expect(reversed.getReported().size).toBe(0);
+    expect(misplacedAttachments.getReported().size).toBe(0);
   });
 
-  // At home by FOLDER is enough, the same standard the per-note judgement uses: a name the rename template
-  // would not produce does not make B's folder any less B's.
-  it('should count an attachment in a referencing note\'s folder under another name as at home', async () => {
-    whenProperPathIs('!!files/A/image.png');
-    await check('!!files/B/image.png', 'A.md');
+  // Owned by FOLDER is enough, the same standard the per-note judgement uses: a name the rename template would
+  // not produce does not make B's folder any less B's.
+  it('should count a note whose folder holds the attachment under another name as its proper note', async () => {
+    misplacedAttachments = new MisplacedAttachmentCheckResult(ExternalAttachmentLinkMode.ReportUnowned);
+    await judgeAsNote('!!files/B/image.png', 'A');
     whenProperPathIs('!!files/B/B 2026-01-01.png');
     await check('!!files/B/image.png', 'B.md');
 
     expect(misplacedAttachments.getReported().size).toBe(0);
   });
 
-  // Shared, but in NO referencing note's folder: every reference is reported, each against its own folder.
-  it('should report every reference to a shared attachment that no referencing note\'s folder holds', async () => {
-    whenProperPathIs('!!files/A/image.png');
-    await check('!!files/C/image.png', 'A.md');
-    whenProperPathIs('!!files/B/image.png');
-    await check('!!files/C/image.png', 'B.md');
+  // Shared, but in NO referencing note's folder: every reference is reported in both modes, each against its own
+  // folder, and there is no proper note.
+  it('should report every reference to a shared attachment that no referencing note\'s folder holds, in both modes', async () => {
+    for (const mode of [ExternalAttachmentLinkMode.Report, ExternalAttachmentLinkMode.ReportUnowned]) {
+      misplacedAttachments = new MisplacedAttachmentCheckResult(mode);
+      await judgeAsNote('!!files/C/image.png', 'A');
+      await judgeAsNote('!!files/C/image.png', 'B');
 
-    const reported = misplacedAttachments.getReported();
-    expect(reported.get('A.md')?.[0]?.properAttachmentFolderPath).toBe('!!files/A');
-    expect(reported.get('B.md')?.[0]?.properAttachmentFolderPath).toBe('!!files/B');
+      const reported = misplacedAttachments.getReported();
+      expect(reported.get('A.md')?.[0]?.properAttachmentFolderPath).toBe('!!files/A');
+      expect(reported.get('B.md')?.[0]?.properAttachmentFolderPath).toBe('!!files/B');
+      expect(misplacedAttachments.isProperNote('!!files/C/image.png', 'B.md')).toBe(false);
+    }
   });
 
   it('should group several misplaced attachments under their note', async () => {
@@ -328,6 +397,20 @@ describe('MisplacedAttachmentHandler', () => {
 
     expect(misplacedAttachments.get('note.md')).toHaveLength(2);
     expect(misplacedAttachments.size).toBe(1);
+  });
+
+  it('should name a note that references an attachment twice only once among the other users', async () => {
+    await judgeAsNote('!!files/B/image.png', 'A');
+    await judgeAsNote('!!files/B/image.png', 'C');
+    await judgeAsNote('!!files/B/image.png', 'C');
+
+    expect(misplacedAttachments.getOtherUserNotePaths('!!files/B/image.png', 'A.md')).toStrictEqual(['C.md']);
+    expect(misplacedAttachments.get('C.md')).toHaveLength(2);
+  });
+
+  it('should know no users and no proper note of an attachment nobody referenced', () => {
+    expect(misplacedAttachments.getOtherUserNotePaths('unused.png', 'A.md')).toStrictEqual([]);
+    expect(misplacedAttachments.isProperNote('unused.png', 'A.md')).toBe(false);
   });
 });
 
@@ -341,31 +424,89 @@ describe('MisplacedAttachmentCheckResult', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     app = strictProxy<App>({});
-    mockGenerateMarkdownLink.mockReturnValue('[[note]]');
-    mockGetFileOrNull.mockReturnValue(createFile('note.md'));
+    mockGenerateMarkdownLink.mockImplementation(({ targetPathOrFile }) => `[[${toPath(targetPathOrFile).replace(/\.md$/, '')}]]`);
+    mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile ? createFile(toPath(pathOrFile)) : null);
     mockIsReferenceCache.mockReturnValue(false);
     mockIsFrontmatterLinkCache.mockReturnValue(false);
   });
+
+  function addEntry(result: MisplacedAttachmentCheckResult, notePath: string, attachmentPath: string): void {
+    result.add(notePath, {
+      attachmentPath,
+      properAttachmentFolderPath: `!!files/${notePath.replace(/\.md$/, '')}`,
+      reference: createReferenceCache(0, attachmentPath)
+    });
+  }
+
+  function whenMissing(missingPath: string): void {
+    mockGetFileOrNull.mockImplementation(({ pathOrFile }) => !pathOrFile || toPath(pathOrFile) === missingPath ? null : createFile(toPath(pathOrFile)));
+  }
 
   it('should say so when there is nothing to report', () => {
     const result = new MisplacedAttachmentCheckResult();
     expect(result.toString(app, 'report.md')).toBe('# Misplaced attachments\nNo problems found\n\n');
   });
 
-  it('should name the line and both paths for a reference cache', () => {
+  it('should say the section was skipped under Ignore, whatever it holds', () => {
+    const result = new MisplacedAttachmentCheckResult(ExternalAttachmentLinkMode.Ignore);
+    addEntry(result, 'A.md', '!!files/B/image.png');
+
+    expect(result.getReported().size).toBe(0);
+    expect(result.toString(app, 'report.md')).toBe(
+      '# Misplaced attachments\nNot checked: \'Links to attachments outside the note\'s folder\' is set to \'Ignore\'.\n\n'
+    );
+  });
+
+  it('should print the owner\'s line with no clause when nothing else uses the attachment', () => {
     mockIsReferenceCache.mockReturnValue(true);
     const result = new MisplacedAttachmentCheckResult();
-    result.add('note.md', {
-      attachmentPath: 'attachments/img.png',
-      properAttachmentFolderPath: 'Files/note',
-      reference: createReferenceCache(4, 'attachments/img.png')
+    result.add('A.md', {
+      attachmentPath: '!!files/B/image.png',
+      properAttachmentFolderPath: '!!files/A',
+      reference: createReferenceCache(4, '!!files/B/image.png')
     });
 
     const text = result.toString(app, 'report.md');
     expect(text).toContain('# Misplaced attachments (1 files)');
-    expect(text).toContain('[[note]]:');
-    expect(text).toContain('- (line 5): `attachments/img.png`');
-    expect(text).toContain('  - Attachment `attachments/img.png` should be in `Files/note`');
+    expect(text).toContain('- [[A]] links to external [[!!files/B/image.png]]\n');
+    expect(text).toContain('  - (line 5): `!!files/B/image.png`\n');
+    expect(text).toContain('  - This note\'s attachment folder is `!!files/A`\n');
+    // The attachment is linked, never embedded, so the report does not render the image.
+    expect(mockGenerateMarkdownLink).toHaveBeenCalledWith(expect.objectContaining({ isEmbed: false, targetPathOrFile: '!!files/B/image.png' }));
+  });
+
+  it('should mark the proper note in the clause', () => {
+    const result = new MisplacedAttachmentCheckResult();
+    addEntry(result, 'A.md', '!!files/B/image.png');
+    result.markHomed('!!files/B/image.png', 'B.md');
+
+    expect(result.toString(app, 'report.md')).toContain(
+      '- [[A]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note))\n'
+    );
+  });
+
+  it('should name one other user when there is no proper note', () => {
+    const result = new MisplacedAttachmentCheckResult();
+    addEntry(result, 'A.md', '!!files/X/image.png');
+    addEntry(result, 'C.md', '!!files/X/image.png');
+
+    const text = result.toString(app, 'report.md');
+    expect(text).toContain('- [[A]] links to external [[!!files/X/image.png]] (also used by [[C]])\n');
+    expect(text).toContain('- [[C]] links to external [[!!files/X/image.png]] (also used by [[A]])\n');
+  });
+
+  it('should print the owner\'s full example: the proper note first, then every other user', () => {
+    const result = new MisplacedAttachmentCheckResult();
+    addEntry(result, 'A.md', '!!files/B/image.png');
+    addEntry(result, 'C.md', '!!files/B/image.png');
+    result.markHomed('!!files/B/image.png', 'B.md');
+    addEntry(result, 'D.md', '!!files/B/image.png');
+
+    const text = result.toString(app, 'report.md');
+    expect(text).toContain('# Misplaced attachments (3 files)');
+    expect(text).toContain('- [[A]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note), [[C]], [[D]])\n');
+    expect(text).toContain('- [[D]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note), [[A]], [[C]])\n');
+    expect(text).not.toContain('- [[B]] links');
   });
 
   it('should name the frontmatter key for a frontmatter link', () => {
@@ -377,7 +518,7 @@ describe('MisplacedAttachmentCheckResult', () => {
       reference: castTo<Reference>({ key: 'cover', link: 'attachments/img.png', original: 'attachments/img.png' })
     });
 
-    expect(result.toString(app, 'report.md')).toContain('- (key cover): `attachments/img.png`');
+    expect(result.toString(app, 'report.md')).toContain('  - (key cover): `attachments/img.png`');
   });
 
   it('should fall back to the bare link when the reference is neither kind', () => {
@@ -388,28 +529,15 @@ describe('MisplacedAttachmentCheckResult', () => {
       reference: castTo<Reference>({ link: 'attachments/img.png', original: 'attachments/img.png' })
     });
 
-    expect(result.toString(app, 'report.md')).toContain('- `attachments/img.png`');
+    expect(result.toString(app, 'report.md')).toContain('  - `attachments/img.png`');
   });
 
-  it('should leave out an entry whose attachment is at home, and a note with nothing left', () => {
-    mockIsReferenceCache.mockReturnValue(true);
-    const result = new MisplacedAttachmentCheckResult();
-    result.add('note.md', {
-      attachmentPath: 'Files/other/shared.png',
-      properAttachmentFolderPath: 'Files/note',
-      reference: createReferenceCache(0, 'Files/other/shared.png')
-    });
-    result.add('note.md', {
-      attachmentPath: 'attachments/img.png',
-      properAttachmentFolderPath: 'Files/note',
-      reference: createReferenceCache(1, 'attachments/img.png')
-    });
-    result.add('only-shared.md', {
-      attachmentPath: 'Files/other/shared.png',
-      properAttachmentFolderPath: 'Files/only-shared',
-      reference: createReferenceCache(0, 'Files/other/shared.png')
-    });
-    result.markHomed('Files/other/shared.png');
+  it('should leave out an owned attachment under ReportUnowned, and a note with nothing left', () => {
+    const result = new MisplacedAttachmentCheckResult(ExternalAttachmentLinkMode.ReportUnowned);
+    addEntry(result, 'note.md', 'Files/other/shared.png');
+    addEntry(result, 'note.md', 'attachments/img.png');
+    addEntry(result, 'only-shared.md', 'Files/other/shared.png');
+    result.markHomed('Files/other/shared.png', 'other.md');
 
     expect([...result.getReported().keys()]).toStrictEqual(['note.md']);
     const text = result.toString(app, 'report.md');
@@ -418,29 +546,39 @@ describe('MisplacedAttachmentCheckResult', () => {
     expect(text).not.toContain('shared.png');
   });
 
-  it('should say there is nothing to report when every candidate is at home', () => {
-    const result = new MisplacedAttachmentCheckResult();
-    result.add('note.md', {
-      attachmentPath: 'Files/other/shared.png',
-      properAttachmentFolderPath: 'Files/note',
-      reference: castTo<Reference>({ link: 'Files/other/shared.png', original: 'Files/other/shared.png' })
-    });
-    result.markHomed('Files/other/shared.png');
+  it('should keep an owned attachment under Report', () => {
+    const result = new MisplacedAttachmentCheckResult(ExternalAttachmentLinkMode.Report);
+    addEntry(result, 'note.md', 'Files/other/shared.png');
+    result.markHomed('Files/other/shared.png', 'other.md');
+
+    expect([...result.getReported().keys()]).toStrictEqual(['note.md']);
+  });
+
+  it('should say there is nothing to report when every candidate is owned under ReportUnowned', () => {
+    const result = new MisplacedAttachmentCheckResult(ExternalAttachmentLinkMode.ReportUnowned);
+    addEntry(result, 'note.md', 'Files/other/shared.png');
+    result.markHomed('Files/other/shared.png', 'other.md');
 
     expect(result.toString(app, 'report.md')).toBe('# Misplaced attachments\nNo problems found\n\n');
   });
 
-  it('should skip a note that no longer exists', () => {
-    mockGetFileOrNull.mockReturnValue(null);
+  it('should skip a note that no longer exists, in its own lines and in the clause', () => {
+    whenMissing('gone.md');
     const result = new MisplacedAttachmentCheckResult();
-    result.add('gone.md', {
-      attachmentPath: 'attachments/img.png',
-      properAttachmentFolderPath: 'Files/note',
-      reference: castTo<Reference>({ link: 'attachments/img.png', original: 'attachments/img.png' })
-    });
+    addEntry(result, 'gone.md', 'attachments/img.png');
+    addEntry(result, 'A.md', 'attachments/img.png');
 
     const text = result.toString(app, 'report.md');
-    expect(text).toContain('# Misplaced attachments (1 files)');
-    expect(text).not.toContain('attachments/img.png');
+    expect(text).toContain('# Misplaced attachments (2 files)');
+    expect(text).not.toContain('[[gone]]');
+    expect(text).toContain('- [[A]] links to external [[attachments/img.png]]\n');
+  });
+
+  it('should print the attachment path as code when the attachment no longer exists', () => {
+    whenMissing('attachments/img.png');
+    const result = new MisplacedAttachmentCheckResult();
+    addEntry(result, 'A.md', 'attachments/img.png');
+
+    expect(result.toString(app, 'report.md')).toContain('- [[A]] links to external `attachments/img.png`\n');
   });
 });

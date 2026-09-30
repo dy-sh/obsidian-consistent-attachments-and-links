@@ -64,7 +64,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const badFrontmatterLinks = new ConsistencyCheckResult('Bad frontmatter links');
     // Filled by the same walk as the three buckets above: it judges references, and only the ones that
     // resolved, so `LinksHandler` is the one place that has both the reference and its target.
-    const misplacedAttachments = new MisplacedAttachmentCheckResult();
+    const misplacedAttachments = new MisplacedAttachmentCheckResult(this.pluginSettingsComponent.settings.externalAttachmentLinkMode);
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: ({ item, iterationString }) => `Checking note ${iterationString} - ${item.path}`,

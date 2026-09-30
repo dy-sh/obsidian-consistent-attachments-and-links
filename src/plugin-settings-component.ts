@@ -166,6 +166,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     super.registerValidators();
     this.registerValidator('includePaths', pathsValidator);
     this.registerValidator('excludePaths', pathsValidator);
+    this.registerValidator('sharedAttachmentPaths', pathsValidator);
   }
 }
 
