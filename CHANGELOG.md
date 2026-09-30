@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 5.1.0
+
+**The misplaced-attachments report now lists a note's links to external attachments, and this changes what 5.0.2 did.**
+
+A note that links an attachment outside its own attachment folder is reported even when another note that uses the attachment has it in its own folder. With `./!!files/${noteFileName}`, `A.md` embedding `!!files/B/image.png` is reported for A, even when `B.md` embeds it too. Each line names every other note that uses the attachment and marks the note whose folder holds it:
+
+`[[A]] links to external [[image.png]] (also used by [[B]] (its proper note), [[C]], [[D]])`
+
+5.0.2 reported nothing in that case. To keep that behavior, set **Links to attachments outside the note's folder** to **Report unowned**.
+
+New settings:
+
+- **Links to attachments outside the note's folder**: **Report** (default) lists every such link. **Report unowned** lists it only when no note that uses the attachment has it in its own folder. **Ignore** switches the section off.
+- **Shared attachment locations**: folders, or `/regular expressions/`, that any note may take attachments from, such as `_assets/common`. A link into one of them is never reported.
+
+- feat(report): report links to external attachments, with a mode and shared locations
+
 ## 5.0.2
 
 - fix(report): stop reporting a shared attachment filed in one of its notes' folders
