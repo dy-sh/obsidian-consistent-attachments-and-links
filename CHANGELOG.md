@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 5.1.1
+
+- build: merge the move off obsidian-dev-utils onto the @mnaoumov packages
+- fix(ui): mark plugin names as code in the backup warning, markdown and comments
+- test: merge using the obsidian-typings declarations of Obsidian internals
+
 ## 5.1.0
 
 **The misplaced-attachments report now lists a note's links to external attachments, and this changes what 5.0.2 did.**
