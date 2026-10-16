@@ -40,6 +40,9 @@ async function populate(): Promise<PopulateFilesParams> {
       demoVaultPath: join(getRootFolder() ?? process.cwd(), 'demo-vault'),
       injectPlugins: [{
         data: CODE_SCRIPT_TOOLKIT_SETTINGS,
+        // `demoSetup.ts` imports `@mnaoumov/obsidian-lib`, which `CodeScript Toolkit` serves only from 13.8.0, so an
+        // older copy left installed in a warm checkout is re-downloaded rather than reused.
+        minVersion: '13.8.0',
         pluginId: CODE_SCRIPT_TOOLKIT_PLUGIN_ID
       }]
     }),
