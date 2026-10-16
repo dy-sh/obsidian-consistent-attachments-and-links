@@ -14,9 +14,9 @@
  * it. The commands that did it are gone — rewriting a link's style is not
  * this plugin's job — so the pair moved onto the repair half of the scope line.
  * There used to be a fifth shot too, showing an attachment following its note
- * across a move; Advanced Rename and Delete Handler owns that since 4.0.0. And a
- * fourth, showing attachments collected into the note's own folder; Custom
- * Attachment Location owns collecting since 5.0.0, so the report now names that
+ * across a move; `Advanced Rename and Delete Handler` owns that since 4.0.0. And a
+ * fourth, showing attachments collected into the note's own folder; `Custom
+ * Attachment Location` owns collecting since 5.0.0, so the report now names that
  * attachment as misplaced instead.
  *
  * THE OFFENDER IS THE INVERSE OF THE DESKTOP SUITE'S, AND IS STAGED DIFFERENTLY.
@@ -194,8 +194,8 @@ beforeAll(async () => {
       // string that belongs in no listing.
       //
       // The same rule hides notices. A Notice is not a modal, so the dismiss pass
-      // further down never reaches one, and the plugin's Advanced Rename and Delete
-      // Handler suggestion lands over the link text these frames exist to show.
+      // further down never reaches one, and the plugin's `Advanced Rename and Delete
+      // Handler` suggestion lands over the link text these frames exist to show.
       // Staging `isAdvancedRenameAndDeleteHandlerSuggestionDeclined` in `data.json`
       // does NOT stop it; hiding the container does, for every notice any plugin
       // raises mid-run.
@@ -296,8 +296,8 @@ describe('mobile store screenshots', () => {
   });
 
   // There used to be a frame here showing an attachment following its note across a move, and one after
-  // it showing attachments collected into the note's own folder. Advanced Rename and Delete Handler owns the
-  // first since 4.0.0 and Custom Attachment Location the second since 5.0.0, so this plugin can no longer show
+  // it showing attachments collected into the note's own folder. `Advanced Rename and Delete Handler` owns the
+  // first since 4.0.0 and `Custom Attachment Location` the second since 5.0.0, so this plugin can no longer show
   // either — and a store screenshot of a feature it does not have is worse than one frame fewer.
   it('3 - what is still broken or misplaced, without touching anything', async () => {
     await runCommand('check-consistency');

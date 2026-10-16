@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * Seeds Advanced Rename and Delete Handler into an integration vault, because this plugin declares it as a
+ * Seeds `Advanced Rename and Delete Handler` into an integration vault, because this plugin declares it as a
  * dependency and loads nothing of its own until it is there.
  *
  * Without it every suite would meet this plugin blocked — no commands, no handlers, no settings — and fail on

@@ -8,7 +8,7 @@ This plugin's goal is a vault whose links keep working **outside** Obsidian — 
 
 ![Wikilinks](<./_assets/images/wikilinks.png>)
 
-If you want Markdown links but find the `%20` escapes unreadable, the [`Better Markdown Links`](https://community.obsidian.md/plugins/better-markdown-links) plugin cleans them up.
+If you want Markdown links but find the `%20` escapes unreadable, the [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) plugin cleans them up.
 
 ## Set `New link format` to `Relative path to file`
 
@@ -26,4 +26,4 @@ For finer control than Obsidian's single setting offers — a folder per note, n
 
 ## Speed
 
-Several of this plugin's operations walk every backlink in the vault. Installing [`Backlink Cache`](https://community.obsidian.md/plugins/backlink-cache) makes those operations noticeably faster on a large vault.
+Several of this plugin's operations walk every backlink in the vault. Installing [Backlink Cache](https://community.obsidian.md/plugins/backlink-cache) makes those operations noticeably faster on a large vault.

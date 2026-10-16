@@ -2,7 +2,7 @@
  * @file
  *
  * Desktop integration suite for a note linking an attachment filed in ANOTHER note's attachment folder, run
- * against the REAL Custom Attachment Location with the template `./!!files/${noteFileName}` — the setup the
+ * against the REAL `Custom Attachment Location` with the template `./!!files/${noteFileName}` — the setup the
  * case was reported from.
  *
  * `A.md` embeds `!!files/B/image.png`. By the template A's attachments belong in `!!files/A`, and `!!files/B`
@@ -13,14 +13,14 @@
  *    whose own folder holds it, is not. 5.0.2 reported nothing here.
  * 3. **`Report unowned`** — nothing is reported, because B owns it. This is 5.0.2's rule, now opt-in.
  * 4. **`Report`, with `!!files` listed as a shared location** — nothing is reported.
- * 5. **Custom Attachment Location disabled**, Obsidian's own `./attachments` — the image is in no note's folder,
+ * 5. **`Custom Attachment Location` disabled**, Obsidian's own `./attachments` — the image is in no note's folder,
  *    so all three references are reported and none names a proper note. This is the control for phase 2: it
  *    shows B's silence there is the proper-note rule, not its reference being dropped.
  *
  * The released plugin is written into the vault and enabled inside the closure, then disabled and removed,
  * rather than seeded for every suite: its patches would change what every other suite's attachment paths
  * resolve to. `12.0.1` is pinned because it is what the reporting vault runs, and because `13.0.0` onwards
- * requires Advanced Rename and Delete Handler's API `^1.1.0`, which the seeded `1.3.0` does not publish — a
+ * requires `Advanced Rename and Delete Handler`'s API `^1.1.0`, which the seeded `1.3.0` does not publish — a
  * later release loads blocked here and never installs its extended function.
  */
 
@@ -148,7 +148,7 @@ describe('Consistency report: a link to an attachment in another note\'s attachm
         await app.vault.adapter.write(`${pluginFolder}/manifest.json`, manifestJson);
         await app.vault.adapter.write(
           `${pluginFolder}/data.json`,
-          // eslint-disable-next-line no-template-curly-in-string -- Custom Attachment Location's own token syntax.
+          // eslint-disable-next-line no-template-curly-in-string -- `Custom Attachment Location`'s own token syntax.
           JSON.stringify({ attachmentFolderPath: './!!files/${noteFileName}' })
         );
 

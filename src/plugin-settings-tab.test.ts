@@ -153,7 +153,7 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Treat as attachment extensions');
   });
 
-  // Advanced Rename and Delete Handler owns these since 4.0.0, so offering them here would be offering to
+  // `Advanced Rename and Delete Handler` owns these since 4.0.0, so offering them here would be offering to
   // configure a handler this plugin no longer runs.
   it('should not render the rename and delete settings it no longer owns', async () => {
     const { tab } = await createTab();
@@ -166,7 +166,7 @@ describe('PluginSettingsTab', () => {
     expect(names).not.toContain('Update backlink text on note rename');
   });
 
-  // Custom Attachment Location owns these since 5.0.0.
+  // `Custom Attachment Location` owns these since 5.0.0.
   it('should not render the collect settings it no longer owns', async () => {
     const { tab } = await createTab();
     const names = getSettingNames(tab);

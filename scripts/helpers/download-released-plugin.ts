@@ -15,8 +15,8 @@ import { fileURLToPath } from 'node:url';
  * Fetches a community plugin's RELEASED build so an integration test can install the real thing into a live
  * vault, rather than a stub standing in for it.
  *
- * The cross-plugin suite needs this because a stub cannot prove what it is there to prove. Advanced Rename
- * and Delete Handler's own suite stages this plugin's attachment-unit-folder designation with a stub, and
+ * The cross-plugin suite needs this because a stub cannot prove what it is there to prove. `Advanced Rename
+ * and Delete Handler`'s own suite stages this plugin's attachment-unit-folder designation with a stub, and
  * this plugin's designation suite drives the publish side with no consumer — so on both sides the other
  * plugin is assumed rather than run. Only a released artifact settles whether the two actually agree.
  *

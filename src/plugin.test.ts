@@ -265,7 +265,7 @@ function suggestionParams(): PluginSuggestionComponentParams {
 }
 
 /**
- * Withdraws the stand-in provider's API, as Advanced Rename and Delete Handler being disabled would.
+ * Withdraws the stand-in provider's API, as `Advanced Rename and Delete Handler` being disabled would.
  */
 function unpublishProviderApi(): void {
   providerComponent.unload();
@@ -303,7 +303,7 @@ describe('Plugin', () => {
       removeSettingTab: vi.fn()
     });
 
-    // Advanced Rename and Delete Handler is a declared dependency, so everything past the base loads only once
+    // `Advanced Rename and Delete Handler` is a declared dependency, so everything past the base loads only once
     // its API is published. An empty API is enough: the gate checks only that one is there, at a matching
     // version. Each test gets a fresh app, and with it a fresh registry.
     providerComponent = new Component();
@@ -331,7 +331,7 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 2 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 4 total. The four collect and move commands left for Custom Attachment Location in 5.0.0, and Reorganize vault was retired.
+      // The plugin wires the OpenDemoVault handler plus 2 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 4 total. The four collect and move commands left for `Custom Attachment Location` in 5.0.0, and Reorganize vault was retired.
       expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(4);
     });
 
@@ -349,7 +349,7 @@ describe('Plugin', () => {
   });
 
   describe('rename and delete handling', () => {
-    // Advanced Rename and Delete Handler owns rename/delete handling since 4.0.0. Two handlers acting on one
+    // `Advanced Rename and Delete Handler` owns rename/delete handling since 4.0.0. Two handlers acting on one
     // rename corrupts links and moves attachments twice, so this plugin must register none — the inverse of
     // what it used to assert.
     it('should not register a rename/delete handler of its own', async () => {

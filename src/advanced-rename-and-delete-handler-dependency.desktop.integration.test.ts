@@ -6,7 +6,7 @@ import {
 } from 'vitest';
 
 /*
- * The dependency on Advanced Rename and Delete Handler, driven end to end: take it away and this plugin's
+ * The dependency on `Advanced Rename and Delete Handler`, driven end to end: take it away and this plugin's
  * feature surface goes with it; bring it back and the surface returns, with no restart.
  *
  * The check-consistency command stands in for the whole surface — it is registered by `onloadImpl`, which is exactly

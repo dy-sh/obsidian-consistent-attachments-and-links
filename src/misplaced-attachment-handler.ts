@@ -4,8 +4,8 @@
  * The `Misplaced attachments` section of the consistency report: every reference whose target is an
  * attachment sitting outside the attachment folder configured for the note that references it.
  *
- * **It only reports.** Moving the attachment is what `collect-attachments` did, and that left for Custom
- * Attachment Location in 5.0.0; a user who wants the finding acted on runs that plugin's `Collect attachments`
+ * **It only reports.** Moving the attachment is what `collect-attachments` did, and that left for `Custom
+ * Attachment Location` in 5.0.0; a user who wants the finding acted on runs that plugin's `Collect attachments`
  * or `Move attachment to proper folder`. See the scope line in `AGENTS.md`.
  *
  * Three things here are easy to get wrong, and all three were. The third, an attachment shared by several
@@ -22,7 +22,7 @@
  *   Attachment Location's `Move attachment to proper folder` is also what keeps the report and the repair
  *   from disagreeing.
  *
- * The Custom Attachment Location seam needs no code here. Every proper-path read goes through
+ * The `Custom Attachment Location` seam needs no code here. Every proper-path read goes through
  * obsidian-dev-utils' `getAttachmentFilePath`, which dispatches to `app.vault.getAvailablePathForAttachments.extended`
  * when a plugin has installed one and falls back to Obsidian's own three modes when none has. That function
  * takes the note path as an argument, so there is no ambient current-file state for a vault-wide walk to

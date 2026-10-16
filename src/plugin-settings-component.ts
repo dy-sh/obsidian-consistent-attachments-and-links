@@ -54,10 +54,10 @@ interface PluginSettingsComponentConstructorParams {
  * that owns them now: the record is rebuilt from the declared properties alone, so the first save after a
  * property was dropped would otherwise strip it from `data.json` before it could ever be offered.
  *
- * - Until 4.0.0, rename/delete handling, now Advanced Rename and Delete Handler's: `emptyFolderBehavior`,
+ * - Until 4.0.0, rename/delete handling, now `Advanced Rename and Delete Handler`'s: `emptyFolderBehavior`,
  *   `shouldChangeNoteBacklinksDisplayText`, `shouldDeleteAttachmentsWithNote`,
  *   `shouldDeleteExistingFilesWhenMovingNote`, `shouldMoveAttachmentsWithNote` and `shouldUpdateLinks`.
- * - Until 5.0.0, attachment collecting, now Custom Attachment Location's: `attachmentUnitFolderPaths`,
+ * - Until 5.0.0, attachment collecting, now `Custom Attachment Location`'s: `attachmentUnitFolderPaths`,
  *   `collectAttachmentUsedByMultipleNotesMode`, `excludePathsFromAttachmentCollecting`,
  *   `moveAttachmentToProperFolderUsedByMultipleNotesMode` and `shouldCollectAttachmentsAutomatically`. The sixth
  *   collect key, `shouldAddCommandsToFileMenu`, is NOT declared: that plugin has no toggle for it, so there is
@@ -193,7 +193,7 @@ function discardDefectProposal(legacySettings: LegacySettingsRecord): void {
 }
 
 /**
- * Parks the collect values the saved record carries, for Custom Attachment Location — which owns them from
+ * Parks the collect values the saved record carries, for `Custom Attachment Location` — which owns them from
  * 5.0.0 on — so the migration component can offer them once.
  *
  * Same rules as {@link parkRenameDeleteSettings}: it runs after the ancient key names are mapped, and only a
@@ -234,7 +234,7 @@ function parkCollectSettings(legacySettings: LegacySettingsRecord): void {
 }
 
 /**
- * Parks the rename and delete values the saved record carries, for Advanced Rename and Delete Handler — which
+ * Parks the rename and delete values the saved record carries, for `Advanced Rename and Delete Handler` — which
  * owns them from 4.0.0 on — so the migration component can offer them once.
  *
  * Runs LAST in the converter, once the ancient key names have been mapped onto the ones this plugin used

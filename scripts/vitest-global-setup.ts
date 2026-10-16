@@ -1,8 +1,8 @@
 /**
  * @file
  *
- * The global setup of the desktop and Android projects: `obsidian-integration-testing`'s own, plus Advanced
- * Rename and Delete Handler, which this plugin declares as a dependency and cannot load without.
+ * The global setup of the desktop and Android projects: `obsidian-integration-testing`'s own, plus `Advanced
+ * Rename and Delete Handler`, which this plugin declares as a dependency and cannot load without.
  *
  * The dependency is enabled after this plugin, so every run also drives the live path: this plugin loads
  * blocked, and finishes loading the moment its dependency's API appears.

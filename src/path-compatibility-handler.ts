@@ -5,7 +5,7 @@
  * invalid on an enabled platform, reports them, and repairs them on command.
  *
  * Renames go through `renameSafe`, which renames via `app.fileManager.renameFile` — so Obsidian rewrites
- * every link to the file, and Advanced Rename and Delete Handler moves its attachments. The reference
+ * every link to the file, and `Advanced Rename and Delete Handler` moves its attachments. The reference
  * implementation this came from (`F:\Obsidian\.scripts\src\Invocables\FixLongPaths.ts`) used
  * `app.vault.rename`, which does neither; in a plugin whose subject is link consistency that is not a
  * detail.
@@ -301,8 +301,8 @@ export class PathCompatibilityHandler {
    * Renames an attachment's sidecar note so it keeps matching the pattern that names it.
    *
    * Leaving it behind would create exactly the kind of broken association this plugin exists to prevent —
-   * the rename is ours, so the mismatch is ours to fix. Keeping a bundle together in general is File
-   * Bundles' job, not this plugin's; this is only the sidecar the preservation itself relies on.
+   * the rename is ours, so the mismatch is ours to fix. Keeping a bundle together in general is `File
+   * Bundles`' job, not this plugin's; this is only the sidecar the preservation itself relies on.
    *
    * @param file - The just-renamed file.
    * @param sidecar - The sidecar resolved BEFORE the rename, or `null` when there was none.

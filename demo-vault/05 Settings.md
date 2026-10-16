@@ -1,6 +1,6 @@
 # Settings
 
-Open **Settings -> Community plugins -> Consistent Attachments and Links** to configure the plugin. Each option below lists the setting key stored in the plugin's `data.json`.
+Open **Settings -> Community plugins -> `Consistent Attachments and Links`** to configure the plugin. Each option below lists the setting key stored in the plugin's `data.json`.
 
 > [!WARNING]
 >
@@ -21,7 +21,7 @@ Upgrading from 3.x does not lose your answers: this plugin offers them to that p
 
 Nothing here either — since 5.0.0 collecting attachments belongs to [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location), which owns **Collect attachments**, **Move attachment to proper folder** and collecting as you edit. Its settings tab is where **Collect attachments automatically**, **Collect attachment used by multiple notes mode**, **Move attachment to proper folder used by multiple notes mode**, **Exclude paths from attachment collecting** and **Attachment unit folders** live now.
 
-Unlike Advanced Rename and Delete Handler, this plugin does not require it: the report and the path repair work without it. It is suggested instead, by a banner at the top of this plugin's settings tab and, if you had collect settings to hand over, a notice on load that installs it in one click.
+Unlike `Advanced Rename and Delete Handler`, this plugin does not require it: the report and the path repair work without it. It is suggested instead, by a banner at the top of this plugin's settings tab and, if you had collect settings to hand over, a notice on load that installs it in one click.
 
 Upgrading from 4.x does not lose your collect settings: they are offered to that plugin once, the first time both are installed, the same way the rename and delete settings are. **Add commands to file menu** is not among them - that plugin always puts its collect and move commands in the file menu, so there is nothing for the value to land in. Two bookkeeping keys track this, and neither has a row in the settings tab:
 

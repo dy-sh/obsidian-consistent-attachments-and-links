@@ -57,7 +57,7 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ct
 
 ## Attachment-like Markdown files (such as Excalidraw) count as attachments
 
-Some plugins store data in files that are Markdown on disk but are really attachments. Excalidraw, for example, saves each drawing as a `.excalidraw.md` file. It is not a note you would ever read on its own - it belongs to whatever note embeds it, exactly as a `.png` does.
+Some plugins store data in files that are Markdown on disk but are really attachments. `Excalidraw`, for example, saves each drawing as a `.excalidraw.md` file. It is not a note you would ever read on its own - it belongs to whatever note embeds it, exactly as a `.png` does.
 
 So any file whose extension is listed in `treatAsAttachmentExtensions` (default `.excalidraw.md`, see [05 Settings](<./05 Settings.md>)) counts as an **attachment** rather than a note in the report's **Misplaced attachments** section: a drawing sitting outside the attachment folder of the note that references it is named there, just as a misplaced image would be. An ordinary note in the same place is not, because a note is not an attachment.
 

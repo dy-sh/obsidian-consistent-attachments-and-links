@@ -21,10 +21,10 @@ describe('PluginSettings', () => {
       expect(settings.shouldShowBackupWarning).toBe(true);
       expect(settings.treatAsAttachmentExtensions).toStrictEqual(['.excalidraw.md']);
       expect(settings.isCustomAttachmentLocationSuggestionDeclined).toBe(false);
-      // A fresh install has nothing to hand to Advanced Rename and Delete Handler, so it is never offered a
+      // A fresh install has nothing to hand to `Advanced Rename and Delete Handler`, so it is never offered a
       // migration.
       expect(settings.proposedRenameDeleteSettings).toBeNull();
-      // Nor anything to hand to Custom Attachment Location.
+      // Nor anything to hand to `Custom Attachment Location`.
       expect(settings.proposedCollectSettings).toBeNull();
       // A note linking an attachment outside its own folder is reported, even when another note owns it.
       expect(settings.externalAttachmentLinkMode).toBe(ExternalAttachmentLinkMode.Report);
