@@ -9,6 +9,7 @@ import {
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
 import { getOrCreateFile } from 'obsidian-dev-utils/obsidian/file-system';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import {
@@ -137,9 +138,9 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       app: this.app,
       message: createFragment((f) => {
         f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
-          wrapper.appendText(
-            'The \'Fix incompatible paths\' command of \'Consistent Attachments and Links\' renames files and folders across your whole vault.'
-          );
+          wrapper.appendText('The \'Fix incompatible paths\' command of ');
+          appendCodeBlock(wrapper, 'Consistent Attachments and Links');
+          wrapper.appendText(' renames files and folders across your whole vault.');
           wrapper.createEl('br');
           wrapper.appendText('It is ');
           wrapper.createEl('strong', { text: 'STRONGLY' });
@@ -153,7 +154,8 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       }),
       title: createFragment((f) => {
         setIcon(f.createSpan(), 'triangle-alert');
-        f.appendText(' Consistent Attachments and Links');
+        f.appendText(' ');
+        appendCodeBlock(f, 'Consistent Attachments and Links');
       })
     });
 
