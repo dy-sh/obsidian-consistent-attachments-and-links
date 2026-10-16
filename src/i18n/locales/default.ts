@@ -1,6 +1,6 @@
-import type { DefaultTranslationsBase } from 'obsidian-dev-utils/obsidian/i18n/default-translations';
+import type { DefaultTranslationsBase } from '@mnaoumov/obsidian-lib/i18n/default-translations';
 
-import { en as obsidianDevUtilsEn } from 'obsidian-dev-utils/obsidian/i18n/locales/en';
+import { en as obsidianDevUtilsEn } from '@mnaoumov/obsidian-lib/i18n/locales/en';
 
 export const defaultTranslations = {
   ...obsidianDevUtilsEn,

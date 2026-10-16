@@ -8,7 +8,7 @@ import type { App } from 'obsidian';
 import {
   enableCommunityPlugin,
   installCommunityPlugin
-} from 'obsidian-dev-utils/obsidian/community-plugins';
+} from '@mnaoumov/obsidian-lib/community-plugins';
 
 const START_NOTE_PATH = '00 Start.md';
 

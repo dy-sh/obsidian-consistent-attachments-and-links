@@ -1,5 +1,5 @@
-import { isTreatedAsAttachment } from 'obsidian-dev-utils/obsidian/file-system';
-import { PathSettings } from 'obsidian-dev-utils/obsidian/path-settings';
+import { isTreatedAsAttachment } from '@mnaoumov/obsidian-lib/file-system';
+import { PathSettings } from '@mnaoumov/obsidian-lib/path-settings';
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
 import type { MigratableCollectSettings } from './custom-attachment-location.ts';

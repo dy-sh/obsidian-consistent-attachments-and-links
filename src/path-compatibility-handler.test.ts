@@ -1,3 +1,6 @@
+import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { LoopParams } from '@mnaoumov/obsidian-lib/loop';
+import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
 import type {
   App as AppOriginal,
   DataAdapter,
@@ -5,34 +8,31 @@ import type {
   TAbstractFile,
   TFile as TFileOriginal
 } from 'obsidian';
-import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
-import type { LoopParams } from 'obsidian-dev-utils/obsidian/loop';
-import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 
-import { noopAsync } from 'obsidian-dev-utils/function';
-import { castTo } from 'obsidian-dev-utils/object-utils';
-import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import {
   addAlias,
   processFrontmatter
-} from 'obsidian-dev-utils/obsidian/file-manager';
+} from '@mnaoumov/obsidian-lib/file-manager';
 import {
   getFileOrNull,
   getOrCreateFile
-} from 'obsidian-dev-utils/obsidian/file-system';
+} from '@mnaoumov/obsidian-lib/file-system';
 import {
   FolderNoteLocation,
   resolveFolderNote,
   resolveFolderNoteConfig
-} from 'obsidian-dev-utils/obsidian/folder-note';
-import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { generateMarkdownLink } from 'obsidian-dev-utils/obsidian/link';
-import { loop } from 'obsidian-dev-utils/obsidian/loop';
+} from '@mnaoumov/obsidian-lib/folder-note';
+import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
+import { loop } from '@mnaoumov/obsidian-lib/loop';
 import {
   getSafeRenamePath,
   renameSafe
-} from 'obsidian-dev-utils/obsidian/vault';
-import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+} from '@mnaoumov/obsidian-lib/vault';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   TFile,
   TFolder,
@@ -69,34 +69,34 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
   getDataAdapterEx: (): DataAdapterExLike => ({ basePath: hoisted.basePath })
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/file-manager', () => ({
+vi.mock('@mnaoumov/obsidian-lib/file-manager', () => ({
   addAlias: vi.fn(() => noopAsync()),
   processFrontmatter: vi.fn(() => noopAsync())
 }));
 
 // Spread the real module: `isFolder` / `isMarkdownFile` / `asFile` do the type routing this handler is built
 // on, and a stub of them would be testing the stub.
-vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
+vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
   getFileOrNull: vi.fn(),
   getOrCreateFile: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/folder-note', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/folder-note')>(),
+vi.mock('@mnaoumov/obsidian-lib/folder-note', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/folder-note')>(),
   resolveFolderNote: vi.fn(),
   resolveFolderNoteConfig: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/link', () => ({
+vi.mock('@mnaoumov/obsidian-lib/link', () => ({
   generateMarkdownLink: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/loop', () => ({
+vi.mock('@mnaoumov/obsidian-lib/loop', () => ({
   loop: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
+vi.mock('@mnaoumov/obsidian-lib/vault', () => ({
   getSafeRenamePath: vi.fn(),
   renameSafe: vi.fn()
 }));

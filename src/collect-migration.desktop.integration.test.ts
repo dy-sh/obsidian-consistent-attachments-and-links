@@ -5,7 +5,7 @@
  *
  * The same seam `rename-delete-migration.desktop.integration.test.ts` covers for 4.0.0's handover, for the
  * settings that left in 5.0.0: a REAL `data.json` written by a 4.x install, loaded by a real plugin in a real
- * Obsidian, and saved back. `obsidian-dev-utils` rebuilds the saved record from the DECLARED properties alone,
+ * Obsidian, and saved back. `@mnaoumov/obsidian-lib` rebuilds the saved record from the DECLARED properties alone,
  * so a property this plugin has dropped is stripped on the first save; if the converter did not park it
  * first, the user's collect settings are gone before `Custom Attachment Location` is ever installed to receive
  * them.

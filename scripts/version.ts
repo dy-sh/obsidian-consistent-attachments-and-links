@@ -1,9 +1,9 @@
-import process from 'node:process';
-import { wrapCliTask } from 'obsidian-dev-utils/script-utils/cli-utils';
 import {
   parseVersionArguments,
   updateVersion
-} from 'obsidian-dev-utils/script-utils/version';
+} from '@mnaoumov/obsidian-dev-toolkit/version';
+import { wrapCliTask } from '@mnaoumov/typescript-dev-toolkit/cli-utils';
+import process from 'node:process';
 
 const [, , ...$arguments] = process.argv;
 const { options, versionUpdateType } = parseVersionArguments($arguments);

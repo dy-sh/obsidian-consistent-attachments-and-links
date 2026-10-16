@@ -1,6 +1,6 @@
+import { lint } from '@mnaoumov/obsidian-dev-toolkit/linters/eslint';
+import { wrapCliTask } from '@mnaoumov/typescript-dev-toolkit/cli-utils';
 import process from 'node:process';
-import { wrapCliTask } from 'obsidian-dev-utils/script-utils/cli-utils';
-import { lint } from 'obsidian-dev-utils/script-utils/linters/eslint';
 
 const [, , ...paths] = process.argv;
 

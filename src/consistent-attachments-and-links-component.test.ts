@@ -1,20 +1,20 @@
+import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { PluginNoticeComponentDelayedNotice } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type {
   App as AppOriginal,
   Notice,
   TFile,
   WorkspaceLeaf
 } from 'obsidian';
-import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
-import type { PluginNoticeComponentDelayedNotice } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 
-import { MarkdownView } from 'obsidian';
+import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import {
   noop,
   noopAsync
-} from 'obsidian-dev-utils/function';
-import { castTo } from 'obsidian-dev-utils/object-utils';
-import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+} from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import { MarkdownView } from 'obsidian';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
@@ -108,17 +108,17 @@ vi.mock('./misplaced-attachment-handler.ts', () => ({
 
 // Spread the real module: the path-compatibility handler reaches `folder-note`, which imports members this
 // suite does not stub, and a bare object mock makes those `undefined` at import time.
-vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
+vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
   getOrCreateFile: (...$arguments: unknown[]): Promise<TFile> => hoisted.mockGetOrCreateFile(...$arguments),
   isMarkdownFile: vi.fn(() => true)
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/modals/alert', () => ({
+vi.mock('@mnaoumov/obsidian-lib/modals/alert', () => ({
   alert: (...$arguments: unknown[]): Promise<void> => hoisted.mockAlert(...$arguments)
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
+vi.mock('@mnaoumov/obsidian-lib/vault', () => ({
   createFolderSafe: (...$arguments: unknown[]): Promise<void> => hoisted.mockCreateFolderSafe(...$arguments),
   getMarkdownFilesSorted: (): TFile[] => hoisted.mockGetMarkdownFilesSorted()
 }));

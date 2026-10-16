@@ -9,8 +9,6 @@
     "ignored in this file.",
     "",
     "@commitlint/cli - .husky/commit-msg runs it as the `commitlint` binary.",
-    "@commitlint/config-conventional - extended by name at runtime by obsidian-dev-utils' script-utils/commitlint-config, which does not declare it itself.",
-    "@commitlint/types - obsidian-dev-utils' commitlint-config.d.cts does `import type { UserConfig } from '@commitlint/types'` without declaring the package, so the consumer must supply it for tsc to resolve.",
     "better-typescript-lib - has no import anywhere by design: it supplies the @typescript/lib-* aliases that tsconfig.json's `libReplacement: true` resolves.",
     "brace-expansion-upstream - the alias that installs the patched brace-expansion 5.x. Its only consumer is patches/brace-expansion-callable/index.js, which depcheck does not scan as project source. See pinned-versions.json's brace-expansion entry.",
     "czg - run as a CLI by scripts/commit.ts.",
@@ -20,8 +18,6 @@
   ],
   "ignores": [
     "@commitlint/cli",
-    "@commitlint/config-conventional",
-    "@commitlint/types",
     "better-typescript-lib",
     "brace-expansion-upstream",
     "czg",

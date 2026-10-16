@@ -6,7 +6,7 @@
  *
  * Only the PAYLOAD is declared here. The envelope carrying it — `migrateSettings`, who is proposing, and
  * whether the user applied it — is `SettingsMigrationApi` in
- * `obsidian-dev-utils/obsidian/plugin/settings-migration-api`, which both ends of the handover compile
+ * `@mnaoumov/obsidian-lib/plugin/settings-migration-api`, which both ends of the handover compile
  * against. That plugin is an Obsidian plugin repo, not an npm package, so the payload cannot be imported:
  * the authoritative copy is `MigratableCollectSettings` in its own `api.d.ts`, published at contract version
  * `1.1.0`.

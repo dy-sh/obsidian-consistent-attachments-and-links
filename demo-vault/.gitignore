@@ -3,7 +3,7 @@
 .obsidian/hotkeys.json
 
 # Built plugins are release-injected by archivePluginDemoVault at release time —
-# both the plugin under test AND the obsidian-dev-utils-owned `Demo Vault Helper`
+# both the plugin under test AND the `@mnaoumov/obsidian-dev-toolkit`-owned `Demo Vault Helper`
 # bootstrap plugin (which installs, configures, and enables CodeScript Toolkit at
 # runtime). Nothing helper-related is committed; commit only the baked settings
 # file for the plugin under test.

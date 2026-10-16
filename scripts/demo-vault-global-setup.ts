@@ -1,9 +1,9 @@
 import type { PopulateFilesParams } from 'obsidian-integration-testing';
 
+import { CODE_SCRIPT_TOOLKIT_PLUGIN_ID } from '@mnaoumov/obsidian-dev-toolkit/demo-vault-buttons';
+import { getRootFolder } from '@mnaoumov/typescript-dev-toolkit/root';
 import { join } from 'node:path';
 import process from 'node:process';
-import { CODE_SCRIPT_TOOLKIT_PLUGIN_ID } from 'obsidian-dev-utils/script-utils/demo-vault-buttons';
-import { getRootFolder } from 'obsidian-dev-utils/script-utils/root';
 import { buildDemoVaultPopulateAsync } from 'obsidian-integration-testing';
 import { createSetup } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 

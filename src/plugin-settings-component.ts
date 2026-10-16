@@ -1,10 +1,10 @@
-import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
-import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
-import type { MaybeReturn } from 'obsidian-dev-utils/type';
+import type { DataHandler } from '@mnaoumov/obsidian-lib/data-handler';
+import type { PluginEventSource } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
+import type { MaybeReturn } from '@mnaoumov/typescript-lib/type';
 
-import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
-import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
+import { PluginSettingsComponentBase } from '@mnaoumov/obsidian-lib/components/plugin-settings-component';
+import { EmptyFolderBehavior } from '@mnaoumov/obsidian-lib/components/rename-delete-handler-component';
+import { isValidRegExp } from '@mnaoumov/typescript-lib/reg-exp';
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
 import type {

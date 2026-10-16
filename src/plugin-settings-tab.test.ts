@@ -1,18 +1,18 @@
+import type { PluginSuggestionComponent } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
+import type { DataHandler } from '@mnaoumov/obsidian-lib/data-handler';
+import type { PluginEventMap } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
 import type {
   SettingGroup,
   ToggleComponent
 } from 'obsidian';
-import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
-import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
-import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
-import { AsyncEvents } from 'obsidian-dev-utils/async-events';
-import { noopAsync } from 'obsidian-dev-utils/function';
-import { castTo } from 'obsidian-dev-utils/object-utils';
-import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
-import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
-import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+import { SuggestedPluginState } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
+import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { SettingEx } from '@mnaoumov/obsidian-lib/setting-ex';
+import { AsyncEvents } from '@mnaoumov/typescript-lib/async-events';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   App,
   DropdownComponent as DropdownComponentClass,

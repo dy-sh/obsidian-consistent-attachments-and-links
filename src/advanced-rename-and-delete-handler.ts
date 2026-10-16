@@ -6,13 +6,13 @@
  *
  * Only the PAYLOAD is declared here. The envelope carrying it — `migrateSettings`, who is proposing, and
  * whether the user applied it — is `SettingsMigrationApi` in
- * `obsidian-dev-utils/obsidian/plugin/settings-migration-api`, which both ends of the handover compile
+ * `@mnaoumov/obsidian-lib/plugin/settings-migration-api`, which both ends of the handover compile
  * against, so that half can no longer drift silently. What stays this plugin's own is which settings it has
  * to offer, which is nobody else's business. That plugin publishes contract version `1.0.0`, so consumers
  * ask for `^1`; the authoritative copy is its own `src/plugin-api.ts`.
  */
 
-import type { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import type { EmptyFolderBehavior } from '@mnaoumov/obsidian-lib/components/rename-delete-handler-component';
 
 /**
  * The id of the plugin that owns rename/delete handling, as listed in Obsidian's community plugin registry.

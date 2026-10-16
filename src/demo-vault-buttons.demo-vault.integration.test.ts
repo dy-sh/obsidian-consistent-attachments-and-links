@@ -1,4 +1,4 @@
-import { registerDemoVaultButtonSuite } from 'obsidian-dev-utils/script-utils/demo-vault-buttons';
+import { registerDemoVaultButtonSuite } from '@mnaoumov/obsidian-dev-toolkit/demo-vault-buttons';
 
 // Clicks every `code-button` in `demo-vault/` against a real Obsidian.
 // A button's failure happens at click time — a wrong `require('/demoSetup.ts')` path, or an API that

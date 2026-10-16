@@ -29,7 +29,7 @@ export const ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID = 'advanced-rename-and
 /**
  * The release seeded.
  */
-export const ADVANCED_RENAME_AND_DELETE_HANDLER_VERSION = '1.3.0';
+export const ADVANCED_RENAME_AND_DELETE_HANDLER_VERSION = '2.2.0';
 
 const ADVANCED_RENAME_AND_DELETE_HANDLER_REPO = 'mnaoumov/obsidian-advanced-rename-and-delete-handler';
 

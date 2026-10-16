@@ -40,7 +40,7 @@
     },
     "typescript": {
       "section": "overrides",
-      "why": "TypeScript 7 (tsgo) breaks this toolchain: @typescript-eslint's parser crashes on the native API, so type-aware ESLint cannot run on 7. @typescript-eslint peer-requires the range below, so 6.x is the last usable major. Hold until obsidian-dev-utils migrates.",
+      "why": "TypeScript 7 (tsgo) breaks this toolchain: @typescript-eslint's parser crashes on the native API, so type-aware ESLint cannot run on 7. @typescript-eslint peer-requires the range below, so 6.x is the last usable major. Hold until @mnaoumov/obsidian-dev-toolkit migrates.",
       "check": "node -e \"process.stdout.write(require('typescript-eslint/package.json').peerDependencies.typescript)\"",
       "expect": ">=4.8.4 <6.1.0"
     }

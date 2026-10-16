@@ -1,10 +1,10 @@
+import type { PluginSuggestionComponent } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
+import type { PluginSettingsTabBaseConstructorParams } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
 import type { SettingDefinitionItem } from 'obsidian';
-import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
-import type { PluginSettingsTabBaseConstructorParams } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 
-import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
-import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
-import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
+import { SuggestedPluginState } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
+import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
+import { PluginSettingsTabBase } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
 
 import type { PluginSettings } from './plugin-settings.ts';
 

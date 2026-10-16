@@ -1,6 +1,6 @@
+import { registerDemoVaultCoverageSuite } from '@mnaoumov/obsidian-dev-toolkit/demo-vault-coverage';
+import { getRootFolder } from '@mnaoumov/typescript-dev-toolkit/root';
 import process from 'node:process';
-import { registerDemoVaultCoverageSuite } from 'obsidian-dev-utils/script-utils/demo-vault-coverage';
-import { getRootFolder } from 'obsidian-dev-utils/script-utils/root';
 
 // Keeps the in-repo `demo-vault/` in sync with the plugin's public surface WITHOUT
 // launching Obsidian: it reflects the real config from source and asserts every

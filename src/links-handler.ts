@@ -1,6 +1,20 @@
 import type { Reference } from 'obsidian';
 
 import {
+  getFileOrNull,
+  MARKDOWN_FILE_EXTENSION
+} from '@mnaoumov/obsidian-lib/file-system';
+import {
+  generateMarkdownLink,
+  splitSubpath
+} from '@mnaoumov/obsidian-lib/link';
+import { getCacheSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
+import {
+  dirname,
+  join
+} from '@mnaoumov/typescript-lib/path';
+import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
+import {
   isFrontmatterLinkCache,
   isReferenceCache
 } from '@obsidian-typings/obsidian-public-latest/implementations';
@@ -10,20 +24,6 @@ import {
   resolveSubpath,
   TFile
 } from 'obsidian';
-import {
-  getFileOrNull,
-  MARKDOWN_FILE_EXTENSION
-} from 'obsidian-dev-utils/obsidian/file-system';
-import {
-  generateMarkdownLink,
-  splitSubpath
-} from 'obsidian-dev-utils/obsidian/link';
-import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import {
-  dirname,
-  join
-} from 'obsidian-dev-utils/path';
-import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type {
   MisplacedAttachmentCheckResult,

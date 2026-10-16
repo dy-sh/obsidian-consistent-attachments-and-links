@@ -11,40 +11,40 @@
  * detail.
  */
 
+import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
 import type {
   App,
   TAbstractFile,
   TFile,
   TFolder
 } from 'obsidian';
-import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
-import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 
-import { getDataAdapterEx } from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   addAlias,
   processFrontmatter
-} from 'obsidian-dev-utils/obsidian/file-manager';
+} from '@mnaoumov/obsidian-lib/file-manager';
 import {
   asFile,
   getFileOrNull,
   getOrCreateFile,
   isFolder,
   isMarkdownFile
-} from 'obsidian-dev-utils/obsidian/file-system';
+} from '@mnaoumov/obsidian-lib/file-system';
 import {
   FolderNoteLocation,
   resolveFolderNote,
   resolveFolderNoteConfig
-} from 'obsidian-dev-utils/obsidian/folder-note';
-import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { generateMarkdownLink } from 'obsidian-dev-utils/obsidian/link';
-import { loop } from 'obsidian-dev-utils/obsidian/loop';
+} from '@mnaoumov/obsidian-lib/folder-note';
+import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
+import { loop } from '@mnaoumov/obsidian-lib/loop';
 import {
   getSafeRenamePath,
   renameSafe
-} from 'obsidian-dev-utils/obsidian/vault';
+} from '@mnaoumov/obsidian-lib/vault';
+import { getDataAdapterEx } from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import type {
   PathCompatibilityPlatform,

@@ -7,7 +7,7 @@ import {
 import { defaultTranslations } from './default.ts';
 
 describe('defaultTranslations', () => {
-  it('should merge the obsidian-dev-utils translations', () => {
+  it('should merge the library translations', () => {
     expect(defaultTranslations.obsidianDevUtils.buttons.cancel).toBeTypeOf('string');
   });
 

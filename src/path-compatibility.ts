@@ -12,14 +12,14 @@
  * platforms composes their constraints by intersection, and a name has to satisfy all of them.
  */
 
-import { Platform } from 'obsidian';
 import {
   getOsUnsafePathCharsRegExp,
   hasWindowsTrailingChars,
   isWindowsReservedName,
   OBSIDIAN_UNSAFE_FILENAME_CHARS,
   trimWindowsTrailingChars
-} from 'obsidian-dev-utils/obsidian/validation';
+} from '@mnaoumov/obsidian-lib/validation';
+import { Platform } from 'obsidian';
 
 /**
  * A platform a vault may be synced to, and whose naming rules can therefore be enforced.
