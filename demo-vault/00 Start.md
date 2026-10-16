@@ -47,7 +47,7 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 - [07 Commands](<./07 Commands.md>)
 - [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>)
 
-The numbering has two gaps. **02 Links stay valid on rename and move** went to Advanced Rename and Delete Handler with the rest of the rename handling. **04 Reorganize and convert links** went when its subject did: link conversion left for Better Markdown Links, and the `Reorganize vault` command it walked through was retired once all it still ran was **Fix Incompatible Paths** - its one surviving section, about Excalidraw drawings, now lives in [03 Check vault consistency](<./03 Check vault consistency.md>). The remaining notes keep their numbers so links already pointing at them still resolve.
+The numbering has two gaps. **02 Links stay valid on rename and move** went to `Advanced Rename and Delete Handler` with the rest of the rename handling. **04 Reorganize and convert links** went when its subject did: link conversion left for `Better Markdown Links`, and the `Reorganize vault` command it walked through was retired once all it still ran was **Fix Incompatible Paths** - its one surviving section, about `Excalidraw` drawings, now lives in [03 Check vault consistency](<./03 Check vault consistency.md>). The remaining notes keep their numbers so links already pointing at them still resolve.
 
 ## Materials
 

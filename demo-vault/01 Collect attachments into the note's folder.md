@@ -17,11 +17,11 @@ await require('/demoSetup.ts').checkConsistency(app);
 
 Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 
-Acting on a finding is Custom Attachment Location's **Move attachment to proper folder**, or its **Collect attachments**.
+Acting on a finding is `Custom Attachment Location`'s **Move attachment to proper folder**, or its **Collect attachments**.
 
 ## Your collect settings are not lost
 
-If you used collecting in 4.x, this plugin offers your settings to Custom Attachment Location once, the first time both are installed: what to do with an attachment several notes share, the paths collecting leaves alone, the attachment unit folders, and whether collecting ran as you edited. That plugin shows you exactly what would change and writes nothing unless you approve. Cancelling leaves the offer pending, so it comes back. See [05 Settings](<./05 Settings.md>) for the key that tracks it.
+If you used collecting in 4.x, this plugin offers your settings to `Custom Attachment Location` once, the first time both are installed: what to do with an attachment several notes share, the paths collecting leaves alone, the attachment unit folders, and whether collecting ran as you edited. That plugin shows you exactly what would change and writes nothing unless you approve. Cancelling leaves the offer pending, so it comes back. See [05 Settings](<./05 Settings.md>) for the key that tracks it.
 
 ## Renaming and deleting notes
 

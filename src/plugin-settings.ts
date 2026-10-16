@@ -40,7 +40,7 @@ export class PluginSettings {
   public externalAttachmentLinkMode = ExternalAttachmentLinkMode.Report;
 
   /**
-   * Whether the user has already declined the suggestion to install Custom Attachment Location.
+   * Whether the user has already declined the suggestion to install `Custom Attachment Location`.
    *
    * Only the load-time notice honours it — the settings-tab banner is shown regardless, because a user
    * looking at these settings right now is a fresher signal than an answer they gave earlier.
@@ -59,15 +59,15 @@ export class PluginSettings {
   public maxVaultRootPathLength = 0;
 
   /**
-   * The collect values this plugin used to own, waiting to be offered to Custom Attachment Location, which
+   * The collect values this plugin used to own, waiting to be offered to `Custom Attachment Location`, which
    * owns attachment collecting from 5.0.0 on. The same one-nullable-object shape as
    * {@link proposedRenameDeleteSettings}, for the same reasons.
    */
   public proposedCollectSettings: MigratableCollectSettings | null = null;
 
   /**
-   * The rename/delete values this plugin used to own, waiting to be offered to Advanced Rename and Delete
-   * Handler. Non-`null` means an offer is still pending; `null` means there is nothing to offer, which is
+   * The rename/delete values this plugin used to own, waiting to be offered to `Advanced Rename and Delete
+   * Handler`. Non-`null` means an offer is still pending; `null` means there is nothing to offer, which is
    * also what a fresh install has.
    *
    * One nullable object rather than one pending property per setting, so a fresh install can never be told

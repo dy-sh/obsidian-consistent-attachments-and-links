@@ -7,14 +7,14 @@
  * plugin in a real Obsidian, and saved back. That round trip is where the values are actually at risk —
  * `obsidian-dev-utils` rebuilds the saved record from the DECLARED properties alone, so a property this
  * plugin has dropped is stripped on the first save. If the converter did not park it first, the user's
- * answers are gone before Advanced Rename and Delete Handler is ever installed to receive them, and
+ * answers are gone before `Advanced Rename and Delete Handler` is ever installed to receive them, and
  * nothing anywhere would report it.
  *
  * The sibling plugin is why this exists: it shipped this same change with two defects that every
  * unit test passed and a single live run caught.
  *
  * Only this plugin is involved. The other half — the dialog that reviews a proposal and writes what the
- * user approves — belongs to Advanced Rename and Delete Handler and is covered by its own
+ * user approves — belongs to `Advanced Rename and Delete Handler` and is covered by its own
  * `settings-migration.cross-platform.integration.test.ts`.
  *
  * Desktop-only (the file name alone picks the project). The behavior itself is

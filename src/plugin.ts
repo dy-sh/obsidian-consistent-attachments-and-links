@@ -35,13 +35,13 @@ const DEPENDENCY_REASON = 'Consistent Attachments and Links no longer handles re
   + ' attachments only a deleted note referenced.';
 
 /**
- * The contract range of Advanced Rename and Delete Handler this plugin requires. It only ever calls
+ * The contract range of `Advanced Rename and Delete Handler` this plugin requires. It only ever calls
  * `migrateSettings`, which every `1.x` contract publishes.
  */
 const DEPENDENCY_API_VERSION_RANGE = '^1';
 
 /**
- * The contract range of Custom Attachment Location the collect handover needs: `migrateSettings` arrived in
+ * The contract range of `Custom Attachment Location` the collect handover needs: `migrateSettings` arrived in
  * its contract `1.1.0`, the one its 13.0.0 publishes.
  */
 const COLLECT_MIGRATION_API_VERSION_RANGE = '^1.1.0';
@@ -56,7 +56,7 @@ export class Plugin extends PluginBase {
   }
 
   /**
-   * Declares Advanced Rename and Delete Handler as a dependency this plugin cannot run without.
+   * Declares `Advanced Rename and Delete Handler` as a dependency this plugin cannot run without.
    *
    * It owns renames and deletions since this plugin's 4.0.0. Without it, attachments silently stop following
    * their notes — and nothing would connect that to a plugin removed weeks earlier. Declared, this plugin does
@@ -89,8 +89,8 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
-    // A suggestion, not a dependency like Advanced Rename and Delete Handler: every feature left here works
-    // without Custom Attachment Location, which only takes over what this plugin no longer does.
+    // A suggestion, not a dependency like `Advanced Rename and Delete Handler`: every feature left here works
+    // without `Custom Attachment Location`, which only takes over what this plugin no longer does.
     const pluginSuggestionComponent = this.addChild(
       new PluginSuggestionComponent({
         app: this.app,

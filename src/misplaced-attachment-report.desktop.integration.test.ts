@@ -6,15 +6,15 @@
  * for THAT note.
  *
  * **The per-note half is the whole point, and it is what a unit suite cannot prove.** The section's original
- * brief assumed the only readable answer was `app.vault.getConfig('attachmentFolderPath')`, which Custom
- * Attachment Location patches against the CURRENTLY OPEN file — so a vault-wide walk would have given every
+ * brief assumed the only readable answer was `app.vault.getConfig('attachmentFolderPath')`, which `Custom
+ * Attachment Location` patches against the CURRENTLY OPEN file — so a vault-wide walk would have given every
  * note the active note's folder, silently and with no error. That is not how the answer is obtained:
  * obsidian-dev-utils' `getAttachmentFilePath` dispatches to `app.vault.getAvailablePathForAttachments.extended`,
  * a function a plugin installs and which takes the NOTE PATH as an argument. Phase 2 below installs one of
  * its own that answers a different folder per note and asserts the report names both — the falsifying test
  * for the ambient-state failure, run with nothing installed.
  *
- * That is also why this suite needs no released Custom Attachment Location and no API stub: the seam is a
+ * That is also why this suite needs no released `Custom Attachment Location` and no API stub: the seam is a
  * property on `app.vault.getAvailablePathForAttachments`, not a registry lookup.
  *
  * The three phases share one staging, changing only the answer to *where should this attachment be?*:
@@ -222,7 +222,7 @@ describe('Consistency report: misplaced attachments', () => {
           const vaultDefault = await runPhase();
 
           /*
-           * Phase 2 — the seam Custom Attachment Location uses. The answer depends only on the NOTE passed
+           * Phase 2 — the seam `Custom Attachment Location` uses. The answer depends only on the NOTE passed
            * in, so if the walk asked once (or asked about the active file), both notes would come back with
            * the same folder and the assertions below would fail.
            */

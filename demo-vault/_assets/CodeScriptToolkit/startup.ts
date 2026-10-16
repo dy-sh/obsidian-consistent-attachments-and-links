@@ -1,7 +1,7 @@
-// Per-vault startup script, run by the universal Demo Vault Helper plugin (via CodeScript
-// Toolkit's require) once CodeScript Toolkit is installed and enabled. This is where each
-// plugin's demo vault does its own startup setup. Here it installs the one plugin Consistent
-// Attachments and Links cannot run without, then opens the landing note.
+// Per-vault startup script, run by the universal `Demo Vault Helper` plugin (via `CodeScript
+// Toolkit`'s require) once `CodeScript Toolkit` is installed and enabled. This is where each
+// plugin's demo vault does its own startup setup. Here it installs the one plugin `Consistent
+// Attachments and Links` cannot run without, then opens the landing note.
 
 import type { App } from 'obsidian';
 
@@ -12,10 +12,10 @@ import {
 
 const START_NOTE_PATH = '00 Start.md';
 
-// Consistent Attachments and Links declares it as a dependency and loads nothing until it is there.
+// `Consistent Attachments and Links` declares it as a dependency and loads nothing until it is there.
 const DEPENDENCY_PLUGIN_ID = 'advanced-rename-and-delete-handler';
 
-// Run by CodeScript Toolkit on load (its `startupScriptPath` setting, which the Demo Vault Helper
+// Run by `CodeScript Toolkit` on load (its `startupScriptPath` setting, which the `Demo Vault Helper`
 // points here). CST calls the exported `invoke` — a top-level script with no `invoke` export throws
 // `this.startupScript.invoke is not a function`.
 export async function invoke(app: App): Promise<void> {

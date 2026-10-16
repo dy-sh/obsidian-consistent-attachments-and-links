@@ -7,7 +7,7 @@
  * settings that left in 5.0.0: a REAL `data.json` written by a 4.x install, loaded by a real plugin in a real
  * Obsidian, and saved back. `obsidian-dev-utils` rebuilds the saved record from the DECLARED properties alone,
  * so a property this plugin has dropped is stripped on the first save; if the converter did not park it
- * first, the user's collect settings are gone before Custom Attachment Location is ever installed to receive
+ * first, the user's collect settings are gone before `Custom Attachment Location` is ever installed to receive
  * them.
  *
  * It also covers what the rename/delete suite does not: that the offer is ONE-SHOT. The parked keys have all
@@ -15,7 +15,7 @@
  * stays retired across a reload. A key that stayed declared would be re-parked on every load and bring an
  * applied migration back forever.
  *
- * Only this plugin is involved. The dialog that reviews the proposal belongs to Custom Attachment Location and
+ * Only this plugin is involved. The dialog that reviews the proposal belongs to `Custom Attachment Location` and
  * is covered by its own `plugin-api-migrate-settings` suite.
  */
 
@@ -151,7 +151,7 @@ describe('The 4.x collect settings hand-over', () => {
       const handover = await reloadPlugin({ dataToWrite: DATA_4X, shouldSaveAndRetire: true });
       const afterRetirement = await reloadPlugin({ shouldSaveAndRetire: false });
 
-      // `shouldAddCommandsToFileMenu` is not proposed: Custom Attachment Location has no toggle for it.
+      // `shouldAddCommandsToFileMenu` is not proposed: `Custom Attachment Location` has no toggle for it.
       const expectedProposal = {
         attachmentUnitFolderPaths: ['assets/page_files'],
         collectAttachmentUsedByMultipleNotesMode: 'Copy',

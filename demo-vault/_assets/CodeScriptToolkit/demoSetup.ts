@@ -186,8 +186,8 @@ async function sleep(milliseconds: number): Promise<void> {
 /**
  * Applies a settings patch, live, through the plugin's own settings component.
  *
- * Manual equivalent: change the same option in **Settings -> Community plugins -> Consistent
- * Attachments and Links**.
+ * Manual equivalent: change the same option in **Settings -> Community plugins -> `Consistent
+ * Attachments and Links`**.
  */
 export async function changeSettings(app: App, patch: DemoSettingsPatch): Promise<void> {
   await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });

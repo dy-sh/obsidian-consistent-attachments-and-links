@@ -12,7 +12,7 @@ import {
   getAdvancedRenameAndDeleteHandlerPopulate
 } from './helpers/advanced-rename-and-delete-handler-seed.ts';
 
-// CodeScript Toolkit is what turns a ```code-button fence into a button, and its root-relative
+// `CodeScript Toolkit` is what turns a ```code-button fence into a button, and its root-relative
 // `require('/demoSetup.ts')` into a call. In real use the in-vault `demo-vault-helper` installs it from
 // the community registry on first launch — a GUI step, and `.obsidian/plugins/*` is gitignored, so the
 // installed copy exists on exactly the one machine that did it and is invisible to a fresh clone, a new
@@ -24,7 +24,7 @@ const CODE_SCRIPT_TOOLKIT_SETTINGS = {
   startupScriptPath: 'startup.ts'
 };
 
-// Advanced Rename and Delete Handler is seeded for the same reason: the vault's own `startup.ts` installs it
+// `Advanced Rename and Delete Handler` is seeded for the same reason: the vault's own `startup.ts` installs it
 // from the community registry, which is a network step too, and this plugin loads nothing until it is there.
 // Seeded, the startup script finds it installed and enabled and leaves it alone.
 //
@@ -47,7 +47,7 @@ async function populate(): Promise<PopulateFilesParams> {
   };
 }
 
-// Pre-populates the whole `demo-vault/` tree (plus the CodeScript Toolkit binary and its settings)
+// Pre-populates the whole `demo-vault/` tree (plus the `CodeScript Toolkit` binary and its settings)
 // before Obsidian opens, so the startup scan indexes every note in one pass. Used by
 // `integration-tests:demo-vault`.
 const { setup, teardown } = createSetup({

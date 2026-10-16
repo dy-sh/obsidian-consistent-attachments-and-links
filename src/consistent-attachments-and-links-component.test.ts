@@ -34,6 +34,11 @@ import type { PluginSettings } from './plugin-settings.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 import { MisplacedAttachmentCheckResult } from './misplaced-attachment-handler.ts';
 
+interface BackupWarningAlertParams {
+  readonly message: DocumentFragment;
+  readonly title: DocumentFragment;
+}
+
 interface ComponentPrivate {
   saveAllOpenNotes: () => Promise<void>;
   showBackupWarning: () => Promise<void>;
@@ -340,6 +345,16 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       await asPrivate(component).showBackupWarning();
       expect(mockAlert).toHaveBeenCalled();
       expect(mockSettings.shouldShowBackupWarning).toBe(false);
+    });
+
+    it('should render the plugin name as code in the message and the title', async () => {
+      const component = createComponent();
+      mockSettings.shouldShowBackupWarning = true;
+      await asPrivate(component).showBackupWarning();
+      const [params] = mockAlert.mock.calls[0] ?? [];
+      const { message, title } = params as BackupWarningAlertParams;
+      expect(message.querySelector('code')?.textContent).toBe('Consistent Attachments and Links');
+      expect(title.querySelector('code')?.textContent).toBe('Consistent Attachments and Links');
     });
   });
 });

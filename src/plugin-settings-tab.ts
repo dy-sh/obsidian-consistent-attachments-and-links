@@ -47,9 +47,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
     this.pluginSuggestionComponent = params.pluginSuggestionComponent;
   }
 
-  // There is no row for Advanced Rename and Delete Handler: it is a declared dependency, so while it is missing
-  // this tab is never registered at all and the library's own blocked tab explains what to install. Custom
-  // Attachment Location is only suggested, so it does get one.
+  // There is no row for `Advanced Rename and Delete Handler`: it is a declared dependency, so while it is missing
+  // this tab is never registered at all and the library's own blocked tab explains what to install. `Custom
+  // Attachment Location` is only suggested, so it does get one.
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
       // The suggestion banner has to travel as a row: Obsidian renders the declarative definitions and never
