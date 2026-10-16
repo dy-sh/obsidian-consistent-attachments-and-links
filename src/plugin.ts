@@ -6,6 +6,7 @@ import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/pl
 import { PluginSuggestionComponent } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
 import { SettingsMigrationComponent } from '@mnaoumov/obsidian-lib/components/settings-migration-component';
 import { PluginDataHandler } from '@mnaoumov/obsidian-lib/data-handler';
+import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { PluginBase } from '@mnaoumov/obsidian-lib/plugin/plugin';
 import { PluginEventSourceImpl } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
 
@@ -30,9 +31,7 @@ import { PathCompatibilityHandler } from './path-compatibility-handler.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 
-const DEPENDENCY_REASON = 'Consistent Attachments and Links no longer handles renames and deletions itself.'
-  + ' Advanced Rename and Delete Handler does: it moves a note\'s attachments with the note, and cleans up the'
-  + ' attachments only a deleted note referenced.';
+const PLUGIN_NAME = 'Consistent Attachments and Links';
 
 /**
  * The contract range of `Advanced Rename and Delete Handler` this plugin requires. It only ever calls
@@ -45,10 +44,6 @@ const DEPENDENCY_API_VERSION_RANGE = '^1';
  * its contract `1.1.0`, the one its 13.0.0 publishes.
  */
 const COLLECT_MIGRATION_API_VERSION_RANGE = '^1.1.0';
-
-const SUGGESTION_REASON = 'Consistent Attachments and Links no longer collects attachments.'
-  + ' Custom Attachment Location does: it collects a note\'s attachments into the note\'s attachment folder, on'
-  + ' command or as you edit, and moves a misplaced attachment to its proper folder.';
 
 export class Plugin extends PluginBase {
   protected override createTranslationsMap(): TranslationsMap {
@@ -70,7 +65,7 @@ export class Plugin extends PluginBase {
         apiVersionRange: DEPENDENCY_API_VERSION_RANGE,
         pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
         pluginName: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME,
-        reason: DEPENDENCY_REASON
+        reason: createDependencyReason()
       }
     ];
   }
@@ -101,7 +96,7 @@ export class Plugin extends PluginBase {
           || pluginSettingsComponent.settings.proposedCollectSettings === null,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent,
-        reason: SUGGESTION_REASON,
+        reason: createSuggestionReason(),
         // `editAndSave`, not `setProperty`: a decline has to outlive a reload, and `setProperty` only edits
         // the in-memory state.
         setSuggestionDeclined: async (isDeclined): Promise<void> => {
@@ -195,4 +190,30 @@ export class Plugin extends PluginBase {
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
     ]);
   }
+}
+
+// Fragments, not strings, so every plugin name renders as code. The library clones a fragment each time it shows
+// one, so the notice and the settings tab can share it.
+function createDependencyReason(): DocumentFragment {
+  return createFragment((f) => {
+    appendCodeBlock(f, PLUGIN_NAME);
+    f.appendText(' no longer handles renames and deletions itself. ');
+    appendCodeBlock(f, ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME);
+    f.appendText(
+      ' does: it moves a note\'s attachments with the note, and cleans up the attachments only a deleted note'
+        + ' referenced.'
+    );
+  });
+}
+
+function createSuggestionReason(): DocumentFragment {
+  return createFragment((f) => {
+    appendCodeBlock(f, PLUGIN_NAME);
+    f.appendText(' no longer collects attachments. ');
+    appendCodeBlock(f, CUSTOM_ATTACHMENT_LOCATION_PLUGIN_NAME);
+    f.appendText(
+      ' does: it collects a note\'s attachments into the note\'s attachment folder, on command or as you'
+        + ' edit, and moves a misplaced attachment to its proper folder.'
+    );
+  });
 }

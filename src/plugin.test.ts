@@ -51,7 +51,7 @@ interface PluginPrivate {
 
 interface PluginSuggestionComponentParams {
   readonly isSuggestionDeclined: (this: void) => boolean;
-  readonly reason: string;
+  readonly reason: DocumentFragment | string;
   readonly setSuggestionDeclined: (this: void, isDeclined: boolean) => Promise<void>;
   readonly suggestedPluginId: string;
   readonly suggestedPluginName: string;
@@ -250,6 +250,20 @@ function migrationParams(providerPluginId = 'advanced-rename-and-delete-handler'
   return call[0];
 }
 
+/**
+ * The names a reason marks as code, in order.
+ *
+ * @param reason - A dependency or suggestion reason.
+ * @returns The text of every `code` element in it; none for a plain string.
+ */
+function reasonCodeNames(reason: DocumentFragment | string | undefined): string[] {
+  return typeof reason === 'object' ? Array.from(reason.querySelectorAll('code'), (code) => code.textContent) : [];
+}
+
+function reasonText(reason: DocumentFragment | string | undefined): string {
+  return typeof reason === 'object' ? reason.textContent : reason ?? '';
+}
+
 function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
   const proxyWithTarget = castTo<Partial<Record<symbol, object>>>(strictProxiedObject);
   const rawTarget = proxyWithTarget[STRICT_PROXY_TARGET_SYMBOL] ?? strictProxiedObject;
@@ -367,7 +381,8 @@ describe('Plugin', () => {
       expect(dependency?.pluginName).toBe('Advanced Rename and Delete Handler');
       // This plugin only ever migrates, which every `1.x` contract supports.
       expect(dependency?.apiVersionRange).toBe('^1');
-      expect(dependency?.reason).toContain('Advanced Rename and Delete Handler');
+      expect(reasonText(dependency?.reason)).toContain('no longer handles renames and deletions');
+      expect(reasonCodeNames(dependency?.reason)).toEqual(['Consistent Attachments and Links', 'Advanced Rename and Delete Handler']);
     });
 
     it('should load nothing of its own while the dependency is missing', async () => {
@@ -463,7 +478,8 @@ describe('Plugin', () => {
       const plugin = await createLoadedPlugin();
       expect(suggestionParams().suggestedPluginId).toBe('obsidian-custom-attachment-location');
       expect(suggestionParams().suggestedPluginName).toBe('Custom Attachment Location');
-      expect(suggestionParams().reason).toContain('no longer collects attachments');
+      expect(reasonText(suggestionParams().reason)).toContain('no longer collects attachments');
+      expect(reasonCodeNames(suggestionParams().reason)).toEqual(['Consistent Attachments and Links', 'Custom Attachment Location']);
       const dependencyIds = castTo<PluginDependenciesProbe>(plugin).getPluginDependencies().map((dependency) => dependency.pluginId);
       expect(dependencyIds).not.toContain('obsidian-custom-attachment-location');
     });
