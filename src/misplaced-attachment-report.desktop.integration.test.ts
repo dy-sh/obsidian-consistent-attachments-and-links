@@ -9,19 +9,19 @@
  * brief assumed the only readable answer was `app.vault.getConfig('attachmentFolderPath')`, which `Custom
  * Attachment Location` patches against the CURRENTLY OPEN file — so a vault-wide walk would have given every
  * note the active note's folder, silently and with no error. That is not how the answer is obtained:
- * obsidian-dev-utils' `getAttachmentFilePath` dispatches to `app.vault.getAvailablePathForAttachments.extended`,
- * a function a plugin installs and which takes the NOTE PATH as an argument. Phase 2 below installs one of
- * its own that answers a different folder per note and asserts the report names both — the falsifying test
- * for the ambient-state failure, run with nothing installed.
+ * `@mnaoumov/obsidian-lib`'s `getAttachmentFilePath` asks `Custom Attachment Location`'s published
+ * attachment-path API, whose `getAvailablePathForAttachments` takes the NOTE PATH as an argument. Phase 2
+ * below publishes a stand-in for that API which answers a different folder per note, and asserts the report
+ * names both — the falsifying test for the ambient-state failure.
  *
- * That is also why this suite needs no released `Custom Attachment Location` and no API stub: the seam is a
- * property on `app.vault.getAvailablePathForAttachments`, not a registry lookup.
+ * That is also why this suite needs no released `Custom Attachment Location`: the library finds the policy
+ * through the plugin-API registry, so a stand-in record under that plugin's id is all it can see.
  *
  * The three phases share one staging, changing only the answer to *where should this attachment be?*:
  *
- * 1. **No extended function** — Obsidian's own `attachmentFolderPath`. The attachment is elsewhere, so both
+ * 1. **No published API** — Obsidian's own `attachmentFolderPath`. The attachment is elsewhere, so both
  *    notes are reported against that one folder.
- * 2. **An extended function, per note** — two notes, two different proper folders, one attachment. Proves
+ * 2. **A stand-in API, per note** — two notes, two different proper folders, one attachment. Proves
  *    the walk asks per note rather than once.
  * 3. **Configured folder = where the attachment already is** — the control. Nothing is reported, which is
  *    what stops phases 1 and 2 passing merely because the section names everything it sees.
@@ -29,6 +29,8 @@
  * Desktop-only (the file name alone picks the project). The behavior is platform-agnostic; this can become
  * `*.cross-platform.integration.test.ts` once an Android leg is worth its runtime.
  */
+
+import type { Plugin } from 'obsidian';
 
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -39,6 +41,7 @@ import {
 } from 'vitest';
 
 const CONSISTENCY_COMMAND_ID = 'consistent-attachments-and-links:check-consistency';
+const CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID = 'obsidian-custom-attachment-location';
 const PLUGIN_ID = 'consistent-attachments-and-links';
 
 /*
@@ -62,7 +65,7 @@ interface PhaseResult {
 
 interface ProbeResult {
   readonly attachmentPath: string;
-  readonly hasExtendedFunction: boolean;
+  readonly hasPublishedApi: boolean;
   readonly inPlace: PhaseResult;
   readonly noteOnePath: string;
   readonly noteTwoPath: string;
@@ -78,18 +81,21 @@ describe('Consistency report: misplaced attachments', () => {
       async callback({
         app,
         consistencyCommandId,
-        lib: { waitUntil },
+        customAttachmentLocationPluginId,
+        lib: {
+          castTo,
+          ComponentEx,
+          findPluginApi,
+          publishPluginApi,
+          waitUntil
+        },
         pluginId,
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
-        interface ExtendedHolder {
-          extended?: unknown;
-        }
-
-        interface ExtendedParams {
+        interface AttachmentPathParams {
           readonly attachmentFileBaseName: string;
           readonly attachmentFileExtension: string;
-          readonly notePathOrFile: NoteFileLike | string;
+          readonly notePathOrFile: NoteFileLike | null | string;
         }
 
         interface NoteFileLike {
@@ -156,7 +162,7 @@ describe('Consistency report: misplaced attachments', () => {
         const attachmentPath = `${attachmentFolder}/img.png`;
         const noteOnePath = `mar-one-${stamp}.md`;
         const noteTwoPath = `mar-two-${stamp}.md`;
-        const extendedRoot = `mar-extended-${stamp}`;
+        const stubRoot = `mar-stub-${stamp}`;
         const properFolder = `mar-proper-${stamp}`;
 
         const settings = findSettings();
@@ -165,9 +171,8 @@ describe('Consistency report: misplaced attachments', () => {
         const vaultUnknown: unknown = app.vault;
         const vaultConfig = vaultUnknown as VaultConfigAccess;
         const priorAttachmentFolder = vaultConfig.getConfig('attachmentFolderPath');
-        const availablePathFunctionUnknown: unknown = app.vault.getAvailablePathForAttachments;
-        const availablePathFunction = availablePathFunctionUnknown as ExtendedHolder;
-        const priorExtended = availablePathFunction.extended;
+        // Unloading it revokes the stand-in API it published.
+        const attachmentLocationStubOwner = new ComponentEx();
 
         async function trashIfExists(path: string): Promise<void> {
           const existing = app.vault.getAbstractFileByPath(path);
@@ -222,18 +227,28 @@ describe('Consistency report: misplaced attachments', () => {
           const vaultDefault = await runPhase();
 
           /*
-           * Phase 2 — the seam `Custom Attachment Location` uses. The answer depends only on the NOTE passed
-           * in, so if the walk asked once (or asked about the active file), both notes would come back with
-           * the same folder and the assertions below would fail.
+           * Phase 2 — the API `Custom Attachment Location` publishes. The answer depends only on the NOTE
+           * passed in, so if the walk asked once (or asked about the active file), both notes would come back
+           * with the same folder and the assertions below would fail.
            */
-          availablePathFunction.extended = (params: ExtendedParams): Promise<string> => {
-            const notePath = typeof params.notePathOrFile === 'string' ? params.notePathOrFile : params.notePathOrFile.path;
-            const noteBaseName = (notePath.split('/').pop() ?? '').replace(/\.md$/, '');
-            return Promise.resolve(`${extendedRoot}/${noteBaseName}/${params.attachmentFileBaseName}.${params.attachmentFileExtension}`);
-          };
-          const hasExtendedFunction = typeof availablePathFunction.extended === 'function';
+          attachmentLocationStubOwner.load();
+          publishPluginApi({
+            api: {
+              // Synchronous on purpose: the library awaits whatever the API returns.
+              getAvailablePathForAttachments: (params: AttachmentPathParams): string => {
+                const notePath = typeof params.notePathOrFile === 'string' ? params.notePathOrFile : params.notePathOrFile?.path ?? '';
+                const noteBaseName = (notePath.split('/').pop() ?? '').replace(/\.md$/, '');
+                return `${stubRoot}/${noteBaseName}/${params.attachmentFileBaseName}.${params.attachmentFileExtension}`;
+              },
+              isAttachmentUnitFolder: (): boolean => false
+            },
+            apiVersion: '1.3.0',
+            component: attachmentLocationStubOwner,
+            plugin: castTo<Plugin>({ manifest: { id: customAttachmentLocationPluginId } })
+          });
+          const hasPublishedApi = findPluginApi({ apiVersionRange: '^1.3.0', pluginId: customAttachmentLocationPluginId }) !== null;
           const perNote = await runPhase();
-          availablePathFunction.extended = priorExtended;
+          attachmentLocationStubOwner.unload();
 
           // Phase 3 — the control: the attachment is already in the configured folder.
           vaultConfig.setConfig('attachmentFolderPath', attachmentFolder);
@@ -241,7 +256,7 @@ describe('Consistency report: misplaced attachments', () => {
 
           return {
             attachmentPath,
-            hasExtendedFunction,
+            hasPublishedApi,
             inPlace,
             noteOnePath,
             noteTwoPath,
@@ -252,7 +267,7 @@ describe('Consistency report: misplaced attachments', () => {
           };
         } finally {
           // Restoring values captured before the awaits; nothing else in this vault writes them.
-          availablePathFunction.extended = priorExtended;
+          attachmentLocationStubOwner.unload();
           vaultConfig.setConfig('attachmentFolderPath', priorAttachmentFolder);
 
           // The desktop suite shares one vault and sibling suites assert on exactly which files survive.
@@ -267,13 +282,14 @@ describe('Consistency report: misplaced attachments', () => {
       },
       input: {
         consistencyCommandId: CONSISTENCY_COMMAND_ID,
+        customAttachmentLocationPluginId: CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID,
         pluginId: PLUGIN_ID,
         waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
       },
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.hasExtendedFunction).toBe(true);
+    expect(result.hasPublishedApi).toBe(true);
 
     // Phase 1: both notes reported, against Obsidian's own configured folder.
     expect(result.vaultDefault.section).toContain(result.attachmentPath);
@@ -287,7 +303,7 @@ describe('Consistency report: misplaced attachments', () => {
      */
     const noteOneBaseName = result.noteOnePath.replace(/\.md$/, '');
     const noteTwoBaseName = result.noteTwoPath.replace(/\.md$/, '');
-    expect(result.perNote.section).toContain('attachment folder is `mar-extended-');
+    expect(result.perNote.section).toContain('attachment folder is `mar-stub-');
     expect(result.perNote.section).toContain(`/${noteOneBaseName}\``);
     expect(result.perNote.section).toContain(`/${noteTwoBaseName}\``);
 

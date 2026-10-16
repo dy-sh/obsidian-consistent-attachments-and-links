@@ -1,5 +1,5 @@
 {
-  "extends": "./node_modules/obsidian-dev-utils/dist/templates/dprint.json",
+  "extends": "./node_modules/@mnaoumov/obsidian-dev-toolkit/dist/templates/dprint.json",
   "excludes": [
     "dist",
     "**/node_modules",

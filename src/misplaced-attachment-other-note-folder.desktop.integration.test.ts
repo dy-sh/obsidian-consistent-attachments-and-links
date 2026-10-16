@@ -2,7 +2,7 @@
  * @file
  *
  * Desktop integration suite for a note linking an attachment filed in ANOTHER note's attachment folder, run
- * against the REAL `Custom Attachment Location` with the template `./!!files/${noteFileName}` — the setup the
+ * against the REAL `Custom Attachment Location` with the template `./!!files/{{noteFileName}}` — the setup the
  * case was reported from.
  *
  * `A.md` embeds `!!files/B/image.png`. By the template A's attachments belong in `!!files/A`, and `!!files/B`
@@ -19,9 +19,10 @@
  *
  * The released plugin is written into the vault and enabled inside the closure, then disabled and removed,
  * rather than seeded for every suite: its patches would change what every other suite's attachment paths
- * resolve to. `12.0.1` is pinned because it is what the reporting vault runs, and because `13.0.0` onwards
- * requires `Advanced Rename and Delete Handler`'s API `^1.1.0`, which the seeded `1.3.0` does not publish — a
- * later release loads blocked here and never installs its extended function.
+ * resolve to. `14.1.0` is pinned because it is the first release to publish the attachment-path API (contract
+ * `1.3.0`) that `@mnaoumov/obsidian-lib` asks; `12.0.1`, which the reporting vault ran, only installed the
+ * `getAvailablePathForAttachments.extended` graft the library no longer reads. It needs `Advanced Rename and
+ * Delete Handler`'s API `^1.1.0`, which the seeded release publishes.
  */
 
 import { evalInObsidian } from 'obsidian-integration-testing';
@@ -37,12 +38,12 @@ import { downloadReleasedPlugin } from '../scripts/helpers/download-released-plu
 const CONSISTENCY_COMMAND_ID = 'consistent-attachments-and-links:check-consistency';
 const CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID = 'obsidian-custom-attachment-location';
 const CUSTOM_ATTACHMENT_LOCATION_REPO = 'mnaoumov/obsidian-custom-attachment-location';
-const CUSTOM_ATTACHMENT_LOCATION_VERSION = '12.0.1';
+const CUSTOM_ATTACHMENT_LOCATION_VERSION = '14.1.0';
 const PLUGIN_ID = 'consistent-attachments-and-links';
 
 /*
  * Under the transport's ~30 s per-closure cap: the closure declares eight waits on this one constant (the
- * extended function, two indexings, five report regenerations), 24 000 ms in all, and each lands well under
+ * published API, two indexings, five report regenerations), 24 000 ms in all, and each lands well under
  * a second.
  */
 const WAIT_TIMEOUT_IN_MILLISECONDS = 3000;
@@ -69,16 +70,15 @@ describe('Consistency report: a link to an attachment in another note\'s attachm
         app,
         consistencyCommandId,
         customAttachmentLocationPluginId,
-        lib: { waitUntil },
+        lib: {
+          findPluginApi,
+          waitUntil
+        },
         mainJs,
         manifestJson,
         pluginId,
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
-        interface ExtendedHolder {
-          extended?: unknown;
-        }
-
         interface ReportSettings {
           externalAttachmentLinkMode: string;
           sharedAttachmentPaths: string[];
@@ -107,11 +107,10 @@ describe('Consistency report: a link to an attachment in another note\'s attachm
         const pluginUnknown: unknown = app.plugins.getPlugin(pluginId);
         const { pluginSettingsComponent } = pluginUnknown as SettingsHolder;
 
-        // Read afresh every time: the plugin REPLACES `getAvailablePathForAttachments`, so a reference taken
-        // before it loaded points at the unpatched function for good.
-        function hasExtendedFunction(): boolean {
-          const functionUnknown: unknown = app.vault.getAvailablePathForAttachments;
-          return typeof (functionUnknown as ExtendedHolder).extended === 'function';
+        // The same lookup the library makes, at the same contract range, so the wait ends exactly when the
+        // report can see the plugin.
+        function hasPublishedApi(): boolean {
+          return findPluginApi({ apiVersionRange: '^1.3.0', pluginId: customAttachmentLocationPluginId }) !== null;
         }
 
         async function trashIfExists(path: string): Promise<void> {
@@ -148,16 +147,19 @@ describe('Consistency report: a link to an attachment in another note\'s attachm
         await app.vault.adapter.write(`${pluginFolder}/manifest.json`, manifestJson);
         await app.vault.adapter.write(
           `${pluginFolder}/data.json`,
-          // eslint-disable-next-line no-template-curly-in-string -- `Custom Attachment Location`'s own token syntax.
-          JSON.stringify({ attachmentFolderPath: './!!files/${noteFileName}' })
+          /*
+           * `13.0.0` onwards follows Obsidian's own attachment setting until told otherwise, and only then
+           * reads the template.
+           */
+          JSON.stringify({ attachmentFolderPath: './!!files/{{noteFileName}}', shouldFollowObsidianAttachmentLocation: false })
         );
 
         try {
           await app.plugins.loadManifests();
           await app.plugins.enablePlugin(customAttachmentLocationPluginId);
           await waitUntil({
-            message: 'Custom Attachment Location did not install its extended function',
-            predicate: hasExtendedFunction,
+            message: 'Custom Attachment Location did not publish its attachment-path API',
+            predicate: hasPublishedApi,
             timeoutInMilliseconds: waitTimeoutInMilliseconds
           });
 

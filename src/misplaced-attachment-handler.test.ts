@@ -6,21 +6,21 @@ import type {
 } from 'obsidian';
 
 import {
-  isFrontmatterLinkCache,
-  isReferenceCache
-} from '@obsidian-typings/obsidian-public-latest/implementations';
-import { castTo } from 'obsidian-dev-utils/object-utils';
-import {
   getAttachmentFilePath,
   isAtProperAttachmentPath
-} from 'obsidian-dev-utils/obsidian/attachment-path';
+} from '@mnaoumov/obsidian-lib/attachment-path';
 import {
   getFileOrNull,
   isNote
-} from 'obsidian-dev-utils/obsidian/file-system';
-import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { generateMarkdownLink } from 'obsidian-dev-utils/obsidian/link';
-import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+} from '@mnaoumov/obsidian-lib/file-system';
+import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import {
+  isFrontmatterLinkCache,
+  isReferenceCache
+} from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   beforeAll,
   beforeEach,
@@ -53,20 +53,20 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
   isReferenceCache: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/attachment-path', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/attachment-path')>(),
+vi.mock('@mnaoumov/obsidian-lib/attachment-path', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-path')>(),
   getAttachmentFilePath: vi.fn(),
   isAtProperAttachmentPath: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
+vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
   getFileOrNull: vi.fn(),
   isNote: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/link')>(),
+vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
   generateMarkdownLink: vi.fn()
 }));
 

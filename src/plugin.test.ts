@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class, @typescript-eslint/no-useless-constructor -- Test mocks require empty constructors and constructor-only classes. */
+import type { PluginDependency } from '@mnaoumov/obsidian-lib/components/plugin-gate-component';
+import type { TranslationsMap } from '@mnaoumov/obsidian-lib/i18n/i18n';
 /* eslint-disable perfectionist/sort-named-imports -- dprint orders these members by their ORIGINAL name (`Plugin` before `PluginManifest`) while perfectionist orders them by the LOCAL alias (`PluginManifest` before `PluginOriginal`). For an aliased import the two orders conflict, and satisfying one re-breaks the other. */
 import type {
   App as AppOriginal,
@@ -7,15 +9,13 @@ import type {
   PluginManifest
 } from 'obsidian';
 /* eslint-enable perfectionist/sort-named-imports -- Only the aliased import above is exempt. */
-import type { PluginDependency } from 'obsidian-dev-utils/obsidian/components/plugin-gate-component';
-import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
+import { getObsidianDevUtilsState } from '@mnaoumov/obsidian-lib/obsidian-dev-utils-state';
+import { publishPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/async-operation-tracking';
 import { Component } from 'obsidian';
-import { waitForAllAsyncOperations } from 'obsidian-dev-utils/async';
-import { noopAsync } from 'obsidian-dev-utils/function';
-import { castTo } from 'obsidian-dev-utils/object-utils';
-import { getObsidianDevUtilsState } from 'obsidian-dev-utils/obsidian-dev-utils-state';
-import { publishPluginApi } from 'obsidian-dev-utils/obsidian/plugin/plugin-api';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
   beforeEach,
@@ -85,14 +85,14 @@ const hoisted = vi.hoisted(() => {
     // `editAndSave` without having to reach the component instance the plugin built.
     editAndSave: vi.fn(async (settingsEditor: (settings: unknown) => void): Promise<void> => {
       settingsEditor(mockSettings);
-      // eslint-disable-next-line obsidian-dev-utils/prefer-noop-async -- a hoisted factory cannot reach a top-level import.
+      // eslint-disable-next-line typescript-dev-toolkit/prefer-noop-async -- a hoisted factory cannot reach a top-level import.
       await Promise.resolve();
     }),
     mockSettings
   };
 });
 
-// --- Mocks for the plugin's OWN sibling modules (allowed: not obsidian-dev-utils / obsidian-test-mocks) ---
+// --- Mocks for the plugin's OWN sibling modules (allowed: not the @mnaoumov libraries / obsidian-test-mocks) ---
 
 vi.mock('./links-handler.ts', () => ({
   LinksHandler: class {
@@ -142,8 +142,8 @@ const { settingsMigrationStub } = vi.hoisted(() => ({
   settingsMigrationStub: vi.fn<(params: SettingsMigrationComponentParams) => object>()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/components/settings-migration-component', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/settings-migration-component')>();
+vi.mock('@mnaoumov/obsidian-lib/components/settings-migration-component', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@mnaoumov/obsidian-lib/components/settings-migration-component')>();
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn used with `new` must be a non-arrow function returning a fresh real Component.
   settingsMigrationStub.mockImplementation(function NamedStub() {
     return new Component();
@@ -160,8 +160,8 @@ const { pluginSuggestionStub } = vi.hoisted(() => ({
   pluginSuggestionStub: vi.fn<(params: PluginSuggestionComponentParams) => object>()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/components/plugin-suggestion-component', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/plugin-suggestion-component')>();
+vi.mock('@mnaoumov/obsidian-lib/components/plugin-suggestion-component', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@mnaoumov/obsidian-lib/components/plugin-suggestion-component')>();
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn used with `new` must be a non-arrow function returning a fresh real Component.
   pluginSuggestionStub.mockImplementation(function NamedStub() {
     return new Component();
@@ -227,7 +227,7 @@ function asPrivate(plugin: Plugin): PluginPrivate {
 
 async function createLoadedPlugin(): Promise<Plugin> {
   const plugin = new Plugin(app, manifest);
-  // PluginBase.onload is async, and the synchronous mock Component.load() would not await it, so the real async load path is driven directly (as the obsidian-dev-utils reference test does).
+  // PluginBase.onload is async, and the synchronous mock Component.load() would not await it, so the real async load path is driven directly (as the library reference test does).
   await plugin.onload();
   return plugin;
 }

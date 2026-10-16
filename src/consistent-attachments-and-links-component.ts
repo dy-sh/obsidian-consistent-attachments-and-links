@@ -1,22 +1,22 @@
+import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { App } from 'obsidian';
-import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
-import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 
+import { LayoutReadyComponent } from '@mnaoumov/obsidian-lib/components/layout-ready-component';
+import { getOrCreateFile } from '@mnaoumov/obsidian-lib/file-system';
+import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
+import { loop } from '@mnaoumov/obsidian-lib/loop';
+import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
+import {
+  createFolderSafe,
+  getMarkdownFilesSorted
+} from '@mnaoumov/obsidian-lib/vault';
+import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
+import { dirname } from '@mnaoumov/typescript-lib/path';
 import {
   MarkdownView,
   setIcon
 } from 'obsidian';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
-import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
-import { getOrCreateFile } from 'obsidian-dev-utils/obsidian/file-system';
-import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
-import { loop } from 'obsidian-dev-utils/obsidian/loop';
-import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
-import {
-  createFolderSafe,
-  getMarkdownFilesSorted
-} from 'obsidian-dev-utils/obsidian/vault';
-import { dirname } from 'obsidian-dev-utils/path';
 
 import type { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
 import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';

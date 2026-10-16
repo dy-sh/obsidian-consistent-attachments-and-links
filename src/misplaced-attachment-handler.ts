@@ -11,7 +11,7 @@
  * Three things here are easy to get wrong, and all three were. The third, an attachment shared by several
  * notes, is on {@link MisplacedAttachmentCheckResult}. The first two:
  *
- * - **The judgement is about the FOLDER, not the path.** obsidian-dev-utils' `getAttachmentFilePath`
+ * - **The judgement is about the FOLDER, not the path.** `@mnaoumov/obsidian-lib`'s `getAttachmentFilePath`
  *   answers about the proper *path* — folder and templated base name both — so judging on it raw reports
  *   every attachment whose NAME does not match the rename template. That is a different defect, this plugin
  *   does not offer to fix it, and reporting what we do not repair is the mistake the wikilink buckets'
@@ -23,10 +23,10 @@
  *   from disagreeing.
  *
  * The `Custom Attachment Location` seam needs no code here. Every proper-path read goes through
- * obsidian-dev-utils' `getAttachmentFilePath`, which dispatches to `app.vault.getAvailablePathForAttachments.extended`
- * when a plugin has installed one and falls back to Obsidian's own three modes when none has. That function
- * takes the note path as an argument, so there is no ambient current-file state for a vault-wide walk to
- * leak — which is what makes an audit over every note answerable at all.
+ * `@mnaoumov/obsidian-lib`'s `getAttachmentFilePath`, which asks that plugin's published attachment-path API
+ * when it is installed and falls back to Obsidian's own three modes when it is not. That API takes the note
+ * path as an argument, so there is no ambient current-file state for a vault-wide walk to leak — which is
+ * what makes an audit over every note answerable at all.
  */
 
 import type {
@@ -36,22 +36,22 @@ import type {
 } from 'obsidian';
 
 import {
+  AttachmentPathContext,
+  getAttachmentFilePath,
+  isAtProperAttachmentPath
+} from '@mnaoumov/obsidian-lib/attachment-path';
+import {
+  getFileOrNull,
+  isNote
+} from '@mnaoumov/obsidian-lib/file-system';
+import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
+import {
   getDataAdapterEx,
   isFrontmatterLinkCache,
   isReferenceCache,
   parentFolderPath
 } from '@obsidian-typings/obsidian-public-latest/implementations';
-import {
-  AttachmentPathContext,
-  getAttachmentFilePath,
-  isAtProperAttachmentPath
-} from 'obsidian-dev-utils/obsidian/attachment-path';
-import {
-  getFileOrNull,
-  isNote
-} from 'obsidian-dev-utils/obsidian/file-system';
-import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { generateMarkdownLink } from 'obsidian-dev-utils/obsidian/link';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
@@ -337,11 +337,11 @@ export class MisplacedAttachmentHandler {
     });
 
     // `parentFolderPath`, not `dirname`: it answers `/` for the vault root where `dirname` answers `.`, and
-    // it is what obsidian-dev-utils' own `getAttachmentFolderPath` returns — so the folder this report names
+    // it is what `@mnaoumov/obsidian-lib`'s own `getAttachmentFolderPath` returns — so the folder this report names
     // is byte-identical to the one that function would give for the same note.
     const properAttachmentFolderPath = parentFolderPath(properAttachmentPath);
 
-    // Fold exactly as obsidian-dev-utils' `isAtProperAttachmentPath` does, so a case-insensitive adapter
+    // Fold exactly as `@mnaoumov/obsidian-lib`'s `isAtProperAttachmentPath` does, so a case-insensitive adapter
     // does not make this section report a folder the collector considers a match.
     const isInsensitive = getDataAdapterEx(this.app).insensitive;
 

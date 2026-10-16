@@ -5,7 +5,7 @@
  *
  * The one seam unit tests cannot reach: a REAL `data.json` written by a 3.x install, loaded by a real
  * plugin in a real Obsidian, and saved back. That round trip is where the values are actually at risk —
- * `obsidian-dev-utils` rebuilds the saved record from the DECLARED properties alone, so a property this
+ * `@mnaoumov/obsidian-lib` rebuilds the saved record from the DECLARED properties alone, so a property this
  * plugin has dropped is stripped on the first save. If the converter did not park it first, the user's
  * answers are gone before `Advanced Rename and Delete Handler` is ever installed to receive them, and
  * nothing anywhere would report it.

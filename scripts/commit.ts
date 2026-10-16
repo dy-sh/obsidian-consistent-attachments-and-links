@@ -1,3 +1,3 @@
-import { exec } from 'obsidian-dev-utils/script-utils/exec';
+import { exec } from '@mnaoumov/typescript-dev-toolkit/exec';
 
 await exec('czg');

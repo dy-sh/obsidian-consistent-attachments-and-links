@@ -1,5 +1,5 @@
-import { wrapCliTask } from 'obsidian-dev-utils/script-utils/cli-utils';
-import { testCoverage } from 'obsidian-dev-utils/script-utils/test-runners/vitest';
+import { wrapCliTask } from '@mnaoumov/typescript-dev-toolkit/cli-utils';
+import { testCoverage } from '@mnaoumov/typescript-dev-toolkit/test-runners/vitest';
 
 const FULL_COVERAGE_PERCENT = 100;
 

@@ -1,3 +1,3 @@
-import { defineEslintConfigs } from 'obsidian-dev-utils/script-utils/linters/eslint-config';
+import { defineEslintConfigs } from '@mnaoumov/obsidian-dev-toolkit/linters/eslint-config';
 
 export const configs = defineEslintConfigs({});

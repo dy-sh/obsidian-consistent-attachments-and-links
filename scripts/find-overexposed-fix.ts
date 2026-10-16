@@ -1,13 +1,13 @@
-import process from 'node:process';
-import { parseArgs } from 'node:util';
 import {
   CliTaskResult,
   wrapCliTask
-} from 'obsidian-dev-utils/script-utils/cli-utils';
+} from '@mnaoumov/typescript-dev-toolkit/cli-utils';
 import {
   findOverExposure,
   formatOverExposureFindings
-} from 'obsidian-dev-utils/script-utils/linters/over-exposure';
+} from '@mnaoumov/typescript-dev-toolkit/linters/over-exposure';
+import process from 'node:process';
+import { parseArgs } from 'node:util';
 
 const [, , ...$arguments] = process.argv;
 

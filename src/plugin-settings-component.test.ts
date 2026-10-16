@@ -1,13 +1,13 @@
-import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
-import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
+import type { DataHandler } from '@mnaoumov/obsidian-lib/data-handler';
+import type { PluginEventMap } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
 
-import { AsyncEvents } from 'obsidian-dev-utils/async-events';
+import { EmptyFolderBehavior } from '@mnaoumov/obsidian-lib/components/rename-delete-handler-component';
+import { AsyncEvents } from '@mnaoumov/typescript-lib/async-events';
 import {
   noop,
   noopAsync
-} from 'obsidian-dev-utils/function';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
-import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+} from '@mnaoumov/typescript-lib/function';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   describe,
   expect,
@@ -32,7 +32,7 @@ class MockDataHandler implements DataHandler {
   public async saveData(data: unknown): Promise<void> {
     // Round-tripped through JSON, exactly as `data.json` is, so a reload reads what the file would hold. Not
     // `structuredClone`: it keeps a key whose value is `undefined`, which JSON drops, and the saved record
-    // carries one for a private settings field (an obsidian-dev-utils defect), so a clone would reload a record
+    // carries one for a private settings field (a library defect), so a clone would reload a record
     // no real `data.json` can contain.
     this.data = JSON.parse(JSON.stringify(data) ?? 'null');
     await noopAsync();

@@ -6,6 +6,15 @@ import type {
   TFile
 } from 'obsidian';
 
+import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
+import {
+  generateMarkdownLink,
+  splitSubpath
+} from '@mnaoumov/obsidian-lib/link';
+import { getCacheSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   isFrontmatterLinkCache,
   isReferenceCache
@@ -14,15 +23,6 @@ import {
   normalizePath,
   resolveSubpath
 } from 'obsidian';
-import { noopAsync } from 'obsidian-dev-utils/function';
-import { castTo } from 'obsidian-dev-utils/object-utils';
-import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
-import {
-  generateMarkdownLink,
-  splitSubpath
-} from 'obsidian-dev-utils/obsidian/link';
-import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeEach,
   describe,
@@ -51,18 +51,18 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
   isReferenceCache: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
+vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
   getFileOrNull: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/link')>(),
+vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
   generateMarkdownLink: vi.fn(),
   splitSubpath: vi.fn()
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
+vi.mock('@mnaoumov/obsidian-lib/metadata-cache', () => ({
   getBacklinksForFileSafe: vi.fn(),
   getCacheSafe: vi.fn(),
   getLinks: vi.fn()

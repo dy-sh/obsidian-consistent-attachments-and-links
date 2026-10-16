@@ -1,5 +1,5 @@
-import { wrapCliTask } from 'obsidian-dev-utils/script-utils/cli-utils';
-import { test } from 'obsidian-dev-utils/script-utils/test-runners/vitest';
+import { wrapCliTask } from '@mnaoumov/typescript-dev-toolkit/cli-utils';
+import { test } from '@mnaoumov/typescript-dev-toolkit/test-runners/vitest';
 
 await wrapCliTask(() =>
   test({

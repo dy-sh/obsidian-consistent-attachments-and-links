@@ -1,3 +1,3 @@
-import { getNanoStagedConfig } from 'obsidian-dev-utils/script-utils/nano-staged-config';
+import { getNanoStagedConfig } from '@mnaoumov/typescript-dev-toolkit/nano-staged-config';
 
 export const config = getNanoStagedConfig();

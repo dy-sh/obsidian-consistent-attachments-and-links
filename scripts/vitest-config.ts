@@ -1,7 +1,7 @@
-import type { ObsidianPluginVitestConfigContext } from 'obsidian-dev-utils/script-utils/test-runners/vitest-config';
+import type { ObsidianPluginVitestConfigContext } from '@mnaoumov/obsidian-dev-toolkit/test-runners/vitest-config';
 import type { TestProjectConfiguration } from 'vitest/config';
 
-import { defineObsidianPluginVitestConfig } from 'obsidian-dev-utils/script-utils/test-runners/vitest-config';
+import { defineObsidianPluginVitestConfig } from '@mnaoumov/obsidian-dev-toolkit/test-runners/vitest-config';
 
 /**
  * The screenshot-capture suites that write
@@ -113,6 +113,9 @@ export const config = defineObsidianPluginVitestConfig({
           globalSetup: ['./scripts/demo-vault-global-setup.ts'],
           include: [DEMO_VAULT_TEST_FILES],
           name: 'integration-tests:demo-vault',
+          // Without the harness endpoint the desktop project carries: this vault does not seed the harness
+          // plugin, and with the endpoint registered every closure's `lib` throws for want of it.
+          setupFiles: ['obsidian-integration-testing/vitest-setup'],
           testTimeout: DEMO_VAULT_TIMEOUT_IN_MILLISECONDS
         }
       }
@@ -122,8 +125,14 @@ export const config = defineObsidianPluginVitestConfig({
     // This plugin declares `Advanced Rename and Delete Handler` as a dependency and loads nothing without it, so
     // every vault these projects open has it seeded. The capture projects spread these same objects and so
     // inherit it; the demo-vault project brings a setup of its own that seeds it too.
-    context.desktop.globalSetup = [GLOBAL_SETUP_FILE];
-    context.android.globalSetup = [GLOBAL_SETUP_FILE];
-    context.desktopPerformance.globalSetup = [GLOBAL_SETUP_FILE];
+    // The same setup also seeds the integration-test harness plugin, and the per-worker endpoint below is what
+    // merges its library into every closure's `lib`.
+    for (const project of [context.android, context.desktop, context.desktopPerformance]) {
+      project.globalSetup = [GLOBAL_SETUP_FILE];
+      project.setupFiles = [
+        'obsidian-integration-testing/vitest-setup',
+        '@mnaoumov/obsidian-dev-toolkit/integration-test-setup'
+      ];
+    }
   }
 });

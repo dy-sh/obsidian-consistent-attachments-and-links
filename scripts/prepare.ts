@@ -1,3 +1,3 @@
-import { execFromRoot } from 'obsidian-dev-utils/script-utils/root';
+import { execFromRoot } from '@mnaoumov/typescript-dev-toolkit/root';
 
 await execFromRoot('husky');
