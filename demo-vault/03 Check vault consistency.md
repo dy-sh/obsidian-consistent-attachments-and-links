@@ -65,7 +65,35 @@ The plugin never rewrites what is written inside such a file. A drawing keeps it
 
 ### Try it with a drawing
 
-1. Open [Source note](<./Materials/03 Check vault consistency/Source note.md>) - it references both [Shared target](<./Materials/03 Check vault consistency/Shared target.md>), an ordinary note, and [Diagram.excalidraw](<./Materials/03 Check vault consistency/Diagram.excalidraw.md>), which is Markdown on disk but an attachment as far as this setting is concerned.
-2. Run **Check Vault Consistency**.
-3. This vault keeps attachments in `_assets/attachments`, so the drawing is listed under **Misplaced attachments**, with that folder named as the note's attachment folder. **Shared target**, an ordinary note in the same place, is not.
-4. Empty `treatAsAttachmentExtensions` in [05 Settings](<./05 Settings.md>) and check again - the drawing now reads as a note and is no longer judged, which is the difference the setting makes.
+[Source note](<./Materials/03 Check vault consistency/Source note.md>) references both [Shared target](<./Materials/03 Check vault consistency/Shared target.md>), an ordinary note, and [Diagram.excalidraw](<./Materials/03 Check vault consistency/Diagram.excalidraw.md>), which is Markdown on disk but an attachment as far as this setting is concerned.
+
+```code-button
+---
+caption: Check with the drawing as an attachment
+---
+await require('/demoSetup.ts').checkDrawingAsAttachment(app);
+```
+
+Manual equivalent: make sure `.excalidraw.md` is listed in **Treat as attachment extensions** in [05 Settings](<./05 Settings.md>), then run **Check Vault Consistency**.
+
+This vault keeps attachments in `_assets/attachments`, so the drawing is listed under **Misplaced attachments**, with that folder named as the note's attachment folder. **Shared target**, an ordinary note in the same place, is not.
+
+```code-button
+---
+caption: Check with treatAsAttachmentExtensions emptied
+---
+await require('/demoSetup.ts').checkDrawingAsNote(app);
+```
+
+Manual equivalent: remove every entry from **Treat as attachment extensions** and check again.
+
+The drawing now reads as a note and is no longer judged, which is the difference the setting makes.
+
+```code-button
+---
+caption: Reset treatAsAttachmentExtensions
+---
+await require('/demoSetup.ts').resetDrawingDemo(app);
+```
+
+Manual equivalent: add `.excalidraw.md` back to **Treat as attachment extensions**.
