@@ -56,9 +56,12 @@ import {
   PathCompatibilityHandler
 } from './path-compatibility-handler.ts';
 import { PathCompatibilityPlatform } from './path-compatibility.ts';
+import { UnicodeNormalizationOutcome } from './unicode-name-normalizer.ts';
 
 const hoisted = vi.hoisted(() => ({
-  basePath: 'C:/vault'
+  basePath: 'C:/vault',
+  isNormalized: vi.fn((_file: unknown): boolean => true),
+  normalize: vi.fn<(file: unknown) => Promise<string>>()
 }));
 
 interface DataAdapterExLike {
@@ -67,6 +70,15 @@ interface DataAdapterExLike {
 
 vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
   getDataAdapterEx: (): DataAdapterExLike => ({ basePath: hoisted.basePath })
+}));
+
+// The on-disk half is `unicode-name-normalizer.test.ts`'s subject; here only the routing to it is.
+vi.mock('./unicode-name-normalizer.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./unicode-name-normalizer.ts')>(),
+  UnicodeNameNormalizer: class {
+    public isNormalized = hoisted.isNormalized;
+    public normalize = hoisted.normalize;
+  }
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-manager', () => ({
@@ -122,6 +134,7 @@ const mockSettings = {
   isPathIgnored: vi.fn((_path: string): boolean => false),
   maxVaultRootPathLength: 0,
   shouldCreateNoteToPreserveOriginalName: false,
+  shouldNormalizeUnicodeNames: false,
   sidecarNoteNamePattern: '{{fileName}}.md'
 };
 
@@ -189,7 +202,10 @@ describe('PathCompatibilityHandler', () => {
     mockSettings.isPathIgnored.mockReturnValue(false);
     mockSettings.maxVaultRootPathLength = 0;
     mockSettings.shouldCreateNoteToPreserveOriginalName = false;
+    mockSettings.shouldNormalizeUnicodeNames = false;
     mockSettings.sidecarNoteNamePattern = '{{fileName}}.md';
+    hoisted.isNormalized.mockReturnValue(true);
+    hoisted.normalize.mockResolvedValue(UnicodeNormalizationOutcome.Normalized);
     mockGetFileOrNull.mockReturnValue(null);
     mockGetSafeRenamePath.mockImplementation((params) => params.newPath);
     // Mimic the real rename: it mutates the abstract file, which is what the sidecar and preservation steps
@@ -564,6 +580,80 @@ describe('PathCompatibilityHandler', () => {
 
     expect(mockRenameSafe.mock.calls.filter((call) => call[0].oldPathOrAbstractFile === sidecar)).toHaveLength(0);
     expect(mockAddAlias).toHaveBeenCalledWith(expect.objectContaining({ pathOrFile: sidecar }));
+  });
+
+  describe('Unicode normalization', () => {
+    beforeEach(() => {
+      mockSettings.getPathCompatibilityPlatforms.mockReturnValue([]);
+      mockSettings.shouldNormalizeUnicodeNames = true;
+      hoisted.isNormalized.mockReturnValue(false);
+    });
+
+    it('should report a name stored in NFD even with no platform enabled, and keep its path', () => {
+      mockSettings.maxVaultRootPathLength = 3;
+      setVault(createFile('note.md'));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      expect(result.entries).toHaveLength(1);
+      expect(result.entries[0]?.newPath).toBe('note.md');
+      // The vault root budget is a platform rule, so with no platform on there is nothing to warn about.
+      expect(result.vaultRootWarning).toBeNull();
+      expect(result.toString(app, 'report.md')).toContain('decomposed Unicode form (NFD)');
+    });
+
+    it('should not report it when the setting is off', () => {
+      mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Windows]);
+      mockSettings.shouldNormalizeUnicodeNames = false;
+      setVault(createFile('note.md'));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should repair it on disk rather than through a vault rename', async () => {
+      const file = createFile('note.md');
+      setVault(file);
+
+      await createHandler().fix();
+
+      expect(hoisted.normalize).toHaveBeenCalledWith(file);
+      expect(mockRenameSafe).not.toHaveBeenCalled();
+      expect(mockAddAlias).not.toHaveBeenCalled();
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith(expect.stringContaining('Repaired 1'));
+    });
+
+    // `adapter.rename` reads the old name from `realpath`, so the vault rename writes the NFC name on its own.
+    it('should leave a name that also breaks a platform rule to the vault rename', async () => {
+      mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Windows]);
+      setVault(createFile(`${LONG_BASENAME}.md`));
+
+      await createHandler().fix();
+
+      expect(hoisted.normalize).not.toHaveBeenCalled();
+      expect(mockRenameSafe).toHaveBeenCalledTimes(1);
+    });
+
+    it('should list a name whose NFC spelling is already taken on disk', async () => {
+      hoisted.normalize.mockResolvedValue(UnicodeNormalizationOutcome.Collision);
+      setVault(createFile('note.md'));
+
+      await createHandler().fix();
+
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith(expect.stringContaining('Did not normalize 1 name(s) to NFC: note.md'));
+    });
+
+    it('should count nothing when the name turned out to be NFC already', async () => {
+      hoisted.normalize.mockResolvedValue(UnicodeNormalizationOutcome.NotNeeded);
+      setVault(createFile('note.md'));
+
+      await createHandler().fix();
+
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith(expect.stringContaining('No paths found'));
+    });
   });
 
   describe('PathCompatibilityCheckResult', () => {

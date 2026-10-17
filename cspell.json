@@ -18,6 +18,7 @@
     "NTFS",
     "creatordate",
     "Dmitry",
+    "ENOENT",
     "excalidraw",
     "frontmatter",
     "GHSA",
@@ -41,6 +42,7 @@
     "offref",
     "outfile",
     "postversion",
+    "realpath",
     "preversion",
     "Savosh",
     "smol",
@@ -53,7 +55,9 @@
     "Wikilinks",
     "wikilinks",
     "wilikinks",
-    "Yrusobad"
+    "Yrusobad",
+    "заметка",
+    "папка"
   ],
   "ignoreWords": [],
   "import": [],

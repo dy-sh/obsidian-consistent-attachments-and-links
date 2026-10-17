@@ -136,6 +136,17 @@ Things that are easy to get wrong here, and were:
 
 Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) moved to `obsidian-dev-utils` and was consumed here on the `obsidian-dev-utils@99.0.0` bump; it now lives in `@mnaoumov/obsidian-lib`. Two cases stay deliberately **unmatched** there, so do not "fix" them here either: `CONIN$` / `CONOUT$` and the superscript `COM²` forms, which every Windows version that runs Obsidian accepts — matching them would rename files that work.
 
+### Unicode normalization (`shouldNormalizeUnicodeNames`)
+
+The one rule that is not a platform's: a name stored on disk in NFD is reported and stored in NFC. `src/unicode-name-normalizer.ts` does the on-disk half. Measured in Obsidian 1.14.4's `app.js`, and easy to get wrong:
+
+- **`file.path` is always NFC — judge the adapter entry's `realpath`.** Both `FileSystemAdapter` and `CapacitorAdapter` key `files` by the NFC path and keep the on-disk name in `files[path].realpath`. A check on `file.path` finds nothing, ever.
+- **An NFC-only repair cannot be a vault rename.** The new vault path is the old one, so `vault.rename` and `adapter.rename` return early. The rename is on disk, through a temporary name, which also changes the stored name on APFS, where the two forms are one name.
+- **A bare `fs.rename` deletes the note from the vault.** The watcher reports the old NFD real path, `reconcileFile` gets ENOENT, and its 100 ms retry calls `removeFile` on the NFC path. So the rename runs in the adapter queue, rewrites `realpath` (and every descendant's prefix for a folder), restarts Linux's per-folder watchers under a renamed folder, and drops watcher events for the retired real paths for 5 s. `unicode-normalization.desktop.integration.test.ts` fails with that filter off. That is measured, so do not "simplify" the filter away.
+- **A name that also breaks a platform rule takes the normal `renameSafe` path**, which writes the NFC name anyway, because `adapter.rename` reads the old `realpath`. So does its link update and its original-name preservation. An NFC-only repair preserves nothing, because no letter changes.
+- **Never overwrite**: a separate on-disk entry spelled in NFC (Windows and Linux allow both) makes the repair skip that item and list it.
+- **Link text is not rewritten.** The scope line says "never rewrite", and Obsidian's `normalizePath` composes link text when it resolves it.
+
 ## Misplaced attachments — the report's fifth section
 
 `Misplaced attachments` names every reference that reaches an attachment sitting outside the attachment folder configured for the note that references it. It is the section that justifies "Attachments" staying in the plugin's name once collecting left for `Custom Attachment Location` (owner, 2026-09-02). **It only reports** — the first third of the scope line — and points the user at that plugin's `Move attachment to proper folder` and `Collect attachments`.

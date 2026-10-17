@@ -16,7 +16,7 @@ Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>
 
 ## Fix Incompatible Paths
 
-Renames every file and folder whose path or name is invalid on a platform you have ticked in the settings - too long, containing a character that platform forbids, or named after an MS-DOS device. Links follow the rename, and the original name is kept in the note's `aliases` and `title`.
+Renames every file and folder whose path or name is invalid on a platform you have ticked in the settings - too long, containing a character that platform forbids, or named after an MS-DOS device. Links follow the rename, and the original name is kept in the note's `aliases` and `title`. It also stores every name kept on disk in decomposed Unicode form (NFD) in the composed form (NFC) Obsidian uses, which changes no letter and no link.
 
 Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
