@@ -13,6 +13,7 @@ interface DemoSettingsPatch {
   shouldEnsurePathCompatibilityOnAndroid?: boolean;
   shouldEnsurePathCompatibilityOnWindows?: boolean;
   shouldNormalizeUnicodeNames?: boolean;
+  treatAsAttachmentExtensions?: readonly string[];
 }
 
 const PATH_COMPATIBILITY_FOLDER_PATH = 'Materials/08 Keep paths valid on every platform';
@@ -230,6 +231,42 @@ export async function checkConsistency(app: App): Promise<void> {
   } finally {
     app.vault.offref(modifyEventRef);
   }
+}
+
+const DEFAULT_TREAT_AS_ATTACHMENT_EXTENSIONS = ['.excalidraw.md'];
+
+/**
+ * Puts `treatAsAttachmentExtensions` back to its default and runs **Check vault consistency**, so the stand-in
+ * drawing in `Materials/03 Check vault consistency` is judged as an attachment and listed as misplaced.
+ *
+ * Manual equivalent: make sure `.excalidraw.md` is listed in **Treat as attachment extensions** in the settings
+ * tab, then run **Check vault consistency** from the Command Palette.
+ */
+export async function checkDrawingAsAttachment(app: App): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { treatAsAttachmentExtensions: DEFAULT_TREAT_AS_ATTACHMENT_EXTENSIONS } });
+  await checkConsistency(app);
+}
+
+/**
+ * Empties `treatAsAttachmentExtensions` and runs **Check vault consistency**, so the stand-in drawing reads as
+ * a note and is no longer judged.
+ *
+ * Manual equivalent: remove every entry from **Treat as attachment extensions** in the settings tab, then run
+ * **Check vault consistency** from the Command Palette.
+ */
+export async function checkDrawingAsNote(app: App): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { treatAsAttachmentExtensions: [] } });
+  await checkConsistency(app);
+}
+
+/**
+ * Puts `treatAsAttachmentExtensions` back to its default after {@link checkDrawingAsNote} emptied it.
+ *
+ * Manual equivalent: add `.excalidraw.md` back to **Treat as attachment extensions** in the settings tab.
+ */
+export async function resetDrawingDemo(app: App): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { treatAsAttachmentExtensions: DEFAULT_TREAT_AS_ATTACHMENT_EXTENSIONS } });
+  new Notice('treatAsAttachmentExtensions is back to its default.');
 }
 
 async function getConsistencyReportPath(app: App): Promise<string> {
