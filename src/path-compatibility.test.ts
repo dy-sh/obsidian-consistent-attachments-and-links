@@ -11,6 +11,7 @@ import type { PathCompatibilityViolation } from './path-compatibility.ts';
 import {
   findPathCompatibilityViolations,
   getCurrentPathCompatibilityPlatform,
+  isUnicodeNormalized,
   measure,
   PathCompatibilityPlatform,
   PathCompatibilityViolationType,
@@ -70,6 +71,18 @@ describe('path-compatibility', () => {
       expect(measure(CJK.repeat(10), true)).toBe(30);
       expect(measure(EMOJI.repeat(10), true)).toBe(40);
       expect(measure('abc', true)).toBe(3);
+    });
+  });
+
+  describe('isUnicodeNormalized', () => {
+    it('should accept a composed name and an ASCII one', () => {
+      expect(isUnicodeNormalized('й.md')).toBe(true);
+      expect(isUnicodeNormalized('note.md')).toBe(true);
+    });
+
+    // `й` as `и` + U+0306 COMBINING BREVE, the shape of the names in issue reports.
+    it('should reject a decomposed name', () => {
+      expect(isUnicodeNormalized('й.md'.normalize('NFD'))).toBe(false);
     });
   });
 

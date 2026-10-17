@@ -40,7 +40,13 @@ export enum PathCompatibilityViolationType {
   NameTooLong = 'NameTooLong',
   PathTooLong = 'PathTooLong',
   ReservedName = 'ReservedName',
-  TrailingCharacter = 'TrailingCharacter'
+  TrailingCharacter = 'TrailingCharacter',
+
+  /**
+   * The name is stored on disk in a form other than Unicode NFC, e.g. `й` as `и` followed by a combining
+   * breve. Not a platform's rule but a sync hazard: tools outside Obsidian see the two forms as two names.
+   */
+  UnicodeNotNormalized = 'UnicodeNotNormalized'
 }
 
 /**
@@ -121,8 +127,11 @@ export interface PathCompatibilityProfile {
 export interface PathCompatibilityViolation {
   /**
    * The platform whose rules the path breaks. Another enabled platform may accept the very same path.
+   *
+   * `null` for a violation no single platform owns, which is
+   * {@link PathCompatibilityViolationType.UnicodeNotNormalized}.
    */
-  readonly platform: PathCompatibilityPlatform;
+  readonly platform: null | PathCompatibilityPlatform;
 
   /**
    * What is wrong.
@@ -338,6 +347,16 @@ export function getCurrentPathCompatibilityPlatform(): null | PathCompatibilityP
   }
 
   return Platform.isLinux ? PathCompatibilityPlatform.Linux : null;
+}
+
+/**
+ * Whether a name is in Unicode NFC, the form Obsidian gives every name it creates.
+ *
+ * @param name - The name as it is stored on disk.
+ * @returns Whether it is NFC.
+ */
+export function isUnicodeNormalized(name: string): boolean {
+  return name === name.normalize('NFC');
 }
 
 /**

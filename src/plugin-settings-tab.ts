@@ -201,6 +201,25 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       ),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('Report, and repair with ');
+          appendCodeBlock(f, 'Fix incompatible paths');
+          f.appendText(', every name stored on disk in decomposed Unicode form (NFD), such as ');
+          appendCodeBlock(f, 'й');
+          f.appendText(' stored as ');
+          appendCodeBlock(f, 'и');
+          f.appendText(' followed by a combining breve.');
+          f.createEl('br');
+          f.appendText(
+            'Obsidian shows such a name exactly like its composed form (NFC), but sync, git and backup tools see two different names. Such names come from outside Obsidian, for example from older macOS disks. The repair keeps the name and only changes how it is stored.'
+          );
+        }),
+        name: 'Normalize Unicode names to NFC',
+        render: (setting) => {
+          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldNormalizeUnicodeNames', valueComponent: toggle }));
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('The length, in characters, of the longest vault root path this vault is expected to live under.');
           f.createEl('br');
           f.appendText('Leave it at ');

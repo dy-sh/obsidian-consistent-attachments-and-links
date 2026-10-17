@@ -100,6 +100,16 @@ export class PluginSettings {
   public shouldEnsurePathCompatibilityOnMacOs = getCurrentPathCompatibilityPlatform() === PathCompatibilityPlatform.MacOs;
   public shouldEnsurePathCompatibilityOnWindows = getCurrentPathCompatibilityPlatform() === PathCompatibilityPlatform.Windows;
 
+  /**
+   * Whether a name stored on disk in a form other than Unicode NFC is reported and, by `Fix incompatible
+   * paths`, renamed to NFC.
+   *
+   * Independent of the platform toggles: the hazard is a vault synced between machines whose tools see the two
+   * forms as two names, whichever platforms those are. On by default because such a name never comes from
+   * typing in Obsidian, which creates every name in NFC, and the report changes nothing on its own.
+   */
+  public shouldNormalizeUnicodeNames = true;
+
   public shouldShowBackupWarning = true;
 
   /**

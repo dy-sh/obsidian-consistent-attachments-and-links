@@ -17,9 +17,10 @@ export const defaultTranslations = {
   },
   pathCompatibility: {
     notice: {
-      noPlatformsEnabled: 'No platforms are selected, so there is nothing to check. Enable at least one under \'Ensure path compatibility on\'.',
+      noPlatformsEnabled: 'No platforms are selected and \'Normalize Unicode names to NFC\' is off, so there is nothing to check. Enable at least one under \'Ensure path compatibility on\', or turn that setting on.',
       nothingToRepair: 'No paths found that need to be repaired',
       repaired: 'Repaired {{count}} path(s)',
+      unicodeCollision: 'Did not normalize {{count}} name(s) to NFC: {{paths}}. The same folder on disk already holds a separate item with the NFC spelling of that name, so renaming would overwrite it. Rename or merge one of the two outside Obsidian.',
       unrepairable: 'Could not repair {{count}} path(s): {{paths}}. Every character of the name would have to be removed.'
     },
     progressBar: {
@@ -38,7 +39,8 @@ export const defaultTranslations = {
       nameTooLong: 'Name is too long for {{platform}}.',
       pathTooLong: 'Path is too long for {{platform}}.',
       reservedName: 'Name is reserved on {{platform}}.',
-      trailingCharacter: 'Name ends with a dot or a space, which {{platform}} does not allow.'
+      trailingCharacter: 'Name ends with a dot or a space, which {{platform}} does not allow.',
+      unicodeNotNormalized: 'Name is stored on disk in decomposed Unicode form (NFD), not the composed form (NFC) Obsidian uses. Sync, git and backup tools see the two as different names. The repair keeps the name and stores it in NFC.'
     }
   }
 } as const satisfies DefaultTranslationsBase;

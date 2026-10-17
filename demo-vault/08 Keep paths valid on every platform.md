@@ -60,6 +60,43 @@ caption: Reset the path compatibility demo
 await require('/demoSetup.ts').resetPathCompatibilityDemo(app);
 ```
 
+## Names that look right but are stored differently
+
+Unicode can spell many letters in two ways. `й` is one character in its composed form (NFC), or `и` followed by a combining breve in its decomposed form (NFD). Obsidian creates every name in NFC and shows both forms identically, but git, sync and backup tools compare the stored bytes, so to them the two forms are two different files. Decomposed names come from outside Obsidian: older macOS disks stored every name that way, and archives and other tools still produce them.
+
+**Normalize Unicode names to NFC** is on by default and does not depend on the platform toggles. The report lists every name stored in NFD, and **Fix incompatible paths** stores it in NFC. The name keeps every letter it had, so nothing needs preserving and no link changes. If the folder on disk already holds a separate item with the NFC spelling, which Windows and Linux allow, the repair skips that name and lists it rather than overwrite anything.
+
+**Step 1 - write a note whose name is stored in NFD.** Obsidian composes every name it creates, so the button writes the file straight to disk, the way such names arrive from outside:
+
+```code-button
+---
+caption: Create a note with a decomposed name
+---
+await require('/demoSetup.ts').createDecomposedNameNote(app);
+```
+
+Manual equivalent: copy a file whose name was decomposed elsewhere into the vault, and make sure **Normalize Unicode names to NFC** is on in the settings tab.
+
+**Step 2 - see the report call it out.** The note shows up under **Path compatibility** as stored in decomposed form, and the name it would get is the very same name:
+
+```code-button
+---
+caption: Check Vault Consistency for the decomposed name (read-only)
+---
+await require('/demoSetup.ts').checkConsistency(app);
+```
+
+**Step 3 - repair it.** Run the repair, then check the vault again. The note is gone from the section, and `Points at the decomposed name` still links to it:
+
+```code-button
+---
+caption: Fix incompatible paths for the decomposed name
+---
+require('/demoSetup.ts').runCommand(app, 'fix-incompatible-paths');
+```
+
+The reset button above removes this note too.
+
 ## What to notice
 
 - **The name was truncated, not mangled.** The extension is kept whole - a truncated `.png` is a broken file, not a shorter one - and the cut lands on a whole character, never half of one.

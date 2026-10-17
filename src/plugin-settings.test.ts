@@ -114,6 +114,10 @@ describe('PluginSettings', () => {
     });
   });
 
+  it('should normalize Unicode names by default', () => {
+    expect(new PluginSettings().shouldNormalizeUnicodeNames).toBe(true);
+  });
+
   describe('getPathCompatibilityPlatforms', () => {
     // `Platform` reports Windows in the unit-test mocks, so that is the platform a fresh install enables.
     it('should enable the current platform only', () => {

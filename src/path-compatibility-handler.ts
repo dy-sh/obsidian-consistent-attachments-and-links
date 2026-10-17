@@ -58,8 +58,13 @@ import {
   PathCompatibilityViolationType,
   repairName
 } from './path-compatibility.ts';
+import {
+  UnicodeNameNormalizer,
+  UnicodeNormalizationOutcome
+} from './unicode-name-normalizer.ts';
 
 enum FixOutcome {
+  Collision = 'Collision',
   NotNeeded = 'NotNeeded',
   Repaired = 'Repaired',
   Unrepairable = 'Unrepairable'
@@ -102,6 +107,7 @@ interface PathCompatibilityHandlerConstructorParams {
 interface PathCompatibilityScope {
   readonly maxVaultRootPathLength: number;
   readonly platforms: readonly PathCompatibilityPlatform[];
+  readonly shouldNormalizeUnicodeNames: boolean;
 }
 
 interface ResolvedName {
@@ -118,7 +124,14 @@ const VIOLATION_DESCRIBERS: Record<PathCompatibilityViolationType, (platform: st
   [PathCompatibilityViolationType.NameTooLong]: (platform) => t(($) => $.pathCompatibility.violation.nameTooLong, { platform }),
   [PathCompatibilityViolationType.PathTooLong]: (platform) => t(($) => $.pathCompatibility.violation.pathTooLong, { platform }),
   [PathCompatibilityViolationType.ReservedName]: (platform) => t(($) => $.pathCompatibility.violation.reservedName, { platform }),
-  [PathCompatibilityViolationType.TrailingCharacter]: (platform) => t(($) => $.pathCompatibility.violation.trailingCharacter, { platform })
+  [PathCompatibilityViolationType.TrailingCharacter]: (platform) => t(($) => $.pathCompatibility.violation.trailingCharacter, { platform }),
+  [PathCompatibilityViolationType.UnicodeNotNormalized]: () => t(($) => $.pathCompatibility.violation.unicodeNotNormalized)
+};
+
+const UNICODE_NORMALIZATION_OUTCOMES: Record<UnicodeNormalizationOutcome, FixOutcome> = {
+  [UnicodeNormalizationOutcome.Collision]: FixOutcome.Collision,
+  [UnicodeNormalizationOutcome.Normalized]: FixOutcome.Repaired,
+  [UnicodeNormalizationOutcome.NotNeeded]: FixOutcome.NotNeeded
 };
 
 /**
@@ -173,6 +186,7 @@ export class PathCompatibilityHandler {
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly resourceLockComponent: null | ResourceLockComponent;
+  private readonly unicodeNameNormalizer: UnicodeNameNormalizer;
 
   public constructor(params: PathCompatibilityHandlerConstructorParams) {
     this.abortSignalComponent = params.abortSignalComponent;
@@ -180,6 +194,7 @@ export class PathCompatibilityHandler {
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.resourceLockComponent = params.resourceLockComponent;
+    this.unicodeNameNormalizer = new UnicodeNameNormalizer({ app: params.app });
   }
 
   /**
@@ -188,16 +203,15 @@ export class PathCompatibilityHandler {
    * @param result - The section to fill.
    */
   public check(result: PathCompatibilityCheckResult): void {
-    const platforms = this.pluginSettingsComponent.settings.getPathCompatibilityPlatforms();
+    const scope = this.resolveScope();
 
-    if (platforms.length === 0) {
+    if (scope === null) {
       return;
     }
 
-    result.vaultRootWarning = this.buildVaultRootWarning();
-    const maxVaultRootPathLength = this.resolveMaxVaultRootPathLength();
-
-    const scope: PathCompatibilityScope = { maxVaultRootPathLength, platforms };
+    if (scope.platforms.length > 0) {
+      result.vaultRootWarning = this.buildVaultRootWarning();
+    }
 
     for (const file of this.getSortedAbstractFiles()) {
       const violations = this.findViolations(file, scope);
@@ -219,21 +233,21 @@ export class PathCompatibilityHandler {
    * Repairs every offending file and folder.
    */
   public async fix(): Promise<void> {
-    const platforms = this.pluginSettingsComponent.settings.getPathCompatibilityPlatforms();
+    const scope = this.resolveScope();
 
-    if (platforms.length === 0) {
+    if (scope === null) {
       this.pluginNoticeComponent.showNotice(t(($) => $.pathCompatibility.notice.noPlatformsEnabled));
       return;
     }
 
-    const vaultRootWarning = this.buildVaultRootWarning();
+    const vaultRootWarning = scope.platforms.length > 0 ? this.buildVaultRootWarning() : null;
 
     if (vaultRootWarning !== null) {
       this.pluginNoticeComponent.showNotice(vaultRootWarning);
     }
 
-    const maxVaultRootPathLength = this.resolveMaxVaultRootPathLength();
     let repairedCount = 0;
+    const collidingPaths: string[] = [];
     const unrepairablePaths: string[] = [];
 
     await loop({
@@ -242,12 +256,25 @@ export class PathCompatibilityHandler {
       items: this.getSortedAbstractFiles(),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (file) => {
-        const outcome = await this.fixFile(file, { maxVaultRootPathLength, platforms });
+        const outcome = await this.fixFile(file, scope);
 
-        if (outcome === FixOutcome.Repaired) {
-          repairedCount++;
-        } else if (outcome === FixOutcome.Unrepairable) {
-          unrepairablePaths.push(file.path);
+        switch (outcome) {
+          case FixOutcome.Collision: {
+            collidingPaths.push(file.path);
+
+            break;
+          }
+          case FixOutcome.Repaired: {
+            repairedCount++;
+
+            break;
+          }
+          case FixOutcome.Unrepairable: {
+            unrepairablePaths.push(file.path);
+
+            break;
+          }
+            // No default
         }
       },
       progressBarTitle: t(($) => $.pathCompatibility.progressBar.title),
@@ -266,6 +293,12 @@ export class PathCompatibilityHandler {
         t(($) => $.pathCompatibility.notice.unrepairable, { count: unrepairablePaths.length, paths: unrepairablePaths.join(', ') })
       );
     }
+
+    if (collidingPaths.length > 0) {
+      this.pluginNoticeComponent.showNotice(
+        t(($) => $.pathCompatibility.notice.unicodeCollision, { count: collidingPaths.length, paths: collidingPaths.join(', ') })
+      );
+    }
   }
 
   private buildVaultRootWarning(): null | string {
@@ -276,7 +309,22 @@ export class PathCompatibilityHandler {
   }
 
   private findViolations(file: TAbstractFile, scope: PathCompatibilityScope): PathCompatibilityViolation[] {
-    return this.pluginSettingsComponent.settings.isPathIgnored(file.path) ? [] : this.findViolationsAt(file, scope, file.path);
+    if (this.pluginSettingsComponent.settings.isPathIgnored(file.path)) {
+      return [];
+    }
+
+    const violations = this.findViolationsAt(file, scope, file.path);
+
+    /*
+     * Judged on the name ON DISK, never on `file.path`: Obsidian keys the vault by the NFC path, so `file.path`
+     * is NFC whatever the disk holds. And only here, not in `findViolationsAt`, whose other caller re-checks a
+     * collision-resolved path that is NFC by construction.
+     */
+    if (scope.shouldNormalizeUnicodeNames && !this.unicodeNameNormalizer.isNormalized(file)) {
+      violations.push({ platform: null, type: PathCompatibilityViolationType.UnicodeNotNormalized });
+    }
+
+    return violations;
   }
 
   private findViolationsAt(file: TAbstractFile, scope: PathCompatibilityScope, path: string): PathCompatibilityViolation[] {
@@ -289,8 +337,19 @@ export class PathCompatibilityHandler {
   }
 
   private async fixFile(file: TAbstractFile, scope: PathCompatibilityScope): Promise<FixOutcome> {
-    if (this.findViolations(file, scope).length === 0) {
+    const violations = this.findViolations(file, scope);
+
+    if (violations.length === 0) {
       return FixOutcome.NotNeeded;
+    }
+
+    /*
+     * A name that breaks a platform rule too goes through the vault rename below, which writes the NFC name
+     * anyway: `adapter.rename` reads the old name from the entry's `realpath`. Only a name whose ONE problem is
+     * its Unicode form needs the on-disk rename, because its vault path does not change at all.
+     */
+    if (violations.every((violation) => violation.type === PathCompatibilityViolationType.UnicodeNotNormalized)) {
+      return UNICODE_NORMALIZATION_OUTCOMES[await this.unicodeNameNormalizer.normalize(file)];
     }
 
     const newName = this.repair(file, scope);
@@ -471,6 +530,26 @@ export class PathCompatibilityHandler {
     return shouldCreate ? await getOrCreateFile(this.app, sidecarPath) : null;
   }
 
+  /**
+   * The rules one pass holds every item to.
+   *
+   * @returns The scope, or `null` when no rule is on, which is the one case with nothing to check.
+   */
+  private resolveScope(): null | PathCompatibilityScope {
+    const settings = this.pluginSettingsComponent.settings;
+    const platforms = settings.getPathCompatibilityPlatforms();
+
+    if (platforms.length === 0 && !settings.shouldNormalizeUnicodeNames) {
+      return null;
+    }
+
+    return {
+      maxVaultRootPathLength: this.resolveMaxVaultRootPathLength(),
+      platforms,
+      shouldNormalizeUnicodeNames: settings.shouldNormalizeUnicodeNames
+    };
+  }
+
   private resolveSidecarNote(file: TAbstractFile): null | TFile {
     if (isFolder(file) || isMarkdownFile(file)) {
       return null;
@@ -514,7 +593,7 @@ function describeItem(app: App, path: string, reportPath: string): string {
 }
 
 function describeViolation(violation: PathCompatibilityViolation): string {
-  const platform = PATH_COMPATIBILITY_PLATFORM_LABELS[violation.platform];
+  const platform = violation.platform === null ? '' : PATH_COMPATIBILITY_PLATFORM_LABELS[violation.platform];
   return VIOLATION_DESCRIBERS[violation.type](platform);
 }
 

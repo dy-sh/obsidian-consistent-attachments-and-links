@@ -12,6 +12,7 @@ interface DemoSettingsPatch {
   shouldCreateNoteToPreserveOriginalName?: boolean;
   shouldEnsurePathCompatibilityOnAndroid?: boolean;
   shouldEnsurePathCompatibilityOnWindows?: boolean;
+  shouldNormalizeUnicodeNames?: boolean;
 }
 
 const PATH_COMPATIBILITY_FOLDER_PATH = 'Materials/08 Keep paths valid on every platform';
@@ -83,6 +84,74 @@ export async function createLongNameNote(app: App): Promise<void> {
   new Notice('A note with a 300-byte name is ready, and the Android rule is on.');
 }
 
+// `й` composed (U+0439). Stored decomposed, it is `и` (U+0438) followed by U+0306 COMBINING BREVE.
+const DECOMPOSED_NOTE_BASENAME = 'Заметка-й';
+const DECOMPOSED_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/${DECOMPOSED_NOTE_BASENAME}.md`;
+const DECOMPOSED_LINKING_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/Points at the decomposed name.md`;
+const DECOMPOSED_NOTE_TIMEOUT_IN_MILLISECONDS = 10_000;
+
+interface RawWriteAdapter {
+  fs?: { write(fullPath: string, data: string): Promise<void> };
+  fsPromises?: { writeFile(fullPath: string, data: string): Promise<void> };
+  getFullRealPath(realPath: string): string;
+  onFileChange(realPath: string): void;
+}
+
+/**
+ * Writes a note whose name is stored on disk in decomposed Unicode form (NFD), plus a note linking to it.
+ *
+ * Obsidian cannot create such a name: it composes every name it creates. So the note is written straight to
+ * disk, the way these names arrive from an old macOS disk or an archive, and Obsidian is then told to look.
+ *
+ * Manual equivalent: copy a file whose name was decomposed elsewhere (for example on an HFS+ volume) into the
+ * vault, and make sure **Normalize Unicode names to NFC** is on in the settings tab.
+ */
+export async function createDecomposedNameNote(app: App): Promise<void> {
+  if (!app.vault.getFolderByPath(PATH_COMPATIBILITY_FOLDER_PATH)) {
+    await app.vault.createFolder(PATH_COMPATIBILITY_FOLDER_PATH);
+  }
+
+  const adapter = app.vault.adapter as unknown as RawWriteAdapter;
+  const realPath = DECOMPOSED_NOTE_PATH.normalize('NFD');
+  const fullRealPath = adapter.getFullRealPath(realPath);
+  const content = '# A name stored in NFD\n\nIt looks like any other name. On disk, every `й` in it is two characters.\n';
+
+  if (!app.vault.getFileByPath(DECOMPOSED_NOTE_PATH)) {
+    if (adapter.fsPromises) {
+      await adapter.fsPromises.writeFile(fullRealPath, content);
+    } else {
+      await adapter.fs?.write(fullRealPath, content);
+    }
+    adapter.onFileChange(realPath);
+
+    const deadline = Date.now() + DECOMPOSED_NOTE_TIMEOUT_IN_MILLISECONDS;
+    while (!app.vault.getFileByPath(DECOMPOSED_NOTE_PATH)) {
+      if (Date.now() > deadline) {
+        throw new Error(`Obsidian did not pick up ${DECOMPOSED_NOTE_PATH} within ${String(DECOMPOSED_NOTE_TIMEOUT_IN_MILLISECONDS)} ms.`);
+      }
+      await sleep(CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS);
+    }
+  }
+
+  const linkingContent = `# Points at the decomposed name\n\n[[${DECOMPOSED_NOTE_BASENAME}]]\n\nThis link works before the repair and after it.\n`;
+  const linkingNote = app.vault.getFileByPath(DECOMPOSED_LINKING_NOTE_PATH);
+  if (linkingNote) {
+    await app.vault.modify(linkingNote, linkingContent);
+  } else {
+    await app.vault.create(DECOMPOSED_LINKING_NOTE_PATH, linkingContent);
+  }
+
+  await configureCommunityPlugin({
+    app,
+    pluginId: PLUGIN_ID,
+    settings: {
+      shouldNormalizeUnicodeNames: true
+    }
+  });
+
+  new Notice('A note whose name is stored in NFD is ready.');
+}
+
 /**
  * Deletes what the path-compatibility buttons created and puts the platform toggles back.
  *
@@ -100,7 +169,8 @@ export async function resetPathCompatibilityDemo(app: App): Promise<void> {
     pluginId: PLUGIN_ID,
     settings: {
       shouldEnsurePathCompatibilityOnAndroid: false,
-      shouldEnsurePathCompatibilityOnWindows: true
+      shouldEnsurePathCompatibilityOnWindows: true,
+      shouldNormalizeUnicodeNames: true
     }
   });
 
