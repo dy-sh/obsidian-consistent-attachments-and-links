@@ -309,7 +309,7 @@ export class PathCompatibilityHandler {
   }
 
   private findViolations(file: TAbstractFile, scope: PathCompatibilityScope): PathCompatibilityViolation[] {
-    if (this.pluginSettingsComponent.settings.isPathIgnored(file.path)) {
+    if (this.pluginSettingsComponent.settings.isPathIgnored(file.path, isFolder(file))) {
       return [];
     }
 

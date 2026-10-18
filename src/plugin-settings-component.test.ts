@@ -68,7 +68,7 @@ describe('PluginSettingsComponent', () => {
         sharedAttachmentPaths: []
       });
       const result = await component.validate(settings);
-      expect(result.includePaths).toBe('Invalid regular expression /[/');
+      expect(result.includePaths).toMatch(/^Invalid regular expression: \/\[\/ \(.+\)$/);
     });
 
     it('should reject an invalid regular expression in excludePaths', async () => {
@@ -79,7 +79,7 @@ describe('PluginSettingsComponent', () => {
         sharedAttachmentPaths: []
       });
       const result = await component.validate(settings);
-      expect(result.excludePaths).toBe('Invalid regular expression /(/');
+      expect(result.excludePaths).toMatch(/^Invalid regular expression: \/\(\/ \(.+\)$/);
     });
 
     it('should reject an invalid regular expression in sharedAttachmentPaths, and accept a valid one', async () => {
@@ -90,7 +90,7 @@ describe('PluginSettingsComponent', () => {
         sharedAttachmentPaths: ['Shared', '/(/']
       });
       const invalidResult = await component.validate(invalid);
-      expect(invalidResult.sharedAttachmentPaths).toBe('Invalid regular expression /(/');
+      expect(invalidResult.sharedAttachmentPaths).toMatch(/^Invalid regular expression: \/\(\/ \(.+\)$/);
 
       const valid = new PluginSettings();
       valid.sharedAttachmentPaths = ['Shared', String.raw`/^_assets\//`];
@@ -105,6 +105,22 @@ describe('PluginSettingsComponent', () => {
       const result = await component.validate(settings);
       expect(result.includePaths).toBeUndefined();
     });
+
+    it('should accept a glob and reject an unclosed character class', async () => {
+      const component = createComponent();
+      const valid = new PluginSettings();
+      valid.excludePaths = ['*.pdf', 'Attachments/**/*.png', 'tmp*/'];
+      const validResult = await component.validate(valid);
+      expect(validResult.excludePaths).toBeUndefined();
+
+      const invalid = strictProxy<PluginSettings>({
+        excludePaths: ['Notes [old'],
+        includePaths: [],
+        sharedAttachmentPaths: []
+      });
+      const invalidResult = await component.validate(invalid);
+      expect(invalidResult.excludePaths).toMatch(/^Invalid glob pattern: Notes \[old \(.+\)$/);
+    });
   });
 
   describe('legacy settings converter', () => {
@@ -118,6 +134,14 @@ describe('PluginSettingsComponent', () => {
       const component = createComponent({ ignoreFolders: ['private'] });
       await component.loadWithPromises();
       expect(component.settings.excludePaths).toStrictEqual(['private']);
+    });
+
+    it('should escape glob characters in a legacy ignored folder, so it stays a literal path', async () => {
+      const component = createComponent({ ignoreFolders: ['Notes [old]'] });
+      await component.loadWithPromises();
+      expect(component.settings.excludePaths).toStrictEqual([String.raw`Notes \[old]`]);
+      expect(component.settings.isPathIgnored('Notes [old]/a.md')).toBe(true);
+      expect(component.settings.isPathIgnored('Notes o/a.md')).toBe(false);
     });
 
     it('should map deleteEmptyFolders true to DeleteWithEmptyParents', async () => {

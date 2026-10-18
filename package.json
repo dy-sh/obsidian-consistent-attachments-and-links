@@ -71,7 +71,7 @@
     "vitest": "^5.0.1"
   },
   "dependencies": {
-    "@mnaoumov/obsidian-lib": "^3.3.1",
+    "@mnaoumov/obsidian-lib": "^5.0.0",
     "@mnaoumov/typescript-lib": "^1.1.1"
   }
 }

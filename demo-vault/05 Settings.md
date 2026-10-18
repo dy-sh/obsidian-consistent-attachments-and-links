@@ -37,6 +37,14 @@ Upgrading from 4.x does not lose your collect settings: they are offered to that
 - `excludePaths`
   - paths the plugin ignores entirely.
 
+An entry in either list, and in `sharedAttachmentPaths` below, is one of three forms, and every form matches case-insensitively:
+
+- a plain path, such as `Archive`, which covers that file or folder and everything under it.
+- a glob, such as `*.pdf`, `Attachments/**/*.png` or `tmp*/`. `*` stays within one folder, `**` crosses folders, `?` is one character and `[abc]` / `[!abc]` a character class. A glob with no `/` matches a name at any depth, one with a `/` starts at the vault root, and a trailing `/` matches folders only.
+- a regular expression written `/pattern/flags`, whose flags are honoured.
+
+An unescaped `*`, `?` or `[` makes an entry a glob, so a path that holds one literally escapes it, as in `Notes \[old]`.
+
 ## Keeping paths valid on every platform
 
 Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>). Each platform is a separate toggle because their limits are not comparable - only Windows has a path budget a vault runs into, and only Linux and Android count a name in bytes.
@@ -69,7 +77,7 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
 - `externalAttachmentLinkMode` (**Links to attachments outside the note's folder**)
   - what the report does when a note links an attachment outside its own attachment folder. `Report` (default) lists every such link, even when the attachment sits in the folder of another note that uses it too, and names that note as its proper note. `ReportUnowned` lists it only when no note that uses the attachment has it in its own folder - the behavior of 5.0.2. `Ignore` switches the **Misplaced attachments** section off. Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>).
 - `sharedAttachmentPaths` (**Shared attachment locations**)
-  - folders any note may take attachments from, one per line, such as `_assets/common`. A folder covers everything under it, and a `/regular expression/` works too, as in `excludePaths`. A link into one of them is never listed under **Misplaced attachments**.
+  - folders any note may take attachments from, one per line, such as `_assets/common`. A folder covers everything under it, and a glob or a `/regular expression/flags` works too, as in `excludePaths`. A link into one of them is never listed under **Misplaced attachments**.
 - `treatAsAttachmentExtensions`
   - extensions that should be treated as attachments even though they are Markdown, such as `.excalidraw.md`. The **Misplaced attachments** section of the report judges a file listed here like any other attachment, instead of skipping it as a note - which is what a drawing wants, since it belongs to whatever note embeds it. The plugin never rewrites what is written inside such a file. Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>).
 - `shouldShowBackupWarning`

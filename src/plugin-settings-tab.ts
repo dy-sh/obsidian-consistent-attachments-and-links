@@ -79,8 +79,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.createEl('br');
           f.appendText('Insert each path on a new line');
           f.createEl('br');
-          f.appendText('You can use path string or ');
-          appendCodeBlock(f, '/regular expression/');
+          appendPathSyntax(f);
           f.createEl('br');
           f.appendText('If the setting is empty, all notes are included');
         }),
@@ -97,8 +96,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.createEl('br');
           f.appendText('Insert each path on a new line');
           f.createEl('br');
-          f.appendText('You can use path string or ');
-          appendCodeBlock(f, '/regular expression/');
+          appendPathSyntax(f);
           f.createEl('br');
           f.appendText('If the setting is empty, no notes are excluded');
         }),
@@ -169,8 +167,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.createEl('br');
           f.appendText('Insert each path on a new line');
           f.createEl('br');
-          f.appendText('You can use path string or ');
-          appendCodeBlock(f, '/regular expression/');
+          appendPathSyntax(f);
         }),
         name: 'Shared attachment locations',
         render: (setting) => {
@@ -279,4 +276,22 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       })
     ];
   }
+}
+
+function appendPathSyntax(f: DocumentFragment): void {
+  f.appendText('Each entry is a path, a glob such as ');
+  appendCodeBlock(f, '*.pdf');
+  f.appendText(' or ');
+  appendCodeBlock(f, 'Attachments/**/*.png');
+  f.appendText(', or a ');
+  appendCodeBlock(f, '/regular expression/flags');
+  f.createEl('br');
+  f.appendText('Matching is case-insensitive. Escape a literal ');
+  appendCodeBlock(f, '*');
+  f.appendText(', ');
+  appendCodeBlock(f, '?');
+  f.appendText(' or ');
+  appendCodeBlock(f, '[');
+  f.appendText(' in a path with ');
+  appendCodeBlock(f, '\\');
 }

@@ -139,7 +139,7 @@ export class PluginSettings {
   }
 
   /**
-   * Folders, or `/regular expressions/`, where any note may keep attachments. A reference into one of them is
+   * Folders, globs or `/regular expressions/flags`, where any note may keep attachments. A reference into one of them is
    * never reported as misplaced.
    */
   public get sharedAttachmentPaths(): string[] {
@@ -178,8 +178,15 @@ export class PluginSettings {
     return PATH_COMPATIBILITY_PLATFORMS.filter((platform) => flags[platform]);
   }
 
-  public isPathIgnored(path: string): boolean {
-    return this._pathSettings.isPathIgnored(path);
+  /**
+   * Whether the include/exclude path settings leave a path out.
+   *
+   * @param path - The path to check.
+   * @param isFolder - Whether the path is a folder, so a folder-only glob (one ending in `/`) matches the folder itself.
+   * @returns `true` when the path is left out.
+   */
+  public isPathIgnored(path: string, isFolder = false): boolean {
+    return this._pathSettings.isPathIgnored(path, isFolder);
   }
 
   public isSharedAttachmentPath(path: string): boolean {
