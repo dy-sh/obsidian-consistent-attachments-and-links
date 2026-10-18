@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 5.2.0
+
+**Migration:** include, exclude and shared-attachment path entries now match case-insensitively in every form. An unescaped `*`, `?` or `[` makes an entry a glob (`*.pdf`, `Attachments/**/*.png`, `tmp*/`), so a plain path that contains one of those characters literally must escape it (`Notes \[old\]`). An entry shaped `/pattern/flags` is a regular expression whose flags are honoured, and a folder-only glob (ending in `/`) also matches the folder itself when `Fix incompatible paths` checks a folder's name. A folder carried over from the pre-4.0 `ignoreFolders` setting is escaped, so it stays a literal path.
+
+- feat(settings): adopt obsidian-lib 5.0.0 path settings
+- feat(paths): normalize decomposed Unicode names to NFC
+- fix(ui): mark plugin names as code in the dependency and suggestion reasons
+- docs: mark plugin names as code
+- docs(demo-vault): add buttons to the drawing walkthrough
+- build(demo-vault): require CodeScript Toolkit 13.8.0 for the obsidian-lib demo script
+- test(report): pin heading links whose colon Obsidian dropped (#121)
+- ci: attest release assets through the toolkit's reusable workflow
+- chore(github): point questions to Discussions from the new-issue page
+
 ## 5.1.1
 
 - build: merge the move off obsidian-dev-utils onto the @mnaoumov packages
