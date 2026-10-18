@@ -1,10 +1,9 @@
 import type { DataHandler } from '@mnaoumov/obsidian-lib/data-handler';
 import type { PluginEventSource } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
-import type { MaybeReturn } from '@mnaoumov/typescript-lib/type';
 
 import { PluginSettingsComponentBase } from '@mnaoumov/obsidian-lib/components/plugin-settings-component';
 import { EmptyFolderBehavior } from '@mnaoumov/obsidian-lib/components/rename-delete-handler-component';
-import { isValidRegExp } from '@mnaoumov/typescript-lib/reg-exp';
+import { pathsValidator } from '@mnaoumov/obsidian-lib/path-settings';
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
 import type {
@@ -111,7 +110,8 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
       if (legacySettings.ignoreFolders) {
         for (const ignoreFolder of legacySettings.ignoreFolders) {
-          excludePaths.push(ignoreFolder);
+          // A legacy folder is a literal path, and an unescaped `*`, `?` or `[` would make it a glob.
+          excludePaths.push(ignoreFolder.replaceAll(/[*?[\\]/g, String.raw`\$&`));
         }
       }
 
@@ -301,17 +301,4 @@ function parkRenameDeleteSettings(legacySettings: LegacySettingsRecord): void {
 
   // Never empty: the dropped key that let this run is always one of the keys proposed above.
   legacySettings.proposedRenameDeleteSettings = proposedRenameDeleteSettings;
-}
-
-function pathsValidator(paths: string[]): MaybeReturn<string> {
-  for (const path of paths) {
-    if (!(path.startsWith('/') && path.endsWith('/'))) {
-      continue;
-    }
-
-    const regExp = path.slice(1, -1);
-    if (!isValidRegExp(regExp)) {
-      return `Invalid regular expression ${path}`;
-    }
-  }
 }

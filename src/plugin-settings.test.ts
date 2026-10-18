@@ -81,6 +81,20 @@ describe('PluginSettings', () => {
       expect(settings.isPathIgnored('ignored/note.md')).toBe(true);
       expect(settings.isPathIgnored('kept/note.md')).toBe(false);
     });
+
+    it('should match case-insensitively', () => {
+      const settings = new PluginSettings();
+      settings.excludePaths = ['Ignored'];
+      expect(settings.isPathIgnored('ignored/note.md')).toBe(true);
+    });
+
+    it('should match a folder-only glob against the folder itself only when told it is a folder', () => {
+      const settings = new PluginSettings();
+      settings.excludePaths = ['tmp*/'];
+      expect(settings.isPathIgnored('a/tmp1/note.md')).toBe(true);
+      expect(settings.isPathIgnored('a/tmp1', true)).toBe(true);
+      expect(settings.isPathIgnored('a/tmp1')).toBe(false);
+    });
   });
 
   describe('isTreatedAsAttachment', () => {

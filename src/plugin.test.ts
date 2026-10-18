@@ -10,9 +10,11 @@ import type {
 } from 'obsidian';
 /* eslint-enable perfectionist/sort-named-imports -- Only the aliased import above is exempt. */
 
+import { ObsidianLibrary } from '@mnaoumov/obsidian-lib/library';
 import { getObsidianDevUtilsState } from '@mnaoumov/obsidian-lib/obsidian-dev-utils-state';
 import { publishPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { Library } from '@mnaoumov/typescript-lib/library';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/async-operation-tracking';
 import { Component } from 'obsidian';
@@ -290,6 +292,10 @@ function unpublishProviderApi(): void {
 describe('Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Each test loads a fresh plugin and never unloads it, and the library's contexts initialize only once
+    // per load, so they are reset here the way the plugin context's own unload would reset them.
+    Library.resetToDefault();
+    ObsidianLibrary.resetToDefault();
     // The settings object is shared across tests, and `editAndSave` really writes to it, so the pending value
     // has to be put back or a later test inherits an earlier one's.
     hoisted.mockSettings.proposedRenameDeleteSettings = null;
