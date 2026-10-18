@@ -45,27 +45,27 @@ Why the change: this plugin carried a copy of that plugin's collector, kept deli
 
 The settings that **stay here** (the include and exclude paths, and the treat-as-attachment extensions) are still read by the report and the path repair.
 
-**Reorganize vault is gone.** Every step it ran but one has left this plugin (link rewriting in 4.0.1, empty-folder cleanup to Advanced Rename and Delete Handler in 4.1.0, and collecting now), so it had become another name for **Fix incompatible paths**. Run that command instead.
+**Reorganize vault is gone.** Every step it ran but one has left this plugin (link rewriting in 4.0.1, empty-folder cleanup to `Advanced Rename and Delete Handler` in 4.1.0, and collecting now), so it had become another name for **Fix incompatible paths**. Run that command instead.
 
 - chore: merge dropping the local desktop caret blur
 - chore: merge the desktop capture caret fix
 - chore: merge the obsidian-integration-testing 17 float
 - chore: merge the Reorganize vault retirement
-- feat!: hand attachment collecting to Custom Attachment Location
+- feat!: hand attachment collecting to `Custom Attachment Location`
 - fix(demo-vault): merge the awaited consistency-check buttons
 
 ## 4.1.0
 
 **[Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) is now required.** This plugin used to suggest it; it now waits for it. Until it is installed, this plugin shows a notice that installs it in one click and finishes loading the moment it arrives. Its defaults change nothing in your vault until you turn renames or deletions on.
 
-**Delete empty folders has moved to Advanced Rename and Delete Handler**, under the same name and the same command id, so your hotkey and your command-palette habit keep working.
+**Delete empty folders has moved to `Advanced Rename and Delete Handler`**, under the same name and the same command id, so your hotkey and your command-palette habit keep working.
 
 The consistency report gains a **Misplaced attachments** section, naming every attachment that sits outside the attachment folder configured for the note that uses it.
 
 Fixed:
 
 - **Move attachment to proper folder** did nothing for an attachment used by exactly one note (#160).
-- The offer to hand your old rename and delete settings to Advanced Rename and Delete Handler came back on every start, even after you had answered it (#159).
+- The offer to hand your old rename and delete settings to `Advanced Rename and Delete Handler` came back on every start, even after you had answered it (#159).
 
 - fix(settings): merge the one-shot rename/delete handover
 - chore(deps): merge obsidian-test-mocks ^7.0.0
@@ -83,7 +83,7 @@ Fixed:
 - refactor(plugin): scope onloadImpl commands through the library, not a local disposal
 - test: settle the excalidraw collecting suite on a trailing image, not the leading one
 - chore(spellcheck): teach cspell the word lintable
-- feat!: hand Delete empty folders to Advanced Rename and Delete Handler
+- feat!: hand Delete empty folders to `Advanced Rename and Delete Handler`
 - fix(deps): float devalue to 5.9.4, clearing GHSA-9rgm-9g3h-6x36
 - chore(deps): drop four dead overrides and justify the one that is not
 - chore(deps): drop the dead markdown-it override
@@ -93,7 +93,7 @@ Fixed:
 - docs: name the library and the sibling plugins so a reader can resolve them
 - docs: replace the private tracker references with what they pointed at
 - test: bring the in-closure wait ceilings under the transport's per-eval cap
-- feat!: require Advanced Rename and Delete Handler instead of suggesting it
+- feat!: require `Advanced Rename and Delete Handler` instead of suggesting it
 
 ## 4.0.1
 
@@ -108,7 +108,7 @@ Fixed:
 - fix(attachment-collector): honour treat-as-attachment in the note walk
 - feat: strip the four convert-to-relative commands
 - docs(agents): settle the plugin's scope line and mint the removals it implies
-- feat: hand wikilink conversion to Better Markdown Links
+- feat: hand wikilink conversion to `Better Markdown Links`
 - docs: describe what the plugin does, and point every link at the real repo
 - feat(path-compatibility): repair names and paths that other platforms reject
 
@@ -122,8 +122,8 @@ Why the change: five plugins each bundled their own copy of the same handler. Tw
 
 **Your existing settings are not lost.** The first time both plugins are installed, this one offers your old rename and delete settings to the new one, shows you exactly what would change, and writes nothing unless you approve. Cancelling leaves the offer pending, so it comes back.
 
-- feat!: hand rename and delete handling to Advanced Rename and Delete Handler
-- feat: suggest Advanced Rename and Delete Handler, through a notice and a settings-tab banner
+- feat!: hand rename and delete handling to `Advanced Rename and Delete Handler`
+- feat: suggest `Advanced Rename and Delete Handler`, through a notice and a settings-tab banner
 - feat: offer the 3.x rename and delete settings to their new owner, once
 - test(integration): guard the settings hand-over against a real data.json
 - docs: rewrite the demo vault and README around what this plugin still does
@@ -136,7 +136,7 @@ The settings that moved: `shouldUpdateLinks`, `shouldMoveAttachmentsWithNote`, `
 - chore(deps): sweep caret-ranged dependencies to latest
 - fix(deps): move to obsidian-integration-testing 11 and obsidian-dev-utils 96.5.2
 - fix(deps): drop the brace-expansion file: override that breaks a clean install
-- fix(i18n): point the custom-token notice at the live Custom Attachment Location repo
+- fix(i18n): point the custom-token notice at the live `Custom Attachment Location` repo
 - docs: point plugin-directory links at community.obsidian.md
 
 ## 3.35.4
@@ -190,7 +190,7 @@ The settings that moved: `shouldUpdateLinks`, `shouldMoveAttachmentsWithNote`, `
 
 ## 3.34.0
 
-- docs: demonstrate context-menu toggle and Excalidraw link-skip in the demo vault
+- docs: demonstrate context-menu toggle and `Excalidraw` link-skip in the demo vault
 - test: add integration tests for context-menu toggle and excalidraw skip (re #153, #151)
 - chore: update libs
 - fix: re #151
@@ -216,7 +216,7 @@ The settings that moved: `shouldUpdateLinks`, `shouldMoveAttachmentsWithNote`, `
 
 - docs: standardize demo-vault README
 - docs: drop per-plugin demo-vault setup notes (bootstrap covered by the obsidian-dev-utils harness)
-- docs(demo-vault): create the Consistent Attachments and Links demo vault
+- docs(demo-vault): create the `Consistent Attachments and Links` demo vault
 - chore: update libs
 - docs: update
 - docs: migrate to AGENTS.md
@@ -725,7 +725,7 @@ The settings that moved: `shouldUpdateLinks`, `shouldMoveAttachmentsWithNote`, `
 ## 3.15.0
 
 - Reuse RenameDeleteHandler
-- Integrate with Better Markdown Links
+- Integrate with `Better Markdown Links`
 - Handle same case scenarios
 
 ## 3.14.0
