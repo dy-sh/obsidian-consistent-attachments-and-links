@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.2.1
+
+- build(deps): float brace-expansion, sharp and fast-uri past their advisories
+
 ## 5.2.0
 
 **Migration:** include, exclude and shared-attachment path entries now match case-insensitively in every form. An unescaped `*`, `?` or `[` makes an entry a glob (`*.pdf`, `Attachments/**/*.png`, `tmp*/`), so a plain path that contains one of those characters literally must escape it (`Notes \[old\]`). An entry shaped `/pattern/flags` is a regular expression whose flags are honoured, and a folder-only glob (ending in `/`) also matches the folder itself when `Fix incompatible paths` checks a folder's name. A folder carried over from the pre-4.0 `ignoreFolders` setting is escaped, so it stays a literal path.

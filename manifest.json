@@ -1,7 +1,7 @@
 {
   "id": "consistent-attachments-and-links",
   "name": "Consistent Attachments and Links",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "minAppVersion": "1.14.4",
   "description": "Reports every link whose written path does not lead to its target and every misplaced attachment, and repairs names and paths that a platform your vault syncs to would reject.",
   "author": "Dmitry Savosh",
