@@ -25,7 +25,7 @@ export const defaultTranslations = {
     },
     progressBar: {
       message: 'Checking path compatibility {{iterationString}} - \'{{path}}\'.',
-      title: 'Consistent Attachments and Links: Repairing incompatible paths...'
+      title: 'Repairing incompatible paths...'
     },
     report: {
       cannotRepair: 'Cannot be repaired automatically: every character of the name would have to be removed.',

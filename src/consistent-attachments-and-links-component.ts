@@ -81,7 +81,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
           note
         });
       },
-      progressBarTitle: 'Consistent Attachments and Links: Checking vault consistency...',
+      progressBarTitle: 'Checking vault consistency...',
       shouldContinueOnError: true,
       shouldShowProgressBar: true
     });
