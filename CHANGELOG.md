@@ -85,7 +85,7 @@ Fixed:
 - **Move attachment to proper folder** did nothing for an attachment used by exactly one note (#160).
 - The offer to hand your old rename and delete settings to `Advanced Rename and Delete Handler` came back on every start, even after you had answered it (#159).
 
-- fix(settings): merge the one-shot rename/delete handover
+- fix(settings): merge the one-shot rename/delete handover (re #159 - [BUG] Migration popup triggers every startup, causing competing renaming between plugins)
 - chore(deps): merge obsidian-test-mocks ^7.0.0
 - style(comments): stop capitalizing the middle of a wrapped comment
 - fix(test): merge the headless demo-vault toolkit install
