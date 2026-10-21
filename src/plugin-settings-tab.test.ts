@@ -65,7 +65,7 @@ async function createTab(): Promise<CreatedTab> {
     dataHandler: new MockDataHandler(),
     pluginEventSource: new AsyncEvents<PluginEventMap>()
   });
-  // The component must be loaded before its settings can be edited; obsidian-dev-utils 70.0.0
+  // The component must be loaded before its settings can be edited; the library
   // makes setProperty/editAndSave throw when the component is not loaded.
   await pluginSettingsComponent.loadWithPromises();
   const plugin = strictProxy<Plugin>({ app: app.asOriginalType__() });
