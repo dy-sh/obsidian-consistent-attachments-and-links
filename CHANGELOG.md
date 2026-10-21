@@ -13,7 +13,7 @@
 - fix(ui): mark plugin names as code in the dependency and suggestion reasons
 - docs: mark plugin names as code
 - docs(demo-vault): add buttons to the drawing walkthrough
-- build(demo-vault): require CodeScript Toolkit 13.8.0 for the obsidian-lib demo script
+- build(demo-vault): require `CodeScript Toolkit` 13.8.0 for the obsidian-lib demo script
 - test(report): pin heading links whose colon Obsidian dropped (#121)
 - ci: attest release assets through the toolkit's reusable workflow
 - chore(github): point questions to Discussions from the new-issue page
