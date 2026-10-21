@@ -49,8 +49,8 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
-    "@mnaoumov/obsidian-dev-toolkit": "^2.0.0",
-    "@mnaoumov/typescript-dev-toolkit": "^2.1.0",
+    "@mnaoumov/obsidian-dev-toolkit": "^4.0.0",
+    "@mnaoumov/typescript-dev-toolkit": "^3.10.0",
     "@mnaoumov/typescript-test-toolkit": "^1.0.1",
     "@obsidian-typings/obsidian-public-latest": "^6.38.0",
     "@total-typescript/ts-reset": "^0.6.1",

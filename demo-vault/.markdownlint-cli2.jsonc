@@ -3,7 +3,7 @@
   // these notes do; every other rule applies, as it does to the rest of the documentation.
   "config": {
     // A note here deliberately keeps an Obsidian `[[wikilink]]` -- see the
-    // `obsidian-dev-utils-disable` directives and the reasons they carry -- and markdownlint parses
+    // `obsidian-dev-toolkit-disable` directives and the reasons they carry -- and markdownlint parses
     // one as an undefined shortcut reference link.
     "MD052": false
   }
