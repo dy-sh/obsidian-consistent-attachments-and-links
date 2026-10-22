@@ -203,10 +203,10 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const appMock = App.createConfigured__();
-    // Initialize the dev-utils shared-state holder so the real `addToQueue` can read/write its queue through the strict-proxied app without tripping the unmocked-property guard.
+    // Initialize the obsidian-lib shared-state holder so the real `addToQueue` can read/write its queue through the strict-proxied app without tripping the unmocked-property guard.
     castTo<ObsidianDevUtilsStateHolder>(appMock).obsidianDevUtilsState = {};
     app = castTo<AppOriginal>(appMock);
-    // Point the Obsidian global at the configured app so dev-utils helpers that resolve the app implicitly (e.g. `getLibDebugger`) share the same initialized shared-state holder.
+    // Point the Obsidian global at the configured app so obsidian-lib helpers that resolve the app implicitly (e.g. `getLibDebugger`) share the same initialized shared-state holder.
     previousGlobalApp = castTo<GlobalAppHolder>(window).app;
     castTo<GlobalAppHolder>(window).app = appMock;
     hoisted.mockGetMarkdownFilesSorted.mockReturnValue([]);
