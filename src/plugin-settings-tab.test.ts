@@ -121,7 +121,7 @@ function renderRows(tab: PluginSettingsTab): void {
 
 beforeAll(async () => {
   await initI18N(translationsMap);
-  // Obsidian-dev-utils' bind() probes setPlaceholderValue to detect text-based components.
+  // Obsidian-lib's bind() probes setPlaceholderValue to detect text-based components.
   for (const prototype of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
     if (!('setPlaceholderValue' in prototype)) {
       Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });

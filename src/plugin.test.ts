@@ -136,9 +136,9 @@ vi.mock('./plugin-settings-tab.ts', () => ({
   }
 }));
 
-// The same treatment for the dev-utils settings-migration component. What is this plugin's own is the pair
+// The same treatment for the obsidian-lib settings-migration component. What is this plugin's own is the pair
 // of closures it hands over — which pending values are offered, and how the retirement is persisted — so
-// they are captured and invoked directly. The offer-and-retire dance around them belongs to dev-utils and is
+// they are captured and invoked directly. The offer-and-retire dance around them belongs to obsidian-lib and is
 // tested there.
 const { settingsMigrationStub } = vi.hoisted(() => ({
   settingsMigrationStub: vi.fn<(params: SettingsMigrationComponentParams) => object>()
@@ -156,7 +156,7 @@ vi.mock('@mnaoumov/obsidian-lib/components/settings-migration-component', async 
   };
 });
 
-// And for the suggestion component: its notice and banner are dev-utils' and tested there. What is this
+// And for the suggestion component: its notice and banner are obsidian-lib's and tested there. What is this
 // plugin's own is when it counts as declined, and how a decline is persisted.
 const { pluginSuggestionStub } = vi.hoisted(() => ({
   pluginSuggestionStub: vi.fn<(params: PluginSuggestionComponentParams) => object>()
@@ -313,7 +313,7 @@ describe('Plugin', () => {
     // Seed the obsidianDevUtilsState holder on the raw target behind the strict-proxy App so the real getObsidianDevUtilsState can read/write it (the proxy throws on first access to an unassigned property, and the default proxy set-trap would not land the value on the target).
     seedOnRawTarget(app, 'obsidianDevUtilsState', {});
 
-    // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument (debug controller, permanent notices) read/write the same seeded holder.
+    // Expose the app as the global instance so obsidian-lib helpers that resolve shared state without an explicit app argument (debug controller, permanent notices) read/write the same seeded holder.
     castTo<AppGlobal>(window).app = app;
 
     // What the dependency gate reaches when the dependency is missing: it registers a settings tab explaining

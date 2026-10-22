@@ -21,7 +21,7 @@ The three categories, and where the removed surfaces went:
 
 ## Rename and delete handling is NOT this plugin's — do not re-add a handler
 
-Since **4.0.0** this plugin registers no `RenameDeleteHandlerComponent`. `Advanced Rename and Delete Handler` (`advanced-rename-and-delete-handler`) owns the implementation *and* its settings for the whole vault. Five plugins used to bundle a copy of the dev-utils handler; two handlers acting on one rename corrupt links and move attachments twice, and which copy won depended on Obsidian's load order, so vault behavior depended on version skew. That plugin's `src/conflicting-plugins.ts` refuses to run beside this one below `4.0.0`.
+Since **4.0.0** this plugin registers no `RenameDeleteHandlerComponent`. `Advanced Rename and Delete Handler` (`advanced-rename-and-delete-handler`) owns the implementation *and* its settings for the whole vault. Five plugins used to bundle a copy of the `obsidian-dev-utils` handler; two handlers acting on one rename corrupt links and move attachments twice, and which copy won depended on Obsidian's load order, so vault behavior depended on version skew. That plugin's `src/conflicting-plugins.ts` refuses to run beside this one below `4.0.0`.
 
 What lives here instead:
 
