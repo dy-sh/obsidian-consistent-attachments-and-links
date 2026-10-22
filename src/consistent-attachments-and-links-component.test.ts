@@ -61,10 +61,6 @@ interface ModeHolder {
   readonly mode: unknown;
 }
 
-interface ObsidianDevUtilsStateHolder {
-  obsidianDevUtilsState: Record<string, unknown>;
-}
-
 interface SavableView {
   save: () => Promise<void>;
 }
@@ -203,10 +199,8 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const appMock = App.createConfigured__();
-    // Initialize the obsidian-lib shared-state holder so the real `addToQueue` can read/write its queue through the strict-proxied app without tripping the unmocked-property guard.
-    castTo<ObsidianDevUtilsStateHolder>(appMock).obsidianDevUtilsState = {};
     app = castTo<AppOriginal>(appMock);
-    // Point the Obsidian global at the configured app so obsidian-lib helpers that resolve the app implicitly (e.g. `getLibDebugger`) share the same initialized shared-state holder.
+    // Point the Obsidian global at the configured app so obsidian-lib helpers that resolve the app implicitly reach it.
     previousGlobalApp = castTo<GlobalAppHolder>(window).app;
     castTo<GlobalAppHolder>(window).app = appMock;
     hoisted.mockGetMarkdownFilesSorted.mockReturnValue([]);

@@ -11,7 +11,7 @@ import type {
 /* eslint-enable perfectionist/sort-named-imports -- Only the aliased import above is exempt. */
 
 import { ObsidianLibrary } from '@mnaoumov/obsidian-lib/library';
-import { getObsidianDevUtilsState } from '@mnaoumov/obsidian-lib/obsidian-dev-utils-state';
+import { getObsidianLibState } from '@mnaoumov/obsidian-lib/obsidian-lib-state';
 import { publishPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import { Library } from '@mnaoumov/typescript-lib/library';
@@ -235,7 +235,7 @@ async function createLoadedPlugin(): Promise<Plugin> {
 }
 
 function hasRegisteredRenameDeleteHandler(): boolean {
-  return getObsidianDevUtilsState('renameDeleteHandlersMap', new Map<string>()).value.has(PLUGIN_ID);
+  return getObsidianLibState('renameDeleteHandlersMap', new Map<string>()).value.has(PLUGIN_ID);
 }
 
 /**
@@ -310,10 +310,7 @@ describe('Plugin', () => {
     });
     app = appMock.asOriginalType__();
 
-    // Seed the obsidianDevUtilsState holder on the raw target behind the strict-proxy App so the real getObsidianDevUtilsState can read/write it (the proxy throws on first access to an unassigned property, and the default proxy set-trap would not land the value on the target).
-    seedOnRawTarget(app, 'obsidianDevUtilsState', {});
-
-    // Expose the app as the global instance so obsidian-lib helpers that resolve shared state without an explicit app argument (debug controller, permanent notices) read/write the same seeded holder.
+    // Expose the app as the global instance so obsidian-lib helpers that resolve the app without an explicit argument (debug controller, permanent notices) reach it.
     castTo<AppGlobal>(window).app = app;
 
     // What the dependency gate reaches when the dependency is missing: it registers a settings tab explaining
