@@ -1,9 +1,9 @@
 import type { DefaultTranslationsBase } from '@mnaoumov/obsidian-lib/i18n/default-translations';
 
-import { en as obsidianDevUtilsEn } from '@mnaoumov/obsidian-lib/i18n/locales/en';
+import { en as obsidianLibEn } from '@mnaoumov/obsidian-lib/i18n/locales/en';
 
 export const defaultTranslations = {
-  ...obsidianDevUtilsEn,
+  ...obsidianLibEn,
   misplacedAttachment: {
     report: {
       alsoUsedBy: ' (also used by {{notes}})',

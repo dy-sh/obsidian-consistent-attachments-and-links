@@ -8,7 +8,7 @@ import { defaultTranslations } from './default.ts';
 
 describe('defaultTranslations', () => {
   it('should merge the library translations', () => {
-    expect(defaultTranslations.obsidianDevUtils.buttons.cancel).toBeTypeOf('string');
+    expect(defaultTranslations.obsidianLib.buttons.cancel).toBeTypeOf('string');
   });
 
   it('should expose the report section titles', () => {

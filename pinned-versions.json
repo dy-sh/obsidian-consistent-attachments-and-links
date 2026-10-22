@@ -7,7 +7,11 @@
     "`expect`. Equal means the pin is still required; different means the condition that justified the pin has changed",
     "and the pin should be re-examined. `check: null` means no mechanical test exists - it is reported for manual review",
     "on every run instead of going quiet. Every exact pin must have an entry here, and every entry must name a package",
-    "that is actually present in the declared section; the script reports either mismatch."
+    "that is actually present in the declared section; the script reports either mismatch.",
+    "Known and NOT overridden: GHSA-vfj7-8cjw-p6xm (braces stack exhaustion) affects every braces release (<=3.0.3,",
+    "no patched version), so there is nothing to override it to. It reaches this repo through markdownlint-cli2 ->",
+    "micromatch / globby -> fast-glob and is the only advisory `npm audit` reports here (measured 2026-10-21). Add a",
+    "braces override once a patched release exists."
   ],
   "pins": {
     "@puppeteer/browsers": {
@@ -31,12 +35,19 @@
       "expect": "17.10.3",
       "manualCheck": "The check reads the range @microsoft/eslint-plugin-sdl declares, not an installed version, because an EXACT range is what forces the nesting. When it becomes a range admitting the major the shared config needs - or this package.json declares eslint-plugin-n itself - the copy hoists unaided and both the override and this entry can go. Confirm before deleting: remove the override, `npm install`, then `npm run lint`."
     },
-    "smol-toml": {
+    "katex": {
       "section": "overrides",
-      "why": "Clears GHSA-7w5x-hrqm-74c2 (smol-toml denial of service via malformed TOML documents), patched in 1.8.0. Reached only transitively, and no direct bump gets there: markdownlint-cli2 EXACT-pins smol-toml at 1.7.0 - the last vulnerable version - and markdownlint-cli2 0.23.2 is itself already the latest release, so floating it reaches no patch. cspell resolves 1.8.0 on its own, so before this override the tree carried two copies and only the markdownlint-cli2 one was vulnerable; the override collapses them onto the patched version rather than adding anything. The forced minor is safe: smol-toml is a TOML parser markdownlint-cli2 uses only to read its own config file, and 1.8.0 changes no API. NEVER take the `npm audit fix --force` remedy here: it fixes by downgrading.",
-      "check": "node -e \"const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync('node_modules/markdownlint-cli2/package.json','utf8')).dependencies['smol-toml'])\"",
-      "expect": "1.7.0",
-      "manualCheck": "The check reads the pin markdownlint-cli2 itself declares, not an installed version, because that pin is what makes the override necessary. When it moves off 1.7.0 to anything outside the advisory range `<=1.7.0`, markdownlint-cli2 no longer pulls a vulnerable smol-toml and this override can be deleted along with this entry."
+      "why": "Clears GHSA-238p-pmpm-9mq7 (KaTeX prototype pollution bypassing trust restrictions, >=0.11.0 <0.18.2). Reached only through the toolkit packages and markdownlint-cli2 -> markdownlint -> micromark-extension-math@3.1.0, its newest release, which declares katex ^0.16.0, so no direct bump reaches the fix. The 0.x minor jump is safe because nothing here runs KaTeX: markdownlint imports only `math`, the micromark syntax extension, and katex is required solely by the `mathHtml` half, which markdownlint never loads. Never take the `npm audit fix --force` remedy: it downgrades markdownlint.",
+      "check": "node -e \"const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync('node_modules/micromark-extension-math/package.json','utf8')).dependencies.katex)\"",
+      "expect": "^0.16.0",
+      "manualCheck": "The check reads the range micromark-extension-math declares, which is what makes the override necessary. When it admits 0.18.2 or later, delete the override and this entry together, then confirm with `npm audit` and `npm run lint:md`."
+    },
+    "moment": {
+      "section": "overrides",
+      "why": "Clears GHSA-4p3w-j4w9-5jqw (moment path traversal via a crafted non-string locale name, >=2.29.2 <2.31.0), which also carried the advisories on obsidian 1.12.3, eslint-plugin-obsidianmd and @mnaoumov/obsidian-dev-toolkit. Reached through eslint-plugin-obsidianmd -> obsidian@1.12.3, which pins moment at the exact 2.29.4, and through obsidian-test-mocks, which pins the same 2.29.4. The direct obsidian@1.14.4 already uses 2.31.0, so the override collapses the tree onto that one copy rather than adding a version; it is a minor move within 2.x.",
+      "check": "node -e \"const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync('node_modules/eslint-plugin-obsidianmd/node_modules/obsidian/package.json','utf8')).dependencies.moment)\"",
+      "expect": "2.29.4",
+      "manualCheck": "The check reads the exact moment pin of the obsidian copy eslint-plugin-obsidianmd brings (it declares obsidian 1.12.3 exactly). When eslint-plugin-obsidianmd moves to an obsidian whose moment is 2.31.0 or later, or that nested copy disappears and the check fails to read it, re-run `npm audit` without the override and drop both if it stays clean; check obsidian-test-mocks' own moment pin at the same time."
     },
     "typescript": {
       "section": "overrides",
