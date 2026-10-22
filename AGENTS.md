@@ -184,7 +184,7 @@ Every override added to clear an advisory carries its reason and its release che
 
 `braces` GHSA-vfj7-8cjw-p6xm is **not** overridden: every published release is vulnerable, so there is nothing to override it *to*. It is the whole of what `npm audit` still reports here, which is why `update-npm-deps.ps1` still ends `FAILED` on its audit alone. Add an override once a patched release exists.
 
-The `brace-expansion` override block this section used to describe is gone: upstream backported the GHSA-mh99-v99m-4gvg fix to every legacy line, so plain resolution audits clean. One alias from it survives: `eslint-plugin-import` → `npm:eslint-plugin-import-x`, added because `eslint-plugin-import` needs `minimatch@^3`. That reason no longer forces anything now that `minimatch@3` resolves a patched `brace-expansion`, so the alias is a candidate for removal rather than a fix to keep in step.
+The `brace-expansion` override block this section used to describe is gone: upstream backported the GHSA-mh99-v99m-4gvg fix to every legacy line, so plain resolution audits clean. The `eslint-plugin-import` → `npm:eslint-plugin-import-x` alias that came with it is gone too: it existed only because `eslint-plugin-import` needs `minimatch@^3`, and `minimatch@3` now resolves a patched `brace-expansion`. Without it the real `eslint-plugin-import` installs, `npm audit` reports the same `braces` chain and nothing else, and lint stays clean.
 
 ## Security overrides (`extract-zip` GHSA-jmr9-qjv8-65gv)
 
