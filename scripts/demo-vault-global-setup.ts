@@ -43,7 +43,11 @@ async function populate(): Promise<PopulateFilesParams> {
         // `demoSetup.ts` imports `@mnaoumov/obsidian-lib`, which `CodeScript Toolkit` serves only from 13.8.0, so an
         // older copy left installed in a warm checkout is re-downloaded rather than reused.
         minVersion: '13.8.0',
-        pluginId: CODE_SCRIPT_TOOLKIT_PLUGIN_ID
+        // The demo vault's scripts import `@mnaoumov/obsidian-lib` 6, which `CodeScript Toolkit` bundles only from 15.0.0
+      // (13.8.0 to 14.x serve 3.3.1, whose names differ), so an older copy left installed in a warm checkout is
+      // re-downloaded rather than reused.
+      minVersion: '15.0.0',
+      pluginId: CODE_SCRIPT_TOOLKIT_PLUGIN_ID
       }]
     }),
     ...await getAdvancedRenameAndDeleteHandlerPopulate()
