@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 5.2.2
+
+- test(demo-vault): enable `Advanced Rename and Delete Handler` before `CodeScript Toolkit`
+- test: seed sibling plugin releases built on obsidian-lib 6
+- test(demo-vault): floor `CodeScript Toolkit` at 15.0.0
+- chore(deps): drop the eslint-plugin-import alias to eslint-plugin-import-x
+- chore(deps): move to obsidian-lib 6 and off the dropped obsidian-dev-utils names
+- docs: name obsidian-lib where comments said dev-utils
+- docs: point leftover obsidian-dev-utils mentions at the packages that hold them now
+- chore(deps): move to obsidian-dev-toolkit 4 and its demo-vault directive spelling
+- fix: drop the plugin name from notice text
+- docs: shorten the debugging section
+- docs(changelog): escape the issue-title tags so markdownlint and cspell pass
+- docs(changelog): name the issue each released entry resolved
+- chore: replace leftover obsidian-dev-utils references with @mnaoumov/obsidian-lib
+- docs(readme): lead the Debugging section with `Advanced Debug Mode`
+
 ## 5.2.1
 
 - build(deps): float brace-expansion, sharp and fast-uri past their advisories
