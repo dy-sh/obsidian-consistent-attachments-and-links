@@ -19,9 +19,11 @@
  *
  * The released plugin is written into the vault and enabled inside the closure, then disabled and removed,
  * rather than seeded for every suite: its patches would change what every other suite's attachment paths
- * resolve to. `14.1.0` is pinned because it is the first release to publish the attachment-path API (contract
- * `1.3.0`) that `@mnaoumov/obsidian-lib` asks; `12.0.1`, which the reporting vault ran, only installed the
- * `getAvailablePathForAttachments.extended` graft the library no longer reads. It needs `Advanced Rename and
+ * resolve to. `17.0.0` is pinned because it is a release built on `@mnaoumov/obsidian-lib` 6, as this plugin
+ * is: a plugin on lib 6 and one on an older lib do not see each other through the plugin-API registry, so an
+ * older release would publish its attachment-path API where the report never looks. `14.1.0` was the first
+ * release to publish that API (contract `1.3.0`) at all; `12.0.1`, which the reporting vault ran, only installed
+ * the `getAvailablePathForAttachments.extended` graft the library no longer reads. It needs `Advanced Rename and
  * Delete Handler`'s API `^1.1.0`, which the seeded release publishes.
  */
 
@@ -38,7 +40,7 @@ import { downloadReleasedPlugin } from '../scripts/helpers/download-released-plu
 const CONSISTENCY_COMMAND_ID = 'consistent-attachments-and-links:check-consistency';
 const CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID = 'obsidian-custom-attachment-location';
 const CUSTOM_ATTACHMENT_LOCATION_REPO = 'mnaoumov/obsidian-custom-attachment-location';
-const CUSTOM_ATTACHMENT_LOCATION_VERSION = '14.1.0';
+const CUSTOM_ATTACHMENT_LOCATION_VERSION = '17.0.0';
 const PLUGIN_ID = 'consistent-attachments-and-links';
 
 /*
