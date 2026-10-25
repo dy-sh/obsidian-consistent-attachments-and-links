@@ -384,6 +384,9 @@ describe('Plugin', () => {
       expect(dependency?.pluginName).toBe('Advanced Rename and Delete Handler');
       // This plugin only ever migrates, which every `1.x` contract supports.
       expect(dependency?.apiVersionRange).toBe('^1');
+      // Up to 3.0.0 it publishes into the registry obsidian-lib 6 stopped reading, so 3.0.1 is the first release
+      // this plugin can see at all.
+      expect(dependency?.minPluginVersion).toBe('3.0.1');
       expect(reasonText(dependency?.reason)).toContain('no longer handles renames and deletions');
       expect(reasonCodeNames(dependency?.reason)).toEqual(['Consistent Attachments and Links', 'Advanced Rename and Delete Handler']);
     });
