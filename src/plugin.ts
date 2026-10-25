@@ -40,6 +40,15 @@ const PLUGIN_NAME = 'Consistent Attachments and Links';
 const DEPENDENCY_API_VERSION_RANGE = '^1';
 
 /**
+ * The first `Advanced Rename and Delete Handler` release built on `@mnaoumov/obsidian-lib` 6, the major that moved
+ * the plugin-API registry from `globalThis.__obsidianDevUtils` to `globalThis.__obsidianLib`. Up to 3.0.0 it
+ * publishes into the old bag, which this plugin never reads, so the gate would see an enabled plugin with no API and
+ * say it is not installed. Asking for `3.0.1` turns that into the gate's "update this plugin" message, with the
+ * button that does it.
+ */
+const DEPENDENCY_MIN_PLUGIN_VERSION = '3.0.1';
+
+/**
  * The contract range of `Custom Attachment Location` the collect handover needs: `migrateSettings` arrived in
  * its contract `1.1.0`, the one its 13.0.0 publishes.
  */
@@ -63,6 +72,7 @@ export class Plugin extends PluginBase {
     return [
       {
         apiVersionRange: DEPENDENCY_API_VERSION_RANGE,
+        minPluginVersion: DEPENDENCY_MIN_PLUGIN_VERSION,
         pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
         pluginName: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME,
         reason: createDependencyReason()
