@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.2.3
+
+- fix(dependency): require `Advanced Rename and Delete Handler` 3.0.1, the first on obsidian-lib 6
+
 ## 5.2.2
 
 - test(demo-vault): enable `Advanced Rename and Delete Handler` before `CodeScript Toolkit`
