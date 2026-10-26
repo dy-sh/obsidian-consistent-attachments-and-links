@@ -88,6 +88,19 @@ This plugin has been cut down over time to reporting and path repair. Each featu
 
 Every command, and the full story of each one that left, is in [07 Commands](<./demo-vault/07 Commands.md>).
 
+## Similar plugins
+
+- [`Broken Links`](https://community.obsidian.md/plugins/broken-links) — browses the links that lead nowhere, including links to missing headings and blocks, in folder, file and link views; it does not repair links or check file names.
+- [`Find orphaned files and broken links`](https://community.obsidian.md/plugins/find-unlinked-files) — writes lists of orphaned files, links to notes not yet created, empty files and empty folders, and can delete or archive them; it does not check whether a written path leads to its target.
+- [`Link Doctor`](https://community.obsidian.md/plugins/link-doctor) — a side panel and dashboard of broken links, headings and blocks, matched the way Obsidian matches names, plus empty notes; it never edits a note, while this plugin reports every path that does not itself lead to its target and can repair one.
+- [`Vault Link Check`](https://community.obsidian.md/plugins/vault-link-check) — sorts broken links into near-misses, suggesting the note a typo or alias most likely meant, and planned notes never written; this plugin's candidates come from git history, renamed folders and aliases instead, and are applied with a click.
+- [`Sync-safe file names`](https://community.obsidian.md/plugins/sync-safe-file-names) — replaces characters other devices reject with a hyphen, automatically as files are created or renamed; this plugin repairs on command, also covers length limits, reserved names and Unicode form, and keeps the original name.
+- [`Safe Filename Linter`](https://community.obsidian.md/plugins/safe-filename-linter) — lints file names for invalid or troublesome characters; this plugin also checks name and path lengths per platform and checks links.
+- [`File name length limit`](https://community.obsidian.md/plugins/file-name-length-limit) — warns about names other platforms reject while you type them, in the status bar and in a report that also lists names colliding by case; it does not rename, while this plugin repairs them and checks links too.
+- [`Attachment Audit`](https://community.obsidian.md/plugins/attachment-audit) — finds unused, duplicate, oversized, badly named and misplaced attachments and cleans them up; this plugin only reports a misplaced attachment, judged against each note's configured attachment folder.
+
+Last searched for similar plugins on 2026-10-26.
+
 ## Installation
 
 The plugin is available in [the official Community Plugins repository](https://community.obsidian.md/plugins/consistent-attachments-and-links).
