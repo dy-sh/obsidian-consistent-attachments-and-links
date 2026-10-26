@@ -119,7 +119,7 @@ describe('Normalize Unicode names to NFC', () => {
         const adapter = app.vault.adapter as RawAdapter & typeof app.vault.adapter;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
-        const rootPath = `t3507-${stamp}`;
+        const rootPath = `unicode-normalization-${stamp}`;
         const notePath = `${rootPath}/${nfcNoteBasename}.md`;
         const folderPath = `${rootPath}/${nfcFolderName}`;
         const childPath = `${folderPath}/child.md`;

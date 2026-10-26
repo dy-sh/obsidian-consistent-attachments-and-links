@@ -109,7 +109,7 @@ describe('Fix incompatible paths', () => {
         settings.shouldEnsurePathCompatibilityOnWindows = false;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
-        const folderPath = `t698-${stamp}`;
+        const folderPath = `path-compatibility-${stamp}`;
         const targetPath = `${folderPath}/${longBasename}.md`;
         const sourcePath = `${folderPath}/source.md`;
         const originalName = `${longBasename}.md`;
