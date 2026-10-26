@@ -300,3 +300,66 @@ export async function changeSettings(app: App, patch: DemoSettingsPatch): Promis
   await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });
   new Notice('Applied.');
 }
+
+const BROKEN_LINKS_FOLDER_PATH = 'Materials/09 Fix broken links';
+const BROKEN_LINKS_VIEW_TYPE = `${PLUGIN_ID}-broken-links`;
+const BROKEN_LINKS_VIEW_TIMEOUT_IN_MILLISECONDS = 30_000;
+
+/**
+ * Creates a small trip folder and a note linking into it, then renames the folder the way a file manager would:
+ * through the vault, so Obsidian rewrites no link. Every link into the folder is broken afterwards.
+ *
+ * Manual equivalent: create `Trips/Lisbon/` with two notes, link to both from another note, close Obsidian, and
+ * rename the folder to `Lisbon 2024` in your file manager.
+ */
+export async function createRenamedFolderDemo(app: App): Promise<void> {
+  await resetBrokenLinksDemo(app);
+  await app.vault.createFolder(`${BROKEN_LINKS_FOLDER_PATH}/Trips/Lisbon`);
+  await app.vault.create(`${BROKEN_LINKS_FOLDER_PATH}/Trips/Lisbon/Itinerary.md`, '# Itinerary\n\nDay 1: the old town.\n');
+  await app.vault.create(`${BROKEN_LINKS_FOLDER_PATH}/Trips/Lisbon/Packing list.md`, '# Packing list\n\n- Sunscreen\n');
+  await app.vault.create(
+    `${BROKEN_LINKS_FOLDER_PATH}/Travel log.md`,
+    [
+      '# Travel log',
+      '',
+      '- [Itinerary](<Trips/Lisbon/Itinerary.md>)',
+      '- [[Trips/Lisbon/Packing list.md|What to pack]]',
+      '- [Visa scan](<Trips/Lisbon/Visa.pdf>) - this one never existed, so nothing can be suggested for it.',
+      ''
+    ].join('\n')
+  );
+
+  const folder = app.vault.getFolderByPath(`${BROKEN_LINKS_FOLDER_PATH}/Trips/Lisbon`);
+  if (folder) {
+    await app.vault.rename(folder, `${BROKEN_LINKS_FOLDER_PATH}/Trips/Lisbon 2024`);
+  }
+  new Notice('Renamed Trips/Lisbon to Trips/Lisbon 2024 without updating links.');
+}
+
+/**
+ * Runs **Fix broken links** and returns once its view is showing.
+ *
+ * Manual equivalent: run **Fix broken links** from the Command Palette.
+ */
+export async function openFixBrokenLinks(app: App): Promise<void> {
+  runCommand(app, 'fix-broken-links');
+  const deadline = Date.now() + BROKEN_LINKS_VIEW_TIMEOUT_IN_MILLISECONDS;
+  while (app.workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE).length === 0) {
+    if (Date.now() > deadline) {
+      throw new Error(`The Fix broken links view did not open within ${String(BROKEN_LINKS_VIEW_TIMEOUT_IN_MILLISECONDS)} ms.`);
+    }
+    await sleep(CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS);
+  }
+}
+
+/**
+ * Deletes what {@link createRenamedFolderDemo} created.
+ *
+ * Manual equivalent: delete the `Materials/09 Fix broken links` folder.
+ */
+export async function resetBrokenLinksDemo(app: App): Promise<void> {
+  const folder = app.vault.getFolderByPath(BROKEN_LINKS_FOLDER_PATH);
+  if (folder) {
+    await app.fileManager.trashFile(folder);
+  }
+}

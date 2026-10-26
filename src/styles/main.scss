@@ -4,3 +4,53 @@
     width: 20em;
   }
 }
+
+.consistent-attachments-and-links-broken-links-view {
+  .consistent-attachments-and-links-broken-links-toolbar {
+    margin-bottom: var(--size-4-4);
+  }
+
+  .consistent-attachments-and-links-broken-links-group {
+    margin-bottom: var(--size-4-6);
+  }
+
+  .consistent-attachments-and-links-broken-links-group-header {
+    align-items: center;
+    display: flex;
+    gap: var(--size-4-3);
+
+    h4 {
+      margin: 0;
+    }
+  }
+
+  .consistent-attachments-and-links-broken-links-row {
+    border-top: 1px solid var(--background-modifier-border);
+    padding: var(--size-4-2) 0;
+  }
+
+  .consistent-attachments-and-links-broken-links-source {
+    word-break: break-all;
+  }
+
+  .consistent-attachments-and-links-broken-links-candidate {
+    margin-inline-start: var(--size-4-4);
+
+    button {
+      margin-inline-start: var(--size-4-2);
+    }
+  }
+
+  .consistent-attachments-and-links-broken-links-evidence {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin: var(--size-2-1) 0;
+  }
+
+  .consistent-attachments-and-links-broken-links-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--size-4-2);
+    margin-top: var(--size-4-1);
+  }
+}

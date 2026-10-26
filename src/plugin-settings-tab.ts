@@ -178,6 +178,36 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('The file names your folder notes are stored under, e.g. ');
+          appendCodeBlock(f, 'index.md');
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText('Such a name says nothing about which note it is, so ');
+          appendCodeBlock(f, 'Fix broken links');
+          f.appendText(' recognizes a moved folder note by its folder\'s name too, and looks for the folder\'s old name in aliases.');
+          f.createEl('br');
+          f.appendText('Insert each file name on a new line.');
+        }),
+        name: 'Folder note file names',
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({ propertyName: 'folderNoteFileNames', valueComponent: multipleText });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('When the vault is in a git repository, ');
+          appendCodeBlock(f, 'Fix broken links');
+          f.appendText(' reads the renames in its history to find where a missing target went. Desktop only.');
+        }),
+        name: 'Use git history to find renamed targets',
+        render: (setting) => {
+          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldUseGitHistoryForBrokenLinks', valueComponent: toggle }));
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('Enforce every platform\'s naming rules at once, whatever the individual toggles below say.');
           f.createEl('br');
           f.appendText('Use this when you do not want to reason about which devices this vault reaches.');

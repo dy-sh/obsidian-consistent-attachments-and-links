@@ -4,12 +4,13 @@
 
 [Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
 
-This plugin makes that visible. It does two things:
+This plugin makes that visible. It does three things:
 
 - **Check vault consistency** audits the whole vault and writes a report, changing nothing: bad links, bad embeds and bad frontmatter links (every link whose written path does not itself lead to its target), attachments sitting outside their note's attachment folder (each named with the other notes that use it, and with configurable handling and shared locations), names and paths a platform you sync to would reject, and names stored on disk in decomposed Unicode form (NFD), which sync and git tools see as a second spelling of the name.
+- **Fix broken links** lists every link whose target is missing, grouped by cause, with the file it most likely meant and the evidence for it: git history, a renamed folder, the same name elsewhere, an alias. One click repairs the path written in a link, or in every link like it; when several files could be meant, you choose.
 - **Fix incompatible paths** repairs those names and paths — not because Obsidian cannot open them, but because that platform's filesystem cannot store them. Links follow the rename, and the original name is kept. A decomposed name is stored in the composed form (NFC) Obsidian uses, with no letter changed.
 
-It never rewrites a link into a style, moves an attachment or cleans up folders: where those matter, it reports and leaves the change to you.
+It never rewrites a link into a style, picks a link's target for you, moves an attachment or cleans up folders: where those matter, it reports and leaves the change to you.
 
 > [!IMPORTANT]
 >
@@ -61,6 +62,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 ## What it does
 
 - **Audit the whole vault** and get a report of bad links, bad embed paths, bad frontmatter links, attachments sitting outside their configured attachment folder and names a platform you sync to would reject, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
+- **Repair links broken outside Obsidian** — a folder renamed in a file manager, a note moved by a sync tool — by choosing, for each link, the file it most likely meant. [09 Fix broken links](<./demo-vault/09 Fix broken links.md>)
 - **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
 - **Every command**, and where the ones that left went. [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which platforms the path repair enforces. [05 Settings](<./demo-vault/05 Settings.md>)

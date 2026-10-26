@@ -4,20 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## The scope line — read this before adding any command
 
-> `Consistent Attachments and Links` **reports** every link whose written path does not itself lead to its target — Obsidian's own resolver is deliberately more forgiving than that — and **repairs** names and paths that a platform the vault is synced to would reject. It does not rewrite links into a style, and it does not place attachments or manage folders; where those matter, it reports and leaves the change to the user.
+> `Consistent Attachments and Links` **reports** every link whose written path does not itself lead to its target — Obsidian's own resolver is deliberately more forgiving than that — and **repairs** names and paths that a platform the vault is synced to would reject, and, one click at a time, the path written in a link whose target is missing. It does not rewrite links into a style, and it does not place attachments or manage folders; where those matter, it reports and leaves the change to the user.
 
 Operationally: **report strictly, repair narrowly, never rewrite.** The rule separating the first two (owner, 2026-09-02): **repair what damages the vault as data; report what merely limits who can read it.** A name Windows reserves means the file cannot exist on a machine the vault syncs to, so the vault itself is damaged. A shortest-path link damages nothing — the vault is intact and only a non-Obsidian reader cannot follow it.
 
 The three categories, and where the removed surfaces went:
 
 - **Report, strictly** — bad links, bad embeds, bad frontmatter links, path compatibility, and attachments sitting outside their configured attachment folder.
-- **Repair, narrowly** — `fix-incompatible-paths` only.
+- **Repair, narrowly** — `fix-incompatible-paths`, and `fix-broken-links`' path-only repair of a link that leads nowhere, applied only on the user's click.
 - **Never rewrite** — link style went to `Better Markdown Links`, attachment placement to `Custom Attachment Location`, folder cleanup to `Advanced Rename and Delete Handler`.
 
 **Two paraphrases of this that are FALSE.** Both were proposed during the 2026-09-02 scope design and rejected against the code; do not re-derive them:
 
 1. *"It resolves in Obsidian → tolerated."* No. `LinksHandler.isValidLink` never calls Obsidian's resolver — it builds the path literally and asks `getFileOrNull`, which does no extension inference, no vault-wide name search and no fuzzy match. `[[note]]` **is** reported even though Obsidian finds it. The reporting standard is deliberately *stricter* than Obsidian, not looser. Tolerating wikilinks and non-relative links means the plugin does not **convert** them; it does not mean they go unreported.
 2. *"Repairs names that break Obsidian on some platform."* No. Obsidian runs fine; the platform's **filesystem** rejects the name. `src/path-compatibility.ts`'s header has the frame: *"A vault is synced, so the platform that matters is not necessarily the one running."*
+
+## `Fix broken links` — a repair, not a rewrite, and never a guess
+
+`Fix broken links` (`fix-broken-links`) opens `BrokenLinksView`: every link the report would call bad, grouped by cause, each with the files it may have meant and the evidence for each. It is the one place this plugin edits link text, so the scope line was widened for it on purpose (owner, 2026-10-26): a link that leads nowhere damages the vault as data, which is the line's own test for repair. What keeps it inside "never rewrite":
+
+- **Only the path changes.** `link-path-rewriter.ts` splices the new path into the link's own text: a wikilink stays a wikilink, a relative path stays relative (`/`-rooted stays rooted, a leading `./` is kept), an angle-bracketed destination stays unencoded, a percent-encoded one is re-encoded, and the subpath, alias and title are kept byte for byte. `@mnaoumov/obsidian-lib`'s `updateLink` is deliberately NOT used: it regenerates the whole link through Obsidian's link settings, which is exactly the style rewrite the scope line forbids. The new path is the literal one `getReferenceTargetPath` resolves, so a fixed link passes the report.
+- **Nothing is chosen for the user.** A link with several candidates gets a `Use this` per candidate and is never in a group fix. `Fix all like this` covers one group, and a group is one old-prefix-to-new-prefix mapping (`getPathMapping`) of links with exactly one candidate each.
+- **A rename cannot be recovered from the link alone**, so every candidate carries evidence from outside it (`broken-link-candidates.ts`, pure): git renames (`git-rename-history.ts`; desktop only, run by `desktop-git-runner.ts`, which imports `node:child_process` and is therefore loaded by a dynamic `import()` behind `Platform.isDesktopApp`), a case-only difference, `aliases` / `title` holding the old name, a missing folder whose sibling holds every missing file that was under it, and the same name with the longest run of shared parent folders. `folderNoteFileNames` exists because a folder note's own name (`index.md`, `!.md`) identifies nothing: such a candidate must share its folder's name too, and its alias is matched against the folder's old name. The finder is called once for ALL missing paths, because the renamed-folder evidence is collective.
+- **A fix matches its link by text and line, not offset** (by key for a frontmatter link): an earlier fix on the same line moves every offset after it. A link that changed since the check is left alone and the view says how many.
+- **The report note stays** (owner's option, chosen 2026-10-26): the demo vault, the store screenshots and five integration suites read it, and it is the shareable record; the view is where to act. **Ignore** lasts until the next check; a permanent exclusion is `Exclude paths`.
+- **The view does not check on open**, only on the command or its Check button: Obsidian restores the view at startup, and a vault-wide walk there would be a cost nobody asked for.
+- **Integration test:** `broken-links-view.desktop.integration.test.ts` clicks `Fix all like this` with a trusted click. This plugin's one-time backup warning is a modal over the whole window in a fresh vault, so the closure dismisses dialogs first: a trusted click lands on whatever is on top, and without the dismissal the click hits `.modal-bg` and the test times out with nothing rewritten. Desktop only: the trusted-input helpers need Electron.
 
 ## Rename and delete handling is NOT this plugin's — do not re-add a handler
 

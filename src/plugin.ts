@@ -17,7 +17,10 @@ import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
 } from './advanced-rename-and-delete-handler.ts';
+import { BrokenLinkFixer } from './broken-link-fixer.ts';
+import { BrokenLinksViewComponent } from './broken-links-view-component.ts';
 import { CheckConsistencyCommandHandler } from './command-handlers/check-consistency-command-handler.ts';
+import { FixBrokenLinksCommandHandler } from './command-handlers/fix-broken-links-command-handler.ts';
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 import {
@@ -189,6 +192,23 @@ export class Plugin extends PluginBase {
       })
     );
 
+    const brokenLinkFixer = new BrokenLinkFixer({
+      abortSignalComponent: this.abortSignalComponent,
+      app: this.app,
+      linksHandler,
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      pluginSettingsComponent,
+      resourceLockComponent: this.resourceLockComponent
+    });
+
+    this.addChild(
+      new BrokenLinksViewComponent({
+        app: this.app,
+        brokenLinkFixer,
+        pluginNoticeComponent: this.pluginNoticeComponent
+      })
+    );
+
     await this.commandHandlerComponent.registerCommandHandlers(() => [
       new OpenDemoVaultCommandHandler({
         app: this.app,
@@ -197,6 +217,7 @@ export class Plugin extends PluginBase {
         pluginVersion: this.manifest.version
       }),
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
+      new FixBrokenLinksCommandHandler(this.app),
       new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
     ]);
   }
