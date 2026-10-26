@@ -80,6 +80,16 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
   - folders any note may take attachments from, one per line, such as `_assets/common`. A folder covers everything under it, and a glob or a `/regular expression/flags` works too, as in `excludePaths`. A link into one of them is never listed under **Misplaced attachments**.
 - `treatAsAttachmentExtensions`
   - extensions that should be treated as attachments even though they are Markdown, such as `.excalidraw.md`. The **Misplaced attachments** section of the report judges a file listed here like any other attachment, instead of skipping it as a note - which is what a drawing wants, since it belongs to whatever note embeds it. The plugin never rewrites what is written inside such a file. Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>).
+
+## Fixing broken links
+
+- `folderNoteFileNames` (**Folder note file names**)
+  - the file names your folder notes are stored under, one per line, such as `index.md`. **Fix broken links** then recognizes a moved folder note by its folder's name too, and looks for the folder's old name in aliases. Empty by default. Walked through in [09 Fix broken links](<./09 Fix broken links.md>).
+- `shouldUseGitHistoryForBrokenLinks` (**Use git history to find renamed targets**)
+  - when the vault is in a git repository, read the renames in its history to find where a missing target went. On by default; desktop only.
+
+## Safety
+
 - `shouldShowBackupWarning`
   - show the one-time backup warning about the commands that rename files. It turns itself off once you have seen it.
 

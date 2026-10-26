@@ -40,6 +40,14 @@ export class PluginSettings {
   public externalAttachmentLinkMode = ExternalAttachmentLinkMode.Report;
 
   /**
+   * The file names a folder note is stored under, such as `index.md`.
+   *
+   * Such a name says nothing about which note it is, so `Fix broken links` identifies a moved folder note by its
+   * folder's name too, and matches aliases against the folder's old name.
+   */
+  public folderNoteFileNames: string[] = [];
+
+  /**
    * Whether the user has already declined the suggestion to install `Custom Attachment Location`.
    *
    * Only the load-time notice honours it — the settings-tab banner is shown regardless, because a user
@@ -111,6 +119,12 @@ export class PluginSettings {
   public shouldNormalizeUnicodeNames = true;
 
   public shouldShowBackupWarning = true;
+
+  /**
+   * Whether `Fix broken links` reads the renames in the git history of the repository the vault lives in, on
+   * desktop. It is the strongest evidence of where a missing target went, and it costs one `git log` per check.
+   */
+  public shouldUseGitHistoryForBrokenLinks = true;
 
   /**
    * Names the sidecar note that carries an attachment's original name.

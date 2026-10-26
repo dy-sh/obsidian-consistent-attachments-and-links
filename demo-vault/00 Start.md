@@ -1,8 +1,9 @@
 # Start here
 
-Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/) demo vault. This plugin audits a vault for what breaks outside Obsidian, and it does two things:
+Welcome to the [Consistent Attachments and Links](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/) demo vault. This plugin audits a vault for what breaks outside Obsidian, and it does three things:
 
 - **Check Vault Consistency** reports, changing nothing, every link whose written path does not itself lead to its target, every attachment sitting outside its note's attachment folder, and every name a platform you sync to would reject - see [03 Check vault consistency](<./03 Check vault consistency.md>).
+- **Fix Broken Links** suggests, with its evidence, the file each broken link most likely meant, and repairs the link's path when you click - see [09 Fix broken links](<./09 Fix broken links.md>).
 - **Fix Incompatible Paths** repairs those names - see [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
 > [!IMPORTANT] Renaming and deleting moved out
@@ -46,6 +47,7 @@ Manual equivalent: run **Check Vault Consistency** from the Command Palette.
 - [06 Recommended Obsidian settings](<./06 Recommended Obsidian settings.md>)
 - [07 Commands](<./07 Commands.md>)
 - [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>)
+- [09 Fix broken links](<./09 Fix broken links.md>)
 
 The numbering has two gaps. **02 Links stay valid on rename and move** went to `Advanced Rename and Delete Handler` with the rest of the rename handling. **04 Reorganize and convert links** went when its subject did: link conversion left for `Better Markdown Links`, and the `Reorganize vault` command it walked through was retired once all it still ran was **Fix Incompatible Paths** - its one surviving section, about `Excalidraw` drawings, now lives in [03 Check vault consistency](<./03 Check vault consistency.md>). The remaining notes keep their numbers so links already pointing at them still resolve.
 

@@ -18,7 +18,10 @@ import { Library } from '@mnaoumov/typescript-lib/library';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/async-operation-tracking';
 import { Component } from 'obsidian';
-import { App } from 'obsidian-test-mocks/obsidian';
+import {
+  App,
+  WorkspaceLeaf
+} from 'obsidian-test-mocks/obsidian';
 import {
   beforeEach,
   describe,
@@ -29,6 +32,8 @@ import {
 
 import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
 import type { MigratableCollectSettings } from './custom-attachment-location.ts';
+
+import { BrokenLinksView } from './broken-links-view.ts';
 
 interface AppGlobal {
   app: AppOriginal;
@@ -348,8 +353,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 2 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 4 total. The four collect and move commands left for `Custom Attachment Location` in 5.0.0, and Reorganize vault was retired.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(4);
+      // The plugin wires the OpenDemoVault handler plus 3 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 5 total. The four collect and move commands left for `Custom Attachment Location` in 5.0.0, and Reorganize vault was retired.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(5);
     });
 
     it('should register the open demo vault command', async () => {
@@ -357,6 +362,18 @@ describe('Plugin', () => {
       const addCommandSpy = vi.spyOn(plugin, 'addCommand');
       await plugin.onload();
       expect(addCommandSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'open-demo-vault' }));
+    });
+
+    it('should register the fix broken links command and its view', async () => {
+      const plugin = new Plugin(app, manifest);
+      const addCommandSpy = vi.spyOn(plugin, 'addCommand');
+      const registerViewSpy = vi.spyOn(app.viewRegistry, 'registerView');
+      await plugin.onload();
+      expect(addCommandSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'fix-broken-links' }));
+      expect(registerViewSpy).toHaveBeenCalledWith('consistent-attachments-and-links-broken-links', expect.any(Function));
+      const [, viewCreator] = registerViewSpy.mock.calls[0] ?? [];
+      expect(viewCreator?.(WorkspaceLeaf.create2__(castTo<App>(app)).asOriginalType3__())).toBeInstanceOf(BrokenLinksView);
+      plugin.unload();
     });
 
     it('should add the settings tab to the plugin', async () => {
@@ -406,7 +423,7 @@ describe('Plugin', () => {
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
-      expect(commands.size).toBe(4);
+      expect(commands.size).toBe(5);
 
       unpublishProviderApi();
       await waitForAllAsyncOperations();

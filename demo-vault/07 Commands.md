@@ -14,6 +14,12 @@ Reports what is inconsistent without changing anything — the one command that 
 
 Walked through in [03 Check vault consistency](<./03 Check vault consistency.md>), and for invalid paths and names in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>).
 
+## Fix Broken Links
+
+Opens a view listing every link whose target is missing, grouped by cause, with the file each one most likely meant and the evidence for it. **Fix** repairs one link, **Fix all like this** every link of the group, and only the path written in each changes. A link with several candidates gets a choice, never a guess.
+
+Walked through in [09 Fix broken links](<./09 Fix broken links.md>).
+
 ## Fix Incompatible Paths
 
 Renames every file and folder whose path or name is invalid on a platform you have ticked in the settings - too long, containing a character that platform forbids, or named after an MS-DOS device. Links follow the rename, and the original name is kept in the note's `aliases` and `title`. It also stores every name kept on disk in decomposed Unicode form (NFD) in the composed form (NFC) Obsidian uses, which changes no letter and no link.

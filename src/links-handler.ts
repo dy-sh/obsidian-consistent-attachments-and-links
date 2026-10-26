@@ -140,6 +140,43 @@ export class LinksHandler {
   }
 
   /**
+   * The file a reference resolves to, or `null` when it resolves to nothing — which is this plugin's
+   * definition of a bad link. The resolution is deliberately LITERAL: no extension inference, no vault-wide
+   * name search, no fuzzy match, so it is stricter than Obsidian's own resolver. See the scope line in
+   * `AGENTS.md`.
+   */
+  public async resolveValidReferenceTarget(link: Reference, notePath: string): Promise<null | TFile> {
+    const { subpath } = splitSubpath(link.link);
+    const file = getFileOrNull({ app: this.app, pathOrFile: getReferenceTargetPath(link, notePath) });
+
+    if (!file) {
+      return null;
+    }
+
+    if (!subpath) {
+      return file;
+    }
+
+    const extension = file.extension.toLocaleLowerCase();
+
+    if (extension === 'pdf') {
+      return subpath.startsWith('#page=') ? file : null;
+    }
+
+    if (extension !== MARKDOWN_FILE_EXTENSION) {
+      return null;
+    }
+
+    const cache = await getCacheSafe(this.app, file);
+
+    if (!cache) {
+      return null;
+    }
+
+    return resolveSubpath(cache, subpath) ? file : null;
+  }
+
+  /**
    * One pass per reference kind: a reference that does not resolve is a bad one and goes no further, and
    * everything that DID resolve is offered to the misplaced-attachment check. Keeping the two in one walk is
    * what makes "a reference already reported as a bad link is never reported twice" structural.
@@ -169,52 +206,22 @@ export class LinksHandler {
       });
     }
   }
+}
 
-  /**
-   * The file a reference resolves to, or `null` when it resolves to nothing — which is this plugin's
-   * definition of a bad link. The resolution is deliberately LITERAL: no extension inference, no vault-wide
-   * name search, no fuzzy match, so it is stricter than Obsidian's own resolver. See the scope line in
-   * `AGENTS.md`.
-   */
-  private async resolveValidReferenceTarget(link: Reference, notePath: string): Promise<null | TFile> {
-    const { linkPath, subpath } = splitSubpath(link.link);
+/**
+ * The vault path a reference's written path leads to, read literally: relative to the note that holds it, or
+ * from the vault root when it starts with `/`.
+ *
+ * @param link - The reference.
+ * @param notePath - The path of the note that holds it.
+ * @returns The vault path, whether or not anything is there.
+ */
+export function getReferenceTargetPath(link: Reference, notePath: string): string {
+  const { linkPath } = splitSubpath(link.link);
 
-    let fullLinkPath: string;
-
-    if (!linkPath) {
-      fullLinkPath = notePath;
-    } else if (linkPath.startsWith('/')) {
-      fullLinkPath = normalizePath(linkPath);
-    } else {
-      fullLinkPath = join(dirname(notePath), linkPath);
-    }
-
-    const file = getFileOrNull({ app: this.app, pathOrFile: fullLinkPath });
-
-    if (!file) {
-      return null;
-    }
-
-    if (!subpath) {
-      return file;
-    }
-
-    const extension = file.extension.toLocaleLowerCase();
-
-    if (extension === 'pdf') {
-      return subpath.startsWith('#page=') ? file : null;
-    }
-
-    if (extension !== MARKDOWN_FILE_EXTENSION) {
-      return null;
-    }
-
-    const cache = await getCacheSafe(this.app, file);
-
-    if (!cache) {
-      return null;
-    }
-
-    return resolveSubpath(cache, subpath) ? file : null;
+  if (!linkPath) {
+    return notePath;
   }
+
+  return linkPath.startsWith('/') ? normalizePath(linkPath) : join(dirname(notePath), linkPath);
 }
