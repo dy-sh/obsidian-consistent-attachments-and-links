@@ -50,9 +50,11 @@ describe('Fix incompatible paths', () => {
         pluginId
       }) {
         interface PathCompatibilitySettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           shouldEnsurePathCompatibilityOnAndroid: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           shouldEnsurePathCompatibilityOnWindows: boolean;
-          sidecarNoteNamePattern: string;
+          readonly sidecarNoteNamePattern: string;
         }
 
         function isPathCompatibilitySettings(value: unknown): value is PathCompatibilitySettings {
@@ -119,8 +121,8 @@ describe('Fix incompatible paths', () => {
         await app.vault.create(sourcePath, `# Source\n\n[target](<${longBasename}.md>)\n`);
 
         interface PreservedNames {
-          aliases: string[];
-          title: string | undefined;
+          readonly aliases: string[];
+          readonly title: string | undefined;
         }
 
         /*

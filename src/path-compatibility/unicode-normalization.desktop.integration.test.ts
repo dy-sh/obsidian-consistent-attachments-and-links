@@ -45,9 +45,13 @@ describe('Normalize Unicode names to NFC', () => {
         settleInMilliseconds
       }) {
         interface UnicodeSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           shouldEnsurePathCompatibilityOnAndroid: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           shouldEnsurePathCompatibilityOnEveryPlatform: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           shouldEnsurePathCompatibilityOnWindows: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           shouldNormalizeUnicodeNames: boolean;
         }
 
@@ -107,13 +111,13 @@ describe('Normalize Unicode names to NFC', () => {
         settings.shouldNormalizeUnicodeNames = true;
 
         interface AdapterFileEntry {
-          realpath: string;
+          readonly realpath: string;
         }
 
         interface RawAdapter {
-          files: Record<string, AdapterFileEntry | undefined>;
-          fsPromises: typeof import('node:fs/promises');
-          getFullRealPath: (realPath: string) => string;
+          readonly files: Record<string, AdapterFileEntry | undefined>;
+          readonly fsPromises: typeof import('node:fs/promises');
+          readonly getFullRealPath: (realPath: string) => string;
         }
 
         const adapter = app.vault.adapter as RawAdapter & typeof app.vault.adapter;

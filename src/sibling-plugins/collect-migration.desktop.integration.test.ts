@@ -78,7 +78,7 @@ async function reloadPlugin(input: ReloadInput): Promise<ReloadResult> {
   return await evalInObsidian({
     async callback({ app, lib: { waitUntil }, pluginId, reloadInput }) {
       interface PluginSettingsComponentLike {
-        editAndSave: (settingsEditor: (settings: Record<string, unknown>) => void) => Promise<void>;
+        readonly editAndSave: (settingsEditor: (settings: Record<string, unknown>) => void) => Promise<void>;
         readonly settings: Record<string, unknown>;
       }
 

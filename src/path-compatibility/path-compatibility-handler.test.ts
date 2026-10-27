@@ -65,7 +65,7 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 interface DataAdapterExLike {
-  basePath: string;
+  readonly basePath: string;
 }
 
 vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({

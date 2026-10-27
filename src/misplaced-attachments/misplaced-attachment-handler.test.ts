@@ -42,7 +42,7 @@ interface CheckedInput {
 }
 
 interface DataAdapterExLike {
-  insensitive: boolean;
+  readonly insensitive: boolean;
 }
 
 // `parentFolderPath` is kept REAL: the vault-root answer (`/`, not `.`) is part of what these tests assert.
@@ -81,10 +81,11 @@ import {
 } from './misplaced-attachment-handler.ts';
 
 interface SettingsLike {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
   externalAttachmentLinkMode: ExternalAttachmentLinkMode;
-  isPathIgnored: (path: string) => boolean;
-  isSharedAttachmentPath: (path: string) => boolean;
-  isTreatedAsAttachment: (path: string) => boolean;
+  readonly isPathIgnored: (path: string) => boolean;
+  readonly isSharedAttachmentPath: (path: string) => boolean;
+  readonly isTreatedAsAttachment: (path: string) => boolean;
 }
 
 const mockIsFrontmatterLinkCache = vi.mocked(isFrontmatterLinkCache);

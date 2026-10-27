@@ -44,10 +44,11 @@ import {
 
 interface Deferred<T> {
   readonly promise: Promise<T>;
-  resolve: (value: T) => void;
+  readonly resolve: (value: T) => void;
 }
 
 interface GlobalAppHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace the app binding during setup and restore it during teardown.
   app: unknown;
 }
 

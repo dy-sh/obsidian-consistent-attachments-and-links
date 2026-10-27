@@ -21,32 +21,34 @@ import {
 } from './unicode-name-normalizer.ts';
 
 interface FakeAdapter {
-  files: Record<string, FileEntry>;
-  fs?: FakeCapacitorFs;
-  fsPromises?: FakeFsPromises;
-  getFullRealPath: (realPath: string) => string;
-  onFileChange: (path: null | string) => void;
-  queue: <T>(function_: () => Promise<T>) => Promise<T>;
-  startWatchPath?: (path: string) => Promise<void>;
-  stopWatchPath?: (path: string) => void;
+  readonly files: Record<string, FileEntry>;
+  readonly fs?: FakeCapacitorFs;
+  readonly fsPromises?: FakeFsPromises;
+  readonly getFullRealPath: (realPath: string) => string;
+  readonly onFileChange: (path: null | string) => void;
+  readonly queue: <T>(function_: () => Promise<T>) => Promise<T>;
+  readonly startWatchPath?: (path: string) => Promise<void>;
+  readonly stopWatchPath?: (path: string) => void;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace watcher state to exercise the adapter restart path.
   watchers?: Record<string, unknown>;
 }
 
 interface FakeCapacitorEntry {
-  name: string;
+  readonly name: string;
 }
 
 interface FakeCapacitorFs {
-  readdir: (fullPath: string) => Promise<FakeCapacitorEntry[]>;
-  rename: (fullPath: string, newFullPath: string) => Promise<void>;
+  readonly readdir: (fullPath: string) => Promise<FakeCapacitorEntry[]>;
+  readonly rename: (fullPath: string, newFullPath: string) => Promise<void>;
 }
 
 interface FakeFsPromises {
-  readdir: (fullPath: string) => Promise<string[]>;
-  rename: (fullPath: string, newFullPath: string) => Promise<void>;
+  readonly readdir: (fullPath: string) => Promise<string[]>;
+  readonly rename: (fullPath: string, newFullPath: string) => Promise<void>;
 }
 
 interface HoistedState {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace the vault adapter to exercise platform-specific behavior.
   adapter: unknown;
 }
 

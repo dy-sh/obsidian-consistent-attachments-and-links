@@ -82,21 +82,23 @@ describe('Consistency report: a link to an attachment in another note\'s attachm
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface ReportSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           externalAttachmentLinkMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests change this setting between scenarios to verify each configured behavior.
           sharedAttachmentPaths: string[];
         }
 
         interface SettingsComponent {
-          editAndSave: (editor: (settings: ReportSettings) => void) => Promise<void>;
+          readonly editAndSave: (editor: (settings: ReportSettings) => void) => Promise<void>;
         }
 
         interface SettingsHolder {
-          pluginSettingsComponent: SettingsComponent;
+          readonly pluginSettingsComponent: SettingsComponent;
         }
 
         interface VaultConfigAccess {
-          getConfig: (key: string) => unknown;
-          setConfig: (key: string, value: unknown) => void;
+          readonly getConfig: (key: string) => unknown;
+          readonly setConfig: (key: string, value: unknown) => void;
         }
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;

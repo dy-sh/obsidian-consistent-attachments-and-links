@@ -46,8 +46,8 @@ export enum UnicodeNormalizationOutcome {
 }
 
 interface RawFileSystem {
-  readdir: (fullPath: string) => Promise<string[]>;
-  rename: (fullPath: string, newFullPath: string) => Promise<void>;
+  readonly readdir: (fullPath: string) => Promise<string[]>;
+  readonly rename: (fullPath: string, newFullPath: string) => Promise<void>;
 }
 
 interface UnicodeNameNormalizerConstructorParams {
