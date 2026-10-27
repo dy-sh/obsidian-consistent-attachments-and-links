@@ -4,23 +4,11 @@
 
 [Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
 
-This plugin makes that visible. It does three things:
-
-- **Check vault consistency** audits the whole vault and writes a report, changing nothing: bad links, bad embeds and bad frontmatter links (every link whose written path does not itself lead to its target), attachments sitting outside their note's attachment folder (each named with the other notes that use it, and with configurable handling and shared locations), names and paths a platform you sync to would reject, and names stored on disk in decomposed Unicode form (NFD), which sync and git tools see as a second spelling of the name.
-- **Fix broken links** lists every link whose target is missing, grouped by cause, with the file it most likely meant and the evidence for it: git history, a renamed folder, the same name elsewhere, an alias. One click repairs the path written in a link, or in every link like it; when several files could be meant, you choose.
-- **Fix incompatible paths** repairs those names and paths — not because Obsidian cannot open them, but because that platform's filesystem cannot store them. Links follow the rename, and the original name is kept. A decomposed name is stored in the composed form (NFC) Obsidian uses, with no letter changed.
-
-It never rewrites a link into a style, picks a link's target for you, moves an attachment or cleans up folders: where those matter, it reports and leaves the change to you.
+This plugin makes that visible: it reports every link whose written path does not lead to its target, repairs a broken link's path when you pick the file it meant, and repairs names a platform you sync to would reject. It never rewrites a link into a style, moves an attachment or cleans up folders: where those matter, it reports and leaves the change to you.
 
 > [!IMPORTANT]
 >
-> This plugin requires [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler), which since **4.0.0** handles renames and deletions for the whole vault — keeping attachments traveling with their note and links rewritten when you move, rename or delete one — so several plugins can no longer fight over it. This plugin loads nothing until that plugin is installed, explains why, and installs it in one click — which changes nothing on its own, since its defaults do nothing until you turn renames or deletions on. It then offers to hand your old settings across.
-
-<!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
-
-> [!NOTE]
->
-> Upgrading from an older version? Link conversion, link-path rewriting, attachment collecting, `Delete empty folders` and `Reorganize vault` have moved to other plugins or been retired. [Where the old features went](#where-the-old-features-went) maps each one to the plugin that owns it now.
+> This plugin requires [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler), which handles renames and deletions for the whole vault since **4.0.0**. This plugin installs it in one click, which changes nothing on its own, and offers to hand your old settings across.
 
 <!-- Separates the callouts; without it markdownlint reads them as one blockquote. -->
 
@@ -61,32 +49,21 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## What it does
 
-- **Audit the whole vault** and get a report of bad links, bad embed paths, bad frontmatter links, attachments sitting outside their configured attachment folder and names a platform you sync to would reject, changing nothing. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
-- **Repair links broken outside Obsidian** — a folder renamed in a file manager, a note moved by a sync tool — by choosing, for each link, the file it most likely meant. [09 Fix broken links](<./demo-vault/09 Fix broken links.md>)
-- **Keep paths valid on every platform you sync to** — find and bulk-repair the names and paths that Windows, Android, Linux, macOS or iOS would reject, without breaking a single link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
+- **Check vault consistency** reports, changing nothing, bad links, embeds and frontmatter links, attachments outside their note's attachment folder, and names a platform you sync to would reject. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
+- **Fix broken links** offers, with its evidence, the file each broken link most likely meant, and repairs the link's path on your click. [09 Fix broken links](<./demo-vault/09 Fix broken links.md>)
+- **Fix incompatible paths** repairs the names and paths that Windows, Android, Linux, macOS or iOS would reject, keeping the original name and every link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
 - **Every command**, and where the ones that left went. [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which platforms the path repair enforces. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
 
 ## Where the old features went
 
-This plugin has been cut down over time to reporting and path repair. Each feature it used to have now has a single owner, so two plugins no longer carry copies of the same feature. The [changelog](CHANGELOG.md) says which release moved each one.
-
 <!-- The span keeps #attachment-subfolder-setting resolving: plugin versions before 3.0.0 link to it. -->
 <!-- markdownlint-disable MD033 -->
-| What you used | Where it lives now | What to do |
-| --- | --- | --- |
-| Rewriting links and moving attachments on rename, move and delete (until 4.0.0) | [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) | Nothing to install: this plugin requires it. Turn on its rename and delete handling; this plugin offers your old settings to it. |
-| `Delete empty folders`, automatic and manual | [Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler) | The automatic half is its **Empty folder behavior** setting. The manual command kept its name and id there, so an existing hotkey keeps working. |
-| The four `Replace all wiki…` commands | [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) | It converts one file, one folder or the whole vault, and can convert as you type. The report no longer treats a wikilink as a defect. |
-| The four `Convert all … paths to relative` commands | [Better Markdown Links](https://community.obsidian.md/plugins/better-markdown-links) | It owns link paths as well as link style. The report still lists a path that does not resolve. |
-| **Collect attachments**, **Move attachment to proper folder** and collecting as you edit (until 5.0.0) | [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) | Optional: this plugin suggests it, and the first time both are installed it offers your old collect settings, showing what would change and writing nothing unless you approve. This plugin still reports a misplaced attachment. |
-| `Reorganize vault` | Retired | Every step but the last moved to the plugins above, so run **Fix incompatible paths** — it does exactly what `Reorganize vault` still did. |
-| <span id="attachment-subfolder-setting"></span>The `Attachment Subfolder` setting (until [3.0.0](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases/tag/3.0.0)) | [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location) | It chooses the folder each new attachment goes into, per note or per anything a pattern can express, and it is what this plugin's report checks attachments against. Without it, this plugin follows Obsidian's built-in [`Default location for new attachments`](https://help.obsidian.md/Editing+and+formatting/Attachments#Change+default+attachment+location). See [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>). |
+
+<span id="attachment-subfolder-setting"></span>Link conversion, link-path rewriting, attachment collecting, rename and delete handling, `Delete empty folders`, `Reorganize vault` and the `Attachment Subfolder` setting moved to other plugins or were retired: [Where the old features went](<./docs/where-the-old-features-went.md>) maps each one to the plugin that owns it now.
 
 <!-- markdownlint-enable MD033 -->
-
-Every command, and the full story of each one that left, is in [07 Commands](<./demo-vault/07 Commands.md>).
 
 ## Similar plugins
 
