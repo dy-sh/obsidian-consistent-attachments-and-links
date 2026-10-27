@@ -15,9 +15,7 @@ import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   App,
-  DropdownComponent as DropdownComponentClass,
-  TextComponent as TextComponentClass,
-  ToggleComponent as ToggleComponentClass
+  DropdownComponent as DropdownComponentClass
 } from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
@@ -121,12 +119,6 @@ function renderRows(tab: PluginSettingsTab): void {
 
 beforeAll(async () => {
   await initI18N(translationsMap);
-  // Obsidian-lib's bind() probes setPlaceholderValue to detect text-based components.
-  for (const prototype of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
-    if (!('setPlaceholderValue' in prototype)) {
-      Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });
-    }
-  }
 });
 
 describe('PluginSettingsTab', () => {
