@@ -47,11 +47,15 @@
     "moment": "^2.31.0",
     "typescript": "6.0.3"
   },
+  "dependencies": {
+    "@mnaoumov/obsidian-lib": "^6.3.0",
+    "@mnaoumov/typescript-lib": "^2.0.0"
+  },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
-    "@mnaoumov/obsidian-dev-toolkit": "^5.0.2",
-    "@mnaoumov/typescript-dev-toolkit": "^3.10.0",
-    "@mnaoumov/typescript-test-toolkit": "^1.0.2",
+    "@mnaoumov/obsidian-dev-toolkit": "^5.3.1",
+    "@mnaoumov/typescript-dev-toolkit": "^3.13.1",
+    "@mnaoumov/typescript-test-toolkit": "^1.0.3",
     "@obsidian-typings/obsidian-public-latest": "^6.50.0",
     "@total-typescript/ts-reset": "^0.6.1",
     "@tsconfig/strictest": "^2.0.8",
@@ -69,9 +73,5 @@
     "obsidian-test-mocks": "^7.2.3",
     "sharp": "^0.35.5",
     "vitest": "^5.0.5"
-  },
-  "dependencies": {
-    "@mnaoumov/obsidian-lib": "^6.0.2",
-    "@mnaoumov/typescript-lib": "^1.6.1"
   }
 }
