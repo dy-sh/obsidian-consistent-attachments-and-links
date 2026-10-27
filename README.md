@@ -65,16 +65,20 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 <!-- markdownlint-enable MD033 -->
 
-## Similar plugins
+## See also
 
-- [`Broken Links`](https://community.obsidian.md/plugins/broken-links) — browses the links that lead nowhere, including links to missing headings and blocks, in folder, file and link views; it does not repair links or check file names.
-- [`Find orphaned files and broken links`](https://community.obsidian.md/plugins/find-unlinked-files) — writes lists of orphaned files, links to notes not yet created, empty files and empty folders, and can delete or archive them; it does not check whether a written path leads to its target.
-- [`Link Doctor`](https://community.obsidian.md/plugins/link-doctor) — a side panel and dashboard of broken links, headings and blocks, matched the way Obsidian matches names, plus empty notes; it never edits a note, while this plugin reports every path that does not itself lead to its target and can repair one.
-- [`Vault Link Check`](https://community.obsidian.md/plugins/vault-link-check) — sorts broken links into near-misses, suggesting the note a typo or alias most likely meant, and planned notes never written; this plugin's candidates come from git history, renamed folders and aliases instead, and are applied with a click.
-- [`Sync-safe file names`](https://community.obsidian.md/plugins/sync-safe-file-names) — replaces characters other devices reject with a hyphen, automatically as files are created or renamed; this plugin repairs on command, also covers length limits, reserved names and Unicode form, and keeps the original name.
-- [`Safe Filename Linter`](https://community.obsidian.md/plugins/safe-filename-linter) — lints file names for invalid or troublesome characters; this plugin also checks name and path lengths per platform and checks links.
-- [`File name length limit`](https://community.obsidian.md/plugins/file-name-length-limit) — warns about names other platforms reject while you type them, in the status bar and in a report that also lists names colliding by case; it does not rename, while this plugin repairs them and checks links too.
-- [`Attachment Audit`](https://community.obsidian.md/plugins/attachment-audit) — finds unused, duplicate, oversized, badly named and misplaced attachments and cleans them up; this plugin only reports a misplaced attachment, judged against each note's configured attachment folder.
+[My other Obsidian resources](https://github.com/mnaoumov/obsidian-resources)
+
+| Plugin | Features | How `Consistent Attachments and Links` differs |
+| --- | --- | --- |
+| [`Attachment Audit`](https://community.obsidian.md/plugins/attachment-audit) | Unused, duplicate, oversized, misnamed and misplaced attachment cleanup | Narrower attachment audit: reports placement against configured folders; also link/name checks |
+| [`Broken Links`](https://community.obsidian.md/plugins/broken-links) | Broken target, heading and block browser; folder/file/link views | Broader checks: file names and path validity; link repair |
+| [`File name length limit`](https://community.obsidian.md/plugins/file-name-length-limit) | Live naming warnings; report includes case collisions; no renaming | Broader audit and repair: renames invalid files; checks links |
+| [`Find orphaned files and broken links`](https://community.obsidian.md/plugins/find-unlinked-files) | Reports orphaned/empty files, folders and uncreated notes; delete/archive | Complementary audit: validates written paths against their targets |
+| [`Link Doctor`](https://community.obsidian.md/plugins/link-doctor) | Broken-link dashboard; Obsidian name matching; empty notes; no edits | Broader path checks: reports non-resolving written paths; repairs links |
+| [`Safe Filename Linter`](https://community.obsidian.md/plugins/safe-filename-linter) | Invalid/troublesome filename character lint | Broader checks: per-platform name/path lengths and links |
+| [`Sync-safe file names`](https://community.obsidian.md/plugins/sync-safe-file-names) | Automatic cross-device character replacement on create/rename | Broader repair: on command; lengths, reserved names, Unicode form; original names retained |
+| [`Vault Link Check`](https://community.obsidian.md/plugins/vault-link-check) | Typo/alias suggestions; separates planned notes from broken links | Alternative repair evidence: git history, renamed folders and aliases; click to apply |
 
 Last searched for similar plugins on 2026-10-26.
 
@@ -111,10 +115,6 @@ Contributions are welcome — see [CONTRIBUTING](./CONTRIBUTING.md) to get set u
 <a href="https://www.buymeacoffee.com/mnaoumov" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
 
 <!-- markdownlint-enable MD033 -->
-
-## My other Obsidian resources
-
-[See my other Obsidian resources](https://github.com/mnaoumov/obsidian-resources).
 
 ## License
 
