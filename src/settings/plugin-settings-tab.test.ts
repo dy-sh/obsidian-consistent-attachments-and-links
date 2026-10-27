@@ -35,9 +35,9 @@ import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
 
 interface CreatedTab {
-  pluginSettingsComponent: PluginSettingsComponent;
-  tab: PluginSettingsTab;
-  toggles: ToggleComponent[];
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly tab: PluginSettingsTab;
+  readonly toggles: ToggleComponent[];
 }
 
 class MockDataHandler implements DataHandler {

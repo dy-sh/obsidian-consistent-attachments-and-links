@@ -42,14 +42,17 @@ import {
 } from './broken-link-fixer.ts';
 
 interface AdapterHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace the vault adapter to exercise platform-specific behavior.
   adapter: unknown;
 }
 
 interface GlobalAppHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace the app binding during setup and restore it during teardown.
   app: unknown;
 }
 
 interface MutablePlatform {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests toggle the platform flag to cover desktop and mobile behavior.
   isDesktopApp: boolean;
 }
 

@@ -96,6 +96,7 @@ interface BrokenLinkFixerConstructorParams {
 }
 
 interface FoundBrokenLink extends BrokenLink {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Candidate discovery fills this field after collecting all missing links.
   candidates: readonly BrokenLinkCandidate[];
 }
 

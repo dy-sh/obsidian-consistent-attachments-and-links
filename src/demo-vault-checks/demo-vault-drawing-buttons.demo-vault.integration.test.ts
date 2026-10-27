@@ -30,14 +30,14 @@ describe('demo vault drawing buttons', () => {
     const result = await evalInObsidian({
       async callback({ app }): Promise<DrawingButtonsResult> {
         interface DemoSetup {
-          checkDrawingAsAttachment: (this: void, app: unknown) => Promise<void>;
-          checkDrawingAsNote: (this: void, app: unknown) => Promise<void>;
-          resetDrawingDemo: (this: void, app: unknown) => Promise<void>;
+          readonly checkDrawingAsAttachment: (this: void, app: unknown) => Promise<void>;
+          readonly checkDrawingAsNote: (this: void, app: unknown) => Promise<void>;
+          readonly resetDrawingDemo: (this: void, app: unknown) => Promise<void>;
         }
 
         interface PluginData {
-          consistencyReportFile?: string;
-          treatAsAttachmentExtensions?: string[];
+          readonly consistencyReportFile?: string;
+          readonly treatAsAttachmentExtensions?: string[];
         }
 
         const PLUGIN_ID = 'consistent-attachments-and-links';

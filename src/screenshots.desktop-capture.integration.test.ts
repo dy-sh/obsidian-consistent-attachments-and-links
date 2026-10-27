@@ -63,15 +63,15 @@ import {
  * A file-explorer row, reduced to the collapse toggle.
  */
 interface CollapsibleFileItem {
-  collapsed?: boolean;
-  setCollapsed?: (this: void, isCollapsed: boolean) => Promise<void>;
+  readonly collapsed?: boolean;
+  readonly setCollapsed?: (this: void, isCollapsed: boolean) => Promise<void>;
 }
 
 /**
  * The file-explorer view, reduced to its rows.
  */
 interface FileExplorerView {
-  fileItems: Record<string, CollapsibleFileItem>;
+  readonly fileItems: Record<string, CollapsibleFileItem>;
 }
 
 const WIDTH_IN_PIXELS = 1200;

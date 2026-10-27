@@ -13,7 +13,7 @@ import type { ConsistentAttachmentsAndLinksComponent } from '../consistency-chec
 import { CheckConsistencyCommandHandler } from './check-consistency-command-handler.ts';
 
 interface CommandHandlerPrivate {
-  execute: () => Promise<void>;
+  readonly execute: () => Promise<void>;
 }
 
 function asPrivate(handler: CheckConsistencyCommandHandler): CommandHandlerPrivate {

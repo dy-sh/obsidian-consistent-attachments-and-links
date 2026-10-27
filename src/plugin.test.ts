@@ -36,24 +36,25 @@ import type { MigratableCollectSettings } from './sibling-plugins/custom-attachm
 import { BrokenLinksView } from './broken-links/broken-links-view.ts';
 
 interface AppGlobal {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace the app binding during setup and restore it during teardown.
   app: AppOriginal;
 }
 
 interface CommandsHolder {
-  commands__: Map<string, Command>;
+  readonly commands__: Map<string, Command>;
 }
 
 interface EventRef {
-  id: string;
+  readonly id: string;
 }
 
 // `getPluginDependencies` is protected on the base, so a test reads it through a probe.
 interface PluginDependenciesProbe {
-  getPluginDependencies: () => PluginDependency[];
+  readonly getPluginDependencies: () => PluginDependency[];
 }
 
 interface PluginPrivate {
-  createTranslationsMap: () => TranslationsMap;
+  readonly createTranslationsMap: () => TranslationsMap;
 }
 
 interface PluginSuggestionComponentParams {
@@ -73,7 +74,7 @@ interface SettingsMigrationComponentParams {
 }
 
 interface SettingTabsHolder {
-  settingTabs__: unknown[];
+  readonly settingTabs__: unknown[];
 }
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');

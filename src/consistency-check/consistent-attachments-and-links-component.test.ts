@@ -40,21 +40,22 @@ interface BackupWarningAlertParams {
 }
 
 interface ComponentPrivate {
-  saveAllOpenNotes: () => Promise<void>;
-  showBackupWarning: () => Promise<void>;
+  readonly saveAllOpenNotes: () => Promise<void>;
+  readonly showBackupWarning: () => Promise<void>;
 }
 
 interface DisplayTextLeaf {
-  getDisplayText: () => string;
-  view: ViewTypeView;
+  readonly getDisplayText: () => string;
+  readonly view: ViewTypeView;
 }
 
 interface GlobalAppHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace the app binding during setup and restore it during teardown.
   app: unknown;
 }
 
 interface LayoutReadyWorkspace {
-  setLayoutReady__: () => void;
+  readonly setLayoutReady__: () => void;
 }
 
 interface ModeHolder {
@@ -62,11 +63,12 @@ interface ModeHolder {
 }
 
 interface SavableView {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This test installs a save spy on a MarkdownView prototype fixture.
   save: () => Promise<void>;
 }
 
 interface ViewTypeView {
-  getViewType: () => string;
+  readonly getViewType: () => string;
 }
 
 // --- Hoisted shared state ---

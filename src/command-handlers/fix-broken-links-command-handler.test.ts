@@ -18,7 +18,7 @@ vi.mock('../broken-links/broken-links-view.ts', () => ({
 }));
 
 interface CommandHandlerPrivate {
-  execute: () => Promise<void>;
+  readonly execute: () => Promise<void>;
 }
 
 describe('FixBrokenLinksCommandHandler', () => {
