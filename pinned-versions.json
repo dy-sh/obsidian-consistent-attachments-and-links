@@ -8,10 +8,9 @@
     "and the pin should be re-examined. `check: null` means no mechanical test exists - it is reported for manual review",
     "on every run instead of going quiet. Every exact pin must have an entry here, and every entry must name a package",
     "that is actually present in the declared section; the script reports either mismatch.",
-    "Known and NOT overridden: GHSA-vfj7-8cjw-p6xm (braces stack exhaustion) affects every braces release (<=3.0.3,",
-    "no patched version), so there is nothing to override it to. It reaches this repo through markdownlint-cli2 ->",
-    "micromatch / globby -> fast-glob and is the only advisory `npm audit` reports here (measured 2026-10-21). Add a",
-    "braces override once a patched release exists."
+    "Historical and NOT overridden: GHSA-vfj7-8cjw-p6xm (braces stack exhaustion) was reported without a patched",
+    "version on 2026-10-21. The installed tree still contains braces 3.0.3 through markdownlint-cli2 -> micromatch,",
+    "but npm ci reports zero vulnerabilities on 2026-10-27. Re-check the advisory before adding an override."
   ],
   "pins": {
     "@puppeteer/browsers": {
