@@ -180,6 +180,8 @@ describe('BrokenLinksView', () => {
 
     expect(view.contentEl.textContent).toContain('"old" is now "new" (2)');
     expect(view.contentEl.textContent).toContain('Evidence for new/a.md.');
+    expect(view.contentEl.querySelector(':scope .consistent-attachments-and-links-broken-links-source .markdown-rendered.code code')).not.toBeNull();
+    expect(view.contentEl.querySelector(':scope .consistent-attachments-and-links-broken-links-candidate .markdown-rendered.code code')).not.toBeNull();
 
     getButton(view, 'Fix', 2).click();
     await waitForAllAsyncOperations();

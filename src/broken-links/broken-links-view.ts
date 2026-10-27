@@ -6,6 +6,7 @@ import type {
 } from 'obsidian';
 
 import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
+import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
 import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import {
@@ -256,13 +257,13 @@ export class BrokenLinksView extends ItemView {
     const rowEl = containerEl.createDiv({ cls: 'consistent-attachments-and-links-broken-links-row' });
     const sourceEl = rowEl.createDiv({ cls: 'consistent-attachments-and-links-broken-links-source' });
     sourceEl.createSpan({ text: `${brokenLink.sourcePath} ${getLocation(brokenLink)}: ` });
-    sourceEl.createEl('code', { text: brokenLink.reference.original });
+    appendCodeBlock(sourceEl, brokenLink.reference.original);
 
     for (const candidate of brokenLink.candidates) {
       const candidateEl = rowEl.createDiv({ cls: 'consistent-attachments-and-links-broken-links-candidate' });
       const candidateLineEl = candidateEl.createDiv();
       candidateLineEl.createSpan({ text: '→ ' });
-      candidateLineEl.createEl('code', { text: candidate.path });
+      appendCodeBlock(candidateLineEl, candidate.path);
       if (brokenLink.candidates.length > 1) {
         new ButtonComponent(candidateLineEl)
           .setButtonText('Use this')
