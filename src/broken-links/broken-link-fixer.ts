@@ -25,20 +25,20 @@ import {
   Platform
 } from 'obsidian';
 
+import type { LinksHandler } from '../consistency-check/links-handler.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type {
   BrokenLinkCandidate,
   GitRename
 } from './broken-link-candidates.ts';
-import type { LinksHandler } from './links-handler.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { getReferenceTargetPath } from '../consistency-check/links-handler.ts';
 import { BrokenLinkCandidateFinder } from './broken-link-candidates.ts';
 import { loadGitRenames } from './git-rename-history.ts';
 import {
   computeNewLinkPath,
   replaceLinkPath
 } from './link-path-rewriter.ts';
-import { getReferenceTargetPath } from './links-handler.ts';
 
 /**
  * Where in a note a broken link is written.

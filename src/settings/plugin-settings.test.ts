@@ -7,7 +7,7 @@ import {
 import {
   PATH_COMPATIBILITY_PLATFORMS,
   PathCompatibilityPlatform
-} from './path-compatibility.ts';
+} from '../path-compatibility/path-compatibility.ts';
 import {
   ExternalAttachmentLinkMode,
   PluginSettings

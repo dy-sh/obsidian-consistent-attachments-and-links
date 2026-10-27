@@ -25,14 +25,14 @@ import {
   vi
 } from 'vitest';
 
+import type { MisplacedAttachmentHandler } from '../misplaced-attachments/misplaced-attachment-handler.ts';
+import type { PathCompatibilityHandler } from '../path-compatibility/path-compatibility-handler.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+import type { PluginSettings } from '../settings/plugin-settings.ts';
 import type { LinksHandler } from './links-handler.ts';
-import type { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
-import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { PluginSettings } from './plugin-settings.ts';
 
+import { MisplacedAttachmentCheckResult } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
-import { MisplacedAttachmentCheckResult } from './misplaced-attachment-handler.ts';
 
 interface BackupWarningAlertParams {
   readonly message: DocumentFragment;
@@ -90,7 +90,7 @@ vi.mock('./links-handler.ts', () => ({
   LinksHandler: class {}
 }));
 
-vi.mock('./misplaced-attachment-handler.ts', () => ({
+vi.mock('../misplaced-attachments/misplaced-attachment-handler.ts', () => ({
   MisplacedAttachmentCheckResult: class {
     public constructor(public readonly mode?: unknown) {}
 

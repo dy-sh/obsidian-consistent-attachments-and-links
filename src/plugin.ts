@@ -10,29 +10,29 @@ import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { PluginBase } from '@mnaoumov/obsidian-lib/plugin/plugin';
 import { PluginEventSourceImpl } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
 
-import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
-import type { MigratableCollectSettings } from './custom-attachment-location.ts';
+import type { MigratableSettings } from './sibling-plugins/advanced-rename-and-delete-handler.ts';
+import type { MigratableCollectSettings } from './sibling-plugins/custom-attachment-location.ts';
 
-import {
-  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
-  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
-} from './advanced-rename-and-delete-handler.ts';
-import { BrokenLinkFixer } from './broken-link-fixer.ts';
-import { BrokenLinksViewComponent } from './broken-links-view-component.ts';
+import { BrokenLinkFixer } from './broken-links/broken-link-fixer.ts';
+import { BrokenLinksViewComponent } from './broken-links/broken-links-view-component.ts';
 import { CheckConsistencyCommandHandler } from './command-handlers/check-consistency-command-handler.ts';
 import { FixBrokenLinksCommandHandler } from './command-handlers/fix-broken-links-command-handler.ts';
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
-import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
+import { ConsistentAttachmentsAndLinksComponent } from './consistency-check/consistent-attachments-and-links-component.ts';
+import { LinksHandler } from './consistency-check/links-handler.ts';
+import { translationsMap } from './i18n/locales/translations-map.ts';
+import { MisplacedAttachmentHandler } from './misplaced-attachments/misplaced-attachment-handler.ts';
+import { PathCompatibilityHandler } from './path-compatibility/path-compatibility-handler.ts';
+import { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
+import { PluginSettingsTab } from './settings/plugin-settings-tab.ts';
+import {
+  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
+} from './sibling-plugins/advanced-rename-and-delete-handler.ts';
 import {
   CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID,
   CUSTOM_ATTACHMENT_LOCATION_PLUGIN_NAME
-} from './custom-attachment-location.ts';
-import { translationsMap } from './i18n/locales/translations-map.ts';
-import { LinksHandler } from './links-handler.ts';
-import { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
-import { PathCompatibilityHandler } from './path-compatibility-handler.ts';
-import { PluginSettingsComponent } from './plugin-settings-component.ts';
-import { PluginSettingsTab } from './plugin-settings-tab.ts';
+} from './sibling-plugins/custom-attachment-location.ts';
 
 const PLUGIN_NAME = 'Consistent Attachments and Links';
 

@@ -53,9 +53,9 @@ import {
   parentFolderPath
 } from '@obsidian-typings/obsidian-public-latest/implementations';
 
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
-import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
+import { ExternalAttachmentLinkMode } from '../settings/plugin-settings.ts';
 
 /**
  * One misplaced attachment, as one reference in one note sees it.

@@ -10,10 +10,10 @@ import {
   vi
 } from 'vitest';
 
-import { openBrokenLinksView } from '../broken-links-view.ts';
+import { openBrokenLinksView } from '../broken-links/broken-links-view.ts';
 import { FixBrokenLinksCommandHandler } from './fix-broken-links-command-handler.ts';
 
-vi.mock('../broken-links-view.ts', () => ({
+vi.mock('../broken-links/broken-links-view.ts', () => ({
   openBrokenLinksView: vi.fn(() => noopAsync())
 }));
 

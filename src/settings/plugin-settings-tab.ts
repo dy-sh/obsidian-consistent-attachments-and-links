@@ -12,7 +12,7 @@ import {
   PATH_COMPATIBILITY_PLATFORM_LABELS,
   PATH_COMPATIBILITY_PLATFORMS,
   PathCompatibilityPlatform
-} from './path-compatibility.ts';
+} from '../path-compatibility/path-compatibility.ts';
 import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
 
 interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {

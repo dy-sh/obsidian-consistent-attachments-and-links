@@ -30,7 +30,7 @@ import {
   vi
 } from 'vitest';
 
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
 const hoisted = vi.hoisted(() => ({
   insensitive: false
@@ -71,14 +71,14 @@ vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { translationsMap } from './i18n/locales/translations-map.ts';
+import { translationsMap } from '../i18n/locales/translations-map.ts';
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { ExternalAttachmentLinkMode } from '../settings/plugin-settings.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import {
   MisplacedAttachmentCheckResult,
   MisplacedAttachmentHandler
 } from './misplaced-attachment-handler.ts';
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
 
 interface SettingsLike {
   externalAttachmentLinkMode: ExternalAttachmentLinkMode;

@@ -46,11 +46,11 @@ import {
 } from '@mnaoumov/obsidian-lib/vault';
 import { getDataAdapterEx } from '@obsidian-typings/obsidian-public-latest/implementations';
 
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type {
   PathCompatibilityPlatform,
   PathCompatibilityViolation
 } from './path-compatibility.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import {
   findPathCompatibilityViolations,

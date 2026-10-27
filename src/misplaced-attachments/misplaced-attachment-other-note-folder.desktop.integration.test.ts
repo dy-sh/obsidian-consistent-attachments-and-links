@@ -35,7 +35,7 @@ import {
   it
 } from 'vitest';
 
-import { downloadReleasedPlugin } from '../scripts/helpers/download-released-plugin.ts';
+import { downloadReleasedPlugin } from '../../scripts/helpers/download-released-plugin.ts';
 
 const CONSISTENCY_COMMAND_ID = 'consistent-attachments-and-links:check-consistency';
 const CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID = 'obsidian-custom-attachment-location';
