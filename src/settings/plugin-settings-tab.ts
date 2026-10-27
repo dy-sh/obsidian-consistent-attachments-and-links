@@ -259,8 +259,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }),
         name: 'Maximum vault root path length',
         render: (setting) => {
-          setting.addNumber((number) => {
-            this.bind({ propertyName: 'maxVaultRootPathLength', valueComponent: number });
+          setting.addNumber(($number) => {
+            this.bind({ propertyName: 'maxVaultRootPathLength', valueComponent: $number });
           });
         }
       }),

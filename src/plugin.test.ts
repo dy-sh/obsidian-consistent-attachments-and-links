@@ -124,7 +124,7 @@ vi.mock('./settings/plugin-settings-component.ts', () => ({
   PluginSettingsComponent: class extends Component {
     public editAndSave = hoisted.editAndSave;
 
-    public on = vi.fn((event: string): EventRef => ({ id: `${event}-ref` }));
+    public on = vi.fn(($event: string): EventRef => ({ id: `${$event}-ref` }));
 
     public settings = hoisted.mockSettings;
 
