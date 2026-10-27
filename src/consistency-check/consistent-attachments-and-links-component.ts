@@ -18,16 +18,16 @@ import {
   setIcon
 } from 'obsidian';
 
-import type { MisplacedAttachmentHandler } from './misplaced-attachment-handler.ts';
-import type { PathCompatibilityHandler } from './path-compatibility-handler.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
+import type { MisplacedAttachmentHandler } from '../misplaced-attachments/misplaced-attachment-handler.ts';
+import type { PathCompatibilityHandler } from '../path-compatibility/path-compatibility-handler.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
+import { MisplacedAttachmentCheckResult } from '../misplaced-attachments/misplaced-attachment-handler.ts';
+import { PathCompatibilityCheckResult } from '../path-compatibility/path-compatibility-handler.ts';
 import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
-import { MisplacedAttachmentCheckResult } from './misplaced-attachment-handler.ts';
-import { PathCompatibilityCheckResult } from './path-compatibility-handler.ts';
 
 interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;

@@ -28,8 +28,8 @@ import {
 import type {
   MisplacedAttachmentCheckResult,
   MisplacedAttachmentHandler
-} from './misplaced-attachment-handler.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
+} from '../misplaced-attachments/misplaced-attachment-handler.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
 interface LinksHandlerCheckConsistencyParams {
   readonly badEmbeds: ConsistencyCheckResult;

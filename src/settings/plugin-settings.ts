@@ -1,14 +1,14 @@
 import { isTreatedAsAttachment } from '@mnaoumov/obsidian-lib/file-system';
 import { PathSettings } from '@mnaoumov/obsidian-lib/path-settings';
 
-import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
-import type { MigratableCollectSettings } from './custom-attachment-location.ts';
+import type { MigratableSettings } from '../sibling-plugins/advanced-rename-and-delete-handler.ts';
+import type { MigratableCollectSettings } from '../sibling-plugins/custom-attachment-location.ts';
 
 import {
   getCurrentPathCompatibilityPlatform,
   PATH_COMPATIBILITY_PLATFORMS,
   PathCompatibilityPlatform
-} from './path-compatibility.ts';
+} from '../path-compatibility/path-compatibility.ts';
 
 /**
  * What the report does with a note's reference to an attachment outside that note's own attachment folder.

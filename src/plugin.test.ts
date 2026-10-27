@@ -30,10 +30,10 @@ import {
   vi
 } from 'vitest';
 
-import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
-import type { MigratableCollectSettings } from './custom-attachment-location.ts';
+import type { MigratableSettings } from './sibling-plugins/advanced-rename-and-delete-handler.ts';
+import type { MigratableCollectSettings } from './sibling-plugins/custom-attachment-location.ts';
 
-import { BrokenLinksView } from './broken-links-view.ts';
+import { BrokenLinksView } from './broken-links/broken-links-view.ts';
 
 interface AppGlobal {
   app: AppOriginal;
@@ -101,7 +101,7 @@ const hoisted = vi.hoisted(() => {
 
 // --- Mocks for the plugin's OWN sibling modules (allowed: not the @mnaoumov libraries / obsidian-test-mocks) ---
 
-vi.mock('./links-handler.ts', () => ({
+vi.mock('./consistency-check/links-handler.ts', () => ({
   LinksHandler: class {
     public constructor(_params: unknown) {
       // No-op.
@@ -109,7 +109,7 @@ vi.mock('./links-handler.ts', () => ({
   }
 }));
 
-vi.mock('./consistent-attachments-and-links-component.ts', () => ({
+vi.mock('./consistency-check/consistent-attachments-and-links-component.ts', () => ({
   // Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it.
   ConsistentAttachmentsAndLinksComponent: class extends Component {
     public constructor(_params: unknown) {
@@ -118,7 +118,7 @@ vi.mock('./consistent-attachments-and-links-component.ts', () => ({
   }
 }));
 
-vi.mock('./plugin-settings-component.ts', () => ({
+vi.mock('./settings/plugin-settings-component.ts', () => ({
   // Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it.
   PluginSettingsComponent: class extends Component {
     public editAndSave = hoisted.editAndSave;
@@ -133,7 +133,7 @@ vi.mock('./plugin-settings-component.ts', () => ({
   }
 }));
 
-vi.mock('./plugin-settings-tab.ts', () => ({
+vi.mock('./settings/plugin-settings-tab.ts', () => ({
   PluginSettingsTab: class {
     public constructor(_params: unknown) {
       // No-op.

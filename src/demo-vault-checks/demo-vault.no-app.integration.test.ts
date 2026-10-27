@@ -9,13 +9,13 @@ import process from 'node:process';
 // and commands with no public API interface, so only the PluginSettings config class
 // is reflected; the plugin's runtime behavior is covered by the other tests.
 registerDemoVaultCoverageSuite({
-  configInterfaces: [{ interfaceName: 'PluginSettings', sourcePath: 'src/plugin-settings.ts' }],
+  configInterfaces: [{ interfaceName: 'PluginSettings', sourcePath: 'src/settings/plugin-settings.ts' }],
   interfaces: [],
   nonTrivialGuard: {
     expectDemoNote: '05 Settings.md',
     expectMember: 'shouldEnsurePathCompatibilityOnEveryPlatform',
     interfaceName: 'PluginSettings',
-    sourcePath: 'src/plugin-settings.ts'
+    sourcePath: 'src/settings/plugin-settings.ts'
   },
   rootFolder: getRootFolder() ?? process.cwd()
 });

@@ -34,8 +34,8 @@ import {
 import type {
   MisplacedAttachmentCheckResult,
   MisplacedAttachmentHandler
-} from './misplaced-attachment-handler.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
+} from '../misplaced-attachments/misplaced-attachment-handler.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
 vi.mock('obsidian', async (importOriginal) => {
   const actual = await importOriginal<typeof import('obsidian')>();

@@ -30,10 +30,10 @@ import {
   vi
 } from 'vitest';
 
+import type { LinksHandler } from '../consistency-check/links-handler.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+import type { PluginSettings } from '../settings/plugin-settings.ts';
 import type { GitRunner } from './git-rename-history.ts';
-import type { LinksHandler } from './links-handler.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { PluginSettings } from './plugin-settings.ts';
 
 import { BrokenLinkEvidenceKind } from './broken-link-candidates.ts';
 import {

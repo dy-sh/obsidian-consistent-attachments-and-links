@@ -5,12 +5,12 @@ import { PluginSettingsComponentBase } from '@mnaoumov/obsidian-lib/components/p
 import { EmptyFolderBehavior } from '@mnaoumov/obsidian-lib/components/rename-delete-handler-component';
 import { pathsValidator } from '@mnaoumov/obsidian-lib/path-settings';
 
-import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
+import type { MigratableSettings } from '../sibling-plugins/advanced-rename-and-delete-handler.ts';
 import type {
   CollectAttachmentUsedByMultipleNotesMode,
   MigratableCollectSettings,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
-} from './custom-attachment-location.ts';
+} from '../sibling-plugins/custom-attachment-location.ts';
 
 import { PluginSettings } from './plugin-settings.ts';
 

@@ -29,9 +29,9 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from './plugin.ts';
+import type { Plugin } from '../plugin.ts';
 
-import { translationsMap } from './i18n/locales/translations-map.ts';
+import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { ExternalAttachmentLinkMode } from './plugin-settings.ts';

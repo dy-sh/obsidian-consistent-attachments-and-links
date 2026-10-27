@@ -8,7 +8,7 @@ import {
   vi
 } from 'vitest';
 
-import type { ConsistentAttachmentsAndLinksComponent } from '../consistent-attachments-and-links-component.ts';
+import type { ConsistentAttachmentsAndLinksComponent } from '../consistency-check/consistent-attachments-and-links-component.ts';
 
 import { FixIncompatiblePathsCommandHandler } from './fix-incompatible-paths-command-handler.ts';
 

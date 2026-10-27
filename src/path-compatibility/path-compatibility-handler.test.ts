@@ -47,10 +47,10 @@ import {
   vi
 } from 'vitest';
 
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { PluginSettings } from './plugin-settings.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+import type { PluginSettings } from '../settings/plugin-settings.ts';
 
-import { translationsMap } from './i18n/locales/translations-map.ts';
+import { translationsMap } from '../i18n/locales/translations-map.ts';
 import {
   PathCompatibilityCheckResult,
   PathCompatibilityHandler
