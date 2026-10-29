@@ -7,6 +7,12 @@ import type {
   WorkspaceLeaf
 } from 'obsidian';
 
+import {
+  CaseInsensitiveFileIndex,
+  getCaseInsensitiveFileIndex,
+  setCaseInsensitiveFileIndex,
+  unsetCaseInsensitiveFileIndex
+} from '@mnaoumov/obsidian-lib/case-insensitive-file-index';
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import {
   noop,
@@ -264,6 +270,50 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(checkParams?.misplacedAttachments).toBeInstanceOf(MisplacedAttachmentCheckResult);
       // The bucket applies the configured mode once the walk is over, so it must be built with it.
       expect(castTo<ModeHolder>(checkParams?.misplacedAttachments).mode).toBe('ReportUnowned');
+    });
+
+    it('should install the case-insensitive file index for the walk only', async () => {
+      const component = createComponent();
+      component.load();
+      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
+      vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+      let indexDuringWalk: CaseInsensitiveFileIndex | null = null;
+      vi.mocked(mockLinksHandler.checkConsistency).mockImplementationOnce(() => {
+        indexDuringWalk = getCaseInsensitiveFileIndex(app);
+        return noopAsync();
+      });
+
+      await component.checkConsistency();
+
+      expect(indexDuringWalk).not.toBeNull();
+      expect(getCaseInsensitiveFileIndex(app)).toBeNull();
+      component.unload();
+    });
+
+    it('should leave an index another plugin installed in place', async () => {
+      const component = createComponent();
+      component.load();
+      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
+      vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+      const otherIndex = new CaseInsensitiveFileIndex(app);
+      setCaseInsensitiveFileIndex(otherIndex);
+      let indexDuringWalk: CaseInsensitiveFileIndex | null = null;
+      vi.mocked(mockLinksHandler.checkConsistency).mockImplementationOnce(() => {
+        indexDuringWalk = getCaseInsensitiveFileIndex(app);
+        return noopAsync();
+      });
+
+      try {
+        await component.checkConsistency();
+
+        expect(indexDuringWalk).toBe(otherIndex);
+        expect(getCaseInsensitiveFileIndex(app)).toBe(otherIndex);
+      } finally {
+        unsetCaseInsensitiveFileIndex(otherIndex);
+        component.unload();
+      }
     });
 
     it('should not reopen the report when it is already open', async () => {

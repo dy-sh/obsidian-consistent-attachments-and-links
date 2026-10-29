@@ -137,7 +137,6 @@ describe('MisplacedAttachmentHandler', () => {
       isTreatedAsAttachment: vi.fn().mockReturnValue(false)
     };
     mockIsNote.mockReturnValue(false);
-    mockIsAtProperAttachmentPath.mockResolvedValue(false);
     handler = new MisplacedAttachmentHandler({
       app,
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
@@ -171,12 +170,7 @@ describe('MisplacedAttachmentHandler', () => {
     await check(attachmentPath, `${noteName}.md`);
   }
 
-  function whenProperPathIs(properPath: null | string): void {
-    if (properPath === null) {
-      mockIsAtProperAttachmentPath.mockResolvedValue(true);
-      return;
-    }
-    mockIsAtProperAttachmentPath.mockResolvedValue(false);
+  function whenProperPathIs(properPath: string): void {
     mockGetAttachmentFilePath.mockResolvedValue(properPath);
   }
 
@@ -195,10 +189,6 @@ describe('MisplacedAttachmentHandler', () => {
     whenProperPathIs('Files/note/img.png');
     const { attachmentFile } = await check('attachments/img.png', 'folder/note.md');
 
-    expect(mockIsAtProperAttachmentPath).toHaveBeenCalledWith(expect.objectContaining({
-      attachmentPathOrFile: attachmentFile,
-      notePathOrFile: 'folder/note.md'
-    }));
     // The duplicate check is skipped: a deduplicated name would never match a folder the attachment is not in.
     expect(mockGetAttachmentFilePath).toHaveBeenCalledWith(expect.objectContaining({
       notePathOrFile: 'folder/note.md',
@@ -242,7 +232,7 @@ describe('MisplacedAttachmentHandler', () => {
 
     expect(misplacedAttachments.size).toBe(0);
     expect(settings.isSharedAttachmentPath).toHaveBeenCalledWith('Shared/img.png');
-    expect(mockIsAtProperAttachmentPath).not.toHaveBeenCalled();
+    expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
 
     await check('Elsewhere/img.png');
     expect(misplacedAttachments.get('note.md')).toHaveLength(1);
@@ -254,16 +244,36 @@ describe('MisplacedAttachmentHandler', () => {
     await check('attachments/img.png');
 
     expect(misplacedAttachments.size).toBe(0);
-    expect(mockIsAtProperAttachmentPath).not.toHaveBeenCalled();
+    expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
   });
 
   it('should skip an attachment already at its proper path, and make its note the proper note', async () => {
-    whenProperPathIs(null);
+    whenProperPathIs('Files/note/img.png');
     await check('Files/note/img.png');
 
     expect(misplacedAttachments.size).toBe(0);
-    expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
     expect(misplacedAttachments.isProperNote('Files/note/img.png', 'note.md')).toBe(true);
+  });
+
+  // An Obsidian deduplication suffix parks the file beside its proper name, in its proper folder.
+  it('should skip an attachment parked under a deduplication suffix in its proper folder', async () => {
+    whenProperPathIs('Files/note/img.png');
+    await check('Files/note/img 1.png');
+
+    expect(misplacedAttachments.size).toBe(0);
+    expect(misplacedAttachments.isProperNote('Files/note/img 1.png', 'note.md')).toBe(true);
+  });
+
+  // Each question is the dominant cost of the report: `Custom Attachment Location` walks every link of the note
+  // to answer one. `isAtProperAttachmentPath` asked first would ask the same question again for every
+  // misplaced attachment, without ever changing the verdict.
+  it('should ask the attachment-path seam exactly once per reference', async () => {
+    whenProperPathIs('Files/note/img.png');
+    await check('attachments/img.png');
+    await check('Files/note/img.png');
+
+    expect(mockGetAttachmentFilePath).toHaveBeenCalledTimes(2);
+    expect(mockIsAtProperAttachmentPath).not.toHaveBeenCalled();
   });
 
   // The judgement is about the FOLDER. An attachment sitting in the right folder under a name the rename
