@@ -75,10 +75,14 @@ const DEMO_VAULT_TEST_FILES = 'src/**/*.demo-vault.integration.test.ts';
 const DEMO_VAULT_TIMEOUT_IN_MILLISECONDS = 600_000;
 
 /**
- * The desktop, Android and performance projects' global setup: the harness's own, plus this plugin's
- * dependency.
+ * The desktop and Android projects' global setup: the harness's own, plus this plugin's dependency.
  */
 const GLOBAL_SETUP_FILE = './scripts/vitest-global-setup.ts';
+
+/**
+ * The performance project's global setup: {@link GLOBAL_SETUP_FILE}'s plugins over a pre-populated corpus.
+ */
+const PERFORMANCE_GLOBAL_SETUP_FILE = './scripts/vitest-global-setup-performance.ts';
 
 export const config = defineObsidianPluginVitestConfig({
   customProjects(context: ObsidianPluginVitestConfigContext): TestProjectConfiguration[] {
@@ -134,5 +138,8 @@ export const config = defineObsidianPluginVitestConfig({
         '@mnaoumov/obsidian-dev-toolkit/integration-test-setup'
       ];
     }
+
+    // The same plugins, over the 37,000-note performance corpus instead of an empty vault.
+    context.desktopPerformance.globalSetup = [PERFORMANCE_GLOBAL_SETUP_FILE];
   }
 });

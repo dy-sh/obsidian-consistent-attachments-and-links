@@ -193,7 +193,8 @@ describe('MisplacedAttachmentHandler', () => {
     expect(mockGetAttachmentFilePath).toHaveBeenCalledWith(expect.objectContaining({
       notePathOrFile: 'folder/note.md',
       oldAttachmentPathOrFile: attachmentFile,
-      shouldSkipDuplicateCheck: true
+      shouldSkipDuplicateCheck: true,
+      shouldSkipGeneratedAttachmentFileName: true
     }));
   });
 

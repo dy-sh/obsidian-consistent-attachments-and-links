@@ -317,13 +317,16 @@ export class MisplacedAttachmentHandler {
     // deliberately not asked first: a `true` from it implies the folders below match, so it could never change
     // the verdict, and each question is the dominant cost of the whole report — `Custom Attachment Location`
     // walks every link of the note to answer it. Asking twice doubled `Check vault consistency` on a 37,000-note
-    // vault (692 s, nearly all of it in that walk).
+    // vault (692 s, nearly all of it in that walk). That walk exists only to generate a NAME, and the verdict keeps
+    // only the folder, so the question is asked folder-only: the resolver computes the folder from the attachment's
+    // own name before any name generation, so the folder is the same either way.
     const properAttachmentPath = await getAttachmentFilePath({
       app: this.app,
       context: AttachmentPathContext.Unknown,
       notePathOrFile: notePath,
       oldAttachmentPathOrFile: attachmentFile,
-      shouldSkipDuplicateCheck: true
+      shouldSkipDuplicateCheck: true,
+      shouldSkipGeneratedAttachmentFileName: true
     });
 
     // `parentFolderPath`, not `dirname`: it answers `/` for the vault root where `dirname` answers `.`, and
