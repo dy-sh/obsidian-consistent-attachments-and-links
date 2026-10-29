@@ -235,14 +235,89 @@ describe('path-compatibility', () => {
       })).toEqual([]);
     });
 
-    it('should report an Obsidian-unsafe character on every platform', () => {
+    it('should name every forbidden character once, in order of first appearance', () => {
+      const violations = findPathCompatibilityViolations({
+        isFolder: false,
+        maxVaultRootPathLength: 10,
+        path: 'notes/a>b<c>d?.md',
+        platforms: [PathCompatibilityPlatform.Windows]
+      });
+
+      expect(violations).toStrictEqual([
+        { characters: ['>', '<', '?'], platform: PathCompatibilityPlatform.Windows, type: PathCompatibilityViolationType.ForbiddenCharacter }
+      ]);
+    });
+
+    // Obsidian's link characters are Obsidian's rule, not a platform's: Windows stores `a[1].pptx` fine.
+    it('should report an Obsidian-unsafe character once, owned by no platform', () => {
       for (const platform of ALL_PLATFORMS) {
-        expect(hasViolation(
-          findPathCompatibilityViolations({ isFolder: false, maxVaultRootPathLength: 10, path: 'notes/a#b.md', platforms: [platform] }),
-          platform,
-          PathCompatibilityViolationType.ForbiddenCharacter
-        )).toBe(true);
+        expect(findPathCompatibilityViolations({
+          isFolder: false,
+          maxVaultRootPathLength: 10,
+          path: 'notes/At A Glance 2025[1].pptx',
+          platforms: [platform]
+        })).toStrictEqual([
+          { characters: ['[', ']'], platform: null, type: PathCompatibilityViolationType.ObsidianForbiddenCharacter }
+        ]);
       }
+
+      expect(findPathCompatibilityViolations({
+        isFolder: false,
+        maxVaultRootPathLength: 10,
+        path: 'notes/a#b^c.md',
+        platforms: ALL_PLATFORMS
+      })).toStrictEqual([
+        { characters: ['#', '^'], platform: null, type: PathCompatibilityViolationType.ObsidianForbiddenCharacter }
+      ]);
+    });
+
+    // `|` is both: Windows refuses it, and Obsidian links do not work with it.
+    it('should report a character both Windows and Obsidian refuse under each', () => {
+      expect(findPathCompatibilityViolations({
+        isFolder: false,
+        maxVaultRootPathLength: 10,
+        path: 'a|b.md',
+        platforms: [PathCompatibilityPlatform.Windows]
+      })).toStrictEqual([
+        { characters: ['|'], platform: null, type: PathCompatibilityViolationType.ObsidianForbiddenCharacter },
+        { characters: ['|'], platform: PathCompatibilityPlatform.Windows, type: PathCompatibilityViolationType.ForbiddenCharacter }
+      ]);
+    });
+
+    it('should not report an Obsidian-unsafe character with no platform enabled', () => {
+      expect(findPathCompatibilityViolations({ isFolder: false, maxVaultRootPathLength: 10, path: 'a[1].md', platforms: [] })).toEqual([]);
+    });
+
+    // 10 + 1 + 249 = 260 against 259, and the name alone is 249 against 255.
+    it('should carry the measured path length, the limit and the vault root it counted', () => {
+      const violations = findPathCompatibilityViolations({
+        isFolder: false,
+        maxVaultRootPathLength: 10,
+        path: `${'a'.repeat(246)}.md`,
+        platforms: [PathCompatibilityPlatform.Windows]
+      });
+
+      expect(violations).toStrictEqual([{
+        measurement: { isInBytes: false, length: 260, limit: 259, vaultRootLength: 10 },
+        platform: PathCompatibilityPlatform.Windows,
+        type: PathCompatibilityViolationType.PathTooLong
+      }]);
+    });
+
+    // 86 CJK characters are 258 bytes.
+    it('should carry a name length in bytes where the platform counts bytes', () => {
+      const violations = findPathCompatibilityViolations({
+        isFolder: false,
+        maxVaultRootPathLength: 10,
+        path: CJK.repeat(86),
+        platforms: [PathCompatibilityPlatform.Android]
+      });
+
+      expect(violations).toStrictEqual([{
+        measurement: { isInBytes: true, length: 258, limit: 255, vaultRootLength: null },
+        platform: PathCompatibilityPlatform.Android,
+        type: PathCompatibilityViolationType.NameTooLong
+      }]);
     });
 
     it('should report a reserved name, with or without an extension, only on Windows', () => {
