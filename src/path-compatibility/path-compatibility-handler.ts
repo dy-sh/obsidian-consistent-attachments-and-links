@@ -44,10 +44,12 @@ import {
   getSafeRenamePath,
   renameSafe
 } from '@mnaoumov/obsidian-lib/vault';
+import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { getDataAdapterEx } from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type {
+  PathCompatibilityMeasurement,
   PathCompatibilityPlatform,
   PathCompatibilityViolation
 } from './path-compatibility.ts';
@@ -117,13 +119,34 @@ interface ResolvedName {
 }
 
 /**
+ * The space: every code point below it is a control character, which the report names as `U+XXXX`.
+ */
+const FIRST_PRINTABLE_CODE_POINT = 0x20;
+
+const HEX_RADIX = 16;
+
+// `U+0000`: the Unicode convention pads to four hex digits.
+const CODE_POINT_HEX_DIGITS = 4;
+
+/**
+ * What a length violation built by hand without its measurement renders: never produced by
+ * `findPathCompatibilityViolations`, which measures every length violation it reports.
+ */
+const NO_MEASUREMENT: PathCompatibilityMeasurement = { isInBytes: false, length: 0, limit: 0, vaultRootLength: null };
+
+/**
  * A lookup rather than a `switch`: exhaustive over the enum by its own type, with no unreachable `default`
  * clause that no test could ever cover.
  */
-const VIOLATION_DESCRIBERS: Record<PathCompatibilityViolationType, (platform: string) => string> = {
-  [PathCompatibilityViolationType.ForbiddenCharacter]: (platform) => t(($) => $.pathCompatibility.violation.forbiddenCharacter, { platform }),
-  [PathCompatibilityViolationType.NameTooLong]: (platform) => t(($) => $.pathCompatibility.violation.nameTooLong, { platform }),
-  [PathCompatibilityViolationType.PathTooLong]: (platform) => t(($) => $.pathCompatibility.violation.pathTooLong, { platform }),
+const VIOLATION_DESCRIBERS: Record<PathCompatibilityViolationType, (platform: string, violation: PathCompatibilityViolation) => string> = {
+  [PathCompatibilityViolationType.ForbiddenCharacter]: (platform, violation) =>
+    t(($) => $.pathCompatibility.violation.forbiddenCharacter, { characters: formatCharacters(violation), platform }),
+  [PathCompatibilityViolationType.NameTooLong]: (platform, violation) =>
+    t(($) => $.pathCompatibility.violation.nameTooLong, { ...formatMeasurement(violation), platform }),
+  [PathCompatibilityViolationType.ObsidianForbiddenCharacter]: (_platform, violation) =>
+    t(($) => $.pathCompatibility.violation.obsidianForbiddenCharacter, { characters: formatCharacters(violation) }),
+  [PathCompatibilityViolationType.PathTooLong]: (platform, violation) =>
+    t(($) => $.pathCompatibility.violation.pathTooLong, { ...formatMeasurement(violation), platform }),
   [PathCompatibilityViolationType.ReservedName]: (platform) => t(($) => $.pathCompatibility.violation.reservedName, { platform }),
   [PathCompatibilityViolationType.TrailingCharacter]: (platform) => t(($) => $.pathCompatibility.violation.trailingCharacter, { platform }),
   [PathCompatibilityViolationType.UnicodeNotNormalized]: () => t(($) => $.pathCompatibility.violation.unicodeNotNormalized)
@@ -608,7 +631,34 @@ function describeItem(app: App, path: string, reportPath: string): string {
 
 function describeViolation(violation: PathCompatibilityViolation): string {
   const platform = violation.platform === null ? '' : PATH_COMPATIBILITY_PLATFORM_LABELS[violation.platform];
-  return VIOLATION_DESCRIBERS[violation.type](platform);
+  return VIOLATION_DESCRIBERS[violation.type](platform, violation);
+}
+
+/*
+ * In backticks, so the report shows `[` rather than starting a link with it. A control character has no
+ * visible form, so it is named by its code point instead.
+ */
+function formatCharacters(violation: PathCompatibilityViolation): string {
+  return (violation.characters ?? []).map((char) => {
+    // A match is never empty, so it always has a first code point.
+    const codePoint = ensureNonNullable(char.codePointAt(0));
+    return codePoint < FIRST_PRINTABLE_CODE_POINT
+      ? `U+${codePoint.toString(HEX_RADIX).toUpperCase().padStart(CODE_POINT_HEX_DIGITS, '0')}`
+      : `\`${char}\``;
+  }).join(', ');
+}
+
+function formatMeasurement(violation: PathCompatibilityViolation): Record<'length' | 'limit' | 'unit' | 'vaultRootLength', number | string> {
+  const measurement = violation.measurement ?? NO_MEASUREMENT;
+  const bytes = t(($) => $.pathCompatibility.violation.bytes);
+  const characters = t(($) => $.pathCompatibility.violation.characters);
+
+  return {
+    length: measurement.length,
+    limit: measurement.limit,
+    unit: measurement.isInBytes ? bytes : characters,
+    vaultRootLength: measurement.vaultRootLength ?? 0
+  };
 }
 
 function getParentPath(file: TAbstractFile): string {

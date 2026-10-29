@@ -38,6 +38,12 @@ export enum PathCompatibilityPlatform {
 export enum PathCompatibilityViolationType {
   ForbiddenCharacter = 'ForbiddenCharacter',
   NameTooLong = 'NameTooLong',
+
+  /**
+   * The name holds a character Obsidian links do not work with (`#`, `^`, `[`, `]`, `|`). Obsidian's rule, not
+   * a platform's: the filesystem stores such a name fine, so naming a platform for it would be false.
+   */
+  ObsidianForbiddenCharacter = 'ObsidianForbiddenCharacter',
   PathTooLong = 'PathTooLong',
   ReservedName = 'ReservedName',
   TrailingCharacter = 'TrailingCharacter',
@@ -75,6 +81,32 @@ export interface FindPathCompatibilityViolationsParams {
    * The platforms whose rules to enforce.
    */
   readonly platforms: readonly PathCompatibilityPlatform[];
+}
+
+/**
+ * A length a path or name was measured at, and the limit it exceeds.
+ */
+export interface PathCompatibilityMeasurement {
+  /**
+   * Whether both numbers count UTF-8 bytes rather than UTF-16 units.
+   */
+  readonly isInBytes: boolean;
+
+  /**
+   * The measured length.
+   */
+  readonly length: number;
+
+  /**
+   * The largest length the platform accepts.
+   */
+  readonly limit: number;
+
+  /**
+   * The vault root length counted into {@link PathCompatibilityMeasurement.length}, before the separator
+   * after it. `null` for a name, which carries no root.
+   */
+  readonly vaultRootLength: null | number;
 }
 
 /**
@@ -126,9 +158,26 @@ export interface PathCompatibilityProfile {
  */
 export interface PathCompatibilityViolation {
   /**
+   * The offending characters, each once, in the order they first appear in the name.
+   *
+   * Set for {@link PathCompatibilityViolationType.ForbiddenCharacter} and
+   * {@link PathCompatibilityViolationType.ObsidianForbiddenCharacter}, so the report can name them.
+   */
+  readonly characters?: readonly string[];
+
+  /**
+   * What was measured and the limit it was measured against.
+   *
+   * Set for {@link PathCompatibilityViolationType.NameTooLong} and
+   * {@link PathCompatibilityViolationType.PathTooLong}, so a reader of the report can verify the verdict.
+   */
+  readonly measurement?: PathCompatibilityMeasurement;
+
+  /**
    * The platform whose rules the path breaks. Another enabled platform may accept the very same path.
    *
    * `null` for a violation no single platform owns, which is
+   * {@link PathCompatibilityViolationType.ObsidianForbiddenCharacter} and
    * {@link PathCompatibilityViolationType.UnicodeNotNormalized}.
    */
   readonly platform: null | PathCompatibilityPlatform;
@@ -297,22 +346,50 @@ const PATH_COMPATIBILITY_PROFILES: Record<PathCompatibilityPlatform, PathCompati
 export function findPathCompatibilityViolations(params: FindPathCompatibilityViolationsParams): PathCompatibilityViolation[] {
   const violations: PathCompatibilityViolation[] = [];
   const name = getName(params.path);
+  const profiles = getProfiles(params.platforms);
 
-  for (const profile of getProfiles(params.platforms)) {
+  /*
+   * Once, with no platform: every platform stores such a name, and only Obsidian's links refuse it. Still
+   * gated on a platform being enabled, because that is what switches the whole check on, and the repair only
+   * replaces these characters under a profile.
+   */
+  const obsidianForbiddenCharacters = findCharacters(name, OBSIDIAN_UNSAFE_FILENAME_CHARS);
+
+  if (profiles.length > 0 && obsidianForbiddenCharacters.length > 0) {
+    violations.push({ characters: obsidianForbiddenCharacters, platform: null, type: PathCompatibilityViolationType.ObsidianForbiddenCharacter });
+  }
+
+  for (const profile of profiles) {
     const maxPathLength = params.isFolder ? profile.maxFolderPathLength : profile.maxFilePathLength;
     const fullPathLength = params.maxVaultRootPathLength + 1 + measure(params.path, profile.shouldMeasureInBytes);
 
     if (fullPathLength > maxPathLength) {
-      violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.PathTooLong });
+      violations.push({
+        measurement: {
+          isInBytes: profile.shouldMeasureInBytes,
+          length: fullPathLength,
+          limit: maxPathLength,
+          vaultRootLength: params.maxVaultRootPathLength
+        },
+        platform: profile.platform,
+        type: PathCompatibilityViolationType.PathTooLong
+      });
     }
 
-    if (measure(name, profile.shouldMeasureInBytes) > profile.maxNameLength) {
-      violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.NameTooLong });
+    const nameLength = measure(name, profile.shouldMeasureInBytes);
+
+    if (nameLength > profile.maxNameLength) {
+      violations.push({
+        measurement: { isInBytes: profile.shouldMeasureInBytes, length: nameLength, limit: profile.maxNameLength, vaultRootLength: null },
+        platform: profile.platform,
+        type: PathCompatibilityViolationType.NameTooLong
+      });
     }
 
-    // Deleting rather than replacing: whatever a forbidden character is replaced with, deleting it changes the name.
-    if (replaceForbiddenCharacters(name, profile, '') !== name) {
-      violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.ForbiddenCharacter });
+    const platformForbiddenCharacters = findCharacters(name, getPlatformForbiddenCharactersRegExp(profile));
+
+    if (platformForbiddenCharacters.length > 0) {
+      violations.push({ characters: platformForbiddenCharacters, platform: profile.platform, type: PathCompatibilityViolationType.ForbiddenCharacter });
     }
 
     if (!profile.hasWindowsNamingRules) {
@@ -496,9 +573,21 @@ function doesFitEveryProfile(basename: string, extension: string, profiles: Path
   });
 }
 
+/*
+ * Each character once, in order of first appearance. `match` on a `g`-flagged regexp returns every match and
+ * ignores `lastIndex`, so the shared constants are safe here.
+ */
+function findCharacters(name: string, regExp: RegExp): string[] {
+  return [...new Set(name.match(regExp))];
+}
+
 function getName(path: string): string {
   const slashIndex = path.lastIndexOf('/');
   return slashIndex === -1 ? path : path.slice(slashIndex + 1);
+}
+
+function getPlatformForbiddenCharactersRegExp(profile: PathCompatibilityProfile): RegExp {
+  return getOsUnsafePathCharsRegExp(profile.hasWindowsNamingRules);
 }
 
 function getProfiles(platforms: readonly PathCompatibilityPlatform[]): PathCompatibilityProfile[] {
@@ -517,7 +606,7 @@ function replaceForbiddenCharacters($string: string, profile: PathCompatibilityP
    * replacement is not expanded as a backreference.
    */
   return $string
-    .replace(getOsUnsafePathCharsRegExp(profile.hasWindowsNamingRules), () => replacement)
+    .replace(getPlatformForbiddenCharactersRegExp(profile), () => replacement)
     .replace(OBSIDIAN_UNSAFE_FILENAME_CHARS, () => replacement);
 }
 

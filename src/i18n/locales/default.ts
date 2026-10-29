@@ -35,9 +35,12 @@ export const defaultTranslations = {
       wouldBecome: 'Would become: `{{newPath}}`'
     },
     violation: {
-      forbiddenCharacter: 'Contains a character {{platform}} does not allow in a name.',
-      nameTooLong: 'Name is too long for {{platform}}.',
-      pathTooLong: 'Path is too long for {{platform}}.',
+      bytes: 'bytes',
+      characters: 'characters',
+      forbiddenCharacter: 'Contains {{characters}}, which {{platform}} does not allow in a name.',
+      nameTooLong: 'Name is {{length}} {{unit}} long, over the {{limit}} {{platform}} allows.',
+      obsidianForbiddenCharacter: 'Contains {{characters}}, which Obsidian links do not work with. The file system stores the name fine.',
+      pathTooLong: 'Path is {{length}} {{unit}} long, over the {{limit}} {{platform}} allows. That counts {{vaultRootLength}} for the vault root and 1 for the separator after it.',
       reservedName: 'Name is reserved on {{platform}}.',
       trailingCharacter: 'Name ends with a dot or a space, which {{platform}} does not allow.',
       unicodeNotNormalized: 'Name is stored on disk in decomposed Unicode form (NFD), not the composed form (NFC) Obsidian uses. Sync, git and backup tools see the two as different names. The repair keeps the name and stores it in NFC.'

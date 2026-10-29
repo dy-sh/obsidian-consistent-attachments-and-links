@@ -55,7 +55,10 @@ import {
   PathCompatibilityCheckResult,
   PathCompatibilityHandler
 } from './path-compatibility-handler.ts';
-import { PathCompatibilityPlatform } from './path-compatibility.ts';
+import {
+  PathCompatibilityPlatform,
+  PathCompatibilityViolationType
+} from './path-compatibility.ts';
 import { UnicodeNormalizationOutcome } from './unicode-name-normalizer.ts';
 
 const hoisted = vi.hoisted(() => ({
@@ -721,11 +724,50 @@ describe('PathCompatibilityHandler', () => {
       createHandler().check(result);
 
       const rendered = result.toString(app, 'report.md');
-      expect(rendered).toContain('Path is too long for Windows.');
-      expect(rendered).toContain('Name is too long for Android.');
-      expect(rendered).toContain('Contains a character Windows does not allow');
+      expect(rendered).toMatch(/Path is \d+ characters long, over the 259 Windows allows\. That counts \d+ for the vault root and 1 for the separator after it\./);
+      expect(rendered).toContain('Name is 607 bytes long, over the 255 Android allows.');
+      expect(rendered).toContain('Contains `<`, `>`, which Windows does not allow in a name.');
       expect(rendered).toContain('Name ends with a dot or a space');
       expect(rendered).toContain('Would become:');
+    });
+
+    // Owner's report, 2026-10-29: `[` and `]` were blamed on Windows, which stores the name fine.
+    it('should blame Obsidian, not a platform, for a character only Obsidian links refuse', () => {
+      setVault(createFile('At A Glance 2025[1].pptx'));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      const rendered = result.toString(app, 'report.md');
+      expect(rendered).toContain('Contains `[`, `]`, which Obsidian links do not work with. The file system stores the name fine.');
+      expect(rendered).not.toContain('Windows');
+    });
+
+    // An entry is public and can be added by hand; a violation built without its details still renders.
+    it('should render a violation that carries no characters or measurement', () => {
+      const result = new PathCompatibilityCheckResult();
+      result.add({
+        newPath: null,
+        path: 'a.md',
+        violations: [
+          { platform: PathCompatibilityPlatform.Windows, type: PathCompatibilityViolationType.ForbiddenCharacter },
+          { platform: PathCompatibilityPlatform.Windows, type: PathCompatibilityViolationType.NameTooLong }
+        ]
+      });
+
+      const rendered = result.toString(app, 'report.md');
+      expect(rendered).toContain('Contains , which Windows does not allow in a name.');
+      expect(rendered).toContain('Name is 0 characters long, over the 0 Windows allows.');
+    });
+
+    it('should name a control character by its code point', () => {
+      mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Linux]);
+      setVault(createFile('a\u{0}b.md'));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      expect(result.toString(app, 'report.md')).toContain('Contains U+0000, which Linux does not allow in a name.');
     });
 
     it('should report a reserved name and a trailing character', () => {
