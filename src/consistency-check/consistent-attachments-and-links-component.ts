@@ -137,7 +137,8 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: ({ item, iterationString }) => `Checking note ${iterationString} - ${item.path}`,
-      items: getMarkdownFilesSorted(this.app),
+      // Never the report itself: see `isConsistencyReportPath`.
+      items: getMarkdownFilesSorted(this.app).filter((note) => !this.pluginSettingsComponent.settings.isConsistencyReportPath(note.path)),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
         await this.linksHandler.checkConsistency({

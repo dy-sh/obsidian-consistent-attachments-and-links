@@ -32,6 +32,20 @@ describe('PluginSettings', () => {
     });
   });
 
+  describe('isConsistencyReportPath', () => {
+    it('should match the configured report and nothing else', () => {
+      const settings = new PluginSettings();
+      expect(settings.isConsistencyReportPath('consistency-report.md')).toBe(true);
+      expect(settings.isConsistencyReportPath('notes/consistency-report.md')).toBe(false);
+    });
+
+    it('should normalize the configured path', () => {
+      const settings = new PluginSettings();
+      settings.consistencyReportFile = '/Reports//consistency.md';
+      expect(settings.isConsistencyReportPath('Reports/consistency.md')).toBe(true);
+    });
+  });
+
   describe('isSharedAttachmentPath', () => {
     it('should match nothing while the list is empty', () => {
       const settings = new PluginSettings();

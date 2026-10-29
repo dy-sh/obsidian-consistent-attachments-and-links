@@ -135,6 +135,7 @@ let previousGlobalApp: unknown;
 const mockSettings = {
   consistencyReportFile: 'report.md',
   externalAttachmentLinkMode: 'ReportUnowned',
+  isConsistencyReportPath: (path: string): boolean => path === 'report.md',
   isPathIgnored: vi.fn((_path: string): boolean => false),
   shouldShowBackupWarning: true
 };
@@ -270,6 +271,21 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(checkParams?.misplacedAttachments).toBeInstanceOf(MisplacedAttachmentCheckResult);
       // The bucket applies the configured mode once the walk is over, so it must be built with it.
       expect(castTo<ModeHolder>(checkParams?.misplacedAttachments).mode).toBe('ReportUnowned');
+    });
+
+    // The report links every attachment it reports: judging it would report its own lines on the next run, each at
+    // the full price of an attachment-path question.
+    it('should never judge the report note itself', async () => {
+      const component = createComponent();
+      const note = strictProxy<TFile>({ path: 'note.md' });
+      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([note, strictProxy<TFile>({ path: 'report.md' })]);
+      vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+
+      await component.checkConsistency();
+
+      const judgedNotes = vi.mocked(mockLinksHandler.checkConsistency).mock.calls.map(([params]) => params.note);
+      expect(judgedNotes).toStrictEqual([note]);
     });
 
     it('should install the case-insensitive file index for the walk only', async () => {

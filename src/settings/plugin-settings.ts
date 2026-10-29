@@ -1,5 +1,6 @@
 import { isTreatedAsAttachment } from '@mnaoumov/obsidian-lib/file-system';
 import { PathSettings } from '@mnaoumov/obsidian-lib/path-settings';
+import { normalizePath } from 'obsidian';
 
 import type { MigratableSettings } from '../sibling-plugins/advanced-rename-and-delete-handler.ts';
 import type { MigratableCollectSettings } from '../sibling-plugins/custom-attachment-location.ts';
@@ -190,6 +191,20 @@ export class PluginSettings {
     };
 
     return PATH_COMPATIBILITY_PLATFORMS.filter((platform) => flags[platform]);
+  }
+
+  /**
+   * Whether a path is the consistency report this plugin writes.
+   *
+   * No walk of notes may judge the report itself. It links every attachment it reports, so a check that read it
+   * would report its own lines on the next run, and judge each of those links at the full price of an
+   * attachment-path question. On a 37,000-note vault whose report held 3,710 links, that was most of the check.
+   *
+   * @param path - The vault path to check.
+   * @returns `true` when the path is the report.
+   */
+  public isConsistencyReportPath(path: string): boolean {
+    return path === normalizePath(this.consistencyReportFile);
   }
 
   /**
