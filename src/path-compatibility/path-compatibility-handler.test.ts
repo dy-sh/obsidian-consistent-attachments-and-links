@@ -130,9 +130,11 @@ const vault = Vault.create2__(strictProxy<DataAdapter>({}));
 const loadedFiles: TAbstractFile[] = [];
 
 const mockSettings = {
+  forbiddenCharacterReplacement: '-',
   getPathCompatibilityPlatforms: vi.fn((): PathCompatibilityPlatform[] => [PathCompatibilityPlatform.Windows]),
   isPathIgnored: vi.fn((_path: string): boolean => false),
   maxVaultRootPathLength: 0,
+  shouldAddOriginalNameAsAlias: true,
   shouldCreateNoteToPreserveOriginalName: false,
   shouldNormalizeUnicodeNames: false,
   sidecarNoteNamePattern: '{{fileName}}.md'
@@ -200,7 +202,9 @@ describe('PathCompatibilityHandler', () => {
     hoisted.basePath = 'C:/vault';
     mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Windows]);
     mockSettings.isPathIgnored.mockReturnValue(false);
+    mockSettings.forbiddenCharacterReplacement = '-';
     mockSettings.maxVaultRootPathLength = 0;
+    mockSettings.shouldAddOriginalNameAsAlias = true;
     mockSettings.shouldCreateNoteToPreserveOriginalName = false;
     mockSettings.shouldNormalizeUnicodeNames = false;
     mockSettings.sidecarNoteNamePattern = '{{fileName}}.md';
@@ -421,6 +425,46 @@ describe('PathCompatibilityHandler', () => {
       const frontmatter: Record<string, unknown> = {};
       await mockProcessFrontmatter.mock.calls[0]?.[0].frontmatterFunction(frontmatter, new AbortController().signal);
       expect(frontmatter['title']).toBe(`${LONG_BASENAME}.md`);
+    });
+
+    it.each([null, ''])('should write the title over an empty one (%j)', async (emptyTitle) => {
+      setVault(createFile(`${LONG_BASENAME}.md`));
+
+      await createHandler().fix();
+
+      const frontmatter: Record<string, unknown> = { title: emptyTitle };
+      await mockProcessFrontmatter.mock.calls[0]?.[0].frontmatterFunction(frontmatter, new AbortController().signal);
+      expect(frontmatter['title']).toBe(`${LONG_BASENAME}.md`);
+    });
+
+    // The title may be the note's true name, which the file name only approximates.
+    it('should keep a title the note already has', async () => {
+      setVault(createFile(`${LONG_BASENAME}.md`));
+
+      await createHandler().fix();
+
+      const frontmatter: Record<string, unknown> = { title: 'The true name: with a colon' };
+      await mockProcessFrontmatter.mock.calls[0]?.[0].frontmatterFunction(frontmatter, new AbortController().signal);
+      expect(frontmatter['title']).toBe('The true name: with a colon');
+    });
+
+    it('should not add an alias when that is turned off', async () => {
+      mockSettings.shouldAddOriginalNameAsAlias = false;
+      setVault(createFile(`${LONG_BASENAME}.md`));
+
+      await createHandler().fix();
+
+      expect(mockAddAlias).not.toHaveBeenCalled();
+      expect(mockProcessFrontmatter).toHaveBeenCalledTimes(1);
+    });
+
+    it('should replace a forbidden character with the configured replacement', async () => {
+      mockSettings.forbiddenCharacterReplacement = '_';
+      setVault(createFile('a?b.md'));
+
+      await createHandler().fix();
+
+      expect(mockRenameSafe).toHaveBeenCalledWith(expect.objectContaining({ newPath: 'a_b.md' }));
     });
 
     it('should write into a folder\'s folder note', async () => {

@@ -11,6 +11,7 @@ import type { PathCompatibilityViolation } from './path-compatibility.ts';
 import {
   findPathCompatibilityViolations,
   getCurrentPathCompatibilityPlatform,
+  getForbiddenCharacterReplacementValidationMessage,
   isUnicodeNormalized,
   measure,
   PathCompatibilityPlatform,
@@ -115,6 +116,29 @@ describe('path-compatibility', () => {
     it('should answer null on a platform with no profile', () => {
       setPlatform({});
       expect(getCurrentPathCompatibilityPlatform()).toBeNull();
+    });
+  });
+
+  describe('getForbiddenCharacterReplacementValidationMessage', () => {
+    it('should accept an ordinary replacement and an empty one', () => {
+      expect(getForbiddenCharacterReplacementValidationMessage('-')).toBe('');
+      expect(getForbiddenCharacterReplacementValidationMessage('_')).toBe('');
+      expect(getForbiddenCharacterReplacementValidationMessage('')).toBe('');
+    });
+
+    it.each([
+      ['a character only Windows refuses', '?'],
+      ['a path separator', '/'],
+      ['a character only Obsidian refuses', '#'],
+      ['a control character', '\u{1}']
+    ])('should refuse %s', (_description, replacement) => {
+      expect(getForbiddenCharacterReplacementValidationMessage(`x${replacement}`)).toContain(replacement);
+    });
+
+    // The library's regexps carry the `g` flag, so a `test` loop would answer differently on a repeat call.
+    it('should answer the same on a repeated call', () => {
+      expect(getForbiddenCharacterReplacementValidationMessage('?')).not.toBe('');
+      expect(getForbiddenCharacterReplacementValidationMessage('?')).not.toBe('');
     });
   });
 
@@ -312,6 +336,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: `CON<x> ${'a'.repeat(400)}`,
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 10,
         parentPath: '',
@@ -323,6 +348,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: 'ordinary note',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 40,
         parentPath: 'notes',
@@ -334,6 +360,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: 'a<b>c:d',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 40,
         parentPath: '',
@@ -341,10 +368,27 @@ describe('path-compatibility', () => {
       })).toBe('a-b-c-d.md');
     });
 
+    it('should replace forbidden characters with the configured replacement', () => {
+      const params = {
+        basename: 'a<b>c:d',
+        extension: 'md',
+        isFolder: false,
+        maxVaultRootPathLength: 40,
+        parentPath: '',
+        platforms: [PathCompatibilityPlatform.Windows]
+      };
+
+      expect(repairName({ ...params, forbiddenCharacterReplacement: '_' })).toBe('a_b_c_d.md');
+      expect(repairName({ ...params, forbiddenCharacterReplacement: '' })).toBe('abcd.md');
+      // A replacer function: a string replacement would expand `$&` into the matched character.
+      expect(repairName({ ...params, forbiddenCharacterReplacement: '$&' })).toBe('a$&b$&c$&d.md');
+    });
+
     it('should replace a forbidden character in the extension too', () => {
       expect(repairName({
         basename: 'note',
         extension: 'm|d',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 40,
         parentPath: '',
@@ -356,6 +400,7 @@ describe('path-compatibility', () => {
       const params = {
         basename: 'CON',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 40,
         parentPath: ''
@@ -370,6 +415,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: 'CON ',
         extension: '',
+        forbiddenCharacterReplacement: '-',
         isFolder: true,
         maxVaultRootPathLength: 40,
         parentPath: '',
@@ -386,6 +432,7 @@ describe('path-compatibility', () => {
     it('should de-reserve an extension-less name whose second segment was hiding the reserved word', () => {
       const params = {
         basename: 'CON.x',
+        forbiddenCharacterReplacement: '-',
         isFolder: true,
         maxVaultRootPathLength: 40,
         parentPath: '',
@@ -400,6 +447,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: 'draft. ',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 40,
         parentPath: '',
@@ -412,6 +460,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: 'note',
         extension: 'md ',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 40,
         parentPath: '',
@@ -423,6 +472,7 @@ describe('path-compatibility', () => {
       const repaired = repairName({
         basename: 'a'.repeat(400),
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 200,
         parentPath: 'folder',
@@ -439,6 +489,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: CJK.repeat(100),
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 10,
         parentPath: '',
@@ -450,6 +501,7 @@ describe('path-compatibility', () => {
       const repaired = repairName({
         basename: EMOJI.repeat(100),
         extension: '',
+        forbiddenCharacterReplacement: '-',
         isFolder: true,
         maxVaultRootPathLength: 10,
         parentPath: '',
@@ -466,6 +518,7 @@ describe('path-compatibility', () => {
       const repaired = repairName({
         basename: `${CJK.repeat(200)}<x>`,
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 10,
         parentPath: '',
@@ -485,6 +538,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: 'anything',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 258,
         parentPath: '',
@@ -498,6 +552,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: '..a',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 253,
         parentPath: '',
@@ -509,6 +564,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: '...',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 10,
         parentPath: '',
@@ -520,6 +576,7 @@ describe('path-compatibility', () => {
       expect(repairName({
         basename: '',
         extension: 'md',
+        forbiddenCharacterReplacement: '-',
         isFolder: false,
         maxVaultRootPathLength: 10,
         parentPath: '',

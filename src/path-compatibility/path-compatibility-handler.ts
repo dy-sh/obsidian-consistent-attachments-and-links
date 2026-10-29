@@ -105,6 +105,7 @@ interface PathCompatibilityHandlerConstructorParams {
  * The limits one pass holds every item to: resolved once, then carried through the repair.
  */
 interface PathCompatibilityScope {
+  readonly forbiddenCharacterReplacement: string;
   readonly maxVaultRootPathLength: number;
   readonly platforms: readonly PathCompatibilityPlatform[];
   readonly shouldNormalizeUnicodeNames: boolean;
@@ -399,6 +400,10 @@ export class PathCompatibilityHandler {
    * Writes the original name into the note that describes the item: the file itself for a markdown note, the
    * folder note for a folder, the sidecar note for anything else.
    *
+   * `title` is written only when the note has none. One it already has is either the note's true name, which
+   * the file name may only approximate, or the original name an earlier repair wrote; overwriting either would
+   * replace it with a name that is already a step removed from it.
+   *
    * @param file - The just-renamed file or folder.
    * @param originalName - The name it had.
    */
@@ -409,17 +414,24 @@ export class PathCompatibilityHandler {
       return;
     }
 
-    await addAlias({
-      alias: originalName,
-      app: this.app,
-      pathOrFile: note,
-      resourceLockComponent: this.resourceLockComponent
-    });
+    if (this.pluginSettingsComponent.settings.shouldAddOriginalNameAsAlias) {
+      await addAlias({
+        alias: originalName,
+        app: this.app,
+        pathOrFile: note,
+        resourceLockComponent: this.resourceLockComponent
+      });
+    }
 
     await processFrontmatter({
       app: this.app,
       frontmatterFunction: (frontmatter) => {
-        frontmatter['title'] = originalName;
+        const title: unknown = frontmatter['title'];
+
+        // `title:` with no value reads as `null`; it is as empty as a missing key.
+        if ((title ?? '') === '') {
+          frontmatter['title'] = originalName;
+        }
       },
       pathOrFile: note,
       pluginNoticeComponent: this.pluginNoticeComponent,
@@ -467,6 +479,7 @@ export class PathCompatibilityHandler {
     return repairName({
       basename: basenameOverride ?? basename,
       extension,
+      forbiddenCharacterReplacement: scope.forbiddenCharacterReplacement,
       isFolder: isFolder(file),
       maxVaultRootPathLength: scope.maxVaultRootPathLength,
       parentPath: getParentPath(file),
@@ -544,6 +557,7 @@ export class PathCompatibilityHandler {
     }
 
     return {
+      forbiddenCharacterReplacement: settings.forbiddenCharacterReplacement,
       maxVaultRootPathLength: this.resolveMaxVaultRootPathLength(),
       platforms,
       shouldNormalizeUnicodeNames: settings.shouldNormalizeUnicodeNames

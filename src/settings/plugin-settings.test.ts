@@ -168,5 +168,11 @@ describe('PluginSettings', () => {
       expect(settings.maxVaultRootPathLength).toBe(0);
       expect(settings.shouldCreateNoteToPreserveOriginalName).toBe(false);
     });
+
+    it('should default the repair to what earlier versions did', () => {
+      const settings = new PluginSettings();
+      expect(settings.forbiddenCharacterReplacement).toBe('-');
+      expect(settings.shouldAddOriginalNameAsAlias).toBe(true);
+    });
   });
 });

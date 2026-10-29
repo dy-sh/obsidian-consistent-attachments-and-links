@@ -266,6 +266,42 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('What ');
+          appendCodeBlock(f, 'Fix incompatible paths');
+          f.appendText(' replaces each forbidden character in a name with, such as ');
+          appendCodeBlock(f, '-');
+          f.appendText(' or ');
+          appendCodeBlock(f, '_');
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText('Leave it empty to delete the character instead. The replacement itself must be valid in a file name on every platform.');
+        }),
+        name: 'Forbidden character replacement',
+        render: (setting) => {
+          setting.addText((text) => {
+            this.bind({ propertyName: 'forbiddenCharacterReplacement', valueComponent: text });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('When an item is renamed, add its original name to the ');
+          appendCodeBlock(f, 'aliases');
+          f.appendText(' of the note that describes it.');
+          f.createEl('br');
+          f.appendText('The original name is also written to ');
+          appendCodeBlock(f, 'title');
+          f.appendText(' when the note has none; a title the note already has is never changed. Turn this off if your notes keep their true name in ');
+          appendCodeBlock(f, 'title');
+          f.appendText(' and you do not want an alias repeating it.');
+        }),
+        name: 'Add the original name as an alias',
+        render: (setting) => {
+          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldAddOriginalNameAsAlias', valueComponent: toggle }));
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('Names the sidecar note that carries an attachment\'s original name, once the attachment has been renamed.');
           f.createEl('br');
           f.appendText('Tokens: ');
