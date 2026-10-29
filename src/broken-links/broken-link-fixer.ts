@@ -8,7 +8,7 @@ import type {
 
 import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
 import {
-  editLinks,
+  editReferences,
   splitSubpath
 } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
@@ -199,9 +199,11 @@ export class BrokenLinkFixer {
 
     for (const sourcePath of sourcePaths) {
       const sourceFixes = fixes.filter((fix) => fix.brokenLink.sourcePath === sourcePath);
-      await editLinks({
+      await editReferences({
         app: this.app,
-        linkConverter: (link) => {
+        pathOrFile: sourcePath,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        referenceConverter: (link) => {
           const fix = sourceFixes.find((sourceFix) => isSameReference(link, sourceFix.brokenLink.reference));
           if (!fix) {
             return;
@@ -211,8 +213,6 @@ export class BrokenLinkFixer {
           const { linkPath } = splitSubpath(fix.brokenLink.reference.link);
           return replaceLinkPath(link.original, computeNewLinkPath({ oldLinkPath: linkPath, sourcePath, targetPath: fix.targetPath }));
         },
-        pathOrFile: sourcePath,
-        pluginNoticeComponent: this.pluginNoticeComponent,
         resourceLockComponent: this.resourceLockComponent
       });
     }
