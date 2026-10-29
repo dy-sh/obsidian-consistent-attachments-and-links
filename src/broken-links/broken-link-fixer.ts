@@ -132,7 +132,11 @@ export class BrokenLinkFixer {
     await loop({
       abortSignal: this.abortSignalComponent.abortSignal,
       buildNoticeMessage: ({ item, iterationString }) => `Looking for broken links ${iterationString} - ${item.path}`,
-      items: getMarkdownFilesSorted(this.app).filter((note) => !this.pluginSettingsComponent.settings.isPathIgnored(note.path)),
+      // Never the consistency report: its links are findings about other notes, not links to repair.
+      items: getMarkdownFilesSorted(this.app).filter((note) =>
+        !this.pluginSettingsComponent.settings.isPathIgnored(note.path)
+        && !this.pluginSettingsComponent.settings.isConsistencyReportPath(note.path)
+      ),
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (note) => {
         const cache = await getCacheSafe(this.app, note.path);

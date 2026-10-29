@@ -37,8 +37,7 @@ import type {
 
 import {
   AttachmentPathContext,
-  getAttachmentFilePath,
-  isAtProperAttachmentPath
+  getAttachmentFilePath
 } from '@mnaoumov/obsidian-lib/attachment-path';
 import {
   getFileOrNull,
@@ -314,20 +313,11 @@ export class MisplacedAttachmentHandler {
       return;
     }
 
-    // Already at its proper path, name and all — or at that path plus an Obsidian deduplication suffix, parked
-    // there because a different file holds the suffix-free slot. Either way nothing would move it.
-    if (
-      await isAtProperAttachmentPath({
-        app: this.app,
-        attachmentPathOrFile: attachmentFile,
-        context: AttachmentPathContext.Unknown,
-        notePathOrFile: notePath
-      })
-    ) {
-      misplacedAttachments.markHomed(attachmentFile.path, notePath);
-      return;
-    }
-
+    // ONE question to the attachment-path seam per reference, never two. `isAtProperAttachmentPath` is
+    // deliberately not asked first: a `true` from it implies the folders below match, so it could never change
+    // the verdict, and each question is the dominant cost of the whole report — `Custom Attachment Location`
+    // walks every link of the note to answer it. Asking twice doubled `Check vault consistency` on a 37,000-note
+    // vault (692 s, nearly all of it in that walk).
     const properAttachmentPath = await getAttachmentFilePath({
       app: this.app,
       context: AttachmentPathContext.Unknown,
@@ -345,8 +335,8 @@ export class MisplacedAttachmentHandler {
     // does not make this section report a folder the collector considers a match.
     const isInsensitive = getDataAdapterEx(this.app).insensitive;
 
-    // Only the base name differs: the attachment IS in its configured folder, and renaming it is not this
-    // plugin's to report.
+    // At its proper path, or only the base name differs (a templated name, or an Obsidian deduplication suffix):
+    // the attachment IS in its configured folder, and renaming it is not this plugin's to report.
     if (fold(parentFolderPath(attachmentFile.path)) === fold(properAttachmentFolderPath)) {
       misplacedAttachments.markHomed(attachmentFile.path, notePath);
       return;

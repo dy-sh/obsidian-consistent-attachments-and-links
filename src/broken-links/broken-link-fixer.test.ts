@@ -88,6 +88,7 @@ let validTargets: Map<Reference, TFile>;
 
 const settings = {
   folderNoteFileNames: [] as string[],
+  isConsistencyReportPath: (path: string): boolean => path === 'consistency-report.md',
   isPathIgnored: vi.fn((_path: string): boolean => false),
   shouldUseGitHistoryForBrokenLinks: false
 };
@@ -202,6 +203,17 @@ describe('BrokenLinkFixer', () => {
       const brokenLinks = await createFixer().findBrokenLinks();
 
       expect(brokenLinks.map((brokenLink) => [brokenLink.targetPath, brokenLink.candidates])).toStrictEqual([['../outside.md', []]]);
+    });
+
+    // The report links every attachment it names, in whatever shape the link generator gives it: its links are
+    // findings about other notes, never links of its own to repair.
+    it('should not look for broken links in the consistency report', async () => {
+      const report = await createNote('consistency-report.md', { links: [createLink('missing.md', 1)] });
+      hoisted.getMarkdownFilesSorted.mockReturnValue([report]);
+
+      const brokenLinks = await createFixer().findBrokenLinks();
+
+      expect(brokenLinks).toStrictEqual([]);
     });
 
     it('should read aliases and titles from the frontmatter', async () => {

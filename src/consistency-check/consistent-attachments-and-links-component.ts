@@ -2,6 +2,8 @@ import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abo
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { App } from 'obsidian';
 
+import { getCaseInsensitiveFileIndex } from '@mnaoumov/obsidian-lib/case-insensitive-file-index';
+import { CaseInsensitiveFileIndexComponent } from '@mnaoumov/obsidian-lib/components/case-insensitive-file-index-component';
 import { LayoutReadyComponent } from '@mnaoumov/obsidian-lib/components/layout-ready-component';
 import { getOrCreateFile } from '@mnaoumov/obsidian-lib/file-system';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
@@ -28,6 +30,13 @@ import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
+
+interface CheckNotesResults {
+  readonly badEmbeds: ConsistencyCheckResult;
+  readonly badFrontmatterLinks: ConsistencyCheckResult;
+  readonly badLinks: ConsistencyCheckResult;
+  readonly misplacedAttachments: MisplacedAttachmentCheckResult;
+}
 
 interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
@@ -66,25 +75,22 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     // Filled by the same walk as the three buckets above: it judges references, and only the ones that
     // resolved, so `LinksHandler` is the one place that has both the reference and its target.
     const misplacedAttachments = new MisplacedAttachmentCheckResult(this.pluginSettingsComponent.settings.externalAttachmentLinkMode);
-    await loop({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => `Checking note ${iterationString} - ${item.path}`,
-      items: getMarkdownFilesSorted(this.app),
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (note) => {
-        await this.linksHandler.checkConsistency({
-          badEmbeds,
-          badFrontmatterLinks,
-          badLinks,
-          misplacedAttachmentHandler: this.misplacedAttachmentHandler,
-          misplacedAttachments,
-          note
-        });
-      },
-      progressBarTitle: 'Checking vault consistency...',
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
+
+    // The walk asks for every referencing note's attachment folder, and on a case-insensitive adapter that is a
+    // case-insensitive lookup of a folder that usually does not exist (`!!files/<note>`). Obsidian answers such a
+    // MISS by scanning the whole vault, which made the lookup 92% of the walk on a 37,000-note vault without
+    // `Custom Attachment Location`. The library's opt-in index answers it in O(1). It is installed only for the
+    // walk, and only when nobody else installed one, so this plugin never replaces or removes another's index.
+    const caseInsensitiveFileIndexComponent = getCaseInsensitiveFileIndex(this.app)
+      ? null
+      : this.addChild(new CaseInsensitiveFileIndexComponent(this.app));
+    try {
+      await this.checkNotes({ badEmbeds, badFrontmatterLinks, badLinks, misplacedAttachments });
+    } finally {
+      if (caseInsensitiveFileIndexComponent) {
+        this.removeChild(caseInsensitiveFileIndexComponent);
+      }
+    }
 
     const notePath = this.pluginSettingsComponent.settings.consistencyReportFile;
 
@@ -119,6 +125,35 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
 
   protected override onLayoutReady(): void {
     invokeAsyncSafely(() => this.showBackupWarning());
+  }
+
+  private async checkNotes(results: CheckNotesResults): Promise<void> {
+    const {
+      badEmbeds,
+      badFrontmatterLinks,
+      badLinks,
+      misplacedAttachments
+    } = results;
+    await loop({
+      abortSignal: this.abortSignalComponent.abortSignal,
+      buildNoticeMessage: ({ item, iterationString }) => `Checking note ${iterationString} - ${item.path}`,
+      // Never the report itself: see `isConsistencyReportPath`.
+      items: getMarkdownFilesSorted(this.app).filter((note) => !this.pluginSettingsComponent.settings.isConsistencyReportPath(note.path)),
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      processItem: async (note) => {
+        await this.linksHandler.checkConsistency({
+          badEmbeds,
+          badFrontmatterLinks,
+          badLinks,
+          misplacedAttachmentHandler: this.misplacedAttachmentHandler,
+          misplacedAttachments,
+          note
+        });
+      },
+      progressBarTitle: 'Checking vault consistency...',
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
   }
 
   private async saveAllOpenNotes(): Promise<void> {
