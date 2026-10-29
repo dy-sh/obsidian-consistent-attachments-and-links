@@ -11,7 +11,7 @@ import type {
 } from 'obsidian';
 
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
-import { editLinks } from '@mnaoumov/obsidian-lib/link';
+import { editReferences } from '@mnaoumov/obsidian-lib/link';
 import { getCacheSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
 import { noop } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
@@ -63,7 +63,7 @@ const hoisted = vi.hoisted(() => ({
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
-  editLinks: vi.fn()
+  editReferences: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', () => ({
@@ -78,7 +78,7 @@ vi.mock('./desktop-git-runner.ts', () => ({
   createDesktopGitRunner: hoisted.createDesktopGitRunner
 }));
 
-const mockEditLinks = vi.mocked(editLinks);
+const mockEditLinks = vi.mocked(editReferences);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 
 let app: AppOriginal;
@@ -272,7 +272,7 @@ describe('BrokenLinkFixer', () => {
       const results: string[] = [];
       mockEditLinks.mockImplementation(async (params) => {
         for (const reference of [createLink('other.md', 0), { ...first, position: { ...first.position, start: { ...first.position.start, offset: 999 } } }, second, frontmatterLink, createFrontmatterLink('other', 'old/d.md'), createLink('old/e.md', 8)]) {
-          const result = await params.linkConverter(reference);
+          const result = await params.referenceConverter(reference);
           if (result) {
             results.push(result);
           }

@@ -65,7 +65,7 @@ vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', () => ({
   getBacklinksForFileSafe: vi.fn(),
   getCacheSafe: vi.fn(),
-  getLinks: vi.fn()
+  getReferences: vi.fn()
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
