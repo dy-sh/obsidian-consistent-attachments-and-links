@@ -101,7 +101,8 @@ The reset button above removes this note too.
 
 - **The name was truncated, not mangled.** The extension is kept whole - a truncated `.png` is a broken file, not a shorter one - and the cut lands on a whole character, never half of one.
 - **The link still works.** The rename goes through Obsidian's own rename, so every link pointing at the file was rewritten. This is the difference between a repair and a breakage.
-- **Nothing was lost.** The original name is written into the note's `aliases` and `title`, so searching for it still finds the note, and you can always read what it used to be called.
+- **Nothing was lost.** The original name is written into the note's `aliases`, and into `title` when the note has none, so searching for it still finds the note, and you can always read what it used to be called. A `title` the note already has is left alone, and **Add the original name as an alias** turns the alias off.
+- **A forbidden character becomes `-`.** **Forbidden character replacement** picks another one, such as `_`, or none at all.
 - **Only the platforms you ticked are enforced.** With just Android on, a name Windows would reject is left alone - and vice versa. Tick every platform your vault reaches, or use **Ensure path compatibility on every platform** and stop thinking about it.
 
 ## Where the original name goes

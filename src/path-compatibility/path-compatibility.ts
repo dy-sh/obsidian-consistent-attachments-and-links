@@ -154,6 +154,12 @@ export interface RepairNameParams {
   readonly extension: string;
 
   /**
+   * What each forbidden character is replaced with. Empty deletes it. Must pass
+   * {@link getForbiddenCharacterReplacementValidationMessage}, or the repair would put back what it removed.
+   */
+  readonly forbiddenCharacterReplacement: string;
+
+  /**
    * Whether the name belongs to a folder.
    */
   readonly isFolder: boolean;
@@ -230,6 +236,9 @@ const LINUX_MAX_PATH_BYTES = 4096;
  */
 const DARWIN_MAX_PATH_BYTES = 1024;
 
+// eslint-disable-next-line no-control-regex -- Control characters are exactly what this matches.
+const CONTROL_CHARS_REG_EXP = /[\u{0}-\u{1F}]/gu;
+
 const PATH_COMPATIBILITY_PROFILES: Record<PathCompatibilityPlatform, PathCompatibilityProfile> = {
   [PathCompatibilityPlatform.Android]: {
     hasWindowsNamingRules: false,
@@ -301,7 +310,8 @@ export function findPathCompatibilityViolations(params: FindPathCompatibilityVio
       violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.NameTooLong });
     }
 
-    if (replaceForbiddenCharacters(name, profile) !== name) {
+    // Deleting rather than replacing: whatever a forbidden character is replaced with, deleting it changes the name.
+    if (replaceForbiddenCharacters(name, profile, '') !== name) {
       violations.push({ platform: profile.platform, type: PathCompatibilityViolationType.ForbiddenCharacter });
     }
 
@@ -350,6 +360,36 @@ export function getCurrentPathCompatibilityPlatform(): null | PathCompatibilityP
 }
 
 /**
+ * Validates the text a forbidden character is replaced with.
+ *
+ * Every platform's set is checked, not only the enabled ones: the toggles can change after the replacement
+ * is chosen, and a replacement one platform refuses would make the repair of that platform produce a name
+ * that is still invalid there.
+ *
+ * @param replacement - The replacement text. Empty is valid and deletes the character.
+ * @returns A message naming the first refused character, or an empty string when the replacement is valid.
+ */
+export function getForbiddenCharacterReplacementValidationMessage(replacement: string): string {
+  const regExps = [
+    getOsUnsafePathCharsRegExp(true, false),
+    getOsUnsafePathCharsRegExp(false, true),
+    getOsUnsafePathCharsRegExp(false, false),
+    OBSIDIAN_UNSAFE_FILENAME_CHARS,
+    CONTROL_CHARS_REG_EXP
+  ];
+
+  // A string iterates by code point, so a surrogate pair is named whole, as the user typed it.
+  for (const char of replacement) {
+    // `replace` rather than `test`, for the reason given at `replaceForbiddenCharacters`.
+    if (regExps.some((regExp) => char.replace(regExp, '') !== char)) {
+      return `The replacement must not contain "${char}": a file name cannot hold it on every platform.`;
+    }
+  }
+
+  return '';
+}
+
+/**
  * Whether a name is in Unicode NFC, the form Obsidian gives every name it creates.
  *
  * @param name - The name as it is stored on disk.
@@ -395,8 +435,8 @@ export function repairName(params: RepairNameParams): null | string {
   let extension = params.extension;
 
   for (const profile of profiles) {
-    basename = replaceForbiddenCharacters(basename, profile);
-    extension = replaceForbiddenCharacters(extension, profile);
+    basename = replaceForbiddenCharacters(basename, profile, params.forbiddenCharacterReplacement);
+    extension = replaceForbiddenCharacters(extension, profile, params.forbiddenCharacterReplacement);
   }
 
   // `note.md ` parses as basename `note` + extension `md `, so trimming only the basename would leave the
@@ -469,15 +509,16 @@ function getProfiles(platforms: readonly PathCompatibilityPlatform[]): PathCompa
  * `replace` rather than `test`: the library's regexps carry the `g` flag, and `test` on a `g`-flagged regexp
  * advances `lastIndex`, so consecutive calls on the same constant answer differently.
  */
-function replaceForbiddenCharacters($string: string, profile: PathCompatibilityProfile): string {
+function replaceForbiddenCharacters($string: string, profile: PathCompatibilityProfile, replacement: string): string {
   /*
-   * One `-` per forbidden character rather than one per run: it keeps the name's visual structure, which is
-   * what makes the repaired name still recognizable to whoever wrote it. Nothing is lost either way — the
-   * original name is preserved in the note's frontmatter.
+   * One replacement per forbidden character rather than one per run: it keeps the name's visual structure,
+   * which is what makes the repaired name still recognizable to whoever wrote it. Nothing is lost either way —
+   * the original name is preserved in the note's frontmatter. A replacer FUNCTION, so a `$&` in the
+   * replacement is not expanded as a backreference.
    */
   return $string
-    .replace(getOsUnsafePathCharsRegExp(profile.hasWindowsNamingRules), '-')
-    .replace(OBSIDIAN_UNSAFE_FILENAME_CHARS, '-');
+    .replace(getOsUnsafePathCharsRegExp(profile.hasWindowsNamingRules), () => replacement)
+    .replace(OBSIDIAN_UNSAFE_FILENAME_CHARS, () => replacement);
 }
 
 /*

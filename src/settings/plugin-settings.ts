@@ -48,6 +48,15 @@ export class PluginSettings {
   public folderNoteFileNames: string[] = [];
 
   /**
+   * What `Fix incompatible paths` replaces each forbidden character with, one replacement per character.
+   * Empty deletes it.
+   *
+   * `-` by default, which is what every earlier version wrote, so an existing vault's next repair names files
+   * the way its earlier repairs did.
+   */
+  public forbiddenCharacterReplacement = '-';
+
+  /**
    * Whether the user has already declined the suggestion to install `Custom Attachment Location`.
    *
    * Only the load-time notice honours it — the settings-tab banner is shown regardless, because a user
@@ -82,6 +91,14 @@ export class PluginSettings {
    * it has a migration waiting and an applied migration is retired with a single write.
    */
   public proposedRenameDeleteSettings: MigratableSettings | null = null;
+
+  /**
+   * Whether a repaired item's original name is added to its note's `aliases`, beside the `title` it is written to
+   * when the note has none.
+   *
+   * On by default. A vault whose notes keep their true name in `title` may not want an alias repeating it.
+   */
+  public shouldAddOriginalNameAsAlias = true;
 
   /**
    * Whether a missing note may be CREATED to hold the original name of a repaired file or folder.

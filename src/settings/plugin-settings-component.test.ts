@@ -64,6 +64,7 @@ describe('PluginSettingsComponent', () => {
       // is used to feed the validator an invalid pattern directly.
       const settings = strictProxy<PluginSettings>({
         excludePaths: [],
+        forbiddenCharacterReplacement: '-',
         includePaths: ['/[/'],
         sharedAttachmentPaths: []
       });
@@ -75,6 +76,7 @@ describe('PluginSettingsComponent', () => {
       const component = createComponent();
       const settings = strictProxy<PluginSettings>({
         excludePaths: ['/(/'],
+        forbiddenCharacterReplacement: '-',
         includePaths: [],
         sharedAttachmentPaths: []
       });
@@ -86,6 +88,7 @@ describe('PluginSettingsComponent', () => {
       const component = createComponent();
       const invalid = strictProxy<PluginSettings>({
         excludePaths: [],
+        forbiddenCharacterReplacement: '-',
         includePaths: [],
         sharedAttachmentPaths: ['Shared', '/(/']
       });
@@ -115,11 +118,25 @@ describe('PluginSettingsComponent', () => {
 
       const invalid = strictProxy<PluginSettings>({
         excludePaths: ['Notes [old'],
+        forbiddenCharacterReplacement: '-',
         includePaths: [],
         sharedAttachmentPaths: []
       });
       const invalidResult = await component.validate(invalid);
       expect(invalidResult.excludePaths).toMatch(/^Invalid glob pattern: Notes \[old \(.+\)$/);
+    });
+
+    it('should reject a forbidden character replacement that a file name cannot hold, and accept an empty one', async () => {
+      const component = createComponent();
+      const invalid = new PluginSettings();
+      invalid.forbiddenCharacterReplacement = ':';
+      const invalidResult = await component.validate(invalid);
+      expect(invalidResult.forbiddenCharacterReplacement).toContain(':');
+
+      const valid = new PluginSettings();
+      valid.forbiddenCharacterReplacement = '';
+      const validResult = await component.validate(valid);
+      expect(validResult.forbiddenCharacterReplacement).toBeUndefined();
     });
   });
 
