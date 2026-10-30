@@ -354,8 +354,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 3 feature command handlers and the library's Undo a bulk operation... handler through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 6 total. The four collect and move commands left for `Custom Attachment Location` in 5.0.0, and Reorganize vault was retired.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(6);
+      // The plugin wires the OpenBugReport and OpenDemoVault handlers plus 3 feature command handlers and the library's Undo a bulk operation... handler through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 7 total. The four collect and move commands left for `Custom Attachment Location` in 5.0.0, and Reorganize vault was retired.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(7);
     });
 
     it('should register the open demo vault command', async () => {
@@ -363,6 +363,13 @@ describe('Plugin', () => {
       const addCommandSpy = vi.spyOn(plugin, 'addCommand');
       await plugin.onload();
       expect(addCommandSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'open-demo-vault' }));
+    });
+
+    it('should register the report bug command', async () => {
+      const plugin = new Plugin(app, manifest);
+      const addCommandSpy = vi.spyOn(plugin, 'addCommand');
+      await plugin.onload();
+      expect(addCommandSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'report-bug' }));
     });
 
     it('should register the fix broken links command and its view', async () => {
@@ -424,7 +431,7 @@ describe('Plugin', () => {
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
-      expect(commands.size).toBe(6);
+      expect(commands.size).toBe(7);
 
       unpublishProviderApi();
       await waitForAllAsyncOperations();
