@@ -24,7 +24,7 @@ interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstr
  * for four of the five: only Windows has a path budget a vault runs into, and only ext4 counts bytes.
  */
 const PATH_COMPATIBILITY_PLATFORM_DESCRIPTIONS = {
-  [PathCompatibilityPlatform.Android]: 'Names of at most 255 bytes. A name of 128 CJK characters is 384 bytes, so this bites long before any character count does.',
+  [PathCompatibilityPlatform.Android]: 'Names of at most 255 bytes. A name of 128 CJK characters is 384 bytes, so this bites long before any character count does. No <>:"?*, which shared storage refuses.',
   [PathCompatibilityPlatform.Ios]: 'Names of at most 255 bytes, and paths of at most 1024.',
   [PathCompatibilityPlatform.Linux]: 'Names of at most 255 bytes.',
   [PathCompatibilityPlatform.MacOs]: 'Names of at most 255 bytes, and paths of at most 1024.',
