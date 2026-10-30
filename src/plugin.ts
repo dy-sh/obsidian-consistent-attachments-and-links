@@ -1,6 +1,7 @@
 import type { PluginDependency } from '@mnaoumov/obsidian-lib/components/plugin-gate-component';
 import type { TranslationsMap } from '@mnaoumov/obsidian-lib/i18n/i18n';
 
+import { OpenBugReportCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-bug-report-command-handler';
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
 import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
 import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
@@ -228,6 +229,11 @@ export class Plugin extends PluginBase {
     );
 
     await this.commandHandlerComponent.registerCommandHandlers(() => [
+      new OpenBugReportCommandHandler({
+        app: this.app,
+        gitHubRepo: 'dy-sh/obsidian-consistent-attachments-and-links',
+        pluginId: this.manifest.id
+      }),
       new OpenDemoVaultCommandHandler({
         app: this.app,
         pluginId: this.manifest.id,
