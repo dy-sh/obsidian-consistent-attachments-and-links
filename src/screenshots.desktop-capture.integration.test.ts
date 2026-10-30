@@ -37,6 +37,7 @@
  */
 
 import { sleep as sleepInNode } from '@mnaoumov/typescript-lib/async';
+import dedent from 'dedent';
 import {
   mkdirSync,
   writeFileSync
@@ -330,16 +331,15 @@ async function buildDiagram(): Promise<Uint8Array> {
  * @returns The note's Markdown.
  */
 function buildSubjectNote(): string {
-  return [
-    '# Meeting',
-    '',
-    `Agreed to follow [the naming note](<${LONG_NAME}.md>) for the layout.`,
-    '',
-    '![diagram](../attachments/diagram.png)',
-    '',
-    `Costs are still open — see [${MISSING_NOTE_NAME}](${MISSING_NOTE_NAME}.md).`,
-    ''
-  ].join('\n');
+  return dedent`
+    # Meeting
+
+    Agreed to follow [the naming note](<${LONG_NAME}.md>) for the layout.
+
+    ![diagram](../attachments/diagram.png)
+
+    Costs are still open — see [${MISSING_NOTE_NAME}](${MISSING_NOTE_NAME}.md).\n
+  `;
 }
 
 /**
