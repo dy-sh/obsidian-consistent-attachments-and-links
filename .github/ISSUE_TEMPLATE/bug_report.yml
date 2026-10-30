@@ -43,6 +43,7 @@ body:
     validations:
       required: true
   - type: input
+    id: plugin-version
     attributes:
       label: Plugin version
       description: ⚠️ Must be the latest version. If not, explain why above.
@@ -50,6 +51,7 @@ body:
     validations:
       required: true
   - type: input
+    id: obsidian-version
     attributes:
       label: Obsidian version
       description: ⚠️ Must be the latest version. If not, explain why above.
@@ -57,11 +59,17 @@ body:
     validations:
       required: true
   - type: input
+    id: operating-system
     attributes:
       label: Operating system
       placeholder: Windows 10
     validations:
       required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: The plugin's Report a bug command fills this in. You can leave it empty.
   - type: textarea
     attributes:
       label: Attachments
