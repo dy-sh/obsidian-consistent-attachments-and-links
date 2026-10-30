@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Filing an issue (for AI agents and humans)
+
+Open issues through the [issue forms](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/issues/new/choose), not as blank issues.
+
+Filing from the CLI or the API (`gh issue create --body`, or an AI agent filing for you) skips the form, and `gh issue create --template` cannot load an issue form. In that case, open the matching form in [`.github/ISSUE_TEMPLATE/`](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/tree/HEAD/.github/ISSUE_TEMPLATE), copy every field as a `### <label>` heading in the form's order, and fill in each one. Always state the plugin version, the Obsidian version and your operating system.
+
 ## The scope line — read this before adding any command
 
 > `Consistent Attachments and Links` **reports** every link whose written path does not itself lead to its target — Obsidian's own resolver is deliberately more forgiving than that — and **repairs** names and paths that a platform the vault is synced to would reject, and, one click at a time, the path written in a link whose target is missing. It does not rewrite links into a style, and it does not place attachments or manage folders; where those matter, it reports and leaves the change to the user.
