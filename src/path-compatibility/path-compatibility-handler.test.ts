@@ -55,6 +55,7 @@ import {
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { PluginSettings } from '../settings/plugin-settings.ts';
 
+import { MAX_REPORTED_ENTRIES_PER_SECTION } from '../consistency-check/report-entry-budget.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import {
   PathCompatibilityCheckResult,
@@ -738,6 +739,19 @@ describe('PathCompatibilityHandler', () => {
   describe('PathCompatibilityCheckResult', () => {
     it('should say so when there is nothing to report', () => {
       expect(new PathCompatibilityCheckResult().toString(app, 'report.md')).toContain('No problems found');
+    });
+
+    it('should list at most the section limit and say how many items it left out', () => {
+      const result = new PathCompatibilityCheckResult();
+      for (let index = 0; index < MAX_REPORTED_ENTRIES_PER_SECTION + 2; index++) {
+        result.add({ newPath: null, path: `item-${String(index)}`, violations: [] });
+      }
+
+      const rendered = result.toString(app, 'report.md');
+      expect(rendered).toContain(`(${String(MAX_REPORTED_ENTRIES_PER_SECTION + 2)} items)`);
+      expect(rendered).toContain(`\`item-${String(MAX_REPORTED_ENTRIES_PER_SECTION - 1)}\``);
+      expect(rendered).not.toContain(`\`item-${String(MAX_REPORTED_ENTRIES_PER_SECTION)}\``);
+      expect(rendered).toContain('Not listed: 2 more.');
     });
 
     it('should render the warning even with no entries', () => {

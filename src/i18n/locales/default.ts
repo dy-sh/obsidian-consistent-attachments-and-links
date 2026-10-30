@@ -45,5 +45,8 @@ export const defaultTranslations = {
       trailingCharacter: 'Name ends with a dot or a space, which {{platform}} does not allow.',
       unicodeNotNormalized: 'Name is stored on disk in decomposed Unicode form (NFD), not the composed form (NFC) Obsidian uses. Sync, git and backup tools see the two as different names. The repair keeps the name and stores it in NFC.'
     }
+  },
+  report: {
+    truncated: '> [!NOTE]\n> Not listed: {{omittedCount}} more. Each section lists its first {{limit}}, so the report stays small enough to open. A list this long usually has one cause, such as an attachment folder setting that no existing attachment matches. Fix it and check again, or leave paths out with \'Exclude paths\'.'
   }
 } as const satisfies DefaultTranslationsBase;

@@ -71,6 +71,8 @@ vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { MAX_REPORTED_ENTRIES_PER_SECTION } from '../consistency-check/report-entry-budget.ts';
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { ExternalAttachmentLinkMode } from '../settings/plugin-settings.ts';
@@ -485,6 +487,21 @@ describe('MisplacedAttachmentCheckResult', () => {
     expect(text).toContain('  - This note\'s attachment folder is `!!files/A`\n');
     // The attachment is linked, never embedded, so the report does not render the image.
     expect(mockGenerateMarkdownLink).toHaveBeenCalledWith(expect.objectContaining({ isEmbed: false, targetPathOrFile: '!!files/B/image.png' }));
+  });
+
+  it('should list at most the section limit and say how many references it left out', () => {
+    const result = new MisplacedAttachmentCheckResult();
+    for (let index = 0; index < MAX_REPORTED_ENTRIES_PER_SECTION + 1; index++) {
+      addEntry(result, 'A.md', `!!files/B/image-${String(index)}.png`);
+    }
+    addEntry(result, 'C.md', '!!files/B/other.png');
+
+    const text = result.toString(app, 'report.md');
+    expect(text).toContain('# Misplaced attachments (2 files)');
+    expect(text).toContain(`[[!!files/B/image-${String(MAX_REPORTED_ENTRIES_PER_SECTION - 1)}.png]]`);
+    expect(text).not.toContain(`[[!!files/B/image-${String(MAX_REPORTED_ENTRIES_PER_SECTION)}.png]]`);
+    expect(text).not.toContain('[[C]]');
+    expect(text).toContain('Not listed: 2 more.');
   });
 
   it('should mark the proper note in the clause', () => {
