@@ -208,6 +208,23 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('When the vault is in a git repository, every run of ');
+          appendCodeBlock(f, 'Fix incompatible paths');
+          f.appendText(' and ');
+          appendCodeBlock(f, 'Fix broken links');
+          f.appendText(' is committed on its own, so one ');
+          appendCodeBlock(f, 'git revert');
+          f.appendText(' or the ');
+          appendCodeBlock(f, 'Undo a bulk operation...');
+          f.appendText(' command undoes it. Desktop only.');
+        }),
+        name: 'Commit bulk operations to git',
+        render: (setting) => {
+          setting.addToggle((toggle) => this.bind({ propertyName: 'shouldCommitBulkOperations', valueComponent: toggle }));
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('Enforce every platform\'s naming rules at once, whatever the individual toggles below say.');
           f.createEl('br');
           f.appendText('Use this when you do not want to reason about which devices this vault reaches.');

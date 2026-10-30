@@ -354,8 +354,8 @@ describe('Plugin', () => {
 
     it('should register all commands with the plugin', async () => {
       const plugin = await createLoadedPlugin();
-      // The plugin wires the OpenDemoVault handler plus 3 feature command handlers through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 5 total. The four collect and move commands left for `Custom Attachment Location` in 5.0.0, and Reorganize vault was retired.
-      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(5);
+      // The plugin wires the OpenDemoVault handler plus 3 feature command handlers and the library's Undo a bulk operation... handler through the real CommandHandlerComponent, and PluginBase auto-registers UnlockActiveNoteCommandHandler, for 6 total. The four collect and move commands left for `Custom Attachment Location` in 5.0.0, and Reorganize vault was retired.
+      expect(castTo<CommandsHolder>(plugin).commands__.size).toBe(6);
     });
 
     it('should register the open demo vault command', async () => {
@@ -424,7 +424,7 @@ describe('Plugin', () => {
     it('should withdraw its own commands once the dependency goes away', async () => {
       const plugin = await createLoadedPlugin();
       const commands = castTo<CommandsHolder>(plugin).commands__;
-      expect(commands.size).toBe(5);
+      expect(commands.size).toBe(6);
 
       unpublishProviderApi();
       await waitForAllAsyncOperations();

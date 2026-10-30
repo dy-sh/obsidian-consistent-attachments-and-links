@@ -1,4 +1,5 @@
 import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
 import type {
@@ -6,6 +7,7 @@ import type {
   Reference
 } from 'obsidian';
 
+import { reportBulkOperationProgress } from '@mnaoumov/obsidian-lib/bulk-operation-progress';
 import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
 import {
   editReferences,
@@ -89,6 +91,7 @@ export interface BrokenLinkFix {
 interface BrokenLinkFixerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
+  readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   readonly linksHandler: LinksHandler;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -107,6 +110,7 @@ interface FoundBrokenLink extends BrokenLink {
 export class BrokenLinkFixer {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
+  private readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   private readonly linksHandler: LinksHandler;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -115,6 +119,7 @@ export class BrokenLinkFixer {
   public constructor(params: BrokenLinkFixerConstructorParams) {
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
+    this.bulkOperationCommitComponent = params.bulkOperationCommitComponent;
     this.linksHandler = params.linksHandler;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -201,25 +206,33 @@ export class BrokenLinkFixer {
     const sourcePaths = new Set(fixes.map((fix) => fix.brokenLink.sourcePath));
     const appliedFixes = new Set<BrokenLinkFix>();
 
-    for (const sourcePath of sourcePaths) {
-      const sourceFixes = fixes.filter((fix) => fix.brokenLink.sourcePath === sourcePath);
-      await editReferences({
-        app: this.app,
-        pathOrFile: sourcePath,
-        pluginNoticeComponent: this.pluginNoticeComponent,
-        referenceConverter: (link) => {
-          const fix = sourceFixes.find((sourceFix) => isSameReference(link, sourceFix.brokenLink.reference));
-          if (!fix) {
-            return;
-          }
+    // One click is one bulk operation, so one revert undoes it. This walk is not a `loop()`, so it refreshes the
+    // commit lock's heartbeat itself, once per note.
+    await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: async () => {
+        for (const sourcePath of sourcePaths) {
+          const sourceFixes = fixes.filter((fix) => fix.brokenLink.sourcePath === sourcePath);
+          await editReferences({
+            app: this.app,
+            pathOrFile: sourcePath,
+            pluginNoticeComponent: this.pluginNoticeComponent,
+            referenceConverter: (link) => {
+              const fix = sourceFixes.find((sourceFix) => isSameReference(link, sourceFix.brokenLink.reference));
+              if (!fix) {
+                return;
+              }
 
-          appliedFixes.add(fix);
-          const { linkPath } = splitSubpath(fix.brokenLink.reference.link);
-          return replaceLinkPath(link.original, computeNewLinkPath({ oldLinkPath: linkPath, sourcePath, targetPath: fix.targetPath }));
-        },
-        resourceLockComponent: this.resourceLockComponent
-      });
-    }
+              appliedFixes.add(fix);
+              const { linkPath } = splitSubpath(fix.brokenLink.reference.link);
+              return replaceLinkPath(link.original, computeNewLinkPath({ oldLinkPath: linkPath, sourcePath, targetPath: fix.targetPath }));
+            },
+            resourceLockComponent: this.resourceLockComponent
+          });
+          reportBulkOperationProgress();
+        }
+      },
+      summary: buildFixSummary(fixes.length, [...sourcePaths])
+    });
 
     return fixes.filter((fix) => appliedFixes.has(fix));
   }
@@ -259,6 +272,19 @@ export class BrokenLinkFixer {
     const { createDesktopGitRunner } = await import('./desktop-git-runner.ts');
     return await loadGitRenames({ runGit: createDesktopGitRunner(adapter.getBasePath()) });
   }
+}
+
+/**
+ * Builds the commit subject of one `Fix broken links` click: the command and its scope.
+ *
+ * @param linkCount - How many links the click asked to fix.
+ * @param sourcePaths - The notes holding them.
+ * @returns `Fix broken links: 1 link in Notes/a.md`, or `Fix broken links: 5 links in 3 notes`.
+ */
+export function buildFixSummary(linkCount: number, sourcePaths: readonly string[]): string {
+  const links = linkCount === 1 ? '1 link' : `${String(linkCount)} links`;
+  const notes = sourcePaths.length === 1 ? ensureNonNullable(sourcePaths[0]) : `${String(sourcePaths.length)} notes`;
+  return `Fix broken links: ${links} in ${notes}`;
 }
 
 /**
