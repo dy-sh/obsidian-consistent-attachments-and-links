@@ -200,6 +200,15 @@ How it is built, and the trap: `check` records every candidate, every note that 
 
 **A reference is never reported twice, and that is structural rather than a filter.** `LinksHandler` resolves each reference exactly once through `resolveValidReferenceTarget` (the resolution half of what used to be `isValidLink`); a reference that resolves to nothing is added to its bad bucket and goes no further, and only the ones that resolved are offered to this check. Do not "restore" a second filter — the guarantee holds because there is one resolution, and a second one is what would let the two drift apart.
 
+## Bulk-operation commits (`shouldCommitBulkOperations`)
+
+`@mnaoumov/obsidian-lib`'s `BulkOperationCommitComponent` wraps the two commands that write: one `Fix incompatible paths` run (`PathCompatibilityHandler.fix`) and one `Fix broken links` click (`BrokenLinkFixer.fix`, a `Fix` or a `Fix all like this`). With the setting on, on desktop, in a git work tree, each becomes `chore: before OP<n>` plus `OP<n>: <summary>`, and the library's `Undo a bulk operation...` command reverts one. Off, the wrapper just runs the operation.
+
+- **Only the loop is wrapped, not the whole of `fix()`.** The early return when no platform is enabled, and the notices after the run, stay outside, so a run that cannot start makes no `chore: before` commit.
+- **`Check vault consistency` is NOT wrapped.** It applies no fix; its one write is the report note, and an `OP<n>` per refresh would fill the history with commits nobody undoes.
+- **The heartbeat**: the path repair is a `loop()`, which refreshes the lease lock itself; the broken-link fix walks its notes by hand, so it calls `reportBulkOperationProgress()` after each.
+- **`bulk-operation-commit.desktop.integration.test.ts` makes the shared temporary vault a git repo for its own duration** and removes `.git` and `.gitignore` afterwards. The config folder is ignored, or Obsidian's own writes there land in the operation's commit and block the revert as local changes. `shouldUseGitHistoryForBrokenLinks` is on by default, so a `.git` left behind would change what the broken-links suites see.
+
 ## Pinned versions
 
 An **exact** version (no `^`) is how a dependency is held back here, and it is also what makes it invisible to `update-npm-deps.ps1`: that script upgrades caret ranges and *silently* skips exact pins. Nothing will ever remind you a pin is stale, so every exact pin carries a release condition — the package, the reason and the command that tests the condition — in [`pinned-versions.json`](pinned-versions.json). **A pin added without an entry there cannot be retired by anyone but its author — do not add one.**

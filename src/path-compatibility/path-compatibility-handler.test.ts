@@ -1,4 +1,8 @@
 import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type {
+  BulkOperationCommitComponent,
+  BulkOperationCommitComponentRunBulkOperationParams
+} from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { LoopParams } from '@mnaoumov/obsidian-lib/loop';
 import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
 import type {
@@ -32,6 +36,7 @@ import {
 } from '@mnaoumov/obsidian-lib/vault';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   TFile,
@@ -126,6 +131,7 @@ const mockLoop = vi.mocked(loop);
 const mockRenameSafe = vi.mocked(renameSafe);
 const mockResolveFolderNote = vi.mocked(resolveFolderNote);
 const mockResolveFolderNoteConfig = vi.mocked(resolveFolderNoteConfig);
+const mockRunBulkOperation = vi.fn(async (params: BulkOperationCommitComponentRunBulkOperationParams<unknown>): Promise<unknown> => await params.operation());
 
 // The fixtures only ever carry the vault, never call through it, so a strict proxy makes any real use throw
 // rather than quietly succeed.
@@ -169,6 +175,7 @@ function createHandler(): PathCompatibilityHandler {
   return new PathCompatibilityHandler({
     abortSignalComponent: strictProxy<AbortSignalComponent>({ abortSignal: new AbortController().signal }),
     app,
+    bulkOperationCommitComponent: strictProxy<BulkOperationCommitComponent>({ runBulkOperation: castTo<BulkOperationCommitComponent['runBulkOperation']>(mockRunBulkOperation) }),
     pluginNoticeComponent: mockPluginNoticeComponent,
     pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ settings: castTo<PluginSettings>(mockSettings) }),
     resourceLockComponent: castTo<null | ResourceLockComponent>(null)
@@ -327,8 +334,33 @@ describe('PathCompatibilityHandler', () => {
 
       expect(mockRenameSafe).not.toHaveBeenCalled();
       expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith(expect.stringContaining('No platforms are selected'));
+      expect(mockRunBulkOperation).not.toHaveBeenCalled();
     });
 
+    it('should run the repair as one bulk operation, with the renames inside it', async () => {
+      setVault(createFile(`${LONG_BASENAME}.md`));
+      let isInsideOperation = false;
+      mockRunBulkOperation.mockImplementationOnce(async (params) => {
+        isInsideOperation = true;
+        try {
+          return await params.operation();
+        } finally {
+          isInsideOperation = false;
+        }
+      });
+      const renamedInsideOperation: boolean[] = [];
+      const renameImplementation = mockRenameSafe.getMockImplementation();
+      mockRenameSafe.mockImplementationOnce(async (params) => {
+        renamedInsideOperation.push(isInsideOperation);
+        return await ensureNonNullable(renameImplementation)(params);
+      });
+
+      await createHandler().fix();
+
+      expect(mockRunBulkOperation).toHaveBeenCalledTimes(1);
+      expect(mockRunBulkOperation.mock.calls[0]?.[0].summary).toBe('Fix incompatible paths in the entire vault');
+      expect(renamedInsideOperation).toStrictEqual([true]);
+    });
     it('should rename an offending file and report the count', async () => {
       setVault(createFile(`${LONG_BASENAME}.md`));
 

@@ -96,5 +96,7 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
 
 - `shouldShowBackupWarning`
   - show the one-time backup warning about the commands that rename files. It turns itself off once you have seen it.
+- `shouldCommitBulkOperations` (**Commit bulk operations to git**)
+  - when the vault is in a git repository, commit each run of **Fix Incompatible Paths** and each **Fix** / **Fix all like this** click of **Fix broken links** on its own: first `chore: before OP<n>` with whatever was already pending, then `OP<n>: <summary>` with exactly what the run changed. `git revert` of that commit, or the **Undo a bulk operation...** command, undoes the run. Off by default; desktop only.
 
 Change any of these, then work through [03 Check vault consistency](<./03 Check vault consistency.md>) and [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>) to watch them take effect.

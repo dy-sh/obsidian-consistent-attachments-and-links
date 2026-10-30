@@ -12,6 +12,7 @@
  */
 
 import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
 import type {
@@ -98,6 +99,7 @@ export interface PathCompatibilityEntry {
 interface PathCompatibilityHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
+  readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resourceLockComponent: null | ResourceLockComponent;
@@ -139,14 +141,10 @@ const NO_MEASUREMENT: PathCompatibilityMeasurement = { isInBytes: false, length:
  * clause that no test could ever cover.
  */
 const VIOLATION_DESCRIBERS: Record<PathCompatibilityViolationType, (platform: string, violation: PathCompatibilityViolation) => string> = {
-  [PathCompatibilityViolationType.ForbiddenCharacter]: (platform, violation) =>
-    t(($) => $.pathCompatibility.violation.forbiddenCharacter, { characters: formatCharacters(violation), platform }),
-  [PathCompatibilityViolationType.NameTooLong]: (platform, violation) =>
-    t(($) => $.pathCompatibility.violation.nameTooLong, { ...formatMeasurement(violation), platform }),
-  [PathCompatibilityViolationType.ObsidianForbiddenCharacter]: (_platform, violation) =>
-    t(($) => $.pathCompatibility.violation.obsidianForbiddenCharacter, { characters: formatCharacters(violation) }),
-  [PathCompatibilityViolationType.PathTooLong]: (platform, violation) =>
-    t(($) => $.pathCompatibility.violation.pathTooLong, { ...formatMeasurement(violation), platform }),
+  [PathCompatibilityViolationType.ForbiddenCharacter]: (platform, violation) => t(($) => $.pathCompatibility.violation.forbiddenCharacter, { characters: formatCharacters(violation), platform }),
+  [PathCompatibilityViolationType.NameTooLong]: (platform, violation) => t(($) => $.pathCompatibility.violation.nameTooLong, { ...formatMeasurement(violation), platform }),
+  [PathCompatibilityViolationType.ObsidianForbiddenCharacter]: (_platform, violation) => t(($) => $.pathCompatibility.violation.obsidianForbiddenCharacter, { characters: formatCharacters(violation) }),
+  [PathCompatibilityViolationType.PathTooLong]: (platform, violation) => t(($) => $.pathCompatibility.violation.pathTooLong, { ...formatMeasurement(violation), platform }),
   [PathCompatibilityViolationType.ReservedName]: (platform) => t(($) => $.pathCompatibility.violation.reservedName, { platform }),
   [PathCompatibilityViolationType.TrailingCharacter]: (platform) => t(($) => $.pathCompatibility.violation.trailingCharacter, { platform }),
   [PathCompatibilityViolationType.UnicodeNotNormalized]: () => t(($) => $.pathCompatibility.violation.unicodeNotNormalized)
@@ -207,6 +205,7 @@ export class PathCompatibilityCheckResult {
 export class PathCompatibilityHandler {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
+  private readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly resourceLockComponent: null | ResourceLockComponent;
@@ -215,6 +214,7 @@ export class PathCompatibilityHandler {
   public constructor(params: PathCompatibilityHandlerConstructorParams) {
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
+    this.bulkOperationCommitComponent = params.bulkOperationCommitComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.resourceLockComponent = params.resourceLockComponent;
@@ -274,36 +274,43 @@ export class PathCompatibilityHandler {
     const collidingPaths: string[] = [];
     const unrepairablePaths: string[] = [];
 
-    await loop({
-      abortSignal: this.abortSignalComponent.abortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => t(($) => $.pathCompatibility.progressBar.message, { iterationString, path: item.path }),
-      items: this.getSortedAbstractFiles(),
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (file) => {
-        const outcome = await this.fixFile(file, scope);
+    // One run is one bulk operation, so one revert undoes it. Each `loop()` item refreshes the commit lock's
+    // heartbeat on its own.
+    await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: async () => {
+        await loop({
+          abortSignal: this.abortSignalComponent.abortSignal,
+          buildNoticeMessage: ({ item, iterationString }) => t(($) => $.pathCompatibility.progressBar.message, { iterationString, path: item.path }),
+          items: this.getSortedAbstractFiles(),
+          pluginNoticeComponent: this.pluginNoticeComponent,
+          processItem: async (file) => {
+            const outcome = await this.fixFile(file, scope);
 
-        switch (outcome) {
-          case FixOutcome.Collision: {
-            collidingPaths.push(file.path);
+            switch (outcome) {
+              case FixOutcome.Collision: {
+                collidingPaths.push(file.path);
 
-            break;
-          }
-          case FixOutcome.Repaired: {
-            repairedCount++;
+                break;
+              }
+              case FixOutcome.Repaired: {
+                repairedCount++;
 
-            break;
-          }
-          case FixOutcome.Unrepairable: {
-            unrepairablePaths.push(file.path);
+                break;
+              }
+              case FixOutcome.Unrepairable: {
+                unrepairablePaths.push(file.path);
 
-            break;
-          }
-            // No default
-        }
+                break;
+              }
+                // No default
+            }
+          },
+          progressBarTitle: t(($) => $.pathCompatibility.progressBar.title),
+          shouldContinueOnError: true,
+          shouldShowProgressBar: true
+        });
       },
-      progressBarTitle: t(($) => $.pathCompatibility.progressBar.title),
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
+      summary: 'Fix incompatible paths in the entire vault'
     });
 
     this.pluginNoticeComponent.showNotice(

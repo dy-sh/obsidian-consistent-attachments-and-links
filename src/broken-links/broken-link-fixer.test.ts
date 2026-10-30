@@ -1,4 +1,8 @@
 import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type {
+  BulkOperationCommitComponent,
+  BulkOperationCommitComponentRunBulkOperationParams
+} from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponentDelayedNotice } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type {
   App as AppOriginal,
@@ -10,10 +14,14 @@ import type {
   TFile
 } from 'obsidian';
 
+import { reportBulkOperationProgress } from '@mnaoumov/obsidian-lib/bulk-operation-progress';
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import { editReferences } from '@mnaoumov/obsidian-lib/link';
 import { getCacheSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
-import { noop } from '@mnaoumov/typescript-lib/function';
+import {
+  noop,
+  noopAsync
+} from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
@@ -38,7 +46,8 @@ import type { GitRunner } from './git-rename-history.ts';
 import { BrokenLinkEvidenceKind } from './broken-link-candidates.ts';
 import {
   BrokenLinkFixer,
-  BrokenLinkKind
+  BrokenLinkKind,
+  buildFixSummary
 } from './broken-link-fixer.ts';
 
 interface AdapterHolder {
@@ -66,6 +75,10 @@ vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
   editReferences: vi.fn()
 }));
 
+vi.mock('@mnaoumov/obsidian-lib/bulk-operation-progress', () => ({
+  reportBulkOperationProgress: vi.fn()
+}));
+
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', () => ({
   getCacheSafe: vi.fn()
 }));
@@ -80,6 +93,8 @@ vi.mock('./desktop-git-runner.ts', () => ({
 
 const mockEditLinks = vi.mocked(editReferences);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
+const mockReportBulkOperationProgress = vi.mocked(reportBulkOperationProgress);
+const mockRunBulkOperation = vi.fn(async (params: BulkOperationCommitComponentRunBulkOperationParams<unknown>): Promise<unknown> => await params.operation());
 
 let app: AppOriginal;
 let previousGlobalApp: unknown;
@@ -97,6 +112,7 @@ function createFixer(): BrokenLinkFixer {
   return new BrokenLinkFixer({
     abortSignalComponent: strictProxy<AbortSignalComponent>({ abortSignal: new AbortController().signal }),
     app,
+    bulkOperationCommitComponent: strictProxy<BulkOperationCommitComponent>({ runBulkOperation: castTo<BulkOperationCommitComponent['runBulkOperation']>(mockRunBulkOperation) }),
     linksHandler: strictProxy<LinksHandler>({
       resolveValidReferenceTarget: vi.fn((reference: Reference): Promise<null | TFile> => Promise.resolve(validTargets.get(reference) ?? null))
     }),
@@ -304,6 +320,42 @@ describe('BrokenLinkFixer', () => {
       expect(mockEditLinks.mock.calls.map(([params]) => params.pathOrFile)).toStrictEqual(['dir/note.md', 'other.md']);
       expect(results).toStrictEqual(['[B](../new/b.md#H)', '[[c.md]]', '[[d.md]]']);
       expect(applied).toStrictEqual(fixes.slice(0, 3));
+    });
+
+    it('should apply one click as one bulk operation, refreshing its heartbeat once per note', async () => {
+      const link = createLink('old/b.md', 1);
+      let isInsideOperation = false;
+      mockRunBulkOperation.mockImplementationOnce(async (params) => {
+        isInsideOperation = true;
+        try {
+          return await params.operation();
+        } finally {
+          isInsideOperation = false;
+        }
+      });
+      const editedInsideOperation: boolean[] = [];
+      mockEditLinks.mockImplementation(() => {
+        editedInsideOperation.push(isInsideOperation);
+        return noopAsync();
+      });
+
+      await createFixer().fix([
+        { brokenLink: { candidates: [], isTargetFound: false, kind: BrokenLinkKind.Link, reference: link, sourcePath: 'a.md', targetPath: 'old/b.md' }, targetPath: 'b.md' },
+        { brokenLink: { candidates: [], isTargetFound: false, kind: BrokenLinkKind.Link, reference: link, sourcePath: 'c.md', targetPath: 'old/b.md' }, targetPath: 'b.md' }
+      ]);
+
+      expect(mockRunBulkOperation).toHaveBeenCalledTimes(1);
+      expect(mockRunBulkOperation.mock.calls[0]?.[0].summary).toBe('Fix broken links: 2 links in 2 notes');
+      expect(editedInsideOperation).toStrictEqual([true, true]);
+      expect(mockReportBulkOperationProgress).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('buildFixSummary', () => {
+    it('should name the note when there is one, and count them otherwise', () => {
+      expect(buildFixSummary(1, ['Notes/a.md'])).toBe('Fix broken links: 1 link in Notes/a.md');
+      expect(buildFixSummary(3, ['Notes/a.md'])).toBe('Fix broken links: 3 links in Notes/a.md');
+      expect(buildFixSummary(5, ['a.md', 'b.md', 'c.md'])).toBe('Fix broken links: 5 links in 3 notes');
     });
   });
 });

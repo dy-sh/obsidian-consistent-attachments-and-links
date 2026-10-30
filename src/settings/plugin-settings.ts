@@ -102,6 +102,14 @@ export class PluginSettings {
   public shouldAddOriginalNameAsAlias = true;
 
   /**
+   * Whether `Fix incompatible paths` and `Fix broken links` record each run as git commits (`chore: before OP<n>`,
+   * then `OP<n>: <summary>`), so `git revert` or `Undo a bulk operation...` undoes it.
+   *
+   * Off by default, and acting only on desktop for a vault inside a git work tree.
+   */
+  public shouldCommitBulkOperations = false;
+
+  /**
    * Whether a missing note may be CREATED to hold the original name of a repaired file or folder.
    *
    * Off by default: a folder with no folder note, and an attachment with no sidecar, are reported instead.

@@ -2,6 +2,8 @@ import type { PluginDependency } from '@mnaoumov/obsidian-lib/components/plugin-
 import type { TranslationsMap } from '@mnaoumov/obsidian-lib/i18n/i18n';
 
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
+import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/plugin-settings-tab-component';
 import { PluginSuggestionComponent } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
 import { SettingsMigrationComponent } from '@mnaoumov/obsidian-lib/components/settings-migration-component';
@@ -167,6 +169,20 @@ export class Plugin extends PluginBase {
       })
     );
 
+    // Off by default, and active only on desktop for a vault inside a git work tree. The callback is read per
+    // operation, so toggling the setting applies to the next run.
+    function isBulkOperationCommitEnabled(): boolean {
+      return pluginSettingsComponent.settings.shouldCommitBulkOperations;
+    }
+    const bulkOperationCommitComponent = this.addChild(
+      new BulkOperationCommitComponent({
+        app: this.app,
+        isEnabled: isBulkOperationCommitEnabled,
+        pluginId: this.manifest.id,
+        pluginNoticeComponent: this.pluginNoticeComponent
+      })
+    );
+
     const misplacedAttachmentHandler = new MisplacedAttachmentHandler({
       app: this.app,
       pluginSettingsComponent
@@ -175,6 +191,7 @@ export class Plugin extends PluginBase {
     const pathCompatibilityHandler = new PathCompatibilityHandler({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
+      bulkOperationCommitComponent,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent,
       resourceLockComponent: this.resourceLockComponent
@@ -195,6 +212,7 @@ export class Plugin extends PluginBase {
     const brokenLinkFixer = new BrokenLinkFixer({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
+      bulkOperationCommitComponent,
       linksHandler,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent,
@@ -218,7 +236,8 @@ export class Plugin extends PluginBase {
       }),
       new CheckConsistencyCommandHandler(consistentAttachmentsAndLinksComponent),
       new FixBrokenLinksCommandHandler(this.app),
-      new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent)
+      new FixIncompatiblePathsCommandHandler(consistentAttachmentsAndLinksComponent),
+      new UndoBulkOperationCommandHandler({ bulkOperationCommitComponent, isEnabled: isBulkOperationCommitEnabled })
     ]);
   }
 }
