@@ -586,8 +586,13 @@ function getName(path: string): string {
   return slashIndex === -1 ? path : path.slice(slashIndex + 1);
 }
 
+/*
+ * Both flags explicitly: the library defaults an omitted one to the platform RUNNING the check, which would make
+ * the Android profile's verdict depend on where the check runs rather than on the profile. Android's shared
+ * storage refuses `* ? < > "` too: Obsidian Sync itself skips such a remote name on Android.
+ */
 function getPlatformForbiddenCharactersRegExp(profile: PathCompatibilityProfile): RegExp {
-  return getOsUnsafePathCharsRegExp(profile.hasWindowsNamingRules);
+  return getOsUnsafePathCharsRegExp(profile.hasWindowsNamingRules, profile.platform === PathCompatibilityPlatform.Android);
 }
 
 function getProfiles(platforms: readonly PathCompatibilityPlatform[]): PathCompatibilityProfile[] {

@@ -384,7 +384,36 @@ describe('path-compatibility', () => {
 
       expect(hasViolation(violations, PathCompatibilityPlatform.Android, PathCompatibilityViolationType.NameTooLong)).toBe(true);
       expect(hasViolation(violations, PathCompatibilityPlatform.Windows, PathCompatibilityViolationType.ForbiddenCharacter)).toBe(true);
-      expect(hasViolation(violations, PathCompatibilityPlatform.Android, PathCompatibilityViolationType.ForbiddenCharacter)).toBe(false);
+      expect(hasViolation(violations, PathCompatibilityPlatform.Android, PathCompatibilityViolationType.ForbiddenCharacter)).toBe(true);
+      // 127 UTF-16 units: the CJK name is over Android's 255 bytes and inside Windows' 255 characters.
+      expect(hasViolation(violations, PathCompatibilityPlatform.Windows, PathCompatibilityViolationType.NameTooLong)).toBe(false);
+    });
+
+    // Each profile's set, whatever platform runs the check: a vault is synced, so the running one is not the one that matters.
+    describe.each([
+      ['desktop', {}],
+      ['Android', { isAndroidApp: true }],
+      ['Windows', { isWin: true }]
+    ])('when running on %s', (_runningPlatform, overrides) => {
+      it.each([
+        [PathCompatibilityPlatform.Android, 'a<b?c*d".md', ['<', '?', '*', '"']],
+        [PathCompatibilityPlatform.Ios, 'a<b?c*d".md', []],
+        [PathCompatibilityPlatform.Linux, 'a<b?c*d".md', []],
+        [PathCompatibilityPlatform.MacOs, 'a<b?c*d".md', []],
+        [PathCompatibilityPlatform.Windows, 'a<b?c*d".md', ['<', '?', '*', '"']],
+        [PathCompatibilityPlatform.Android, 'a:b.md', [':']],
+        [PathCompatibilityPlatform.Ios, 'a:b.md', [':']],
+        [PathCompatibilityPlatform.Linux, 'a:b.md', [':']],
+        [PathCompatibilityPlatform.MacOs, 'a:b.md', [':']],
+        [PathCompatibilityPlatform.Windows, 'a:b.md', [':']]
+      ])('should judge %s by its own forbidden characters in %s', (platform, path, expectedCharacters) => {
+        setPlatform(overrides);
+
+        const violation = findPathCompatibilityViolations({ isFolder: false, maxVaultRootPathLength: 10, path, platforms: [platform] })
+          .find((candidate) => candidate.type === PathCompatibilityViolationType.ForbiddenCharacter);
+
+        expect(violation?.characters ?? []).toEqual(expectedCharacters);
+      });
     });
 
     // The vault root is part of every path, so raising the budget is what makes an over-long path fit.
