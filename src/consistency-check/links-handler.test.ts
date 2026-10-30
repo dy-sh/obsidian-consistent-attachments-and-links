@@ -7,6 +7,7 @@ import type {
 } from 'obsidian';
 
 import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
+import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
   generateMarkdownLink,
   splitSubpath
@@ -24,6 +25,7 @@ import {
   resolveSubpath
 } from 'obsidian';
 import {
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -36,6 +38,8 @@ import type {
   MisplacedAttachmentHandler
 } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+
+import { translationsMap } from '../i18n/locales/translations-map.ts';
 
 vi.mock('obsidian', async (importOriginal) => {
   const actual = await importOriginal<typeof import('obsidian')>();
@@ -73,6 +77,8 @@ import {
   ConsistencyCheckResult,
   LinksHandler
 } from './links-handler.ts';
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { MAX_REPORTED_ENTRIES_PER_SECTION } from './report-entry-budget.ts';
 
 interface LinksHandlerPrivate {
   readonly resolveValidReferenceTarget: (link: Reference, notePath: string) => Promise<null | TFile>;
@@ -432,6 +438,10 @@ describe('LinksHandler', () => {
 describe('ConsistencyCheckResult', () => {
   let app: App;
 
+  beforeAll(async () => {
+    await initI18N(translationsMap);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     app = strictProxy<App>({});
@@ -482,6 +492,26 @@ describe('ConsistencyCheckResult', () => {
     mockIsFrontmatterLinkCache.mockReturnValue(false);
     const $string = result.toString(castTo<App>(app), 'report.md');
     expect($string).toContain('[[note]]:');
+  });
+
+  it('should list at most the section limit and say how many references it left out', () => {
+    const result = new ConsistencyCheckResult('Title');
+    result.add('a.md', createReferenceCache({ link: 'first' }));
+    for (let index = 1; index < MAX_REPORTED_ENTRIES_PER_SECTION; index++) {
+      result.add('a.md', createReferenceCache({ link: 'listed' }));
+    }
+    result.add('a.md', createReferenceCache({ link: 'over' }));
+    result.add('b.md', createReferenceCache({ link: 'skipped1' }));
+    result.add('b.md', createReferenceCache({ link: 'skipped2' }));
+    mockGetFileOrNull.mockImplementation(({ pathOrFile }) => createFile(castTo<string>(pathOrFile)));
+    mockGenerateMarkdownLink.mockImplementation(({ targetPathOrFile }) => `[[${castTo<TFile>(targetPathOrFile).path}]]`);
+    mockIsReferenceCache.mockReturnValue(true);
+    const $string = result.toString(castTo<App>(app), 'report.md');
+    expect($string).toContain('# Title (2 files)');
+    expect($string).toContain('`first`');
+    expect($string).not.toContain('`over`');
+    expect($string).not.toContain('[[b.md]]');
+    expect($string).toContain(`Not listed: 3 more. Each section lists its first ${String(MAX_REPORTED_ENTRIES_PER_SECTION)},`);
   });
 
   it('should not push when the array is missing in add', () => {

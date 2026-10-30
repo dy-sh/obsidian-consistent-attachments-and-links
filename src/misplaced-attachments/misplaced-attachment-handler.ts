@@ -54,6 +54,7 @@ import {
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
+import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
 import { ExternalAttachmentLinkMode } from '../settings/plugin-settings.ts';
 
 /**
@@ -213,14 +214,24 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
     }
 
     let $string = `# ${title} (${String(reported.size)} files)\n`;
+    const budget = new ReportEntryBudget();
 
     for (const [notePath, entries] of reported) {
+      if (budget.isExhausted) {
+        budget.omit(entries.length);
+        continue;
+      }
+
       const noteLink = generateNoteLink(app, reportPath, notePath);
       if (noteLink === null) {
         continue;
       }
 
       for (const entry of entries) {
+        if (!budget.take()) {
+          continue;
+        }
+
         const attachmentLink = getFileOrNull({ app, pathOrFile: entry.attachmentPath })
           ? generateMarkdownLink({
             app,
@@ -241,7 +252,7 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
       $string += '\n';
     }
 
-    return `${$string}\n`;
+    return `${$string}\n${budget.describeOmission()}`;
   }
 
   /**

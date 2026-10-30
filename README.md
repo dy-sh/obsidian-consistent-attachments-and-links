@@ -49,7 +49,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## What it does
 
-- **Check vault consistency** reports, changing nothing, bad links, embeds and frontmatter links, attachments outside their note's attachment folder, and names a platform you sync to would reject. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
+- **Check vault consistency** reports, changing nothing, bad links, embeds and frontmatter links, attachments outside their note's attachment folder, and names a platform you sync to would reject. Each section lists its first 1,000 entries and counts the rest, so the report stays small enough to open. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Fix broken links** offers, with its evidence, the file each broken link most likely meant, and repairs the link's path on your click. [09 Fix broken links](<./demo-vault/09 Fix broken links.md>)
 - **Fix incompatible paths** repairs the names and paths that Windows, Android, Linux, macOS or iOS would reject, keeping the original name and every link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
 - **Undo a bulk operation** reverts one run of either fix command, when the vault is in a git repository and **Commit bulk operations to git** is on: each run is committed on its own as `OP<n>`, so one `git revert` undoes it. [05 Settings](<./demo-vault/05 Settings.md>)

@@ -55,6 +55,7 @@ import type {
   PathCompatibilityViolation
 } from './path-compatibility.ts';
 
+import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
 import {
   findPathCompatibilityViolations,
   PATH_COMPATIBILITY_PLATFORM_LABELS,
@@ -184,8 +185,13 @@ export class PathCompatibilityCheckResult {
     }
 
     let $string = `# ${title} (${String(this.entries.length)} items)\n${warningLine}`;
+    const budget = new ReportEntryBudget();
 
     for (const entry of this.entries) {
+      if (!budget.take()) {
+        continue;
+      }
+
       $string += `${describeItem(app, entry.path, reportPath)}:\n`;
 
       for (const violation of entry.violations) {
@@ -198,7 +204,7 @@ export class PathCompatibilityCheckResult {
       $string += '\n\n';
     }
 
-    return $string;
+    return `${$string}${budget.describeOmission()}`;
   }
 }
 

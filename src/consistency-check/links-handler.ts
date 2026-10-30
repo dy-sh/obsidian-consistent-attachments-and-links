@@ -31,6 +31,8 @@ import type {
 } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
+import { ReportEntryBudget } from './report-entry-budget.ts';
+
 interface LinksHandlerCheckConsistencyParams {
   readonly badEmbeds: ConsistencyCheckResult;
   readonly badFrontmatterLinks: ConsistencyCheckResult;
@@ -69,7 +71,12 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
   public override toString(app: App, reportPath: string): string {
     if (this.size > 0) {
       let $string = `# ${this.title} (${String(this.size)} files)\n`;
-      for (const notePath of this.keys()) {
+      const budget = new ReportEntryBudget();
+      for (const [notePath, links] of this) {
+        if (budget.isExhausted) {
+          budget.omit(links.length);
+          continue;
+        }
         const note = getFileOrNull({ app, pathOrFile: notePath });
         if (!note) {
           continue;
@@ -80,7 +87,10 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
           targetPathOrFile: note
         });
         $string += `${linkString}:\n`;
-        for (const link of ensureNonNullable(this.get(notePath))) {
+        for (const link of links) {
+          if (!budget.take()) {
+            continue;
+          }
           if (isReferenceCache(link)) {
             $string += `- (line ${String(link.position.start.line + 1)}): \`${link.link}\`\n`;
           } else if (isFrontmatterLinkCache(link)) {
@@ -89,7 +99,7 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
         }
         $string += '\n\n';
       }
-      return $string;
+      return `${$string}${budget.describeOmission()}`;
     }
     return `# ${this.title}\nNo problems found\n\n`;
   }
