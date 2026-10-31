@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## 5.3.0
+
+- feat(path-compatibility): keep names unchanged in configured paths
+- docs: add issue-filing instructions for AI agents
+- feat: add a Report a bug command
+- chore(github): give the bug form the field ids bug-report links prefill
+- fix(path-compatibility): judge the Android profile by its own forbidden characters
+- chore(deps): float to typescript-dev-toolkit ^5.4.1 and obsidian-dev-toolkit ^7.4.0
+- fix(consistency-check): cap each report section at 1,000 entries, so the report stays openable
+- feat(bulk-operations): commit each fix run to git, so one revert undoes it
+- fix(path-compatibility): blame Obsidian for link characters, and name the evidence
+- build(deps): override re2js to ^2.9.1 for GHSA-gg6h-894w-4m9c
+- perf(consistency-check): ask the misplaced-attachment check folder-only, and pin it at vault scale
+- perf(consistency-check): stop Check vault consistency judging its own report and asking twice per reference
+- feat(path-compatibility): configurable forbidden character replacement, keep an existing title, optional alias
+- build(deps): bump @mnaoumov/obsidian-lib to ^10.1.0 and adopt its Reference API names
+- build(deps): bump @mnaoumov/typescript-dev-toolkit to ^5.1.0
+- chore: adopt shared keyword identifier lint rule
+- refactor: adopt readonly interface members
+- test: drop obsolete text-component probe patches
+- docs(readme): combine related resources and plugin comparisons
+- refactor: group src files into subject folders
+- docs: move the README's migration table into its own note
+- docs: list similar plugins in the README
+- test: name integration staging folders after the suite they belong to
+- feat: fix broken links interactively, showing the evidence for each candidate
+
 ## 5.2.3
 
 - fix(dependency): require `Advanced Rename and Delete Handler` 3.0.1, the first on obsidian-lib 6
