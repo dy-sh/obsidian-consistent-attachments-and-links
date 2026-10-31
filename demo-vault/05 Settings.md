@@ -37,7 +37,7 @@ Upgrading from 4.x does not lose your collect settings: they are offered to that
 - `excludePaths`
   - paths the plugin ignores entirely.
 
-An entry in either list, and in `sharedAttachmentPaths` below, is one of three forms, and every form matches case-insensitively:
+An entry in either list, and in `pathCompatibilityExcludePaths` and `sharedAttachmentPaths` below, is one of three forms, and every form matches case-insensitively:
 
 - a plain path, such as `Archive`, which covers that file or folder and everything under it.
 - a glob, such as `*.pdf`, `Attachments/**/*.png` or `tmp*/`. `*` stays within one folder, `**` crosses folders, `?` is one character and `[abc]` / `[!abc]` a character class. A glob with no `/` matches a name at any depth, one with a `/` starts at the vault root, and a trailing `/` matches folders only.
@@ -63,6 +63,8 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
   - names of at most 255 bytes, and paths of at most 1024.
 - `shouldNormalizeUnicodeNames` (**Normalize Unicode names to NFC**)
   - report every name stored on disk in decomposed Unicode form (NFD), such as `й` stored as `и` plus a combining breve, and let **Fix Incompatible Paths** store it in the composed form (NFC) Obsidian uses. Independent of the platform toggles, and on by default: Obsidian never creates such a name, and sync, git and backup tools see the two forms as two different names. The name keeps every letter, so no link changes and nothing needs preserving. A name whose NFC spelling is already taken by a separate item on disk is skipped and listed, never overwritten.
+- `pathCompatibilityExcludePaths` (**Keep names unchanged in these paths**)
+  - paths whose names the path compatibility check leaves as they are: it neither reports them nor renames them with **Fix Incompatible Paths**, while their links are still checked. Meant for names another tool owns, such as a Calibre library, whose database holds every path in it. Empty by default. `excludePaths` would leave such a folder out of every check, and `sharedAttachmentPaths` does not touch this check at all.
 - `maxVaultRootPathLength`
   - the length, in characters, of the longest vault root path this vault is expected to live under. `0` means this machine's real vault root, which makes the check exact here; set it to the length of the deepest place the vault is synced to when that is longer. A value below the real root's length is reported as a warning rather than quietly applied.
 - `forbiddenCharacterReplacement` (**Forbidden character replacement**)

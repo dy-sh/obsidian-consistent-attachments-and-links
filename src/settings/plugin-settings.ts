@@ -179,6 +179,22 @@ export class PluginSettings {
   }
 
   /**
+   * Folders, globs or `/regular expressions/flags` whose names the path compatibility check leaves as they are: it
+   * neither reports nor repairs them, while every other check still reads them.
+   *
+   * For names another tool owns, such as a Calibre library whose `metadata.db` holds each path. `excludePaths`
+   * would drop them from the link checks too, and `sharedAttachmentPaths` says where attachments may live, which
+   * is a different claim from whose names may not change.
+   */
+  public get pathCompatibilityExcludePaths(): string[] {
+    return this._pathCompatibilityExcludePathSettings.excludePaths;
+  }
+
+  public set pathCompatibilityExcludePaths(value: string[]) {
+    this._pathCompatibilityExcludePathSettings.excludePaths = value;
+  }
+
+  /**
    * Folders, globs or `/regular expressions/flags`, where any note may keep attachments. A reference into one of them is
    * never reported as misplaced.
    */
@@ -189,6 +205,9 @@ export class PluginSettings {
   public set sharedAttachmentPaths(value: string[]) {
     this._sharedAttachmentPathSettings.excludePaths = value;
   }
+
+  // Only the EXCLUDE half is used, as for `_sharedAttachmentPathSettings` below.
+  private readonly _pathCompatibilityExcludePathSettings = new PathSettings();
 
   private readonly _pathSettings = new PathSettings();
 
@@ -241,6 +260,18 @@ export class PluginSettings {
    */
   public isPathIgnored(path: string, isFolder = false): boolean {
     return this._pathSettings.isPathIgnored(path, isFolder);
+  }
+
+  /**
+   * Whether the path compatibility check leaves a path out: either every check does, or `pathCompatibilityExcludePaths`
+   * matches it.
+   *
+   * @param path - The path to check.
+   * @param isFolder - Whether the path is a folder, so a folder-only glob (one ending in `/`) matches the folder itself.
+   * @returns `true` when the path is left out.
+   */
+  public isPathIgnoredByPathCompatibility(path: string, isFolder = false): boolean {
+    return this.isPathIgnored(path, isFolder) || this._pathCompatibilityExcludePathSettings.isPathIgnored(path, isFolder);
   }
 
   public isSharedAttachmentPath(path: string): boolean {

@@ -264,6 +264,27 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('Paths whose names the path compatibility check leaves as they are, e.g. a Calibre library, whose database holds every path in it.');
+          f.createEl('br');
+          f.appendText('They are neither reported nor renamed by ');
+          appendCodeBlock(f, 'Fix incompatible paths');
+          f.appendText(', but their links are still checked. Use ');
+          appendCodeBlock(f, 'Exclude paths');
+          f.appendText(' to leave them out of every check.');
+          f.createEl('br');
+          f.appendText('Insert each path on a new line');
+          f.createEl('br');
+          appendPathSyntax(f);
+        }),
+        name: 'Keep names unchanged in these paths',
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({ propertyName: 'pathCompatibilityExcludePaths', valueComponent: multipleText });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('The length, in characters, of the longest vault root path this vault is expected to live under.');
           f.createEl('br');
           f.appendText('Leave it at ');
