@@ -66,6 +66,7 @@ describe('PluginSettingsComponent', () => {
         excludePaths: [],
         forbiddenCharacterReplacement: '-',
         includePaths: ['/[/'],
+        pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: []
       });
       const result = await component.validate(settings);
@@ -78,6 +79,7 @@ describe('PluginSettingsComponent', () => {
         excludePaths: ['/(/'],
         forbiddenCharacterReplacement: '-',
         includePaths: [],
+        pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: []
       });
       const result = await component.validate(settings);
@@ -90,6 +92,7 @@ describe('PluginSettingsComponent', () => {
         excludePaths: [],
         forbiddenCharacterReplacement: '-',
         includePaths: [],
+        pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: ['Shared', '/(/']
       });
       const invalidResult = await component.validate(invalid);
@@ -101,6 +104,23 @@ describe('PluginSettingsComponent', () => {
       expect(validResult.sharedAttachmentPaths).toBeUndefined();
     });
 
+    it('should reject an invalid regular expression in pathCompatibilityExcludePaths, and accept a valid one', async () => {
+      const component = createComponent();
+      const invalid = strictProxy<PluginSettings>({
+        excludePaths: [],
+        forbiddenCharacterReplacement: '-',
+        includePaths: [],
+        pathCompatibilityExcludePaths: ['Books/!!files/Calibre/', '/(/'],
+        sharedAttachmentPaths: []
+      });
+      const invalidResult = await component.validate(invalid);
+      expect(invalidResult.pathCompatibilityExcludePaths).toMatch(/^Invalid regular expression: \/\(\/ \(.+\)$/);
+
+      const valid = new PluginSettings();
+      valid.pathCompatibilityExcludePaths = ['Books/!!files/Calibre/'];
+      const validResult = await component.validate(valid);
+      expect(validResult.pathCompatibilityExcludePaths).toBeUndefined();
+    });
     it('should not treat plain path strings as regular expressions', async () => {
       const component = createComponent();
       const settings = new PluginSettings();
@@ -120,6 +140,7 @@ describe('PluginSettingsComponent', () => {
         excludePaths: ['Notes [old'],
         forbiddenCharacterReplacement: '-',
         includePaths: [],
+        pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: []
       });
       const invalidResult = await component.validate(invalid);

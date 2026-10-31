@@ -111,6 +111,29 @@ describe('PluginSettings', () => {
     });
   });
 
+  describe('isPathIgnoredByPathCompatibility', () => {
+    it('should leave out a path under pathCompatibilityExcludePaths, the folder itself included, and nothing else', () => {
+      const settings = new PluginSettings();
+      settings.pathCompatibilityExcludePaths = ['Books/!!files/Calibre/'];
+      expect(settings.isPathIgnoredByPathCompatibility('Books/!!files/Calibre/CLR via C# (12)/cover.jpg')).toBe(true);
+      expect(settings.isPathIgnoredByPathCompatibility('Books/!!files/Calibre', true)).toBe(true);
+      expect(settings.isPathIgnoredByPathCompatibility('Books/other.md')).toBe(false);
+      expect(settings.isPathIgnored('Books/!!files/Calibre/CLR via C# (12)/cover.jpg')).toBe(false);
+    });
+
+    it('should leave out a path the exclude paths leave out', () => {
+      const settings = new PluginSettings();
+      settings.excludePaths = ['ignored'];
+      expect(settings.isPathIgnoredByPathCompatibility('ignored/note.md')).toBe(true);
+    });
+
+    it('should not make sharedAttachmentPaths leave a path out', () => {
+      const settings = new PluginSettings();
+      settings.sharedAttachmentPaths = ['Shared/'];
+      expect(settings.isPathIgnoredByPathCompatibility('Shared/image.png')).toBe(false);
+    });
+  });
+
   describe('isTreatedAsAttachment', () => {
     it('should treat files with a configured attachment extension as attachments', () => {
       const settings = new PluginSettings();

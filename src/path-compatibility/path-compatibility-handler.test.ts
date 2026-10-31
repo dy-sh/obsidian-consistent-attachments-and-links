@@ -142,7 +142,7 @@ const loadedFiles: TAbstractFile[] = [];
 const mockSettings = {
   forbiddenCharacterReplacement: '-',
   getPathCompatibilityPlatforms: vi.fn((): PathCompatibilityPlatform[] => [PathCompatibilityPlatform.Windows]),
-  isPathIgnored: vi.fn((_path: string): boolean => false),
+  isPathIgnoredByPathCompatibility: vi.fn((_path: string, _isFolder?: boolean): boolean => false),
   maxVaultRootPathLength: 0,
   shouldAddOriginalNameAsAlias: true,
   shouldCreateNoteToPreserveOriginalName: false,
@@ -212,7 +212,7 @@ describe('PathCompatibilityHandler', () => {
     vi.clearAllMocks();
     hoisted.basePath = 'C:/vault';
     mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Windows]);
-    mockSettings.isPathIgnored.mockReturnValue(false);
+    mockSettings.isPathIgnoredByPathCompatibility.mockReturnValue(false);
     mockSettings.forbiddenCharacterReplacement = '-';
     mockSettings.maxVaultRootPathLength = 0;
     mockSettings.shouldAddOriginalNameAsAlias = true;
@@ -278,7 +278,7 @@ describe('PathCompatibilityHandler', () => {
     });
 
     it('should skip an ignored path', () => {
-      mockSettings.isPathIgnored.mockReturnValue(true);
+      mockSettings.isPathIgnoredByPathCompatibility.mockReturnValue(true);
       setVault(createFile(`${LONG_BASENAME}.md`));
 
       const result = new PathCompatibilityCheckResult();
