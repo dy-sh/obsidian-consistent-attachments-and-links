@@ -61,6 +61,8 @@ interface GlobalAppHolder {
 }
 
 interface MutablePlatform {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests toggle the desktop guard and restore it afterwards.
+  isDesktop: boolean;
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests toggle the platform flag to cover desktop and mobile behavior.
   isDesktopApp: boolean;
 }
@@ -267,7 +269,7 @@ describe('BrokenLinkFixer', () => {
 
       const [brokenLink] = await createFixer().findBrokenLinks();
 
-      expect(hoisted.createDesktopGitRunner).toHaveBeenCalledWith('C:/vault');
+      expect(hoisted.createDesktopGitRunner).toHaveBeenCalledWith(expect.objectContaining({ cwd: 'C:/vault' }));
       expect(brokenLink?.candidates[0]?.evidence[0]?.kind).toBe(BrokenLinkEvidenceKind.GitRename);
     });
 
@@ -283,6 +285,25 @@ describe('BrokenLinkFixer', () => {
       await createFixer().findBrokenLinks();
 
       expect(hoisted.createDesktopGitRunner).not.toHaveBeenCalled();
+    });
+
+    it('should skip desktop dependencies on mobile even with a filesystem adapter', async () => {
+      const note = await createNote('note.md', { links: [createLink('old.md', 1)] });
+      hoisted.getMarkdownFilesSorted.mockReturnValue([note]);
+      settings.shouldUseGitHistoryForBrokenLinks = true;
+      const wasDesktop = Platform.isDesktop;
+      castTo<MutablePlatform>(Platform).isDesktop = false;
+      castTo<MutablePlatform>(Platform).isDesktopApp = true;
+      const adapter = castTo<FileSystemAdapter>(Object.create(FileSystemAdapter.prototype));
+      adapter.getBasePath = (): string => 'C:/vault';
+      castTo<AdapterHolder>(app.vault).adapter = adapter;
+      try {
+        const [brokenLink] = await createFixer().findBrokenLinks();
+        expect(brokenLink?.candidates).toStrictEqual([]);
+        expect(hoisted.createDesktopGitRunner).not.toHaveBeenCalled();
+      } finally {
+        castTo<MutablePlatform>(Platform).isDesktop = wasDesktop;
+      }
     });
 
     it('should answer no broken links for a clean vault', async () => {
