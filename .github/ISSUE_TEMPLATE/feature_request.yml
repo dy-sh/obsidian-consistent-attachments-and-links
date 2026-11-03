@@ -55,24 +55,22 @@ body:
   - type: textarea
     attributes:
       label: Attachments
-      description: Attach a video and a sample vault.
+      description: Optional, but strongly encouraged. Attach a video showing the current behavior and a sample vault where the feature could be applied. They help the maintainer understand the request and speed up the implementation.
       placeholder: Drag and drop files here.
   - type: dropdown
     attributes:
       label: Video
+      description: Optional, but strongly encouraged.
       options:
         - "Not attached. ⚠️ Providing a video helps the maintainer understand the request and speeds up implementation."
         - "Attached"
-    validations:
-      required: true
   - type: dropdown
     attributes:
       label: Sample vault
+      description: Optional, but strongly encouraged.
       options:
         - "Not attached. ⚠️ Providing a sample vault helps the maintainer understand the request and speeds up implementation."
         - "Attached"
-    validations:
-      required: true
   - type: checkboxes
     attributes:
       label: Confirmations
