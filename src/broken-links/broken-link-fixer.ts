@@ -1,3 +1,7 @@
+import type {
+  BrokenLinkCandidate,
+  GitRename
+} from '@mnaoumov/obsidian-lib/broken-link-candidates';
 import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
 import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
@@ -7,8 +11,10 @@ import type {
   Reference
 } from 'obsidian';
 
+import { BrokenLinkCandidateFinder } from '@mnaoumov/obsidian-lib/broken-link-candidates';
 import { reportBulkOperationProgress } from '@mnaoumov/obsidian-lib/bulk-operation-progress';
 import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
+import { loadGitRenames } from '@mnaoumov/obsidian-lib/git-rename-history';
 import {
   editReferences,
   splitSubpath
@@ -29,14 +35,8 @@ import {
 
 import type { LinksHandler } from '../consistency-check/links-handler.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
-import type {
-  BrokenLinkCandidate,
-  GitRename
-} from './broken-link-candidates.ts';
 
 import { getReferenceTargetPath } from '../consistency-check/links-handler.ts';
-import { BrokenLinkCandidateFinder } from './broken-link-candidates.ts';
-import { loadGitRenames } from './git-rename-history.ts';
 import {
   computeNewLinkPath,
   replaceLinkPath

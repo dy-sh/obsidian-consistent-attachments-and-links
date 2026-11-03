@@ -11,6 +11,12 @@
  * Desktop-only (the file name alone picks the project): the trusted click goes through Electron.
  */
 
+import { execFileSync } from 'node:child_process';
+import {
+  existsSync,
+  rmSync
+} from 'node:fs';
+import { join } from 'node:path';
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
@@ -32,6 +38,73 @@ interface ProbeResult {
 }
 
 describe('Fix broken links view', () => {
+  it('finds a renamed target from git history in the desktop renderer', async () => {
+    const vaultPath = getTemporaryVault().path;
+    const gitPath = join(vaultPath, '.git');
+    expect(existsSync(gitPath)).toBe(false);
+    function git(arguments_: readonly string[]): void {
+      execFileSync('git', [...arguments_], { cwd: vaultPath, windowsHide: true });
+    }
+    git(['init', '--quiet']);
+    git(['config', 'user.name', 'Integration Test']);
+    git(['config', 'user.email', 'integration-test@example.com']);
+    git(['config', 'core.hooksPath', '.git/no-hooks']);
+    git(['config', 'core.autocrlf', 'false']);
+    const probeFolder = 'git-candidate-probe';
+    try {
+      await evalInObsidian({
+        async callback({ app, folder }) {
+          await app.vault.createFolder(folder);
+          await app.vault.create(`${folder}/old.md`, 'A unique note whose new name has no other matching evidence.\n');
+        },
+        input: { folder: probeFolder },
+        vaultPath
+      });
+      git(['add', '--', `${probeFolder}/old.md`]);
+      git(['commit', '--quiet', '-m', 'initial']);
+      await evalInObsidian({
+        async callback({ app, folder }) {
+          await app.vault.adapter.rename(`${folder}/old.md`, `${folder}/new.md`);
+          await app.vault.create(`${folder}/source.md`, '[Old](old.md)\n');
+        },
+        input: { folder: probeFolder },
+        vaultPath
+      });
+      git(['add', '-A', '--', probeFolder]);
+      git(['commit', '--quiet', '-m', 'rename']);
+      const viewText = await evalInObsidian({
+        async callback({ app, commandId, folder, lib: { waitUntil }, viewType }) {
+          await waitUntil({ predicate: () => app.vault.getFileByPath(`${folder}/new.md`) !== null });
+          app.commands.executeCommandById(commandId);
+          await waitUntil({
+            predicate: () => {
+              const text = app.workspace.getLeavesOfType(viewType)[0]?.view.containerEl.textContent ?? '';
+              return text.includes(`${folder}/source.md`) && text.includes('[Old](old.md)');
+            }
+          });
+          return app.workspace.getLeavesOfType(viewType)[0]?.view.containerEl.textContent ?? '';
+        },
+        input: { commandId: COMMAND_ID, folder: probeFolder, viewType: VIEW_TYPE },
+        vaultPath
+      });
+      expect(viewText).toContain(`${probeFolder}/new.md`);
+      expect(viewText).toContain('Git history records the rename, in commit');
+    } finally {
+      await evalInObsidian({
+        async callback({ app, folder, viewType }) {
+          app.workspace.detachLeavesOfType(viewType);
+          const existing = app.vault.getAbstractFileByPath(folder);
+          if (existing) {
+            await app.fileManager.trashFile(existing);
+          }
+        },
+        input: { folder: probeFolder, viewType: VIEW_TYPE },
+        vaultPath
+      });
+      rmSync(gitPath, { force: true, recursive: true });
+    }
+  }, 180_000);
+
   it('repairs every link into a renamed folder with one click, and leaves a link with no candidate alone', async () => {
     const result = await evalInObsidian({
       async callback({

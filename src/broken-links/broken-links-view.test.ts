@@ -8,6 +8,7 @@ import type {
   WorkspaceLeaf as WorkspaceLeafOriginal
 } from 'obsidian';
 
+import { BrokenLinkEvidenceKind } from '@mnaoumov/obsidian-lib/broken-link-candidates';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
@@ -32,7 +33,6 @@ import type {
   BrokenLinkFixer
 } from './broken-link-fixer.ts';
 
-import { BrokenLinkEvidenceKind } from './broken-link-candidates.ts';
 import { BrokenLinkKind } from './broken-link-fixer.ts';
 import {
   BROKEN_LINKS_VIEW_TYPE,

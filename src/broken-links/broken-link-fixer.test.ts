@@ -4,6 +4,7 @@ import type {
   BulkOperationCommitComponentRunBulkOperationParams
 } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponentDelayedNotice } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import type { GitRunner } from '@mnaoumov/obsidian-lib/git-rename-history';
 import type {
   App as AppOriginal,
   CachedMetadata,
@@ -14,6 +15,7 @@ import type {
   TFile
 } from 'obsidian';
 
+import { BrokenLinkEvidenceKind } from '@mnaoumov/obsidian-lib/broken-link-candidates';
 import { reportBulkOperationProgress } from '@mnaoumov/obsidian-lib/bulk-operation-progress';
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import { editReferences } from '@mnaoumov/obsidian-lib/link';
@@ -41,9 +43,7 @@ import {
 import type { LinksHandler } from '../consistency-check/links-handler.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { PluginSettings } from '../settings/plugin-settings.ts';
-import type { GitRunner } from './git-rename-history.ts';
 
-import { BrokenLinkEvidenceKind } from './broken-link-candidates.ts';
 import {
   BrokenLinkFixer,
   BrokenLinkKind,

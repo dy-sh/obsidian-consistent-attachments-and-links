@@ -10,9 +10,8 @@
  * scope line forbids.
  */
 
+import { getParentPath } from '@mnaoumov/obsidian-lib/broken-link-candidates';
 import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
-
-import { getParentPath } from './broken-link-candidates.ts';
 
 /**
  * The parameters for {@link computeNewLinkPath}.
