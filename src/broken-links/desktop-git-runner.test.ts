@@ -1,3 +1,5 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import {
   describe,
   expect,
@@ -25,7 +27,7 @@ describe('createDesktopGitRunner', () => {
       callback(null, { stdout: 'output' });
     });
 
-    const output = await createDesktopGitRunner('C:/vault')(['status']);
+    const output = await createDesktopGitRunner({ cwd: 'C:/vault', execFile, promisify })(['status']);
 
     expect(output).toBe('output');
     expect(hoisted.execFile).toHaveBeenCalledWith('git', ['status'], expect.objectContaining({ cwd: 'C:/vault', windowsHide: true }), expect.any(Function));
