@@ -1,7 +1,7 @@
+import type { GitRunner } from '@mnaoumov/obsidian-lib/git-rename-history';
+
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-
-import type { GitRunner } from './git-rename-history.ts';
 
 /**
  * Large enough for the rename history of any vault: `--diff-filter=R` keeps only the renames. 256 MiB.

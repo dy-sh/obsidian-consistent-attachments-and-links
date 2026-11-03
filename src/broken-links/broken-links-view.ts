@@ -5,6 +5,7 @@ import type {
   WorkspaceLeaf
 } from 'obsidian';
 
+import { getPathMapping } from '@mnaoumov/obsidian-lib/broken-link-candidates';
 import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
@@ -23,8 +24,6 @@ import type {
   BrokenLinkFix,
   BrokenLinkFixer
 } from './broken-link-fixer.ts';
-
-import { getPathMapping } from './broken-link-candidates.ts';
 
 /**
  * The view type the broken-links view is registered under.
