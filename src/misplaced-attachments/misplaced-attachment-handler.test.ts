@@ -90,12 +90,12 @@ interface SettingsLike {
   readonly isTreatedAsAttachment: (path: string) => boolean;
 }
 
-const mockIsFrontmatterLinkCache = vi.mocked(isFrontmatterLinkCache);
-const mockIsReferenceCache = vi.mocked(isReferenceCache);
+const isFrontmatterLinkCacheMock = vi.mocked(isFrontmatterLinkCache);
+const isReferenceCacheMock = vi.mocked(isReferenceCache);
 const mockGetAttachmentFilePath = vi.mocked(getAttachmentFilePath);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
-const mockIsAtProperAttachmentPath = vi.mocked(isAtProperAttachmentPath);
-const mockIsNote = vi.mocked(isNote);
+const isAtProperAttachmentPathMock = vi.mocked(isAtProperAttachmentPath);
+const isNoteMock = vi.mocked(isNote);
 const mockGenerateMarkdownLink = vi.mocked(generateMarkdownLink);
 
 function createFile(path: string): TFile {
@@ -138,7 +138,7 @@ describe('MisplacedAttachmentHandler', () => {
       isSharedAttachmentPath: vi.fn().mockReturnValue(false),
       isTreatedAsAttachment: vi.fn().mockReturnValue(false)
     };
-    mockIsNote.mockReturnValue(false);
+    isNoteMock.mockReturnValue(false);
     handler = new MisplacedAttachmentHandler({
       app,
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
@@ -201,7 +201,7 @@ describe('MisplacedAttachmentHandler', () => {
   });
 
   it('should skip a reference whose target is a note', async () => {
-    mockIsNote.mockReturnValue(true);
+    isNoteMock.mockReturnValue(true);
     whenProperPathIs('Files/note/other.md');
     await check('other.md');
 
@@ -211,7 +211,7 @@ describe('MisplacedAttachmentHandler', () => {
 
   // A note whose extension the user declared an attachment's — `.excalidraw.md` by default — IS judged.
   it('should judge a note treated as an attachment', async () => {
-    mockIsNote.mockReturnValue(true);
+    isNoteMock.mockReturnValue(true);
     castTo<ReturnType<typeof vi.fn>>(settings.isTreatedAsAttachment).mockReturnValue(true);
     whenProperPathIs('Files/note/drawing.excalidraw.md');
     await check('attachments/drawing.excalidraw.md');
@@ -276,7 +276,7 @@ describe('MisplacedAttachmentHandler', () => {
     await check('Files/note/img.png');
 
     expect(mockGetAttachmentFilePath).toHaveBeenCalledTimes(2);
-    expect(mockIsAtProperAttachmentPath).not.toHaveBeenCalled();
+    expect(isAtProperAttachmentPathMock).not.toHaveBeenCalled();
   });
 
   // The judgement is about the FOLDER. An attachment sitting in the right folder under a name the rename
@@ -440,8 +440,8 @@ describe('MisplacedAttachmentCheckResult', () => {
     app = strictProxy<App>({});
     mockGenerateMarkdownLink.mockImplementation(({ targetPathOrFile }) => `[[${toPath(targetPathOrFile).replace(/\.md$/, '')}]]`);
     mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile ? createFile(toPath(pathOrFile)) : null);
-    mockIsReferenceCache.mockReturnValue(false);
-    mockIsFrontmatterLinkCache.mockReturnValue(false);
+    isReferenceCacheMock.mockReturnValue(false);
+    isFrontmatterLinkCacheMock.mockReturnValue(false);
   });
 
   function addEntry(result: MisplacedAttachmentCheckResult, notePath: string, attachmentPath: string): void {
@@ -472,7 +472,7 @@ describe('MisplacedAttachmentCheckResult', () => {
   });
 
   it('should print the owner\'s line with no clause when nothing else uses the attachment', () => {
-    mockIsReferenceCache.mockReturnValue(true);
+    isReferenceCacheMock.mockReturnValue(true);
     const result = new MisplacedAttachmentCheckResult();
     result.add('A.md', {
       attachmentPath: '!!files/B/image.png',
@@ -539,7 +539,7 @@ describe('MisplacedAttachmentCheckResult', () => {
   });
 
   it('should name the frontmatter key for a frontmatter link', () => {
-    mockIsFrontmatterLinkCache.mockReturnValue(true);
+    isFrontmatterLinkCacheMock.mockReturnValue(true);
     const result = new MisplacedAttachmentCheckResult();
     result.add('note.md', {
       attachmentPath: 'attachments/img.png',

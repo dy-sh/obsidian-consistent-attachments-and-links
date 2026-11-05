@@ -1,6 +1,6 @@
 # Recommended Obsidian settings
 
-This plugin's goal is a vault whose links keep working **outside** Obsidian — opened in another editor, published to GitHub, or exported as a folder. Obsidian's own defaults pull the other way: they lean on a clever link resolver that only Obsidian has. None of the settings below is mandatory, but each one moves your vault towards being readable by anything.
+This plugin's goal is a vault whose links keep working **outside** Obsidian — opened in another editor, published to `GitHub`, or exported as a folder. Obsidian's own defaults pull the other way: they lean on a clever link resolver that only Obsidian has. None of the settings below is mandatory, but each one moves your vault towards being readable by anything.
 
 ## Use Markdown links instead of wikilinks
 

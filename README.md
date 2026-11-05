@@ -2,7 +2,7 @@
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov) [![GitHub release](https://img.shields.io/github/v/release/dy-sh/obsidian-consistent-attachments-and-links)](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases) [![GitHub downloads](https://img.shields.io/github/downloads/dy-sh/obsidian-consistent-attachments-and-links/total)](https://github.com/dy-sh/obsidian-consistent-attachments-and-links/releases) [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/dy-sh/obsidian-consistent-attachments-and-links)
 
-[Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to GitHub, or exported as a folder.
+[Obsidian](https://obsidian.md/) resolves links with a clever search that only Obsidian has, so a vault can be perfectly navigable inside it and full of dead links the moment you open a note anywhere else — in another editor, published to `GitHub`, or exported as a folder.
 
 This plugin makes that visible: it reports every link whose written path does not lead to its target, repairs a broken link's path when you pick the file it meant, and repairs names a platform you sync to would reject. It never rewrites a link into a style, moves an attachment or cleans up folders: where those matter, it reports and leaves the change to you.
 
@@ -39,7 +39,7 @@ This plugin makes that visible: it reports every link whose written path does no
 
 **The documentation is a demo vault.** Every feature has a note that explains what it does and why you would want it, with example notes to run it against.
 
-**[Start reading here](<./demo-vault/00 Start.md>)** — it is plain markdown, so it works on GitHub with nothing installed.
+**[Start reading here](<./demo-vault/00 Start.md>)** — it is plain markdown, so it works on `GitHub` with nothing installed.
 
 A copy of the vault ships with every release. You can access it via any of the following:
 
@@ -52,7 +52,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Check vault consistency** reports, changing nothing, bad links, embeds and frontmatter links, attachments outside their note's attachment folder, and names a platform you sync to would reject. Each section lists its first 1,000 entries and counts the rest, so the report stays small enough to open. [03 Check vault consistency](<./demo-vault/03 Check vault consistency.md>)
 - **Fix broken links** offers, with its evidence, the file each broken link most likely meant, and repairs the link's path on your click. [09 Fix broken links](<./demo-vault/09 Fix broken links.md>)
 - **Fix incompatible paths** repairs the names and paths that Windows, Android, Linux, macOS or iOS would reject, keeping the original name and every link. [08 Keep paths valid on every platform](<./demo-vault/08 Keep paths valid on every platform.md>)
-- **Undo a bulk operation** reverts one run of either fix command, when the vault is in a git repository and **Commit bulk operations to git** is on: each run is committed on its own as `OP<n>`, so one `git revert` undoes it. [05 Settings](<./demo-vault/05 Settings.md>)
+- **Undo a bulk operation** reverts one run of either fix command, when the vault is in a `git` repository and **Commit bulk operations to `git`** is on: each run is committed on its own as `OP<n>`, so one `git revert` undoes it. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Every command**, and where the ones that left went. [07 Commands](<./demo-vault/07 Commands.md>)
 - **Settings**, including which platforms the path repair enforces. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
@@ -79,7 +79,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 | [`Link Doctor`](https://community.obsidian.md/plugins/link-doctor) | Broken-link dashboard; Obsidian name matching; empty notes; no edits | Broader path checks: reports non-resolving written paths; repairs links |
 | [`Safe Filename Linter`](https://community.obsidian.md/plugins/safe-filename-linter) | Invalid/troublesome filename character lint | Broader checks: per-platform name/path lengths and links |
 | [`Sync-safe file names`](https://community.obsidian.md/plugins/sync-safe-file-names) | Automatic cross-device character replacement on create/rename | Broader repair: on command; lengths, reserved names, Unicode form; original names retained |
-| [`Vault Link Check`](https://community.obsidian.md/plugins/vault-link-check) | Typo/alias suggestions; separates planned notes from broken links | Alternative repair evidence: git history, renamed folders and aliases; click to apply |
+| [`Vault Link Check`](https://community.obsidian.md/plugins/vault-link-check) | Typo/alias suggestions; separates planned notes from broken links | Alternative repair evidence: `git` history, renamed folders and aliases; click to apply |
 
 Last searched for similar plugins on 2026-10-26.
 

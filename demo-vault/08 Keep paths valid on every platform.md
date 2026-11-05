@@ -62,7 +62,7 @@ await require('/demoSetup.ts').resetPathCompatibilityDemo(app);
 
 ## Names that look right but are stored differently
 
-Unicode can spell many letters in two ways. `й` is one character in its composed form (NFC), or `и` followed by a combining breve in its decomposed form (NFD). Obsidian creates every name in NFC and shows both forms identically, but git, sync and backup tools compare the stored bytes, so to them the two forms are two different files. Decomposed names come from outside Obsidian: older macOS disks stored every name that way, and archives and other tools still produce them.
+Unicode can spell many letters in two ways. `й` is one character in its composed form (NFC), or `и` followed by a combining breve in its decomposed form (NFD). Obsidian creates every name in NFC and shows both forms identically, but `git`, sync and backup tools compare the stored bytes, so to them the two forms are two different files. Decomposed names come from outside Obsidian: older macOS disks stored every name that way, and archives and other tools still produce them.
 
 **Normalize Unicode names to NFC** is on by default and does not depend on the platform toggles. The report lists every name stored in NFD, and **Fix incompatible paths** stores it in NFC. The name keeps every letter it had, so nothing needs preserving and no link changes. If the folder on disk already holds a separate item with the NFC spelling, which Windows and Linux allow, the repair skips that name and lists it rather than overwrite anything.
 

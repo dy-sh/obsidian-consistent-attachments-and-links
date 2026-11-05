@@ -8,7 +8,7 @@ A folder renamed in a file manager, a note moved by a sync tool, a letter's case
 
 A broken link alone cannot say where its target went - a link to `Trips/Lisbon/Itinerary.md` says nothing about `Lisbon` having become `Lisbon 2024`. So every suggestion comes with evidence from outside the link:
 
-- **Git history**: when the vault is in a git repository, the rename is recorded there. The strongest evidence, read on desktop only.
+- **Git history**: when the vault is in a `git` repository, the rename is recorded there. The strongest evidence, read on desktop only.
 - **Only the letter case differs**.
 - **Aliases or title**: the note's `aliases` or `title` still hold the old name.
 - **A renamed folder**: the folder is gone, and a sibling folder holds every missing file that was under it.
@@ -60,4 +60,4 @@ await require('/demoSetup.ts').resetBrokenLinksDemo(app);
 ## Settings
 
 - **Folder note file names**: if your folder notes all share a name such as `index.md`, list it, so a moved folder note is recognized by its folder's name rather than by a name every folder note shares.
-- **Use git history to find renamed targets**: on by default; turn it off to skip the `git log` the check runs on desktop.
+- **Use `git` history to find renamed targets**: on by default; turn it off to skip the `git log` the check runs on desktop.

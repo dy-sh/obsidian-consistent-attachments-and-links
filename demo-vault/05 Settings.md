@@ -62,7 +62,7 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
 - `shouldEnsurePathCompatibilityOnIos`
   - names of at most 255 bytes, and paths of at most 1024.
 - `shouldNormalizeUnicodeNames` (**Normalize Unicode names to NFC**)
-  - report every name stored on disk in decomposed Unicode form (NFD), such as `й` stored as `и` plus a combining breve, and let **Fix Incompatible Paths** store it in the composed form (NFC) Obsidian uses. Independent of the platform toggles, and on by default: Obsidian never creates such a name, and sync, git and backup tools see the two forms as two different names. The name keeps every letter, so no link changes and nothing needs preserving. A name whose NFC spelling is already taken by a separate item on disk is skipped and listed, never overwritten.
+  - report every name stored on disk in decomposed Unicode form (NFD), such as `й` stored as `и` plus a combining breve, and let **Fix Incompatible Paths** store it in the composed form (NFC) Obsidian uses. Independent of the platform toggles, and on by default: Obsidian never creates such a name, and sync, `git` and backup tools see the two forms as two different names. The name keeps every letter, so no link changes and nothing needs preserving. A name whose NFC spelling is already taken by a separate item on disk is skipped and listed, never overwritten.
 - `pathCompatibilityExcludePaths` (**Keep names unchanged in these paths**)
   - paths whose names the path compatibility check leaves as they are: it neither reports them nor renames them with **Fix Incompatible Paths**, while their links are still checked. Meant for names another tool owns, such as a Calibre library, whose database holds every path in it. Empty by default. `excludePaths` would leave such a folder out of every check, and `sharedAttachmentPaths` does not touch this check at all.
 - `maxVaultRootPathLength`
@@ -91,14 +91,14 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
 
 - `folderNoteFileNames` (**Folder note file names**)
   - the file names your folder notes are stored under, one per line, such as `index.md`. **Fix broken links** then recognizes a moved folder note by its folder's name too, and looks for the folder's old name in aliases. Empty by default. Walked through in [09 Fix broken links](<./09 Fix broken links.md>).
-- `shouldUseGitHistoryForBrokenLinks` (**Use git history to find renamed targets**)
-  - when the vault is in a git repository, read the renames in its history to find where a missing target went. On by default; desktop only.
+- `shouldUseGitHistoryForBrokenLinks` (**Use `git` history to find renamed targets**)
+  - when the vault is in a `git` repository, read the renames in its history to find where a missing target went. On by default; desktop only.
 
 ## Safety
 
 - `shouldShowBackupWarning`
   - show the one-time backup warning about the commands that rename files. It turns itself off once you have seen it.
-- `shouldCommitBulkOperations` (**Commit bulk operations to git**)
-  - when the vault is in a git repository, commit each run of **Fix Incompatible Paths** and each **Fix** / **Fix all like this** click of **Fix broken links** on its own: first `chore: before OP<n>` with whatever was already pending, then `OP<n>: <summary>` with exactly what the run changed. `git revert` of that commit, or the **Undo a bulk operation...** command, undoes the run. Off by default; desktop only.
+- `shouldCommitBulkOperations` (**Commit bulk operations to `git`**)
+  - when the vault is in a `git` repository, commit each run of **Fix Incompatible Paths** and each **Fix** / **Fix all like this** click of **Fix broken links** on its own: first `chore: before OP<n>` with whatever was already pending, then `OP<n>: <summary>` with exactly what the run changed. `git revert` of that commit, or the **Undo a bulk operation...** command, undoes the run. Off by default; desktop only.
 
 Change any of these, then work through [03 Check vault consistency](<./03 Check vault consistency.md>) and [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>) to watch them take effect.

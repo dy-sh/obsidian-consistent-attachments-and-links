@@ -11,7 +11,7 @@ Filing from the CLI or the API (`gh issue create --body`, or an AI agent filing 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (latest LTS recommended)
-- npm (comes with Node.js)
+- `npm` (comes with Node.js)
 
 ## Setup
 
