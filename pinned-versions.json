@@ -34,6 +34,13 @@
       "expect": "17.10.3",
       "manualCheck": "The check reads the range @microsoft/eslint-plugin-sdl declares, not an installed version, because an EXACT range is what forces the nesting. When it becomes a range admitting the major the shared config needs - or this package.json declares eslint-plugin-n itself - the copy hoists unaided and both the override and this entry can go. Confirm before deleting: remove the override, `npm install`, then `npm run lint`."
     },
+    "glob": {
+      "section": "overrides",
+      "why": "Clears GHSA-3g3m-2fjr-6pw4 (AbortSignal cancellation bypass, glob >=9 <=14.0.1; patched 14.0.2). The latest obsidian-integration-testing pins webdriverio 9.27.0, whose @wdio/config and archiver-utils still require glob ^10.2.2 and ^10.0.0. Both call only the retained sync API (sync/globSync), which glob 14 keeps with its CommonJS build, so 14.0.3 preserves their API. No direct dependency update reaches the fix. NEVER take the `npm audit fix --force` remedy: it proposes downgrading obsidian-integration-testing to 1.1.2. minimatch GHSA-g3hv-75wg-m249 is deliberately NOT overridden: eslint-plugin-import-x imports the makeRe export minimatch 11 removed, and the 3.x/8.x consumers call the removed callable default.",
+      "check": "node -e \"const fs=require('node:fs');for(const p of ['@wdio/config','archiver-utils'])console.log(JSON.parse(fs.readFileSync('node_modules/'+p+'/package.json','utf8')).dependencies.glob)\"",
+      "expect": "^10.2.2\n^10.0.0",
+      "manualCheck": "Remove the override when both consumers admit >=14.0.2. Re-run npm audit, the project gate and the integration harness glob/archive smoke checks."
+    },
     "katex": {
       "section": "overrides",
       "why": "Clears GHSA-238p-pmpm-9mq7 (KaTeX prototype pollution bypassing trust restrictions, >=0.11.0 <0.18.2). Reached only through the toolkit packages and markdownlint-cli2 -> markdownlint -> micromark-extension-math@3.1.0, its newest release, which declares katex ^0.16.0, so no direct bump reaches the fix. The 0.x minor jump is safe because nothing here runs KaTeX: markdownlint imports only `math`, the micromark syntax extension, and katex is required solely by the `mathHtml` half, which markdownlint never loads. Never take the `npm audit fix --force` remedy: it downgrades markdownlint.",
