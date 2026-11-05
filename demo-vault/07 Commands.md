@@ -28,7 +28,7 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
 
 ## Undo a Bulk Operation
 
-Shown in the command palette as **Undo a bulk operation...**, and offered on desktop while **Commit bulk operations to git** is on (see [05 Settings](<./05 Settings.md>)). It lists the runs of **Fix Incompatible Paths** and **Fix Broken Links** this plugin committed as `OP<n>`, newest first, and reverts the one you pick with `git revert`. A conflict is left for you to resolve in git, never aborted.
+Shown in the command palette as **Undo a bulk operation...**, and offered on desktop while **Commit bulk operations to `git`** is on (see [05 Settings](<./05 Settings.md>)). It lists the runs of **Fix Incompatible Paths** and **Fix Broken Links** this plugin committed as `OP<n>`, newest first, and reverts the one you pick with `git revert`. A conflict is left for you to resolve in `git`, never aborted.
 
 ## Commands that moved
 

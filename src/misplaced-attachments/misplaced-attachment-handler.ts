@@ -315,12 +315,9 @@ export class MisplacedAttachmentHandler {
       return;
     }
 
-    if (settings.isPathIgnored(attachmentFile.path)) {
-      return;
-    }
-
-    // A shared location is anybody's folder, so no reference into it is external.
-    if (settings.isSharedAttachmentPath(attachmentFile.path)) {
+    // An ignored path is never judged, and a shared location is anybody's folder, so no reference into it is
+    // external.
+    if (settings.isPathIgnored(attachmentFile.path) || settings.isSharedAttachmentPath(attachmentFile.path)) {
       return;
     }
 

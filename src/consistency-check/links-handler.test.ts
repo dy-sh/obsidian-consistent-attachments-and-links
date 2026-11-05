@@ -97,8 +97,8 @@ interface SettingsLike {
   readonly isPathIgnored: (path: string) => boolean;
 }
 
-const mockIsFrontmatterLinkCache = vi.mocked(isFrontmatterLinkCache);
-const mockIsReferenceCache = vi.mocked(isReferenceCache);
+const isFrontmatterLinkCacheMock = vi.mocked(isFrontmatterLinkCache);
+const isReferenceCacheMock = vi.mocked(isReferenceCache);
 const mockNormalizePath = vi.mocked(normalizePath);
 const mockResolveSubpath = vi.mocked(resolveSubpath);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
@@ -110,10 +110,11 @@ function asPrivate(handler: LinksHandler): LinksHandlerPrivate {
   return castTo<LinksHandlerPrivate>(handler);
 }
 
-function createFile(path: string, extension = 'md', parent?: null | ParentLike): TFile {
+function createFile(path: string, extension = 'md'): TFile {
+  const parent: ParentLike = { path: '' };
   return strictProxy<TFile>({
     extension,
-    parent: parent === null ? null : strictProxy<TFile['parent']>(parent ?? { path: '' }),
+    parent: strictProxy<TFile['parent']>(parent),
     path
   });
 }
@@ -131,12 +132,11 @@ function createMisplacedParams(): MisplacedParams {
   };
 }
 
-function createRef(overrides: Partial<Reference> = {}): Reference {
+function createRef(): Reference {
   return strictProxy<Reference>({
     displayText: '',
     link: 'link',
-    original: '[[link]]',
-    ...overrides
+    original: '[[link]]'
   });
 }
 
@@ -475,8 +475,8 @@ describe('ConsistencyCheckResult', () => {
     result.add('note.md', fmLink);
     mockGetFileOrNull.mockReturnValue(createFile('note.md'));
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
-    mockIsReferenceCache.mockImplementation((link: Reference) => link === refLink);
-    mockIsFrontmatterLinkCache.mockImplementation((link: Reference) => link === fmLink);
+    isReferenceCacheMock.mockImplementation((link: Reference) => link === refLink);
+    isFrontmatterLinkCacheMock.mockImplementation((link: Reference) => link === fmLink);
     const $string = result.toString(castTo<App>(app), 'report.md');
     expect($string).toContain('(line 1): `a`');
     expect($string).toContain('(key prop): `b`');
@@ -488,8 +488,8 @@ describe('ConsistencyCheckResult', () => {
     result.add('note.md', link);
     mockGetFileOrNull.mockReturnValue(createFile('note.md'));
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
-    mockIsReferenceCache.mockReturnValue(false);
-    mockIsFrontmatterLinkCache.mockReturnValue(false);
+    isReferenceCacheMock.mockReturnValue(false);
+    isFrontmatterLinkCacheMock.mockReturnValue(false);
     const $string = result.toString(castTo<App>(app), 'report.md');
     expect($string).toContain('[[note]]:');
   });
@@ -505,7 +505,7 @@ describe('ConsistencyCheckResult', () => {
     result.add('b.md', createReferenceCache({ link: 'skipped2' }));
     mockGetFileOrNull.mockImplementation(({ pathOrFile }) => createFile(castTo<string>(pathOrFile)));
     mockGenerateMarkdownLink.mockImplementation(({ targetPathOrFile }) => `[[${castTo<TFile>(targetPathOrFile).path}]]`);
-    mockIsReferenceCache.mockReturnValue(true);
+    isReferenceCacheMock.mockReturnValue(true);
     const $string = result.toString(castTo<App>(app), 'report.md');
     expect($string).toContain('# Title (2 files)');
     expect($string).toContain('`first`');
