@@ -5,6 +5,7 @@ Before repairing anything, you can audit the whole vault without changing a sing
 - Bad (broken) links
 - Bad (broken) embed paths
 - Bad (broken) frontmatter links
+- HTML tags Obsidian does not know, or changes or removes when it renders the note, covered under **HTML problems** below
 - Paths and names that are invalid on a platform you sync to, covered in [08 Keep paths valid on every platform](<./08 Keep paths valid on every platform.md>)
 - Attachments that sit outside the attachment folder configured for the note that references them
 
@@ -35,6 +36,21 @@ Two things it deliberately does **not** report:
 - Anything already listed above as a bad link, embed or frontmatter link. A reference that does not resolve has no attachment to judge, so it is reported once, as the broken link it is.
 
 Acting on the finding is a separate step and always yours to take. Since 5.0.0 moving attachments belongs to [Custom Attachment Location](https://community.obsidian.md/plugins/obsidian-custom-attachment-location): run its **Move attachment to proper folder** on the named file, or its **Collect attachments** on the note.
+
+## HTML problems
+
+Obsidian renders HTML written in a note, but not all of it. A tag the browser does not know, such as `<nonExistingTag>`, renders as nothing in particular, and Obsidian's sanitizer removes or changes tags such as `<script>` and `<style>` before the note is shown. The **HTML problems** section names each such tag, with its line:
+
+```markdown
+- (line 1): `<nonExistingTag>` is not a known HTML element
+- (line 3): `<script>` is changed or removed when Obsidian renders it
+```
+
+The verdict is the running Obsidian's own: each tag is passed through the same sanitizer Obsidian renders with, not checked against a list kept in this plugin. A custom element such as `<alpha-widget>` is not called unknown merely because nothing registered it, though the section still says so when the sanitizer drops it. HTML written inside code, inline or fenced, and inside comments is not HTML, and is not checked.
+
+This section needs [Advanced Metadata Cache](https://community.obsidian.md/plugins/advanced-metadata-cache) 2.5.0 or later, with its **HTML** module turned on in its settings. That plugin keeps one shared index of every note's HTML, so the check reads no note itself and does not re-read a note that has not changed. Without it, the section says it was not checked, rather than reporting a clean vault.
+
+It only reports. A tag here is a candidate found without fully parsing the note, so an unusual Markdown construct can produce one that Obsidian would not treat as HTML. Decide each finding yourself; nothing is deleted for you.
 
 ## Try it
 

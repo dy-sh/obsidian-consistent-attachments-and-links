@@ -31,6 +31,7 @@ import {
   vi
 } from 'vitest';
 
+import type { HtmlProblemHandler } from '../html-problems/html-problem-handler.ts';
 import type { MisplacedAttachmentHandler } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import type { PathCompatibilityHandler } from '../path-compatibility/path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
@@ -144,6 +145,15 @@ const mockAbortSignalComponent = strictProxy<AbortSignalComponent>({
   abortSignal: new AbortController().signal
 });
 
+const mockHtmlProblems = {
+  toString: (): string => 'HTML problems\n'
+};
+
+const mockHtmlProblemHandler = strictProxy<HtmlProblemHandler>({
+  check: vi.fn((): Promise<void> => noopAsync()),
+  createResult: vi.fn(() => castTo<ReturnType<HtmlProblemHandler['createResult']>>(mockHtmlProblems))
+});
+
 const mockLinksHandler = strictProxy<LinksHandler>({
   checkConsistency: vi.fn((): Promise<void> => noopAsync())
 });
@@ -182,6 +192,7 @@ function createComponent(): ConsistentAttachmentsAndLinksComponent {
   return new ConsistentAttachmentsAndLinksComponent({
     abortSignalComponent: mockAbortSignalComponent,
     app,
+    htmlProblemHandler: mockHtmlProblemHandler,
     linksHandler: mockLinksHandler,
     misplacedAttachmentHandler: mockMisplacedAttachmentHandler,
     pathCompatibilityHandler: mockPathCompatibilityHandler,
@@ -242,7 +253,23 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(openLinkTextSpy).toHaveBeenCalledWith('report.md', '/', false);
     });
 
-    it('should write all five sections, with the misplaced attachments one last', async () => {
+    it('should check every note for HTML problems and write that section after the link sections', async () => {
+      const component = createComponent();
+      hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
+      const modifySpy = vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+
+      await component.checkConsistency();
+
+      expect(mockHtmlProblemHandler.createResult).toHaveBeenCalledTimes(1);
+      expect(mockHtmlProblemHandler.check).toHaveBeenCalledWith({ htmlProblems: mockHtmlProblems, notePath: 'note.md' });
+      const text = modifySpy.mock.calls[0]?.[1] ?? '';
+      expect(text.indexOf('HTML problems\n')).toBeGreaterThan(text.indexOf('Bad frontmatter links\n'));
+      // Misplaced attachments stays last: integration suites slice the report from its heading to the end.
+      expect(text.indexOf('HTML problems\n')).toBeLessThan(text.indexOf('Misplaced attachments\n'));
+    });
+
+    it('should write all six sections, with the misplaced attachments one last', async () => {
       const component = createComponent();
       hoisted.mockGetMarkdownFilesSorted.mockReturnValue([strictProxy<TFile>({ path: 'note.md' })]);
       const modifySpy = vi.spyOn(app.vault, 'modify').mockResolvedValue();

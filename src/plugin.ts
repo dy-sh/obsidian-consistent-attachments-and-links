@@ -23,6 +23,7 @@ import { FixBrokenLinksCommandHandler } from './command-handlers/fix-broken-link
 import { FixIncompatiblePathsCommandHandler } from './command-handlers/fix-incompatible-paths-command-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistency-check/consistent-attachments-and-links-component.ts';
 import { LinksHandler } from './consistency-check/links-handler.ts';
+import { HtmlProblemHandler } from './html-problems/html-problem-handler.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { MisplacedAttachmentHandler } from './misplaced-attachments/misplaced-attachment-handler.ts';
 import { PathCompatibilityHandler } from './path-compatibility/path-compatibility-handler.ts';
@@ -202,6 +203,7 @@ export class Plugin extends PluginBase {
       new ConsistentAttachmentsAndLinksComponent({
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
+        htmlProblemHandler: new HtmlProblemHandler({ pluginSettingsComponent }),
         linksHandler,
         misplacedAttachmentHandler,
         pathCompatibilityHandler,
