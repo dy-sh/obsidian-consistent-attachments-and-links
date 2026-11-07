@@ -20,6 +20,10 @@ import {
   setIcon
 } from 'obsidian';
 
+import type {
+  HtmlProblemCheckResult,
+  HtmlProblemHandler
+} from '../html-problems/html-problem-handler.ts';
 import type { MisplacedAttachmentHandler } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import type { PathCompatibilityHandler } from '../path-compatibility/path-compatibility-handler.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
@@ -35,12 +39,14 @@ interface CheckNotesResults {
   readonly badEmbeds: ConsistencyCheckResult;
   readonly badFrontmatterLinks: ConsistencyCheckResult;
   readonly badLinks: ConsistencyCheckResult;
+  readonly htmlProblems: HtmlProblemCheckResult;
   readonly misplacedAttachments: MisplacedAttachmentCheckResult;
 }
 
 interface ConsistentAttachmentsAndLinksComponentConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
+  readonly htmlProblemHandler: HtmlProblemHandler;
   readonly linksHandler: LinksHandler;
   readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
   readonly pathCompatibilityHandler: PathCompatibilityHandler;
@@ -50,6 +56,7 @@ interface ConsistentAttachmentsAndLinksComponentConstructorParams {
 
 export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent {
   private readonly abortSignalComponent: AbortSignalComponent;
+  private readonly htmlProblemHandler: HtmlProblemHandler;
   private readonly linksHandler: LinksHandler;
   private readonly misplacedAttachmentHandler: MisplacedAttachmentHandler;
   private readonly pathCompatibilityHandler: PathCompatibilityHandler;
@@ -59,6 +66,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
   public constructor(params: ConsistentAttachmentsAndLinksComponentConstructorParams) {
     super(params.app);
     this.abortSignalComponent = params.abortSignalComponent;
+    this.htmlProblemHandler = params.htmlProblemHandler;
     this.linksHandler = params.linksHandler;
     this.misplacedAttachmentHandler = params.misplacedAttachmentHandler;
     this.pathCompatibilityHandler = params.pathCompatibilityHandler;
@@ -75,6 +83,8 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     // Filled by the same walk as the three buckets above: it judges references, and only the ones that
     // resolved, so `LinksHandler` is the one place that has both the reference and its target.
     const misplacedAttachments = new MisplacedAttachmentCheckResult(this.pluginSettingsComponent.settings.externalAttachmentLinkMode);
+    // Filled by the same walk, but from `Advanced Metadata Cache`'s shared index: it reads no note itself.
+    const htmlProblems = this.htmlProblemHandler.createResult();
 
     // The walk asks for every referencing note's attachment folder, and on a case-insensitive adapter that is a
     // case-insensitive lookup of a folder that usually does not exist (`!!files/<note>`). Obsidian answers such a
@@ -85,7 +95,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       ? null
       : this.addChild(new CaseInsensitiveFileIndexComponent(this.app));
     try {
-      await this.checkNotes({ badEmbeds, badFrontmatterLinks, badLinks, misplacedAttachments });
+      await this.checkNotes({ badEmbeds, badFrontmatterLinks, badLinks, htmlProblems, misplacedAttachments });
     } finally {
       if (caseInsensitiveFileIndexComponent) {
         this.removeChild(caseInsensitiveFileIndexComponent);
@@ -99,7 +109,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const pathCompatibility = new PathCompatibilityCheckResult();
     this.pathCompatibilityHandler.check(pathCompatibility);
 
-    const text = [badLinks, badEmbeds, badFrontmatterLinks, pathCompatibility, misplacedAttachments]
+    const text = [badLinks, badEmbeds, badFrontmatterLinks, htmlProblems, pathCompatibility, misplacedAttachments]
       .map((result) => result.toString(this.app, notePath))
       .join('');
     await createFolderSafe(this.app, dirname(notePath));
@@ -132,6 +142,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       badEmbeds,
       badFrontmatterLinks,
       badLinks,
+      htmlProblems,
       misplacedAttachments
     } = results;
     await loop({
@@ -149,6 +160,7 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
           misplacedAttachments,
           note
         });
+        await this.htmlProblemHandler.check({ htmlProblems, notePath: note.path });
       },
       progressBarTitle: 'Checking vault consistency...',
       shouldContinueOnError: true,

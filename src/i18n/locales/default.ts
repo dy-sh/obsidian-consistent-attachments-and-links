@@ -4,6 +4,16 @@ import { en as obsidianLibEn } from '@mnaoumov/obsidian-lib/i18n/locales/en';
 
 export const defaultTranslations = {
   ...obsidianLibEn,
+  htmlProblems: {
+    report: {
+      noProblems: 'No problems found',
+      notChecked: '> [!NOTE]\n> Not checked: {{noteCount}} note(s). `Advanced Metadata Cache` answered nothing for them: its `HTML` module is off, or it is still indexing them. Turn the module on, or check again later.',
+      sanitized: '(line {{line}}): `{{html}}` is changed or removed when Obsidian renders it',
+      title: 'HTML problems',
+      unavailable: 'Not checked: needs the `Advanced Metadata Cache` plugin, version 2.5.0 or later, with its `HTML` module turned on.',
+      unknown: '(line {{line}}): `{{html}}` is not a known HTML element'
+    }
+  },
   misplacedAttachment: {
     report: {
       alsoUsedBy: ' (also used by {{notes}})',

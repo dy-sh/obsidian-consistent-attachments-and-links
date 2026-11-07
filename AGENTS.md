@@ -16,7 +16,7 @@ Operationally: **report strictly, repair narrowly, never rewrite.** The rule sep
 
 The three categories, and where the removed surfaces went:
 
-- **Report, strictly** — bad links, bad embeds, bad frontmatter links, path compatibility, and attachments sitting outside their configured attachment folder.
+- **Report, strictly** — bad links, bad embeds, bad frontmatter links, HTML problems, path compatibility, and attachments sitting outside their configured attachment folder.
 - **Repair, narrowly** — `fix-incompatible-paths`, and `fix-broken-links`' path-only repair of a link that leads nowhere, applied only on the user's click.
 - **Never rewrite** — link style went to `Better Markdown Links`, attachment placement to `Custom Attachment Location`, folder cleanup to `Advanced Rename and Delete Handler`.
 
@@ -209,6 +209,15 @@ How it is built, and the trap: `check` records every candidate, every note that 
 **The reported vault was not running this code.** The reporting vault ran this plugin at `4.0.1`, which predates the whole section (it arrived in `4.1.0`). The single-reference case, where only `A.md` embeds `!!files/B/image.png`, was already reported by `5.0.1` when measured against the real `Custom Attachment Location`. Check the installed version before re-deriving a defect in this section.
 
 **A reference is never reported twice, and that is structural rather than a filter.** `LinksHandler` resolves each reference exactly once through `resolveValidReferenceTarget` (the resolution half of what used to be `isValidLink`); a reference that resolves to nothing is added to its bad bucket and goes no further, and only the ones that resolved are offered to this check. Do not "restore" a second filter — the guarantee holds because there is one resolution, and a second one is what would let the two drift apart.
+
+## HTML problems — the report's sixth section, read from `Advanced Metadata Cache`
+
+`HTML problems` names every HTML tag the browser does not know (`unknown`) and every tag Obsidian's sanitizer changes or removes (`sanitized`), per note, with its line. `src/html-problems/html-problem-handler.ts` holds it; `src/sibling-plugins/advanced-metadata-cache.ts` declares the consumed subset of that plugin's contract. **It only reports**: a candidate is lexical, so deleting markup on one would lose content.
+
+- **Nothing here scans HTML or Markdown — do not add a scanner, a tag list or a sanitizer cache.** `Advanced Metadata Cache` (`advanced-metadata-cache`, contract `^1.15.0`, release 2.5.0, `docs/html.md` in that repo) keeps one persisted, incremental index of each note's HTML candidates, excludes code, YAML, comments and fences, and validates through the running Obsidian's own `sanitizeHTMLToDom`. `Vault Problems` is to consume the same index, so the two plugins' verdicts cannot drift. Owner, 2026-11-02: no full Markdown parse and no repeated vault-wide scans.
+- **It is an optional provider, not a dependency or a suggestion.** Its `HTML` module is off by default. `findPluginApi` is asked ONCE per walk (`createResult`), and a revoked record counts as absent. Without the API the section says `Not checked: needs ...`; a note the API answers `null` for (module off, or still indexing) is counted and the section ends with a `Not checked: <n> note(s)` callout. Never print `No problems found` for a note nobody checked: an empty section reads as a clean vault.
+- **The section sits before `Path compatibility`, not last.** `Misplaced attachments` stays the last section because integration suites slice the report from its heading to the end.
+- **A custom element is sanitized, not unknown** (measured 2026-11-07, Obsidian 1.15, `Advanced Metadata Cache` 2.5.0): `<alpha-widget>` gets a `sanitized` line and no `unknown` line. `html-problems-report.desktop.integration.test.ts` pins that against the real released plugin, installed inside the closure, with the module turned on through its `data.json`.
 
 ## Bulk-operation commits (`shouldCommitBulkOperations`)
 
