@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 5.4.0
+
+This release has 1 new feature, 1 fix and 3 documentation changes. 4 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
+
+### New
+
+- **consistency-check:** report HTML tags Obsidian does not know or sanitizes
+
+### Fixed
+
+- guard desktop `git` dependencies for mobile scanners
+
+### Documentation
+
+- make issue attachments optional and strongly encouraged
+- link to the Obsidian resources page
+- **readme:** point bug reports at the Report a bug command
+
 ## 5.3.0
 
 - feat(path-compatibility): keep names unchanged in configured paths
