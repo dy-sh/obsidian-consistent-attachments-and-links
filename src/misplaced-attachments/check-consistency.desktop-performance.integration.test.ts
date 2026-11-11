@@ -102,7 +102,8 @@ describe('Check vault consistency at vault scale', () => {
         }
 
         const MISPLACED_HEADING = '# Misplaced attachments';
-        const SECTION_HEAD_LENGTH = 200;
+        // The heading, the first note's callout title and its first finding, which names the folder.
+        const SECTION_HEAD_LENGTH = 500;
 
         let callCount = 0;
         const flagValues = new Set<unknown>();
@@ -149,7 +150,7 @@ describe('Check vault consistency at vault scale', () => {
           const headingIndex = text.indexOf(MISPLACED_HEADING);
           // The section is written last, so it runs to the end of the report.
           const section = headingIndex === -1 ? '' : text.slice(headingIndex);
-          const misplacedEntryCount = section.split('\n').filter((line) => line.startsWith('- ')).length;
+          const misplacedEntryCount = section.split('\n').filter((line) => line.startsWith('> - ')).length;
 
           return {
             callCount,

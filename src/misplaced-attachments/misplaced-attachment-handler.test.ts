@@ -481,10 +481,10 @@ describe('MisplacedAttachmentCheckResult', () => {
     });
 
     const text = result.toString(app, 'report.md');
-    expect(text).toContain('# Misplaced attachments (1 files)');
-    expect(text).toContain('- [[A]] links to external [[!!files/B/image.png]]\n');
-    expect(text).toContain('  - (line 5): `!!files/B/image.png`\n');
-    expect(text).toContain('  - This note\'s attachment folder is `!!files/A`\n');
+    expect(text).toMatch(/^# Misplaced attachments \(\d+ in 1 notes\)$/mu);
+    expect(text).toContain('# Misplaced attachments (1 in 1 notes)\n\n> [!warning]- [[A]] (1)\n> - [[A]] links to external [[!!files/B/image.png]]\n');
+    expect(text).toContain('>   - (line 5): `!!files/B/image.png`\n');
+    expect(text).toContain('>   - This note\'s attachment folder is `!!files/A`\n');
     // The attachment is linked, never embedded, so the report does not render the image.
     expect(mockGenerateMarkdownLink).toHaveBeenCalledWith(expect.objectContaining({ isEmbed: false, targetPathOrFile: '!!files/B/image.png' }));
   });
@@ -497,7 +497,7 @@ describe('MisplacedAttachmentCheckResult', () => {
     addEntry(result, 'C.md', '!!files/B/other.png');
 
     const text = result.toString(app, 'report.md');
-    expect(text).toContain('# Misplaced attachments (2 files)');
+    expect(text).toMatch(/^# Misplaced attachments \(\d+ in 2 notes\)$/mu);
     expect(text).toContain(`[[!!files/B/image-${String(MAX_REPORTED_ENTRIES_PER_SECTION - 1)}.png]]`);
     expect(text).not.toContain(`[[!!files/B/image-${String(MAX_REPORTED_ENTRIES_PER_SECTION)}.png]]`);
     expect(text).not.toContain('[[C]]');
@@ -510,7 +510,7 @@ describe('MisplacedAttachmentCheckResult', () => {
     result.markHomed('!!files/B/image.png', 'B.md');
 
     expect(result.toString(app, 'report.md')).toContain(
-      '- [[A]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note))\n'
+      '> - [[A]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note))\n'
     );
   });
 
@@ -520,8 +520,8 @@ describe('MisplacedAttachmentCheckResult', () => {
     addEntry(result, 'C.md', '!!files/X/image.png');
 
     const text = result.toString(app, 'report.md');
-    expect(text).toContain('- [[A]] links to external [[!!files/X/image.png]] (also used by [[C]])\n');
-    expect(text).toContain('- [[C]] links to external [[!!files/X/image.png]] (also used by [[A]])\n');
+    expect(text).toContain('> - [[A]] links to external [[!!files/X/image.png]] (also used by [[C]])\n');
+    expect(text).toContain('> - [[C]] links to external [[!!files/X/image.png]] (also used by [[A]])\n');
   });
 
   it('should print the owner\'s full example: the proper note first, then every other user', () => {
@@ -532,10 +532,10 @@ describe('MisplacedAttachmentCheckResult', () => {
     addEntry(result, 'D.md', '!!files/B/image.png');
 
     const text = result.toString(app, 'report.md');
-    expect(text).toContain('# Misplaced attachments (3 files)');
-    expect(text).toContain('- [[A]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note), [[C]], [[D]])\n');
-    expect(text).toContain('- [[D]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note), [[A]], [[C]])\n');
-    expect(text).not.toContain('- [[B]] links');
+    expect(text).toMatch(/^# Misplaced attachments \(\d+ in 3 notes\)$/mu);
+    expect(text).toContain('> - [[A]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note), [[C]], [[D]])\n');
+    expect(text).toContain('> - [[D]] links to external [[!!files/B/image.png]] (also used by [[B]] (its proper note), [[A]], [[C]])\n');
+    expect(text).not.toContain('> - [[B]] links');
   });
 
   it('should name the frontmatter key for a frontmatter link', () => {
@@ -547,7 +547,7 @@ describe('MisplacedAttachmentCheckResult', () => {
       reference: castTo<Reference>({ key: 'cover', link: 'attachments/img.png', original: 'attachments/img.png' })
     });
 
-    expect(result.toString(app, 'report.md')).toContain('  - (key cover): `attachments/img.png`');
+    expect(result.toString(app, 'report.md')).toContain('>   - (key cover): `attachments/img.png`');
   });
 
   it('should fall back to the bare link when the reference is neither kind', () => {
@@ -558,7 +558,7 @@ describe('MisplacedAttachmentCheckResult', () => {
       reference: castTo<Reference>({ link: 'attachments/img.png', original: 'attachments/img.png' })
     });
 
-    expect(result.toString(app, 'report.md')).toContain('  - `attachments/img.png`');
+    expect(result.toString(app, 'report.md')).toContain('>   - `attachments/img.png`');
   });
 
   it('should leave out an owned attachment under ReportUnowned, and a note with nothing left', () => {
@@ -570,7 +570,7 @@ describe('MisplacedAttachmentCheckResult', () => {
 
     expect([...result.getReported().keys()]).toStrictEqual(['note.md']);
     const text = result.toString(app, 'report.md');
-    expect(text).toContain('# Misplaced attachments (1 files)');
+    expect(text).toMatch(/^# Misplaced attachments \(\d+ in 1 notes\)$/mu);
     expect(text).toContain('attachments/img.png');
     expect(text).not.toContain('shared.png');
   });
@@ -598,9 +598,9 @@ describe('MisplacedAttachmentCheckResult', () => {
     addEntry(result, 'A.md', 'attachments/img.png');
 
     const text = result.toString(app, 'report.md');
-    expect(text).toContain('# Misplaced attachments (2 files)');
+    expect(text).toMatch(/^# Misplaced attachments \(\d+ in 2 notes\)$/mu);
     expect(text).not.toContain('[[gone]]');
-    expect(text).toContain('- [[A]] links to external [[attachments/img.png]]\n');
+    expect(text).toContain('> - [[A]] links to external [[attachments/img.png]]\n');
   });
 
   it('should print the attachment path as code when the attachment no longer exists', () => {
@@ -608,6 +608,6 @@ describe('MisplacedAttachmentCheckResult', () => {
     const result = new MisplacedAttachmentCheckResult();
     addEntry(result, 'A.md', 'attachments/img.png');
 
-    expect(result.toString(app, 'report.md')).toContain('- [[A]] links to external `attachments/img.png`\n');
+    expect(result.toString(app, 'report.md')).toContain('> - [[A]] links to external `attachments/img.png`\n');
   });
 });

@@ -748,9 +748,10 @@ describe('PathCompatibilityHandler', () => {
       }
 
       const rendered = result.toString(app, 'report.md');
-      expect(rendered).toContain(`(${String(MAX_REPORTED_ENTRIES_PER_SECTION + 2)} items)`);
+      expect(rendered).toContain(`(0 in ${String(MAX_REPORTED_ENTRIES_PER_SECTION + 2)} items)`);
       expect(rendered).toContain(`\`item-${String(MAX_REPORTED_ENTRIES_PER_SECTION - 1)}\``);
       expect(rendered).not.toContain(`\`item-${String(MAX_REPORTED_ENTRIES_PER_SECTION)}\``);
+      expect(rendered).toContain('> [!warning]- `item-0` (0)\n> - Cannot be repaired automatically: every character of the name would have to be removed.\n\n');
       expect(rendered).toContain('Not listed: 2 more.');
     });
 

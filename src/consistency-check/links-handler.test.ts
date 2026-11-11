@@ -464,7 +464,7 @@ describe('ConsistencyCheckResult', () => {
     const result = new ConsistencyCheckResult('Title');
     result.add('missing.md', createReferenceCache());
     mockGetFileOrNull.mockReturnValue(null);
-    expect(result.toString(castTo<App>(app), 'report.md')).toContain('Title (1 files)');
+    expect(result.toString(castTo<App>(app), 'report.md')).toBe('# Title (1 in 1 notes)\n\n');
   });
 
   it('should render reference cache and frontmatter link entries', () => {
@@ -478,8 +478,7 @@ describe('ConsistencyCheckResult', () => {
     isReferenceCacheMock.mockImplementation((link: Reference) => link === refLink);
     isFrontmatterLinkCacheMock.mockImplementation((link: Reference) => link === fmLink);
     const $string = result.toString(castTo<App>(app), 'report.md');
-    expect($string).toContain('(line 1): `a`');
-    expect($string).toContain('(key prop): `b`');
+    expect($string).toBe('# Title (2 in 1 notes)\n\n> [!warning]- [[note]] (2)\n> - (line 1): `a`\n> - (key prop): `b`\n\n');
   });
 
   it('should ignore entries that are neither reference nor frontmatter caches', () => {
@@ -491,7 +490,7 @@ describe('ConsistencyCheckResult', () => {
     isReferenceCacheMock.mockReturnValue(false);
     isFrontmatterLinkCacheMock.mockReturnValue(false);
     const $string = result.toString(castTo<App>(app), 'report.md');
-    expect($string).toContain('[[note]]:');
+    expect($string).toContain('> [!warning]- [[note]] (1)\n\n');
   });
 
   it('should list at most the section limit and say how many references it left out', () => {
@@ -507,9 +506,10 @@ describe('ConsistencyCheckResult', () => {
     mockGenerateMarkdownLink.mockImplementation(({ targetPathOrFile }) => `[[${castTo<TFile>(targetPathOrFile).path}]]`);
     isReferenceCacheMock.mockReturnValue(true);
     const $string = result.toString(castTo<App>(app), 'report.md');
-    expect($string).toContain('# Title (2 files)');
+    expect($string).toContain('# Title (1003 in 2 notes)');
     expect($string).toContain('`first`');
     expect($string).not.toContain('`over`');
+    expect($string).toContain('> [!warning]- [[a.md]] (1001)\n');
     expect($string).not.toContain('[[b.md]]');
     expect($string).toContain(`Not listed: 3 more. Each section lists its first ${String(MAX_REPORTED_ENTRIES_PER_SECTION)},`);
   });
@@ -526,6 +526,7 @@ describe('ConsistencyCheckResult', () => {
     mockGetFileOrNull.mockReturnValue(createFile('note.md'));
     mockGenerateMarkdownLink.mockReturnValue('[[note]]');
     const $string = result.toString(castTo<App>(app), 'report.md');
-    expect($string).toContain('[[note]]:');
+    expect($string).toContain('# Title (0 in 1 notes)');
+    expect($string).toContain('> [!warning]- [[note]] (0)\n\n');
   });
 });

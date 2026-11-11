@@ -238,14 +238,14 @@ describe('Consistency report: a link to an attachment in another note\'s attachm
     const imageName = 'image.png';
 
     // Phase 1: A is reported against its own folder, and nothing else uses the image.
-    expect(result.aOnly).toMatch(/^- \[\[A\]\] links to external .*image\.png[^\n]*\]\]$/mu);
+    expect(result.aOnly).toMatch(/^> - \[\[A\]\] links to external .*image\.png[^\n]*\]\]$/mu);
     expect(result.aOnly).not.toContain('also used by');
     expect(result.aOnly).toContain(`This note's attachment folder is \`${result.root}/!!files/A\``);
     expect(result.aOnly).not.toContain('[[B]] links');
 
     // Phase 2: A and C are each reported, naming B as the proper note first; B is not.
-    expect(result.used).toMatch(/^- \[\[A\]\] links to external .*image\.png.* \(also used by \[\[B\]\] \(its proper note\), \[\[C\]\]\)$/mu);
-    expect(result.used).toMatch(/^- \[\[C\]\] links to external .*image\.png.* \(also used by \[\[B\]\] \(its proper note\), \[\[A\]\]\)$/mu);
+    expect(result.used).toMatch(/^> - \[\[A\]\] links to external .*image\.png.* \(also used by \[\[B\]\] \(its proper note\), \[\[C\]\]\)$/mu);
+    expect(result.used).toMatch(/^> - \[\[C\]\] links to external .*image\.png.* \(also used by \[\[B\]\] \(its proper note\), \[\[A\]\]\)$/mu);
     expect(result.used).not.toContain('[[B]] links');
 
     // Phase 3: B owns it, so `Report unowned` reports nothing about it.
