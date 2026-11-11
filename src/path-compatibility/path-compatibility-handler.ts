@@ -55,6 +55,11 @@ import type {
   PathCompatibilityViolation
 } from './path-compatibility.ts';
 
+import {
+  countFindings,
+  formatReportCallout,
+  formatReportHeading
+} from '../consistency-check/report-callout.ts';
 import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
 import {
   findPathCompatibilityViolations,
@@ -184,7 +189,8 @@ export class PathCompatibilityCheckResult {
       return `# ${title}\n${warningLine}${t(($) => $.pathCompatibility.report.noProblems)}\n\n`;
     }
 
-    let $string = `# ${title} (${String(this.entries.length)} items)\n${warningLine}`;
+    const violationCount = countFindings(this.entries.map((entry) => entry.violations));
+    let $string = `${formatReportHeading(title, violationCount, this.entries.length, 'items')}\n${warningLine}`;
     const budget = new ReportEntryBudget();
 
     for (const entry of this.entries) {
@@ -192,16 +198,13 @@ export class PathCompatibilityCheckResult {
         continue;
       }
 
-      $string += `${describeItem(app, entry.path, reportPath)}:\n`;
-
-      for (const violation of entry.violations) {
-        $string += `- ${describeViolation(violation)}\n`;
-      }
-
-      $string += entry.newPath === null
-        ? `- ${t(($) => $.pathCompatibility.report.cannotRepair)}\n`
-        : `- ${t(($) => $.pathCompatibility.report.wouldBecome, { newPath: entry.newPath })}\n`;
-      $string += '\n\n';
+      const lines = entry.violations.map((violation) => `- ${describeViolation(violation)}`);
+      lines.push(
+        entry.newPath === null
+          ? `- ${t(($) => $.pathCompatibility.report.cannotRepair)}`
+          : `- ${t(($) => $.pathCompatibility.report.wouldBecome, { newPath: entry.newPath })}`
+      );
+      $string += formatReportCallout(describeItem(app, entry.path, reportPath), entry.violations.length, lines);
     }
 
     return `${$string}${budget.describeOmission()}`;

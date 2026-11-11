@@ -31,6 +31,11 @@ import type {
 } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
+import {
+  countFindings,
+  formatReportCallout,
+  formatReportHeading
+} from './report-callout.ts';
 import { ReportEntryBudget } from './report-entry-budget.ts';
 
 interface LinksHandlerCheckConsistencyParams {
@@ -70,7 +75,7 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
 
   public override toString(app: App, reportPath: string): string {
     if (this.size > 0) {
-      let $string = `# ${this.title} (${String(this.size)} files)\n`;
+      let $string = `${formatReportHeading(this.title, countFindings(this.values()), this.size)}\n`;
       const budget = new ReportEntryBudget();
       for (const [notePath, links] of this) {
         if (budget.isExhausted) {
@@ -86,18 +91,18 @@ export class ConsistencyCheckResult extends Map<string, Reference[]> {
           sourcePathOrFile: reportPath,
           targetPathOrFile: note
         });
-        $string += `${linkString}:\n`;
+        const lines: string[] = [];
         for (const link of links) {
           if (!budget.take()) {
             continue;
           }
           if (isReferenceCache(link)) {
-            $string += `- (line ${String(link.position.start.line + 1)}): \`${link.link}\`\n`;
+            lines.push(`- (line ${String(link.position.start.line + 1)}): \`${link.link}\``);
           } else if (isFrontmatterLinkCache(link)) {
-            $string += `- (key ${link.key}): \`${link.link}\`\n`;
+            lines.push(`- (key ${link.key}): \`${link.link}\``);
           }
         }
-        $string += '\n\n';
+        $string += formatReportCallout(linkString, links.length, lines);
       }
       return `${$string}${budget.describeOmission()}`;
     }

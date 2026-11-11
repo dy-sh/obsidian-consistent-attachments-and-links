@@ -27,6 +27,11 @@ import type {
   HtmlDiagnostic
 } from '../sibling-plugins/advanced-metadata-cache.ts';
 
+import {
+  countFindings,
+  formatReportCallout,
+  formatReportHeading
+} from '../consistency-check/report-callout.ts';
 import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
 import {
   ADVANCED_METADATA_CACHE_HTML_API_VERSION_RANGE,
@@ -92,7 +97,7 @@ export class HtmlProblemCheckResult extends Map<string, HtmlDiagnostic[]> {
       return `# ${title}\n${t(($) => $.htmlProblems.report.noProblems)}\n\n${notChecked}`;
     }
 
-    let $string = `# ${title} (${String(this.size)} files)\n`;
+    let $string = `${formatReportHeading(title, countFindings(this.values()), this.size)}\n`;
     const budget = new ReportEntryBudget();
     for (const [notePath, diagnostics] of this) {
       if (budget.isExhausted) {
@@ -105,13 +110,13 @@ export class HtmlProblemCheckResult extends Map<string, HtmlDiagnostic[]> {
         continue;
       }
 
-      $string += `${generateMarkdownLink({ app, sourcePathOrFile: reportPath, targetPathOrFile: note })}:\n`;
+      const lines: string[] = [];
       for (const diagnostic of diagnostics) {
         if (budget.take()) {
-          $string += `- ${describeDiagnostic(diagnostic)}\n`;
+          lines.push(`- ${describeDiagnostic(diagnostic)}`);
         }
       }
-      $string += '\n\n';
+      $string += formatReportCallout(generateMarkdownLink({ app, sourcePathOrFile: reportPath, targetPathOrFile: note }), diagnostics.length, lines);
     }
 
     return `${$string}${budget.describeOmission()}${notChecked}`;

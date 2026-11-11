@@ -54,6 +54,11 @@ import {
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
+import {
+  countFindings,
+  formatReportCallout,
+  formatReportHeading
+} from '../consistency-check/report-callout.ts';
 import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
 import { ExternalAttachmentLinkMode } from '../settings/plugin-settings.ts';
 
@@ -213,7 +218,7 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
       return `# ${title}\n${t(($) => $.misplacedAttachment.report.noProblems)}\n\n`;
     }
 
-    let $string = `# ${title} (${String(reported.size)} files)\n`;
+    let $string = `${formatReportHeading(title, countFindings(reported.values()), reported.size)}\n`;
     const budget = new ReportEntryBudget();
 
     for (const [notePath, entries] of reported) {
@@ -227,6 +232,7 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
         continue;
       }
 
+      const lines: string[] = [];
       for (const entry of entries) {
         if (!budget.take()) {
           continue;
@@ -240,19 +246,21 @@ export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachm
             targetPathOrFile: entry.attachmentPath
           })
           : `\`${entry.attachmentPath}\``;
-        $string += `- ${t(($) => $.misplacedAttachment.report.linksToExternal, { attachmentLink, noteLink })}${this.describeOtherUsers(app, reportPath, entry.attachmentPath, notePath)}\n`;
-        $string += `  - ${describeReference(entry.reference)}\n`;
-        $string += `  - ${
-          t(($) => $.misplacedAttachment.report.noteAttachmentFolder, {
-            properAttachmentFolderPath: entry.properAttachmentFolderPath
-          })
-        }\n`;
+        lines.push(
+          `- ${t(($) => $.misplacedAttachment.report.linksToExternal, { attachmentLink, noteLink })}${this.describeOtherUsers(app, reportPath, entry.attachmentPath, notePath)}`,
+          `  - ${describeReference(entry.reference)}`,
+          `  - ${
+            t(($) => $.misplacedAttachment.report.noteAttachmentFolder, {
+              properAttachmentFolderPath: entry.properAttachmentFolderPath
+            })
+          }`
+        );
       }
 
-      $string += '\n';
+      $string += formatReportCallout(noteLink, entries.length, lines);
     }
 
-    return `${$string}\n${budget.describeOmission()}`;
+    return `${$string}${budget.describeOmission()}`;
   }
 
   /**

@@ -132,10 +132,10 @@ describe('HtmlProblemHandler', () => {
     await handler.check({ htmlProblems: result, notePath: 'clean.md' });
 
     expect(result.toString(app, 'report.md')).toBe(
-      '# HTML problems (1 files)\n[[note.md]]:\n'
-        + '- (line 2): `<nonExistingTag>` is changed or removed when Obsidian renders it\n'
-        + '- (line 2): `<nonExistingTag>` is not a known HTML element\n'
-        + '- (line 5): `<script>` is changed or removed when Obsidian renders it\n\n\n'
+      '# HTML problems (3 in 1 notes)\n\n> [!warning]- [[note.md]] (3)\n'
+        + '> - (line 2): `<nonExistingTag>` is changed or removed when Obsidian renders it\n'
+        + '> - (line 2): `<nonExistingTag>` is not a known HTML element\n'
+        + '> - (line 5): `<script>` is changed or removed when Obsidian renders it\n\n'
     );
   });
 
@@ -174,7 +174,7 @@ describe('HtmlProblemHandler', () => {
     const result = new HtmlProblemCheckResult(createApi({}));
     result.add('gone.md', [createDiagnostic('unknown', '<foo>', 0, 0)]);
     mockGetFileOrNull.mockReturnValue(null);
-    expect(result.toString(app, 'report.md')).toBe('# HTML problems (1 files)\n');
+    expect(result.toString(app, 'report.md')).toBe('# HTML problems (1 in 1 notes)\n\n');
   });
 
   it('caps the listed entries like every other section', () => {
@@ -183,7 +183,7 @@ describe('HtmlProblemHandler', () => {
     result.add('a.md', diagnostics);
     result.add('b.md', [createDiagnostic('unknown', '<bar>', 0, 0)]);
     const text = result.toString(app, 'report.md');
-    expect(text.match(/^- /gmu)).toHaveLength(MAX_REPORTED_ENTRIES_PER_SECTION);
+    expect(text.match(/^> - /gmu)).toHaveLength(MAX_REPORTED_ENTRIES_PER_SECTION);
     expect(text).toContain('Not listed: 2 more.');
     expect(text).not.toContain('[[b.md]]');
   });
