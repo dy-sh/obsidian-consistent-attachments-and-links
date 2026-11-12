@@ -270,13 +270,8 @@ export class BrokenLinkFixer {
         return new Map();
       }
 
-      const { createDesktopGitRunner } = await import('./desktop-git-runner.ts');
-      // Native dynamic Node imports survive bundling and fail in Obsidian's renderer.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import-x/no-nodejs-modules -- Desktop guard keeps Node off mobile; require works in the bundled renderer.
-      const { execFile } = require('node:child_process') as typeof import('node:child_process');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import-x/no-nodejs-modules -- Desktop guard keeps Node off mobile; require works in the bundled renderer.
-      const { promisify } = require('node:util') as typeof import('node:util');
-      return await loadGitRenames({ runGit: createDesktopGitRunner({ cwd: adapter.getBasePath(), execFile, promisify }) });
+      const { createDesktopGitRunner } = await import('@mnaoumov/obsidian-lib/desktop-git-runner');
+      return await loadGitRenames({ runGit: createDesktopGitRunner(adapter.getBasePath()) });
     }
     return new Map();
   }
