@@ -89,7 +89,7 @@ vi.mock('@mnaoumov/obsidian-lib/vault', () => ({
   getMarkdownFilesSorted: (): TFile[] => hoisted.getMarkdownFilesSorted()
 }));
 
-vi.mock('./desktop-git-runner.ts', () => ({
+vi.mock('@mnaoumov/obsidian-lib/desktop-git-runner', () => ({
   createDesktopGitRunner: hoisted.createDesktopGitRunner
 }));
 
@@ -269,7 +269,7 @@ describe('BrokenLinkFixer', () => {
 
       const [brokenLink] = await createFixer().findBrokenLinks();
 
-      expect(hoisted.createDesktopGitRunner).toHaveBeenCalledWith(expect.objectContaining({ cwd: 'C:/vault' }));
+      expect(hoisted.createDesktopGitRunner).toHaveBeenCalledWith('C:/vault');
       expect(brokenLink?.candidates[0]?.evidence[0]?.kind).toBe(BrokenLinkEvidenceKind.GitRename);
     });
 
