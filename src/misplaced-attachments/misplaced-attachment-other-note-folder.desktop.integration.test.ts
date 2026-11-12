@@ -27,6 +27,7 @@
  * Delete Handler`'s API `^1.1.0`, which the seeded release publishes.
  */
 
+import { downloadReleasedPlugin } from '@mnaoumov/obsidian-dev-toolkit/test-runners/released-plugin';
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
@@ -34,8 +35,6 @@ import {
   expect,
   it
 } from 'vitest';
-
-import { downloadReleasedPlugin } from '../../scripts/helpers/download-released-plugin.ts';
 
 const CONSISTENCY_COMMAND_ID = 'consistent-attachments-and-links:check-consistency';
 const CUSTOM_ATTACHMENT_LOCATION_PLUGIN_ID = 'obsidian-custom-attachment-location';

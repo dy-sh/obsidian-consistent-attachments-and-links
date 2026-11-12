@@ -10,6 +10,7 @@
  * not check, rather than reporting a clean vault.
  */
 
+import { downloadReleasedPlugin } from '@mnaoumov/obsidian-dev-toolkit/test-runners/released-plugin';
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
@@ -17,8 +18,6 @@ import {
   expect,
   it
 } from 'vitest';
-
-import { downloadReleasedPlugin } from '../../scripts/helpers/download-released-plugin.ts';
 
 const ADVANCED_METADATA_CACHE_PLUGIN_ID = 'advanced-metadata-cache';
 const ADVANCED_METADATA_CACHE_REPO = 'mnaoumov/obsidian-advanced-metadata-cache';
