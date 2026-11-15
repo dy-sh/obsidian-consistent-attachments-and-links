@@ -1,7 +1,7 @@
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { App } from 'obsidian';
 
-import { Component } from 'obsidian';
+import { ComponentEx } from '@mnaoumov/obsidian-lib/components/component-ex';
 
 import type { BrokenLinkFixer } from './broken-link-fixer.ts';
 
@@ -25,7 +25,7 @@ interface BrokenLinksViewComponentConstructorParams {
  * throws on a view type registered twice, so nothing after it in `onloadImpl` would run. The cleanup mirrors
  * Obsidian's own, and also closes the open views: their Fix buttons must not act while the plugin is blocked.
  */
-export class BrokenLinksViewComponent extends Component {
+export class BrokenLinksViewComponent extends ComponentEx {
   private readonly app: App;
   private readonly brokenLinkFixer: BrokenLinkFixer;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
