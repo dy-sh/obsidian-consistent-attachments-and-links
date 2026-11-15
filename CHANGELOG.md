@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 5.5.0
+
+This release has 1 new feature, 1 fix and 1 documentation change. 4 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
+
+### New
+
+- **consistency-check:** group each note's findings in one collapsed callout
+
+### Fixed
+
+- **consistency-check:** accept a base embed whose subpath names one of its views
+
+### Documentation
+
+- **changelog:** regroup the published release notes for readers
+
 ## 5.4.0
 
 This release has 1 new feature, 1 fix and 3 documentation changes. 4 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
