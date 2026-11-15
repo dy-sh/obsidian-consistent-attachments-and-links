@@ -13,7 +13,11 @@ import {
   dirname,
   join
 } from '@mnaoumov/typescript-lib/path';
-import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
+import {
+  ensureGenericObject,
+  ensureNonNullable,
+  isObject
+} from '@mnaoumov/typescript-lib/type-guards';
 import {
   isFrontmatterLinkCache,
   isReferenceCache
@@ -21,6 +25,7 @@ import {
 import {
   App,
   normalizePath,
+  parseYaml,
   resolveSubpath,
   TFile
 } from 'obsidian';
@@ -37,6 +42,8 @@ import {
   formatReportHeading
 } from './report-callout.ts';
 import { ReportEntryBudget } from './report-entry-budget.ts';
+
+const BASE_FILE_EXTENSION = 'base';
 
 interface LinksHandlerCheckConsistencyParams {
   readonly badEmbeds: ConsistencyCheckResult;
@@ -178,6 +185,10 @@ export class LinksHandler {
       return subpath.startsWith('#page=') ? file : null;
     }
 
+    if (extension === BASE_FILE_EXTENSION) {
+      return await this.hasBaseView(file, subpath.slice(1)) ? file : null;
+    }
+
     if (extension !== MARKDOWN_FILE_EXTENSION) {
       return null;
     }
@@ -220,6 +231,28 @@ export class LinksHandler {
         reference
       });
     }
+  }
+
+  /**
+   * Whether a base file declares a view named `viewName`. `![[File.base#View]]` embeds one view of a base, so
+   * the subpath of a base reference is a view name, the way a heading is the subpath of a note reference. A base
+   * that cannot be read or parsed has no views, so a subpath into it is reported, as a heading into a note with
+   * no metadata is.
+   */
+  private async hasBaseView(file: TFile, viewName: string): Promise<boolean> {
+    let parsed: unknown;
+    try {
+      parsed = parseYaml(await this.app.vault.cachedRead(file));
+    } catch {
+      return false;
+    }
+
+    if (!isObject(parsed)) {
+      return false;
+    }
+
+    const views: unknown = ensureGenericObject(parsed)['views'];
+    return Array.isArray(views) && views.some((view: unknown) => isObject(view) && ensureGenericObject(view)['name'] === viewName);
   }
 }
 

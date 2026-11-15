@@ -22,6 +22,7 @@ import {
 } from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   normalizePath,
+  parseYaml,
   resolveSubpath
 } from 'obsidian';
 import {
@@ -46,6 +47,7 @@ vi.mock('obsidian', async (importOriginal) => {
   return {
     ...actual,
     normalizePath: vi.fn(),
+    parseYaml: vi.fn(),
     resolveSubpath: vi.fn()
   };
 });
@@ -100,6 +102,7 @@ interface SettingsLike {
 const isFrontmatterLinkCacheMock = vi.mocked(isFrontmatterLinkCache);
 const isReferenceCacheMock = vi.mocked(isReferenceCache);
 const mockNormalizePath = vi.mocked(normalizePath);
+const mockParseYaml = vi.mocked(parseYaml);
 const mockResolveSubpath = vi.mocked(resolveSubpath);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockGenerateMarkdownLink = vi.mocked(generateMarkdownLink);
@@ -164,7 +167,11 @@ describe('LinksHandler', () => {
     settings = {
       isPathIgnored: vi.fn().mockReturnValue(false)
     };
-    app = strictProxy<App>({});
+    app = strictProxy<App>({
+      vault: strictProxy<App['vault']>({
+        cachedRead: vi.fn((): Promise<string> => Promise.resolve('base yaml'))
+      })
+    });
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
       settings: castTo<PluginSettingsComponent['settings']>(settings)
     });
@@ -430,6 +437,47 @@ describe('LinksHandler', () => {
       mockGetFileOrNull.mockReturnValue(createFile('other.md', 'md'));
       mockGetCacheSafe.mockResolvedValue(castTo<Awaited<ReturnType<typeof getCacheSafe>>>({}));
       mockResolveSubpath.mockReturnValue(null);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
+    });
+
+    // `![[File.base#View]]` embeds one view of a base, so a base's subpath is a view name.
+    it('should accept a base subpath that names one of its views', async () => {
+      const target = createFile('Legal case.base', 'base');
+      mockSplitSubpath.mockReturnValue({ linkPath: 'Legal case.base', subpath: '#Case documents' });
+      mockGetFileOrNull.mockReturnValue(target);
+      mockParseYaml.mockReturnValue({ views: [{ name: 'Table' }, { name: 'Case documents' }] });
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBe(target);
+      expect(app.vault.cachedRead).toHaveBeenCalledWith(target);
+      expect(mockParseYaml).toHaveBeenCalledWith('base yaml');
+    });
+
+    it('should reject a base subpath that names no view', async () => {
+      mockSplitSubpath.mockReturnValue({ linkPath: 'Legal case.base', subpath: '#Missing' });
+      mockGetFileOrNull.mockReturnValue(createFile('Legal case.base', 'base'));
+      mockParseYaml.mockReturnValue({ views: [{ name: 'Table' }, 'not a view'] });
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
+    });
+
+    it('should reject a base subpath when the base has no views list', async () => {
+      mockSplitSubpath.mockReturnValue({ linkPath: 'a.base', subpath: '#Table' });
+      mockGetFileOrNull.mockReturnValue(createFile('a.base', 'base'));
+      mockParseYaml.mockReturnValue({ views: 'Table' });
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
+    });
+
+    it('should reject a base subpath when the base is not a YAML mapping', async () => {
+      mockSplitSubpath.mockReturnValue({ linkPath: 'a.base', subpath: '#Table' });
+      mockGetFileOrNull.mockReturnValue(createFile('a.base', 'base'));
+      mockParseYaml.mockReturnValue(null);
+      expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
+    });
+
+    it('should reject a base subpath when the base cannot be parsed', async () => {
+      mockSplitSubpath.mockReturnValue({ linkPath: 'a.base', subpath: '#Table' });
+      mockGetFileOrNull.mockReturnValue(createFile('a.base', 'base'));
+      mockParseYaml.mockImplementation(() => {
+        throw new Error('bad yaml');
+      });
       expect(await asPrivate(handler).resolveValidReferenceTarget(createRef(), 'note.md')).toBeNull();
     });
   });
