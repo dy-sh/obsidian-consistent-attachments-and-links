@@ -120,7 +120,7 @@ function createFixer(): BrokenLinkFixer {
     }),
     pluginNoticeComponent: strictProxy<PluginNoticeComponent>({
       showNotice: vi.fn((): Notice => castTo<Notice>({})),
-      showNoticeAfterDelay: vi.fn((): PluginNoticeComponentDelayedNotice => ({ setContent: noop, [Symbol.dispose]: noop }))
+      showNoticeAfterDelay: vi.fn((): PluginNoticeComponentDelayedNotice => ({ dispose: noop, setContent: noop, [Symbol.dispose]: noop }))
     }),
     pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ settings: castTo<PluginSettings>(settings) }),
     resourceLockComponent: null

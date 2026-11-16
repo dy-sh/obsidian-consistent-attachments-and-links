@@ -171,6 +171,7 @@ const mockPluginNoticeComponent = strictProxy<PluginNoticeComponent>({
   showNotice: vi.fn((_message: DocumentFragment | string): Notice => castTo<Notice>({})),
   // `checkConsistency`'s `loop` asks for its progress notice through this.
   showNoticeAfterDelay: vi.fn((): PluginNoticeComponentDelayedNotice => ({
+    dispose: noop,
     setContent: noop,
     [Symbol.dispose]: noop
   }))
