@@ -30,9 +30,9 @@ describe('demo vault drawing buttons', () => {
     const result = await evalInObsidian({
       async callback({ app }): Promise<DrawingButtonsResult> {
         interface DemoSetup {
-          readonly checkDrawingAsAttachment: (this: void, app: unknown) => Promise<void>;
-          readonly checkDrawingAsNote: (this: void, app: unknown) => Promise<void>;
           readonly resetDrawingDemo: (this: void, app: unknown) => Promise<void>;
+          readonly runCheckWithDrawingAsAttachment: (this: void, app: unknown) => Promise<void>;
+          readonly runCheckWithDrawingAsNote: (this: void, app: unknown) => Promise<void>;
         }
 
         interface PluginData {
@@ -73,10 +73,10 @@ describe('demo vault drawing buttons', () => {
           return end === -1 ? report.slice(start) : report.slice(start, end);
         }
 
-        await demoSetup.checkDrawingAsAttachment(app);
+        await demoSetup.runCheckWithDrawingAsAttachment(app);
         const misplacedSectionAsAttachment = await readMisplacedSection();
 
-        await demoSetup.checkDrawingAsNote(app);
+        await demoSetup.runCheckWithDrawingAsNote(app);
         const misplacedSectionAsNote = await readMisplacedSection();
 
         await demoSetup.resetDrawingDemo(app);

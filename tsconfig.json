@@ -34,5 +34,10 @@
     "./src/**/*.ts",
     "./scripts/**/*.ts",
     "./vitest.config.ts"
+  ],
+  "references": [
+    {
+      "path": "./demo-vault/_assets/CodeScriptToolkit"
+    }
   ]
 }

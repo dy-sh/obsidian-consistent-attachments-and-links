@@ -1,0 +1,20 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "outDir": "../../../dist/demo-vault-setup",
+    "tsBuildInfoFile": "../../../dist/demo-vault-setup/tsconfig.tsbuildinfo",
+    "types": [
+      "@obsidian-typings/obsidian-public-latest"
+    ]
+  },
+  "files": [
+    "./demoSetup.ts",
+    "./startup.ts"
+  ],
+  "include": []
+}

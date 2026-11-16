@@ -35,7 +35,7 @@ Manual equivalent: create a note with a very long non-Latin name, link to it fro
 ---
 caption: Check Vault Consistency (read-only)
 ---
-await require('/demoSetup.ts').checkConsistency(app);
+await require('/demoSetup.ts').runConsistencyCheck(app);
 ```
 
 **Step 3 - repair it.**
@@ -83,7 +83,7 @@ Manual equivalent: copy a file whose name was decomposed elsewhere into the vaul
 ---
 caption: Check Vault Consistency for the decomposed name (read-only)
 ---
-await require('/demoSetup.ts').checkConsistency(app);
+await require('/demoSetup.ts').runConsistencyCheck(app);
 ```
 
 **Step 3 - repair it.** Run the repair, then check the vault again. The note is gone from the section, and `Points at the decomposed name` still links to it:
