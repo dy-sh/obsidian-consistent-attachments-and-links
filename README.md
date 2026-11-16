@@ -57,6 +57,8 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Settings**, including which platforms the path repair enforces. [05 Settings](<./demo-vault/05 Settings.md>)
 - **Obsidian's own settings matter too** — link format, attachment location — and the vault explains which ones to change and why. [06 Recommended Obsidian settings](<./demo-vault/06 Recommended Obsidian settings.md>)
 
+**Want the problems live instead of in a report?** [`Vault Problems`](https://github.com/mnaoumov/obsidian-vault-problems) checks every category of the consistency report as you edit, through the same shared code, and lists the problems in one view with quick fixes. With it enabled, **Check vault consistency** still writes the report, opens it with a pointer to that view, and shows a notice whose **Open Problems** button opens it. Only the check for names stored in decomposed Unicode (NFD) stays here alone.
+
 ## Where the old features went
 
 <!-- The span keeps #attachment-subfolder-setting resolving: plugin versions before 3.0.0 link to it. -->

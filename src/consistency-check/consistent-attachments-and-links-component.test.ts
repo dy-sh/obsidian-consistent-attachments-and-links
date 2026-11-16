@@ -14,11 +14,13 @@ import {
   unsetCaseInsensitiveFileIndex
 } from '@mnaoumov/obsidian-lib/case-insensitive-file-index';
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
   noop,
   noopAsync
 } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import { MarkdownView } from 'obsidian';
 import { App } from 'obsidian-test-mocks/obsidian';
@@ -38,6 +40,7 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 import type { PluginSettings } from '../settings/plugin-settings.ts';
 import type { LinksHandler } from './links-handler.ts';
 
+import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { MisplacedAttachmentCheckResult } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import { ConsistentAttachmentsAndLinksComponent } from './consistent-attachments-and-links-component.ts';
 
@@ -284,6 +287,51 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(text).toContain('Bad frontmatter links\n');
       expect(text).toContain('Misplaced attachments\n');
       expect(text.indexOf('Misplaced attachments\n')).toBeGreaterThan(text.indexOf('Bad frontmatter links\n'));
+    });
+
+    it('should neither point to Vault Problems nor show its notice while that plugin is not enabled', async () => {
+      await initI18N(translationsMap);
+      const component = createComponent();
+      const modifySpy = vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+
+      await component.checkConsistency();
+
+      const text = modifySpy.mock.calls[0]?.[1] ?? '';
+      expect(text.startsWith('Bad links\n')).toBe(true);
+      expect(text).not.toContain('Vault Problems');
+      expect(mockPluginNoticeComponent.showNotice).not.toHaveBeenCalled();
+    });
+
+    it('should still write the report, opened by a pointer to Vault Problems, and offer its view in a notice', async () => {
+      await initI18N(translationsMap);
+      app.plugins.enabledPlugins.add('vault-problems');
+      const component = createComponent();
+      const modifySpy = vi.spyOn(app.vault, 'modify').mockResolvedValue();
+      vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue();
+      const executedCommandIds: string[] = [];
+      app.commands = strictProxy<AppOriginal['commands']>({
+        executeCommandById: (commandId: string): boolean => {
+          executedCommandIds.push(commandId);
+          return true;
+        }
+      });
+
+      await component.checkConsistency();
+
+      const text = modifySpy.mock.calls[0]?.[1] ?? '';
+      expect(text.startsWith('> [!TIP]\n> `Vault Problems` shows these problems live')).toBe(true);
+      expect(text).toContain('Bad links\n');
+      expect(text).toContain('Misplaced attachments\n');
+
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledTimes(1);
+      const message = castTo<DocumentFragment>(vi.mocked(mockPluginNoticeComponent.showNotice).mock.calls[0]?.[0]);
+      expect(message.querySelector('code')?.textContent).toBe('Vault Problems');
+      const button = ensureNonNullable(message.querySelector('button'));
+      expect(button.textContent).toBe('Open Problems');
+      expect(executedCommandIds).toStrictEqual([]);
+      button.click();
+      expect(executedCommandIds).toStrictEqual(['vault-problems:open-problems']);
     });
 
     it('should hand the misplaced-attachment handler and its bucket to the links handler', async () => {

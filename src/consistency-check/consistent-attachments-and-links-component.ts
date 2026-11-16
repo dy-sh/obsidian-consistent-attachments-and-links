@@ -7,8 +7,13 @@ import { CaseInsensitiveFileIndexComponent } from '@mnaoumov/obsidian-lib/compon
 import { LayoutReadyComponent } from '@mnaoumov/obsidian-lib/components/layout-ready-component';
 import { getOrCreateFile } from '@mnaoumov/obsidian-lib/file-system';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
+import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
 import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
+import {
+  getInstalledPluginState,
+  InstalledPluginState
+} from '@mnaoumov/obsidian-lib/plugin/plugin-install-state';
 import {
   createFolderSafe,
   getMarkdownFilesSorted
@@ -30,6 +35,11 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 
 import { MisplacedAttachmentCheckResult } from '../misplaced-attachments/misplaced-attachment-handler.ts';
 import { PathCompatibilityCheckResult } from '../path-compatibility/path-compatibility-handler.ts';
+import {
+  VAULT_PROBLEMS_OPEN_PROBLEMS_COMMAND_ID,
+  VAULT_PROBLEMS_PLUGIN_ID,
+  VAULT_PROBLEMS_PLUGIN_NAME
+} from '../sibling-plugins/vault-problems.ts';
 import {
   ConsistencyCheckResult,
   LinksHandler
@@ -109,7 +119,11 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     const pathCompatibility = new PathCompatibilityCheckResult();
     this.pathCompatibilityHandler.check(pathCompatibility);
 
-    const text = [badLinks, badEmbeds, badFrontmatterLinks, htmlProblems, pathCompatibility, misplacedAttachments]
+    // With `Vault Problems` enabled, the same findings are live in its view. The report is still written, as a
+    // shareable record, but its first line and a notice point there.
+    const isVaultProblemsEnabled = this.isVaultProblemsEnabled();
+    const pointer = isVaultProblemsEnabled ? t(($) => $.vaultProblems.report.pointer) : '';
+    const text = pointer + [badLinks, badEmbeds, badFrontmatterLinks, htmlProblems, pathCompatibility, misplacedAttachments]
       .map((result) => result.toString(this.app, notePath))
       .join('');
     await createFolderSafe(this.app, dirname(notePath));
@@ -126,6 +140,10 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Can change in await calls.
     if (!isFileOpened) {
       await this.app.workspace.openLinkText(notePath, '/', false);
+    }
+
+    if (isVaultProblemsEnabled) {
+      this.showVaultProblemsNotice();
     }
   }
 
@@ -166,6 +184,13 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       shouldContinueOnError: true,
       shouldShowProgressBar: true
     });
+  }
+
+  /**
+   * Enabled, not merely installed: a disabled plugin has no command to run.
+   */
+  private isVaultProblemsEnabled(): boolean {
+    return getInstalledPluginState({ app: this.app, pluginId: VAULT_PROBLEMS_PLUGIN_ID }) === InstalledPluginState.Enabled;
   }
 
   private async saveAllOpenNotes(): Promise<void> {
@@ -209,5 +234,18 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
     await this.pluginSettingsComponent.editAndSave((settings) => {
       settings.shouldShowBackupWarning = false;
     });
+  }
+
+  private showVaultProblemsNotice(): void {
+    this.pluginNoticeComponent.showNotice(createFragment((f) => {
+      appendCodeBlock(f, VAULT_PROBLEMS_PLUGIN_NAME);
+      f.appendText(t(($) => $.vaultProblems.notice.message));
+      f.createEl('br');
+      f.createEl('button', { text: t(($) => $.vaultProblems.notice.openProblems) }, (button) => {
+        button.addEventListener('click', () => {
+          this.app.commands.executeCommandById(VAULT_PROBLEMS_OPEN_PROBLEMS_COMMAND_ID);
+        });
+      });
+    }));
   }
 }
