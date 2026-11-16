@@ -12,7 +12,7 @@ It **reports** where they are. The **Misplaced attachments** section of the cons
 ---
 caption: Check Vault Consistency (read-only)
 ---
-await require('/demoSetup.ts').checkConsistency(app);
+await require('/demoSetup.ts').runConsistencyCheck(app);
 ```
 
 Manual equivalent: run **Check Vault Consistency** from the Command Palette.

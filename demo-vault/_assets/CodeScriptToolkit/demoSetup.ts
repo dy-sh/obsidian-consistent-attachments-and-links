@@ -1,19 +1,28 @@
-import type { App } from 'obsidian';
+/*
+ * `CodeScript Toolkit` loads this file inside the vault, where no `node_modules` holds `dedent`, so an import of it
+ * fails every demo button. Note contents are joined lines instead.
+ */
+/* eslint-disable typescript-dev-toolkit/prefer-dedent -- `dedent` cannot be resolved inside the demo vault. */
 
+import type {
+  App,
+  DataAdapter
+} from 'obsidian';
+
+import { configureCommunityPlugin } from '@mnaoumov/obsidian-lib/community-plugins';
 import {
   MarkdownView,
   Notice
 } from 'obsidian';
-import { configureCommunityPlugin } from '@mnaoumov/obsidian-lib/community-plugins';
 
 const PLUGIN_ID = 'consistent-attachments-and-links';
 
 interface DemoSettingsPatch {
-  shouldCreateNoteToPreserveOriginalName?: boolean;
-  shouldEnsurePathCompatibilityOnAndroid?: boolean;
-  shouldEnsurePathCompatibilityOnWindows?: boolean;
-  shouldNormalizeUnicodeNames?: boolean;
-  treatAsAttachmentExtensions?: readonly string[];
+  readonly shouldCreateNoteToPreserveOriginalName?: boolean;
+  readonly shouldEnsurePathCompatibilityOnAndroid?: boolean;
+  readonly shouldEnsurePathCompatibilityOnWindows?: boolean;
+  readonly shouldNormalizeUnicodeNames?: boolean;
+  readonly treatAsAttachmentExtensions?: readonly string[];
 }
 
 const PATH_COMPATIBILITY_FOLDER_PATH = 'Materials/08 Keep paths valid on every platform';
@@ -23,7 +32,8 @@ const PATH_COMPATIBILITY_FOLDER_PATH = 'Materials/08 Keep paths valid on every p
  * iOS filesystem enforces, and nowhere near any limit Windows has. That gap is the whole point of the demo,
  * and it is why the walkthrough turns the Android rule on rather than relying on the host's own.
  */
-const LONG_NAME = '文'.repeat(100);
+const LONG_NAME_CHARACTER_COUNT = 100;
+const LONG_NAME = '文'.repeat(LONG_NAME_CHARACTER_COUNT);
 const LONG_NAME_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/${LONG_NAME}.md`;
 const LINKING_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/Points at the long name.md`;
 
@@ -91,11 +101,20 @@ const DECOMPOSED_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/${DECOMPOSED_NOT
 const DECOMPOSED_LINKING_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/Points at the decomposed name.md`;
 const DECOMPOSED_NOTE_TIMEOUT_IN_MILLISECONDS = 10_000;
 
-interface RawWriteAdapter {
-  fs?: { write(fullPath: string, data: string): Promise<void> };
-  fsPromises?: { writeFile(fullPath: string, data: string): Promise<void> };
-  getFullRealPath(realPath: string): string;
-  onFileChange(realPath: string): void;
+interface RawFs {
+  readonly write: (fullPath: string, data: string) => Promise<void>;
+}
+
+interface RawFsPromises {
+  readonly writeFile: (fullPath: string, data: string) => Promise<void>;
+}
+
+// A DataAdapter as the desktop and mobile adapters both are at runtime: each has one of the two write APIs.
+interface RawWriteAdapter extends DataAdapter {
+  readonly fs?: RawFs;
+  readonly fsPromises?: RawFsPromises;
+  readonly getFullRealPath: (realPath: string) => string;
+  readonly onFileChange: (realPath: string) => void;
 }
 
 /**
@@ -112,12 +131,11 @@ export async function createDecomposedNameNote(app: App): Promise<void> {
     await app.vault.createFolder(PATH_COMPATIBILITY_FOLDER_PATH);
   }
 
-  const adapter = app.vault.adapter as unknown as RawWriteAdapter;
+  const adapter = app.vault.adapter as RawWriteAdapter;
   const realPath = DECOMPOSED_NOTE_PATH.normalize('NFD');
   const fullRealPath = adapter.getFullRealPath(realPath);
-  const content = '# A name stored in NFD\n\nIt looks like any other name. On disk, every `й` in it is two characters.\n';
-
   if (!app.vault.getFileByPath(DECOMPOSED_NOTE_PATH)) {
+    const content = '# A name stored in NFD\n\nIt looks like any other name. On disk, every `й` in it is two characters.\n';
     if (adapter.fsPromises) {
       await adapter.fsPromises.writeFile(fullRealPath, content);
     } else {
@@ -130,7 +148,7 @@ export async function createDecomposedNameNote(app: App): Promise<void> {
       if (Date.now() > deadline) {
         throw new Error(`Obsidian did not pick up ${DECOMPOSED_NOTE_PATH} within ${String(DECOMPOSED_NOTE_TIMEOUT_IN_MILLISECONDS)} ms.`);
       }
-      await sleep(CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS);
+      await waitPollInterval();
     }
   }
 
@@ -183,7 +201,7 @@ export async function resetPathCompatibilityDemo(app: App): Promise<void> {
  *
  * It returns as soon as the command has STARTED: the plugin runs every command fire-and-forget, so
  * nothing here can await its end. For a command that later opens a note, use a wrapper that waits for
- * that, as {@link checkConsistency} does.
+ * that, as {@link runConsistencyCheck} does.
  *
  * Manual equivalent: the Command Palette entry of the same name.
  */
@@ -206,13 +224,14 @@ const CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS = 50;
  *
  * Manual equivalent: run **Check vault consistency** from the Command Palette.
  */
-export async function checkConsistency(app: App): Promise<void> {
+export async function runConsistencyCheck(app: App): Promise<void> {
   const reportPath = await getConsistencyReportPath(app);
 
-  let isReportWritten = false;
+  // Read through a set the event handler fills, so the loop below sees the write the handler makes.
+  const writtenPaths = new Set<string>();
   const modifyEventRef = app.vault.on('modify', (file) => {
     if (file.path === reportPath) {
-      isReportWritten = true;
+      writtenPaths.add(file.path);
     }
   });
 
@@ -222,11 +241,11 @@ export async function checkConsistency(app: App): Promise<void> {
     // The report is written first and opened second, and it is opened only when no tab shows it yet —
     // so "written, and showing somewhere" holds after either path.
     const deadline = Date.now() + CONSISTENCY_REPORT_TIMEOUT_IN_MILLISECONDS;
-    while (!(isReportWritten && isReportShowing(app, reportPath))) {
+    while (!(writtenPaths.has(reportPath) && isReportShowing(app, reportPath))) {
       if (Date.now() > deadline) {
         throw new Error(`The consistency report ${reportPath} did not appear within ${String(CONSISTENCY_REPORT_TIMEOUT_IN_MILLISECONDS)} ms.`);
       }
-      await sleep(CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS);
+      await waitPollInterval();
     }
   } finally {
     app.vault.offref(modifyEventRef);
@@ -236,15 +255,36 @@ export async function checkConsistency(app: App): Promise<void> {
 const DEFAULT_TREAT_AS_ATTACHMENT_EXTENSIONS = ['.excalidraw.md'];
 
 /**
+ * Applies a settings patch, live, through the plugin's own settings component.
+ *
+ * Manual equivalent: change the same option in **Settings -> Community plugins -> `Consistent
+ * Attachments and Links`**.
+ */
+export async function changeSettings(app: App, patch: DemoSettingsPatch): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });
+  new Notice('Applied.');
+}
+
+/**
+ * Puts `treatAsAttachmentExtensions` back to its default after {@link runCheckWithDrawingAsNote} emptied it.
+ *
+ * Manual equivalent: add `.excalidraw.md` back to **Treat as attachment extensions** in the settings tab.
+ */
+export async function resetDrawingDemo(app: App): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { treatAsAttachmentExtensions: DEFAULT_TREAT_AS_ATTACHMENT_EXTENSIONS } });
+  new Notice('treatAsAttachmentExtensions is back to its default.');
+}
+
+/**
  * Puts `treatAsAttachmentExtensions` back to its default and runs **Check vault consistency**, so the stand-in
  * drawing in `Materials/03 Check vault consistency` is judged as an attachment and listed as misplaced.
  *
  * Manual equivalent: make sure `.excalidraw.md` is listed in **Treat as attachment extensions** in the settings
  * tab, then run **Check vault consistency** from the Command Palette.
  */
-export async function checkDrawingAsAttachment(app: App): Promise<void> {
+export async function runCheckWithDrawingAsAttachment(app: App): Promise<void> {
   await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { treatAsAttachmentExtensions: DEFAULT_TREAT_AS_ATTACHMENT_EXTENSIONS } });
-  await checkConsistency(app);
+  await runConsistencyCheck(app);
 }
 
 /**
@@ -254,19 +294,9 @@ export async function checkDrawingAsAttachment(app: App): Promise<void> {
  * Manual equivalent: remove every entry from **Treat as attachment extensions** in the settings tab, then run
  * **Check vault consistency** from the Command Palette.
  */
-export async function checkDrawingAsNote(app: App): Promise<void> {
+export async function runCheckWithDrawingAsNote(app: App): Promise<void> {
   await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { treatAsAttachmentExtensions: [] } });
-  await checkConsistency(app);
-}
-
-/**
- * Puts `treatAsAttachmentExtensions` back to its default after {@link checkDrawingAsNote} emptied it.
- *
- * Manual equivalent: add `.excalidraw.md` back to **Treat as attachment extensions** in the settings tab.
- */
-export async function resetDrawingDemo(app: App): Promise<void> {
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { treatAsAttachmentExtensions: DEFAULT_TREAT_AS_ATTACHMENT_EXTENSIONS } });
-  new Notice('treatAsAttachmentExtensions is back to its default.');
+  await runConsistencyCheck(app);
 }
 
 async function getConsistencyReportPath(app: App): Promise<string> {
@@ -284,21 +314,10 @@ function isReportShowing(app: App, reportPath: string): boolean {
   return app.workspace.getLeavesOfType('markdown').some((leaf) => leaf.view instanceof MarkdownView && leaf.view.file?.path === reportPath);
 }
 
-async function sleep(milliseconds: number): Promise<void> {
+async function waitPollInterval(): Promise<void> {
   await new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds);
+    window.setTimeout(resolve, CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS);
   });
-}
-
-/**
- * Applies a settings patch, live, through the plugin's own settings component.
- *
- * Manual equivalent: change the same option in **Settings -> Community plugins -> `Consistent
- * Attachments and Links`**.
- */
-export async function changeSettings(app: App, patch: DemoSettingsPatch): Promise<void> {
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });
-  new Notice('Applied.');
 }
 
 const BROKEN_LINKS_FOLDER_PATH = 'Materials/09 Fix broken links';
@@ -348,7 +367,7 @@ export async function openFixBrokenLinks(app: App): Promise<void> {
     if (Date.now() > deadline) {
       throw new Error(`The Fix broken links view did not open within ${String(BROKEN_LINKS_VIEW_TIMEOUT_IN_MILLISECONDS)} ms.`);
     }
-    await sleep(CONSISTENCY_REPORT_POLL_INTERVAL_IN_MILLISECONDS);
+    await waitPollInterval();
   }
 }
 
@@ -363,3 +382,5 @@ export async function resetBrokenLinksDemo(app: App): Promise<void> {
     await app.fileManager.trashFile(folder);
   }
 }
+
+/* eslint-enable typescript-dev-toolkit/prefer-dedent -- End of the file. */

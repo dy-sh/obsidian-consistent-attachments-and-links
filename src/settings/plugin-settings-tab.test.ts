@@ -8,6 +8,7 @@ import type {
 
 import { SuggestedPluginState } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { ExternalAttachmentLinkMode } from '@mnaoumov/obsidian-lib/misplaced-attachment';
 import { SettingEx } from '@mnaoumov/obsidian-lib/setting-ex';
 import { AsyncEvents } from '@mnaoumov/typescript-lib/async-events';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
@@ -32,7 +33,6 @@ import type { Plugin } from '../plugin.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
-import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
 
 interface CreatedTab {
   readonly pluginSettingsComponent: PluginSettingsComponent;

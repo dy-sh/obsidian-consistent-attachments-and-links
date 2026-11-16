@@ -58,7 +58,7 @@ It only reports. A tag here is a candidate found without fully parsing the note,
 ---
 caption: Check Vault Consistency
 ---
-await require('/demoSetup.ts').checkConsistency(app);
+await require('/demoSetup.ts').runConsistencyCheck(app);
 ```
 
 Manual equivalent: run **Check Vault Consistency** from the Command Palette (`Ctrl/Cmd-P`).
@@ -87,7 +87,7 @@ The plugin never rewrites what is written inside such a file. A drawing keeps it
 ---
 caption: Check with the drawing as an attachment
 ---
-await require('/demoSetup.ts').checkDrawingAsAttachment(app);
+await require('/demoSetup.ts').runCheckWithDrawingAsAttachment(app);
 ```
 
 Manual equivalent: make sure `.excalidraw.md` is listed in **Treat as attachment extensions** in [05 Settings](<./05 Settings.md>), then run **Check Vault Consistency**.
@@ -98,7 +98,7 @@ This vault keeps attachments in `_assets/attachments`, so the drawing is listed 
 ---
 caption: Check with treatAsAttachmentExtensions emptied
 ---
-await require('/demoSetup.ts').checkDrawingAsNote(app);
+await require('/demoSetup.ts').runCheckWithDrawingAsNote(app);
 ```
 
 Manual equivalent: remove every entry from **Treat as attachment extensions** and check again.

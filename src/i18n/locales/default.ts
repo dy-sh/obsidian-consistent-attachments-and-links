@@ -58,5 +58,14 @@ export const defaultTranslations = {
   },
   report: {
     truncated: '> [!NOTE]\n> Not listed: {{omittedCount}} more. Each section lists its first {{limit}}, so the report stays small enough to open. A list this long usually has one cause, such as an attachment folder setting that no existing attachment matches. Fix it and check again, or leave paths out with \'Exclude paths\'.'
+  },
+  vaultProblems: {
+    notice: {
+      message: ' shows these problems live, as you edit, with quick fixes.',
+      openProblems: 'Open Problems'
+    },
+    report: {
+      pointer: '> [!TIP]\n> `Vault Problems` shows these problems live, as you edit, with quick fixes. Run its `Open Problems` command to see them.\n\n'
+    }
   }
 } as const satisfies DefaultTranslationsBase;

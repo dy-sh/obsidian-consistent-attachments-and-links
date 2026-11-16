@@ -14,6 +14,11 @@
 import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
 import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import type {
+  PathCompatibilityMeasurement,
+  PathCompatibilityPlatform,
+  PathCompatibilityViolation
+} from '@mnaoumov/obsidian-lib/path-compatibility';
 import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
 import type {
   App,
@@ -42,6 +47,12 @@ import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
 import {
+  findPathCompatibilityViolations,
+  PATH_COMPATIBILITY_PLATFORM_LABELS,
+  PathCompatibilityViolationType,
+  repairName
+} from '@mnaoumov/obsidian-lib/path-compatibility';
+import {
   getSafeRenamePath,
   renameSafe
 } from '@mnaoumov/obsidian-lib/vault';
@@ -49,11 +60,6 @@ import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { getDataAdapterEx } from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
-import type {
-  PathCompatibilityMeasurement,
-  PathCompatibilityPlatform,
-  PathCompatibilityViolation
-} from './path-compatibility.ts';
 
 import {
   countFindings,
@@ -61,12 +67,6 @@ import {
   formatReportHeading
 } from '../consistency-check/report-callout.ts';
 import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
-import {
-  findPathCompatibilityViolations,
-  PATH_COMPATIBILITY_PLATFORM_LABELS,
-  PathCompatibilityViolationType,
-  repairName
-} from './path-compatibility.ts';
 import {
   UnicodeNameNormalizer,
   UnicodeNormalizationOutcome

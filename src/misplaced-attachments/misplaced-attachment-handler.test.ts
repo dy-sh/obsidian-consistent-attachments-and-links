@@ -6,7 +6,7 @@ import type {
 } from 'obsidian';
 
 import {
-  getAttachmentFilePath,
+  getAttachmentFolderPathForAttachment,
   isAtProperAttachmentPath
 } from '@mnaoumov/obsidian-lib/attachment-path';
 import {
@@ -19,7 +19,8 @@ import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   isFrontmatterLinkCache,
-  isReferenceCache
+  isReferenceCache,
+  parentFolderPath
 } from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   beforeAll,
@@ -55,7 +56,7 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 
 vi.mock('@mnaoumov/obsidian-lib/attachment-path', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-path')>(),
-  getAttachmentFilePath: vi.fn(),
+  getAttachmentFolderPathForAttachment: vi.fn(),
   isAtProperAttachmentPath: vi.fn()
 }));
 
@@ -71,11 +72,12 @@ vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { ExternalAttachmentLinkMode } from '@mnaoumov/obsidian-lib/misplaced-attachment';
+
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { MAX_REPORTED_ENTRIES_PER_SECTION } from '../consistency-check/report-entry-budget.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { translationsMap } from '../i18n/locales/translations-map.ts';
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { ExternalAttachmentLinkMode } from '../settings/plugin-settings.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import {
   MisplacedAttachmentCheckResult,
@@ -92,7 +94,7 @@ interface SettingsLike {
 
 const isFrontmatterLinkCacheMock = vi.mocked(isFrontmatterLinkCache);
 const isReferenceCacheMock = vi.mocked(isReferenceCache);
-const mockGetAttachmentFilePath = vi.mocked(getAttachmentFilePath);
+const mockGetAttachmentFolderPathForAttachment = vi.mocked(getAttachmentFolderPathForAttachment);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const isAtProperAttachmentPathMock = vi.mocked(isAtProperAttachmentPath);
 const isNoteMock = vi.mocked(isNote);
@@ -173,7 +175,7 @@ describe('MisplacedAttachmentHandler', () => {
   }
 
   function whenProperPathIs(properPath: string): void {
-    mockGetAttachmentFilePath.mockResolvedValue(properPath);
+    mockGetAttachmentFolderPathForAttachment.mockResolvedValue(parentFolderPath(properPath));
   }
 
   it('should record an attachment whose folder differs from the proper one', async () => {
@@ -191,12 +193,10 @@ describe('MisplacedAttachmentHandler', () => {
     whenProperPathIs('Files/note/img.png');
     const { attachmentFile } = await check('attachments/img.png', 'folder/note.md');
 
-    // The duplicate check is skipped: a deduplicated name would never match a folder the attachment is not in.
-    expect(mockGetAttachmentFilePath).toHaveBeenCalledWith(expect.objectContaining({
-      notePathOrFile: 'folder/note.md',
-      oldAttachmentPathOrFile: attachmentFile,
-      shouldSkipDuplicateCheck: true,
-      shouldSkipGeneratedAttachmentFileName: true
+    // The folder-only question: no name is generated and no duplicate check runs.
+    expect(mockGetAttachmentFolderPathForAttachment).toHaveBeenCalledWith(expect.objectContaining({
+      attachmentPathOrFile: attachmentFile,
+      notePathOrFile: 'folder/note.md'
     }));
   });
 
@@ -206,7 +206,7 @@ describe('MisplacedAttachmentHandler', () => {
     await check('other.md');
 
     expect(misplacedAttachments.size).toBe(0);
-    expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
+    expect(mockGetAttachmentFolderPathForAttachment).not.toHaveBeenCalled();
   });
 
   // A note whose extension the user declared an attachment's — `.excalidraw.md` by default — IS judged.
@@ -225,7 +225,7 @@ describe('MisplacedAttachmentHandler', () => {
     await check('attachments/img.png');
 
     expect(misplacedAttachments.size).toBe(0);
-    expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
+    expect(mockGetAttachmentFolderPathForAttachment).not.toHaveBeenCalled();
   });
 
   it('should skip an attachment in a shared location, asked about the attachment\'s own path', async () => {
@@ -235,7 +235,7 @@ describe('MisplacedAttachmentHandler', () => {
 
     expect(misplacedAttachments.size).toBe(0);
     expect(settings.isSharedAttachmentPath).toHaveBeenCalledWith('Shared/img.png');
-    expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
+    expect(mockGetAttachmentFolderPathForAttachment).not.toHaveBeenCalled();
 
     await check('Elsewhere/img.png');
     expect(misplacedAttachments.get('note.md')).toHaveLength(1);
@@ -247,7 +247,7 @@ describe('MisplacedAttachmentHandler', () => {
     await check('attachments/img.png');
 
     expect(misplacedAttachments.size).toBe(0);
-    expect(mockGetAttachmentFilePath).not.toHaveBeenCalled();
+    expect(mockGetAttachmentFolderPathForAttachment).not.toHaveBeenCalled();
   });
 
   it('should skip an attachment already at its proper path, and make its note the proper note', async () => {
@@ -275,7 +275,7 @@ describe('MisplacedAttachmentHandler', () => {
     await check('attachments/img.png');
     await check('Files/note/img.png');
 
-    expect(mockGetAttachmentFilePath).toHaveBeenCalledTimes(2);
+    expect(mockGetAttachmentFolderPathForAttachment).toHaveBeenCalledTimes(2);
     expect(isAtProperAttachmentPathMock).not.toHaveBeenCalled();
   });
 
