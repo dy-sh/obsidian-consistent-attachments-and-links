@@ -8,25 +8,11 @@
  * Attachment Location` in 5.0.0; a user who wants the finding acted on runs that plugin's `Collect attachments`
  * or `Move attachment to proper folder`. See the scope line in `AGENTS.md`.
  *
- * Three things here are easy to get wrong, and all three were. The third, an attachment shared by several
- * notes, is on {@link MisplacedAttachmentCheckResult}. The first two:
- *
- * - **The judgement is about the FOLDER, not the path.** `@mnaoumov/obsidian-lib`'s `getAttachmentFilePath`
- *   answers about the proper *path* — folder and templated base name both — so judging on it raw reports
- *   every attachment whose NAME does not match the rename template. That is a different defect, this plugin
- *   does not offer to fix it, and reporting what we do not repair is the mistake the wikilink buckets'
- *   removal already settled. So the comparison is `dirname` against `dirname`.
- * - **The proper path is asked for the REAL attachment, never a dummy.** An attachment folder template may
- *   depend on the attachment's own name, extension or stats, so `getAttachmentFolderPath`'s dummy-file
- *   route can answer about a file that does not exist. Asking the same question, the same way, as Custom
- *   Attachment Location's `Move attachment to proper folder` is also what keeps the report and the repair
- *   from disagreeing.
- *
- * The `Custom Attachment Location` seam needs no code here. Every proper-path read goes through
- * `@mnaoumov/obsidian-lib`'s `getAttachmentFilePath`, which asks that plugin's published attachment-path API
- * when it is installed and falls back to Obsidian's own three modes when it is not. That API takes the note
- * path as an argument, so there is no ambient current-file state for a vault-wide walk to leak — which is
- * what makes an audit over every note answerable at all.
+ * **The judgement is `@mnaoumov/obsidian-lib/misplaced-attachment`'s, not this file's.** That module decides
+ * whether an attachment sits in a note's folder (folder against folder, asked once per reference, folder-only,
+ * for the REAL attachment) and collects the verdicts in a `MisplacedAttachmentIndex`, so `Vault Problems` and
+ * this report cannot disagree. What stays here is this plugin's settings, handed to it as predicates, and the
+ * rendering of the report section.
  */
 
 import type {
@@ -35,21 +21,17 @@ import type {
   TFile
 } from 'obsidian';
 
-import {
-  AttachmentPathContext,
-  getAttachmentFilePath
-} from '@mnaoumov/obsidian-lib/attachment-path';
-import {
-  getFileOrNull,
-  isNote
-} from '@mnaoumov/obsidian-lib/file-system';
+import { getFileOrNull } from '@mnaoumov/obsidian-lib/file-system';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
 import {
-  getDataAdapterEx,
+  ExternalAttachmentLinkMode,
+  MisplacedAttachmentIndex,
+  recordAttachmentPlacement
+} from '@mnaoumov/obsidian-lib/misplaced-attachment';
+import {
   isFrontmatterLinkCache,
-  isReferenceCache,
-  parentFolderPath
+  isReferenceCache
 } from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
@@ -60,32 +42,6 @@ import {
   formatReportHeading
 } from '../consistency-check/report-callout.ts';
 import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
-import { ExternalAttachmentLinkMode } from '../settings/plugin-settings.ts';
-
-/**
- * One misplaced attachment, as one reference in one note sees it.
- *
- * The same attachment referenced from two notes is two entries, because the two notes can configure
- * different attachment folders — which is the whole reason the entry is keyed by the reference rather than
- * by the attachment. Whether an entry reaches the report is decided only once the whole vault has been
- * walked: see {@link MisplacedAttachmentCheckResult}.
- */
-export interface MisplacedAttachmentEntry {
-  /**
-   * The attachment's current vault-relative path.
-   */
-  readonly attachmentPath: string;
-
-  /**
-   * The vault-relative folder the referencing note's configuration puts its attachments in.
-   */
-  readonly properAttachmentFolderPath: string;
-
-  /**
-   * The reference that reaches it, so the report can name the line or the frontmatter key.
-   */
-  readonly reference: Reference;
-}
 
 interface MisplacedAttachmentHandlerCheckParams {
   readonly attachmentFile: TFile;
@@ -100,111 +56,18 @@ interface MisplacedAttachmentHandlerConstructorParams {
 }
 
 /**
- * The `Misplaced attachments` section of the consistency report.
- *
- * A third result shape beside `ConsistencyCheckResult` and `PathCompatibilityCheckResult`: an entry carries
- * two paths — where the attachment is and where that note's configuration wants it — which a
- * `Map<string, Reference[]>` cannot express, and each line also names the OTHER notes that use the attachment.
+ * The `Misplaced attachments` section of the consistency report: the library's index, rendered.
  *
  * **A reference is judged from the note that makes it (owner, 2026-09-29).** `A.md` linking
  * `!!files/B/image.png` under `./!!files/${noteFileName}` is A linking an EXTERNAL attachment, even when `B.md`
- * uses it too and it sits in B's folder. So the map holds every such reference, and the walk also records every
- * note that uses each attachment ({@link addUser}) and the ones whose own folder holds it ({@link markHomed}) —
- * its *proper notes*. Those feed the `also used by` clause, and the `ReportUnowned` mode, which reports a
- * reference only when the attachment has no proper note. Both are known only after the whole walk, because the
- * note that owns an attachment can be walked after the note that links it from outside, so the mode is applied
- * in {@link getReported}, never inside the check.
+ * uses it too and it sits in B's folder. Each line names the OTHER notes that use the attachment, its proper notes
+ * first. The mode is applied in `getReported`, after the whole walk, because the note that owns an attachment can
+ * be walked after the note that links it from outside.
  *
  * 5.0.2 treated an attachment in ANY referencing note's folder as at home and reported none of its references.
  * The owner rejected that as the default, and it survives only as `ReportUnowned`.
  */
-export class MisplacedAttachmentCheckResult extends Map<string, MisplacedAttachmentEntry[]> {
-  private readonly properNotePathsByAttachment = new Map<string, Set<string>>();
-  private readonly userNotePathsByAttachment = new Map<string, Set<string>>();
-
-  public constructor(private readonly mode = ExternalAttachmentLinkMode.Report) {
-    super();
-  }
-
-  public add(notePath: string, entry: MisplacedAttachmentEntry): void {
-    let entries = this.get(notePath);
-    if (!entries) {
-      entries = [];
-      this.set(notePath, entries);
-    }
-    entries.push(entry);
-    this.addUser(entry.attachmentPath, notePath);
-  }
-
-  /**
-   * Records that a note references an attachment, wherever the attachment sits.
-   *
-   * @param attachmentPath - The attachment's vault-relative path.
-   * @param notePath - The referencing note's vault-relative path.
-   */
-  public addUser(attachmentPath: string, notePath: string): void {
-    addToSetMap(this.userNotePathsByAttachment, attachmentPath, notePath);
-  }
-
-  /**
-   * The notes that use an attachment besides the given one, its proper notes first, each group in walk order.
-   *
-   * @param attachmentPath - The attachment's vault-relative path.
-   * @param notePath - The note to leave out: the one whose reference is being reported.
-   * @returns The other notes' paths.
-   */
-  public getOtherUserNotePaths(attachmentPath: string, notePath: string): string[] {
-    const properNotePaths = [...this.properNotePathsByAttachment.get(attachmentPath) ?? []];
-    const userNotePaths = [...this.userNotePathsByAttachment.get(attachmentPath) ?? []];
-    return [...properNotePaths, ...userNotePaths.filter((path) => !properNotePaths.includes(path))].filter((path) => path !== notePath);
-  }
-
-  /**
-   * The entries the report names, after the mode is applied, grouped by note, with a note left out once none of
-   * its entries survive.
-   *
-   * @returns The entries the report names.
-   */
-  public getReported(): Map<string, MisplacedAttachmentEntry[]> {
-    const reported = new Map<string, MisplacedAttachmentEntry[]>();
-    if (this.mode === ExternalAttachmentLinkMode.Ignore) {
-      return reported;
-    }
-
-    for (const [notePath, entries] of this) {
-      const surviving = this.mode === ExternalAttachmentLinkMode.ReportUnowned
-        ? entries.filter((entry) => !this.properNotePathsByAttachment.has(entry.attachmentPath))
-        : entries;
-      if (surviving.length > 0) {
-        reported.set(notePath, surviving);
-      }
-    }
-    return reported;
-  }
-
-  /**
-   * Whether a note is a proper note of an attachment: it references it, and its own folder holds it.
-   *
-   * @param attachmentPath - The attachment's vault-relative path.
-   * @param notePath - The note's vault-relative path.
-   * @returns `true` when the note's own attachment folder holds the attachment.
-   */
-  public isProperNote(attachmentPath: string, notePath: string): boolean {
-    return this.properNotePathsByAttachment.get(attachmentPath)?.has(notePath) ?? false;
-  }
-
-  /**
-   * Records that an attachment sits in the folder configured for a note that references it, which makes that
-   * note its proper note.
-   *
-   * @param attachmentPath - The attachment's vault-relative path.
-   * @param notePath - The referencing note whose folder holds it.
-   */
-  public markHomed(attachmentPath: string, notePath: string): void {
-    addToSetMap(this.properNotePathsByAttachment, attachmentPath, notePath);
-    this.addUser(attachmentPath, notePath);
-  }
-
+export class MisplacedAttachmentCheckResult extends MisplacedAttachmentIndex {
   public override toString(app: App, reportPath: string): string {
     const title = t(($) => $.misplacedAttachment.report.title);
 
@@ -315,73 +178,20 @@ export class MisplacedAttachmentHandler {
       return;
     }
 
-    // A note is not an attachment — unless the user declared its extension one (`.excalidraw.md` by
-    // default), in which case it IS judged here. That is the same rule a collector uses to make such a file
-    // travel as an attachment, and answering differently would leave the report and the repair disagreeing
-    // about what an attachment is.
-    if (isNote(attachmentFile) && !settings.isTreatedAsAttachment(attachmentFile.path)) {
-      return;
-    }
-
-    // An ignored path is never judged, and a shared location is anybody's folder, so no reference into it is
-    // external.
-    if (settings.isPathIgnored(attachmentFile.path) || settings.isSharedAttachmentPath(attachmentFile.path)) {
-      return;
-    }
-
-    // ONE question to the attachment-path seam per reference, never two. `isAtProperAttachmentPath` is
-    // deliberately not asked first: a `true` from it implies the folders below match, so it could never change
-    // the verdict, and each question is the dominant cost of the whole report — `Custom Attachment Location`
-    // walks every link of the note to answer it. Asking twice doubled `Check vault consistency` on a 37,000-note
-    // vault (692 s, nearly all of it in that walk). That walk exists only to generate a NAME, and the verdict keeps
-    // only the folder, so the question is asked folder-only: the resolver computes the folder from the attachment's
-    // own name before any name generation, so the folder is the same either way.
-    const properAttachmentPath = await getAttachmentFilePath({
+    // A note the user declared an attachment (`.excalidraw.md` by default) IS judged; an ignored path is never
+    // judged; and a shared location is anybody's folder, so no reference into it is external.
+    await recordAttachmentPlacement({
       app: this.app,
-      context: AttachmentPathContext.Unknown,
-      notePathOrFile: notePath,
-      oldAttachmentPathOrFile: attachmentFile,
-      shouldSkipDuplicateCheck: true,
-      shouldSkipGeneratedAttachmentFileName: true
-    });
-
-    // `parentFolderPath`, not `dirname`: it answers `/` for the vault root where `dirname` answers `.`, and
-    // it is what `@mnaoumov/obsidian-lib`'s own `getAttachmentFolderPath` returns — so the folder this report names
-    // is byte-identical to the one that function would give for the same note.
-    const properAttachmentFolderPath = parentFolderPath(properAttachmentPath);
-
-    // Fold exactly as `@mnaoumov/obsidian-lib`'s `isAtProperAttachmentPath` does, so a case-insensitive adapter
-    // does not make this section report a folder the collector considers a match.
-    const isInsensitive = getDataAdapterEx(this.app).insensitive;
-
-    // At its proper path, or only the base name differs (a templated name, or an Obsidian deduplication suffix):
-    // the attachment IS in its configured folder, and renaming it is not this plugin's to report.
-    if (fold(parentFolderPath(attachmentFile.path)) === fold(properAttachmentFolderPath)) {
-      misplacedAttachments.markHomed(attachmentFile.path, notePath);
-      return;
-    }
-
-    misplacedAttachments.add(notePath, {
-      attachmentPath: attachmentFile.path,
-      properAttachmentFolderPath,
+      attachmentFile,
+      index: misplacedAttachments,
+      isPathIgnored: (path) => settings.isPathIgnored(path),
+      isSharedAttachmentPath: (path) => settings.isSharedAttachmentPath(path),
+      isTreatedAsAttachment: (path) => settings.isTreatedAsAttachment(path),
+      notePath,
       reference
     });
-
-    function fold(value: string): string {
-      return isInsensitive ? value.toLowerCase() : value;
-    }
   }
 }
-
-function addToSetMap(map: Map<string, Set<string>>, key: string, value: string): void {
-  let set = map.get(key);
-  if (!set) {
-    set = new Set<string>();
-    map.set(key, set);
-  }
-  set.add(value);
-}
-
 /**
  * The same per-reference line the first three buckets print, so one report does not describe a line number
  * two ways.

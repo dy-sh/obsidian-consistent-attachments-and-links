@@ -1,36 +1,15 @@
 import { isTreatedAsAttachment } from '@mnaoumov/obsidian-lib/file-system';
+import { ExternalAttachmentLinkMode } from '@mnaoumov/obsidian-lib/misplaced-attachment';
+import {
+  getCurrentPathCompatibilityPlatform,
+  PATH_COMPATIBILITY_PLATFORMS,
+  PathCompatibilityPlatform
+} from '@mnaoumov/obsidian-lib/path-compatibility';
 import { PathSettings } from '@mnaoumov/obsidian-lib/path-settings';
 import { normalizePath } from 'obsidian';
 
 import type { MigratableSettings } from '../sibling-plugins/advanced-rename-and-delete-handler.ts';
 import type { MigratableCollectSettings } from '../sibling-plugins/custom-attachment-location.ts';
-
-import {
-  getCurrentPathCompatibilityPlatform,
-  PATH_COMPATIBILITY_PLATFORMS,
-  PathCompatibilityPlatform
-} from '../path-compatibility/path-compatibility.ts';
-
-/**
- * What the report does with a note's reference to an attachment outside that note's own attachment folder.
- */
-export enum ExternalAttachmentLinkMode {
-  /**
-   * Never report it: the `Misplaced attachments` section is skipped, and says so.
-   */
-  Ignore = 'Ignore',
-
-  /**
-   * Report every such reference — including one to an attachment filed in the folder of another note that
-   * references it too.
-   */
-  Report = 'Report',
-
-  /**
-   * Report it only when no note that references the attachment has it in its own folder.
-   */
-  ReportUnowned = 'ReportUnowned'
-}
 
 export class PluginSettings {
   public consistencyReportFile = 'consistency-report.md';

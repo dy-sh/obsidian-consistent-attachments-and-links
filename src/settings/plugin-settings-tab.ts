@@ -4,16 +4,15 @@ import type { SettingDefinitionItem } from 'obsidian';
 
 import { SuggestedPluginState } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
-import { PluginSettingsTabBase } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
-
-import type { PluginSettings } from './plugin-settings.ts';
-
+import { ExternalAttachmentLinkMode } from '@mnaoumov/obsidian-lib/misplaced-attachment';
 import {
   PATH_COMPATIBILITY_PLATFORM_LABELS,
   PATH_COMPATIBILITY_PLATFORMS,
   PathCompatibilityPlatform
-} from '../path-compatibility/path-compatibility.ts';
-import { ExternalAttachmentLinkMode } from './plugin-settings.ts';
+} from '@mnaoumov/obsidian-lib/path-compatibility';
+import { PluginSettingsTabBase } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
+
+import type { PluginSettings } from './plugin-settings.ts';
 
 interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
   readonly pluginSuggestionComponent: PluginSuggestionComponent;

@@ -31,6 +31,10 @@ import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
 import {
+  PathCompatibilityPlatform,
+  PathCompatibilityViolationType
+} from '@mnaoumov/obsidian-lib/path-compatibility';
+import {
   getSafeRenamePath,
   renameSafe
 } from '@mnaoumov/obsidian-lib/vault';
@@ -61,10 +65,6 @@ import {
   PathCompatibilityCheckResult,
   PathCompatibilityHandler
 } from './path-compatibility-handler.ts';
-import {
-  PathCompatibilityPlatform,
-  PathCompatibilityViolationType
-} from './path-compatibility.ts';
 import { UnicodeNormalizationOutcome } from './unicode-name-normalizer.ts';
 
 const hoisted = vi.hoisted(() => ({

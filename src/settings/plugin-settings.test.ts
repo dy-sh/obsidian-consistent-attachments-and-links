@@ -1,17 +1,15 @@
+import { ExternalAttachmentLinkMode } from '@mnaoumov/obsidian-lib/misplaced-attachment';
+import {
+  PATH_COMPATIBILITY_PLATFORMS,
+  PathCompatibilityPlatform
+} from '@mnaoumov/obsidian-lib/path-compatibility';
 import {
   describe,
   expect,
   it
 } from 'vitest';
 
-import {
-  PATH_COMPATIBILITY_PLATFORMS,
-  PathCompatibilityPlatform
-} from '../path-compatibility/path-compatibility.ts';
-import {
-  ExternalAttachmentLinkMode,
-  PluginSettings
-} from './plugin-settings.ts';
+import { PluginSettings } from './plugin-settings.ts';
 
 describe('PluginSettings', () => {
   describe('defaults', () => {

@@ -27,10 +27,9 @@ import type {
 } from 'obsidian';
 
 import { around } from '@mnaoumov/obsidian-lib/components/monkey-around-component';
+import { isUnicodeNormalized } from '@mnaoumov/obsidian-lib/path-compatibility';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { getDataAdapterEx } from '@obsidian-typings/obsidian-public-latest/implementations';
-
-import { isUnicodeNormalized } from './path-compatibility.ts';
 
 /**
  * What {@link UnicodeNameNormalizer.normalize} did.

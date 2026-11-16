@@ -3,6 +3,7 @@ import type { PluginEventSource } from '@mnaoumov/obsidian-lib/plugin/plugin-eve
 
 import { PluginSettingsComponentBase } from '@mnaoumov/obsidian-lib/components/plugin-settings-component';
 import { EmptyFolderBehavior } from '@mnaoumov/obsidian-lib/components/rename-delete-handler-component';
+import { getForbiddenCharacterReplacementValidationMessage } from '@mnaoumov/obsidian-lib/path-compatibility';
 import { pathsValidator } from '@mnaoumov/obsidian-lib/path-settings';
 
 import type { MigratableSettings } from '../sibling-plugins/advanced-rename-and-delete-handler.ts';
@@ -12,7 +13,6 @@ import type {
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
 } from '../sibling-plugins/custom-attachment-location.ts';
 
-import { getForbiddenCharacterReplacementValidationMessage } from '../path-compatibility/path-compatibility.ts';
 import { PluginSettings } from './plugin-settings.ts';
 
 // The saved record as a converter sees it: the keys this plugin used to declare, plus the ones it declares
