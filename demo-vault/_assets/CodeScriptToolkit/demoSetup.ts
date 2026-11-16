@@ -1,10 +1,15 @@
+/*
+ * `CodeScript Toolkit` loads this file inside the vault, where no `node_modules` holds `dedent`, so an import of it
+ * fails every demo button. Note contents are joined lines instead.
+ */
+/* eslint-disable typescript-dev-toolkit/prefer-dedent -- `dedent` cannot be resolved inside the demo vault. */
+
 import type {
   App,
   DataAdapter
 } from 'obsidian';
 
 import { configureCommunityPlugin } from '@mnaoumov/obsidian-lib/community-plugins';
-import dedent from 'dedent';
 import {
   MarkdownView,
   Notice
@@ -32,20 +37,22 @@ const LONG_NAME = '文'.repeat(LONG_NAME_CHARACTER_COUNT);
 const LONG_NAME_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/${LONG_NAME}.md`;
 const LINKING_NOTE_PATH = `${PATH_COMPATIBILITY_FOLDER_PATH}/Points at the long name.md`;
 
-const LONG_NAME_NOTE_CONTENT = dedent`
-  # A name no Android device will accept
+const LONG_NAME_NOTE_CONTENT = [
+  '# A name no Android device will accept',
+  '',
+  'This note\'s file name is 100 CJK characters, which is 300 bytes in UTF-8. Windows is perfectly happy',
+  'with it; ext4 is not.',
+  ''
+].join('\n');
 
-  This note's file name is 100 CJK characters, which is 300 bytes in UTF-8. Windows is perfectly happy
-  with it; ext4 is not.\n
-`;
-
-const LINKING_NOTE_CONTENT = dedent`
-  # Points at the long name
-
-  [the long-named note](<${LONG_NAME}.md>)
-
-  Watch this link after the repair: it follows the rename on its own.\n
-`;
+const LINKING_NOTE_CONTENT = [
+  '# Points at the long name',
+  '',
+  `[the long-named note](<${LONG_NAME}.md>)`,
+  '',
+  'Watch this link after the repair: it follows the rename on its own.',
+  ''
+].join('\n');
 
 /**
  * Creates a note whose file name is valid on Windows and invalid on Android, plus a note linking to it.
@@ -331,13 +338,14 @@ export async function createRenamedFolderDemo(app: App): Promise<void> {
   await app.vault.create(`${BROKEN_LINKS_FOLDER_PATH}/Trips/Lisbon/Packing list.md`, '# Packing list\n\n- Sunscreen\n');
   await app.vault.create(
     `${BROKEN_LINKS_FOLDER_PATH}/Travel log.md`,
-    dedent`
-      # Travel log
-
-      - [Itinerary](<Trips/Lisbon/Itinerary.md>)
-      - [[Trips/Lisbon/Packing list.md|What to pack]]
-      - [Visa scan](<Trips/Lisbon/Visa.pdf>) - this one never existed, so nothing can be suggested for it.\n
-    `
+    [
+      '# Travel log',
+      '',
+      '- [Itinerary](<Trips/Lisbon/Itinerary.md>)',
+      '- [[Trips/Lisbon/Packing list.md|What to pack]]',
+      '- [Visa scan](<Trips/Lisbon/Visa.pdf>) - this one never existed, so nothing can be suggested for it.',
+      ''
+    ].join('\n')
   );
 
   const folder = app.vault.getFolderByPath(`${BROKEN_LINKS_FOLDER_PATH}/Trips/Lisbon`);
@@ -374,3 +382,5 @@ export async function resetBrokenLinksDemo(app: App): Promise<void> {
     await app.fileManager.trashFile(folder);
   }
 }
+
+/* eslint-enable typescript-dev-toolkit/prefer-dedent -- End of the file. */
