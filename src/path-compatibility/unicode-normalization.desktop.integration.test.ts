@@ -129,8 +129,8 @@ describe('Normalize Unicode names to NFC', () => {
         const childPath = `${folderPath}/child.md`;
         const sourcePath = `${rootPath}/source.md`;
 
-        function getRealPath(path: string): string | undefined {
-          return adapter.files[path]?.realpath;
+        function getRealPath(path: string): null | string {
+          return adapter.files[path]?.realpath ?? null;
         }
 
         async function listDisk(realFolderPath: string): Promise<string[]> {
