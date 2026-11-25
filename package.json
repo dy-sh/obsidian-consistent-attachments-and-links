@@ -49,13 +49,13 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
-    "@mnaoumov/obsidian-lib": "^11.0.0",
+    "@mnaoumov/obsidian-lib": "^12.0.0",
     "@mnaoumov/typescript-lib": "^4.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
-    "@mnaoumov/obsidian-dev-toolkit": "^12.1.0",
-    "@mnaoumov/typescript-dev-toolkit": "^8.0.0",
+    "@mnaoumov/obsidian-dev-toolkit": "^13.0.0",
+    "@mnaoumov/typescript-dev-toolkit": "^10.0.0",
     "@mnaoumov/typescript-test-toolkit": "^1.1.0",
     "@obsidian-typings/obsidian-public-latest": "^6.58.0",
     "@total-typescript/ts-reset": "^0.6.1",
@@ -71,7 +71,7 @@
     "jsdom": "^30.1.3",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.14.4",
-    "obsidian-integration-testing": "^17.9.0",
+    "obsidian-integration-testing": "^18.1.0",
     "obsidian-test-mocks": "^7.2.3",
     "sharp": "^0.35.5",
     "vitest": "^5.1.0"

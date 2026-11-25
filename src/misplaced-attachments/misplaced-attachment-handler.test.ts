@@ -48,26 +48,26 @@ interface DataAdapterExLike {
 
 // `parentFolderPath` is kept REAL: the vault-root answer (`/`, not `.`) is part of what these tests assert.
 vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@obsidian-typings/obsidian-public-latest/implementations')>(),
+  ...(await importOriginal<typeof import('@obsidian-typings/obsidian-public-latest/implementations')>()),
   getDataAdapterEx: (): DataAdapterExLike => ({ insensitive: hoisted.insensitive }),
   isFrontmatterLinkCache: vi.fn(),
   isReferenceCache: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/attachment-path', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-path')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-path')>()),
   getAttachmentFolderPathForAttachment: vi.fn(),
   isAtProperAttachmentPath: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   getFileOrNull: vi.fn(),
   isNote: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   generateMarkdownLink: vi.fn()
 }));
 

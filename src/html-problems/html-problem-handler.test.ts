@@ -27,12 +27,12 @@ import type {
 vi.mock('@mnaoumov/obsidian-lib/plugin/plugin-api', () => ({ findPluginApi: vi.fn() }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   getFileOrNull: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   generateMarkdownLink: vi.fn()
 }));
 
