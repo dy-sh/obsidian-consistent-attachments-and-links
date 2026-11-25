@@ -75,15 +75,19 @@ A copy of the vault ships with every release. You can access it via any of the f
 | Plugin | Features | How `Consistent Attachments and Links` differs |
 | --- | --- | --- |
 | [`Attachment Audit`](https://community.obsidian.md/plugins/attachment-audit) | Unused, duplicate, oversized, misnamed and misplaced attachment cleanup | Narrower attachment audit: reports placement against configured folders; also link/name checks |
+| [`Broken Link Cleaner`](https://community.obsidian.md/plugins/broken-link-cleaner) | Wikilink-only scan; closest-name fix with a confidence threshold; removes broken links after review | Same goal, stricter evidence: no name-similarity guesses and never removes a link; also Markdown links, embeds, frontmatter and file names |
 | [`Broken Links`](https://community.obsidian.md/plugins/broken-links) | Broken target, heading and block browser; folder/file/link views | Broader checks: file names and path validity; link repair |
 | [`File name length limit`](https://community.obsidian.md/plugins/file-name-length-limit) | Live naming warnings; report includes case collisions; no renaming | Broader audit and repair: renames invalid files; checks links |
+| [`Filename Sanitizer`](https://community.obsidian.md/plugins/filename-sanitizer) | Automatic repair of new files after a quiet time; per-character replacement rules; review list; rename log; name API for other plugins | Same goal for names, repaired on command: also per-platform lengths, reserved names and Unicode form; checks links |
 | [`Find orphaned files and broken links`](https://community.obsidian.md/plugins/find-unlinked-files) | Reports orphaned/empty files, folders and uncreated notes; delete/archive | Complementary audit: validates written paths against their targets |
 | [`Link Doctor`](https://community.obsidian.md/plugins/link-doctor) | Broken-link dashboard; Obsidian name matching; empty notes; no edits | Broader path checks: reports non-resolving written paths; repairs links |
 | [`Safe Filename Linter`](https://community.obsidian.md/plugins/safe-filename-linter) | Invalid/troublesome filename character lint | Broader checks: per-platform name/path lengths and links |
 | [`Sync-safe file names`](https://community.obsidian.md/plugins/sync-safe-file-names) | Automatic cross-device character replacement on create/rename | Broader repair: on command; lengths, reserved names, Unicode form; original names retained |
 | [`Vault Link Check`](https://community.obsidian.md/plugins/vault-link-check) | Typo/alias suggestions; separates planned notes from broken links | Alternative repair evidence: `git` history, renamed folders and aliases; click to apply |
+| [`Vault Inspector`](https://community.obsidian.md/plugins/vault-inspector) | Broken links, headings and blocks; orphan attachments; duplicates; empty notes; optional external URL checks; frontmatter types; large files | Narrower vault-health scope, stricter links: reports written paths Obsidian still resolves; adds path compatibility and misplaced attachments |
+| [`Vault Problems`](https://community.obsidian.md/plugins/vault-problems) (my plugin) | Live analysis on every change; automatic repairs with Undo; Problems view and editor underlines with quick fixes; syntax checks | Same checks as a one-off report note: `Vault Problems` runs them live; adds the on-disk Unicode-form repair |
 
-Last searched for similar plugins on 2026-10-26.
+Last searched for similar plugins on 2026-11-25.
 
 ## Installation
 
