@@ -18,6 +18,7 @@
  * retired real paths are dropped for a short while afterwards.
  */
 
+import type { DisposableEx } from '@mnaoumov/typescript-lib/disposable';
 import type { DataAdapterEx } from '@obsidian-typings/obsidian-public-latest';
 import type {
   App,
@@ -26,7 +27,7 @@ import type {
   TAbstractFile
 } from 'obsidian';
 
-import { around } from '@mnaoumov/obsidian-lib/components/monkey-around-component';
+import { patchMethod } from '@mnaoumov/obsidian-lib/components/monkey-around-component';
 import { isUnicodeNormalized } from '@mnaoumov/obsidian-lib/path-compatibility';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { getDataAdapterEx } from '@obsidian-typings/obsidian-public-latest/implementations';
@@ -69,7 +70,7 @@ export class UnicodeNameNormalizer {
   private readonly app: App;
   private readonly retiredRealPaths = new Set<string>();
   private uninstallTimeoutId: null | number = null;
-  private uninstallWatcherFilter: (() => void) | null = null;
+  private watcherFilter: DisposableEx | null = null;
 
   public constructor(params: UnicodeNameNormalizerConstructorParams) {
     this.app = params.app;
@@ -163,20 +164,17 @@ export class UnicodeNameNormalizer {
   private retire(adapter: DataAdapterEx, realPath: string): void {
     this.retiredRealPaths.add(realPath);
 
-    if (this.uninstallWatcherFilter === null) {
-      // An arrow, so the patched method below can keep its own `this`, the adapter.
-      const isRetired = (changedPath: null | string): boolean => this.isRetired(changedPath);
-      this.uninstallWatcherFilter = around(adapter, {
-        onFileChange: (next) =>
-          function onFileChange(this: DataAdapterEx, changedPath: null | string): void {
-            if (isRetired(changedPath)) {
-              return;
-            }
+    this.watcherFilter ??= patchMethod({
+      $object: adapter,
+      methodName: 'onFileChange',
+      patchHandler: ({ fallback, originalArguments: [changedPath] }) => {
+        if (this.isRetired(changedPath)) {
+          return;
+        }
 
-            next.call(this, changedPath);
-          }
-      });
-    }
+        fallback();
+      }
+    });
 
     if (this.uninstallTimeoutId !== null) {
       window.clearTimeout(this.uninstallTimeoutId);
@@ -185,8 +183,8 @@ export class UnicodeNameNormalizer {
     this.uninstallTimeoutId = window.setTimeout(() => {
       this.uninstallTimeoutId = null;
       this.retiredRealPaths.clear();
-      this.uninstallWatcherFilter?.();
-      this.uninstallWatcherFilter = null;
+      this.watcherFilter?.dispose();
+      this.watcherFilter = null;
     }, RETIRED_REAL_PATH_WINDOW_IN_MILLISECONDS);
   }
 }
