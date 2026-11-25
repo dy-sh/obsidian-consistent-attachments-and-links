@@ -83,7 +83,7 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
 
 // The on-disk half is `unicode-name-normalizer.test.ts`'s subject; here only the routing to it is.
 vi.mock('./unicode-name-normalizer.ts', async (importOriginal) => ({
-  ...await importOriginal<typeof import('./unicode-name-normalizer.ts')>(),
+  ...(await importOriginal<typeof import('./unicode-name-normalizer.ts')>()),
   UnicodeNameNormalizer: class {
     public isNormalized = hoisted.isNormalized;
     public normalize = hoisted.normalize;
@@ -98,13 +98,13 @@ vi.mock('@mnaoumov/obsidian-lib/file-manager', () => ({
 // Spread the real module: `isFolder` / `isMarkdownFile` / `asFile` do the type routing this handler is built
 // on, and a stub of them would be testing the stub.
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   getFileOrNull: vi.fn(),
   getOrCreateFile: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/folder-note', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/folder-note')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/folder-note')>()),
   resolveFolderNote: vi.fn(),
   resolveFolderNoteConfig: vi.fn()
 }));

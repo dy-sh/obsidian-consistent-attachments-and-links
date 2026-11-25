@@ -36,7 +36,7 @@ const CODE_SCRIPT_TOOLKIT_SETTINGS = {
 // network I/O at all: an already-installed plugin is skipped.
 async function populate(): Promise<PopulateFilesParams> {
   return {
-    ...await buildDemoVaultPopulateAsync({
+    ...(await buildDemoVaultPopulateAsync({
       demoVaultPath: join(getRootFolder() ?? process.cwd(), 'demo-vault'),
       injectPlugins: [{
         data: CODE_SCRIPT_TOOLKIT_SETTINGS,
@@ -46,8 +46,8 @@ async function populate(): Promise<PopulateFilesParams> {
         minVersion: '15.0.0',
         pluginId: CODE_SCRIPT_TOOLKIT_PLUGIN_ID
       }]
-    }),
-    ...await getAdvancedRenameAndDeleteHandlerPopulate()
+    })),
+    ...(await getAdvancedRenameAndDeleteHandlerPopulate())
   };
 }
 

@@ -58,12 +58,12 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   getFileOrNull: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   generateMarkdownLink: vi.fn(),
   splitSubpath: vi.fn()
 }));

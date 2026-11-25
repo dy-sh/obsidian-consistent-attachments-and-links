@@ -125,7 +125,7 @@ describe('Fix broken links view', () => {
         }
 
         function findGroupHeader(): HTMLElement | null {
-          const headers = [...getViewEl()?.querySelectorAll<HTMLElement>('.consistent-attachments-and-links-broken-links-group-header') ?? []];
+          const headers = [...(getViewEl()?.querySelectorAll<HTMLElement>('.consistent-attachments-and-links-broken-links-group-header') ?? [])];
           return headers.find((header) => header.querySelector('h4')?.textContent === groupTitle) ?? null;
         }
 
@@ -170,8 +170,8 @@ describe('Fix broken links view', () => {
             timeoutInMilliseconds: waitTimeoutInMilliseconds
           });
 
-          const groupTitles = [...getViewEl()?.querySelectorAll('h4') ?? []].map((element) => element.textContent);
-          const button = [...findGroupHeader()?.querySelectorAll('button') ?? []].find((element) => element.textContent === 'Fix all like this');
+          const groupTitles = [...(getViewEl()?.querySelectorAll('h4') ?? [])].map((element) => element.textContent);
+          const button = [...(findGroupHeader()?.querySelectorAll('button') ?? [])].find((element) => element.textContent === 'Fix all like this');
           if (!button) {
             throw new Error('The group has no Fix all like this button');
           }

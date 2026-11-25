@@ -73,7 +73,7 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   editReferences: vi.fn()
 }));
 

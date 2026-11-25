@@ -2,7 +2,7 @@
  * `CodeScript Toolkit` loads this file inside the vault, where no `node_modules` holds `dedent`, so an import of it
  * fails every demo button. Note contents are joined lines instead.
  */
-/* eslint-disable typescript-dev-toolkit/prefer-dedent -- `dedent` cannot be resolved inside the demo vault. */
+ 
 
 import type {
   App,
@@ -383,4 +383,4 @@ export async function resetBrokenLinksDemo(app: App): Promise<void> {
   }
 }
 
-/* eslint-enable typescript-dev-toolkit/prefer-dedent -- End of the file. */
+ 

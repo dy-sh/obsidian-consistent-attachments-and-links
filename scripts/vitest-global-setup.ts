@@ -25,7 +25,7 @@ import {
 export const { setup, teardown } = createSetup({
   enableCommunityPlugins: [ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID, OBSIDIAN_DEV_TOOLKIT_INTEGRATION_TEST_PLUGIN_ID],
   populate: async () => ({
-    ...await getAdvancedRenameAndDeleteHandlerPopulate(),
+    ...(await getAdvancedRenameAndDeleteHandlerPopulate()),
     ...getIntegrationTestPluginPopulate()
   })
 });
