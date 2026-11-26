@@ -16,7 +16,6 @@ import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/compon
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type {
   PathCompatibilityMeasurement,
-  PathCompatibilityPlatform,
   PathCompatibilityViolation
 } from '@mnaoumov/obsidian-lib/path-compatibility';
 import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
@@ -48,7 +47,9 @@ import { generateMarkdownLink } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
 import {
   findPathCompatibilityViolations,
+  getCurrentPathCompatibilityPlatform,
   PATH_COMPATIBILITY_PLATFORM_LABELS,
+  PathCompatibilityPlatform,
   PathCompatibilityViolationType,
   repairName
 } from '@mnaoumov/obsidian-lib/path-compatibility';
@@ -369,6 +370,29 @@ export class PathCompatibilityHandler {
     });
   }
 
+  /**
+   * On a Windows device, remembers this vault root's length in the synced settings when it is the longest
+   * Windows root seen so far, so every other device judges Windows' path budget against a real Windows root.
+   *
+   * The longest wins rather than the latest: with several Windows machines, a path has to fit under the
+   * deepest of them. Nothing is written when the remembered value already covers this root.
+   */
+  public async rememberWindowsVaultRoot(): Promise<void> {
+    if (getCurrentPathCompatibilityPlatform() !== PathCompatibilityPlatform.Windows) {
+      return;
+    }
+
+    const real = this.getRealVaultRootPathLength();
+
+    if (real <= this.pluginSettingsComponent.settings.rememberedWindowsVaultRootPathLength) {
+      return;
+    }
+
+    await this.pluginSettingsComponent.editAndSave((settings) => {
+      settings.rememberedWindowsVaultRootPathLength = Math.max(settings.rememberedWindowsVaultRootPathLength, real);
+    });
+  }
+
   private buildVaultRootWarning(): null | string {
     const configured = this.pluginSettingsComponent.settings.maxVaultRootPathLength;
     const real = this.getRealVaultRootPathLength();
@@ -670,9 +694,20 @@ export class PathCompatibilityHandler {
     return await getOrCreateFile(this.app, joinPath(folderPath, `${name}.${extension}`));
   }
 
-  private resolveMaxVaultRootPathLength(): number {
-    const configured = this.pluginSettingsComponent.settings.maxVaultRootPathLength;
-    return configured === 0 ? this.getRealVaultRootPathLength() : configured;
+  /*
+   * A typed number wins. Otherwise the real root, or, while Windows is checked, the longest Windows root any
+   * device remembered when that is longer: on a phone the real root says nothing about Windows' budget, and on
+   * a Windows machine another Windows machine's deeper root is the one a synced path must fit under.
+   */
+  private resolveMaxVaultRootPathLength(platforms: readonly PathCompatibilityPlatform[]): number {
+    const settings = this.pluginSettingsComponent.settings;
+
+    if (settings.maxVaultRootPathLength !== 0) {
+      return settings.maxVaultRootPathLength;
+    }
+
+    const real = this.getRealVaultRootPathLength();
+    return platforms.includes(PathCompatibilityPlatform.Windows) ? Math.max(real, settings.rememberedWindowsVaultRootPathLength) : real;
   }
 
   /**
@@ -724,7 +759,7 @@ export class PathCompatibilityHandler {
     return {
       forbiddenCharacterReplacement: settings.forbiddenCharacterReplacement,
       forbiddenCharacterReplacements: parseForbiddenCharacterReplacements(settings.forbiddenCharacterReplacements),
-      maxVaultRootPathLength: this.resolveMaxVaultRootPathLength(),
+      maxVaultRootPathLength: this.resolveMaxVaultRootPathLength(platforms),
       platforms,
       shouldNormalizeUnicodeNames: settings.shouldNormalizeUnicodeNames
     };

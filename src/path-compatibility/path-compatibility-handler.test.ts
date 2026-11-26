@@ -74,6 +74,8 @@ import { UnicodeNormalizationOutcome } from './unicode-name-normalizer.ts';
 
 const hoisted = vi.hoisted(() => ({
   basePath: 'C:/vault',
+  // The library's own enum value, spelled out because a hoisted block runs before any import.
+  currentPlatform: 'Windows',
   isNormalized: vi.fn((_file: unknown): boolean => true),
   normalize: vi.fn<(file: unknown) => Promise<string>>()
 }));
@@ -93,6 +95,11 @@ vi.mock('./unicode-name-normalizer.ts', async (importOriginal) => ({
     public isNormalized = hoisted.isNormalized;
     public normalize = hoisted.normalize;
   }
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/path-compatibility', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/path-compatibility')>()),
+  getCurrentPathCompatibilityPlatform: (): string => hoisted.currentPlatform
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-manager', () => ({
@@ -162,6 +169,7 @@ const mockSettings = {
   isPathIgnoredByPathCompatibility: vi.fn((_path: string, _isFolder?: boolean): boolean => false),
   maxVaultRootPathLength: 0,
   pathCompatibilityExcludePaths: [] as string[],
+  rememberedWindowsVaultRootPathLength: 0,
   shouldAddOriginalNameAsAlias: true,
   shouldCreateNoteToPreserveOriginalName: false,
   shouldNormalizeUnicodeNames: false,
@@ -230,6 +238,8 @@ describe('PathCompatibilityHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hoisted.basePath = 'C:/vault';
+    hoisted.currentPlatform = PathCompatibilityPlatform.Windows;
+    mockSettings.rememberedWindowsVaultRootPathLength = 0;
     mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Windows]);
     mockSettings.isPathIgnoredByPathCompatibility.mockReturnValue(false);
     mockSettings.forbiddenCharacterReplacement = '-';
@@ -981,6 +991,85 @@ describe('PathCompatibilityHandler', () => {
       createHandler().check(result);
 
       expect(result.toString(app, 'report.md')).toContain('[link](x.md)');
+    });
+  });
+
+  describe('remembered Windows vault root', () => {
+    // 103 characters: fits under Windows' budget with the 8-character `C:/vault` root, not with a 200-character one.
+    const MEDIUM_NAME = `${'b'.repeat(100)}.md`;
+    const LONG_WINDOWS_ROOT = 200;
+
+    it('should judge Windows against a longer remembered root when nothing is typed', () => {
+      hoisted.currentPlatform = PathCompatibilityPlatform.Android;
+      mockSettings.rememberedWindowsVaultRootPathLength = LONG_WINDOWS_ROOT;
+      setVault(createFile(MEDIUM_NAME));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      expect(result.entries).toHaveLength(1);
+      expect(result.entries[0]?.violations[0]?.measurement?.vaultRootLength).toBe(LONG_WINDOWS_ROOT);
+    });
+
+    it('should ignore the remembered root while Windows is not checked', () => {
+      mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Android]);
+      mockSettings.rememberedWindowsVaultRootPathLength = 4000;
+      setVault(createFile(MEDIUM_NAME));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should keep the real root when it is longer than the remembered one', () => {
+      hoisted.basePath = 'C:/'.padEnd(LONG_WINDOWS_ROOT, 'r');
+      mockSettings.rememberedWindowsVaultRootPathLength = 10;
+      setVault(createFile(MEDIUM_NAME));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      expect(result.entries[0]?.violations[0]?.measurement?.vaultRootLength).toBe(LONG_WINDOWS_ROOT);
+    });
+
+    it('should let a typed maximum override the remembered root', () => {
+      mockSettings.maxVaultRootPathLength = 20;
+      mockSettings.rememberedWindowsVaultRootPathLength = LONG_WINDOWS_ROOT;
+      setVault(createFile(MEDIUM_NAME));
+
+      const result = new PathCompatibilityCheckResult();
+      createHandler().check(result);
+
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should remember this root on Windows when it is the longest seen', async () => {
+      hoisted.basePath = 'C:/a/longer/vault';
+      mockSettings.rememberedWindowsVaultRootPathLength = 8;
+
+      await createHandler().rememberWindowsVaultRoot();
+
+      expect(mockEditAndSave).toHaveBeenCalledOnce();
+      expect(mockSettings.rememberedWindowsVaultRootPathLength).toBe('C:/a/longer/vault'.length);
+    });
+
+    it('should keep a longer root another Windows machine remembered', async () => {
+      mockSettings.rememberedWindowsVaultRootPathLength = LONG_WINDOWS_ROOT;
+
+      await createHandler().rememberWindowsVaultRoot();
+
+      expect(mockEditAndSave).not.toHaveBeenCalled();
+      expect(mockSettings.rememberedWindowsVaultRootPathLength).toBe(LONG_WINDOWS_ROOT);
+    });
+
+    it('should remember nothing on a device that is not Windows', async () => {
+      hoisted.currentPlatform = PathCompatibilityPlatform.Android;
+
+      await createHandler().rememberWindowsVaultRoot();
+
+      expect(mockEditAndSave).not.toHaveBeenCalled();
+      expect(mockSettings.rememberedWindowsVaultRootPathLength).toBe(0);
     });
   });
 });

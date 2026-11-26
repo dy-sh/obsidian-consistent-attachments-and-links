@@ -5,6 +5,7 @@ import { OpenBugReportCommandHandler } from '@mnaoumov/obsidian-lib/command-hand
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
 import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
 import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
+import { CallbackLayoutReadyComponent } from '@mnaoumov/obsidian-lib/components/layout-ready-component';
 import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/plugin-settings-tab-component';
 import { PluginSuggestionComponent } from '@mnaoumov/obsidian-lib/components/plugin-suggestion-component';
 import { SettingsMigrationComponent } from '@mnaoumov/obsidian-lib/components/settings-migration-component';
@@ -200,6 +201,16 @@ export class Plugin extends PluginBase {
       resourceLockComponent: this.resourceLockComponent,
       reviewRepairs: showPathCompatibilityReviewModal
     });
+
+    // A Windows device leaves its vault root length in the synced settings, so a phone or a Mac judges Windows'
+    // path budget against it. After the layout, so startup pays nothing, and after the settings file is read, so
+    // a longer root another machine remembered is not overwritten with defaults.
+    this.addChild(
+      new CallbackLayoutReadyComponent(this.app, async () => {
+        await pluginSettingsComponent.whenLoadedFromFile();
+        await pathCompatibilityHandler.rememberWindowsVaultRoot();
+      })
+    );
 
     const consistentAttachmentsAndLinksComponent = this.addChild(
       new ConsistentAttachmentsAndLinksComponent({
