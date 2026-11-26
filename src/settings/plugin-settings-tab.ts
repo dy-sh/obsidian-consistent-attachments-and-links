@@ -291,6 +291,17 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText(' to use this machine\'s real vault root, which makes the check exact here.');
           f.createEl('br');
           f.appendText(
+            'While Windows is checked, every Windows device remembers its vault root length in the synced settings, and the longest one seen is used whenever it is longer than this machine\'s root. So a phone judges Windows\' limit against a real Windows root.'
+          );
+          f.createEl('br');
+          const remembered = this.pluginSettingsComponent.settings.rememberedWindowsVaultRootPathLength;
+          f.appendText(
+            remembered === 0
+              ? 'No Windows vault root remembered yet: open this vault on a Windows device once.'
+              : `Longest Windows vault root remembered: ${String(remembered)} characters.`
+          );
+          f.createEl('br');
+          f.appendText(
             'The root of a device you are not running on cannot be known, so state it: set this to the length of the deepest place this vault is synced to. A value below the real root\'s length is reported as a warning, because every path check is then stricter than this machine requires.'
           );
         }),

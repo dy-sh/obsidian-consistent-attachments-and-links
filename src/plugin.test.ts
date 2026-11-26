@@ -128,6 +128,10 @@ vi.mock('./settings/plugin-settings-component.ts', () => ({
 
     public settings = hoisted.mockSettings;
 
+    public whenLoadedFromFile = vi.fn(async (): Promise<void> => {
+      await noopAsync();
+    });
+
     public constructor(_params: unknown) {
       super();
     }

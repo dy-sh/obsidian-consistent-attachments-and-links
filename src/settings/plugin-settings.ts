@@ -56,8 +56,9 @@ export class PluginSettings {
    * The length, in characters, of the longest vault root path this vault is expected to live under.
    *
    * `0` means the running vault's real root, which is what makes the on-machine check exact with nothing
-   * configured — and what keeps a machine-specific number out of `data.json`. The root of a platform the
-   * check is NOT running on is unknowable, so it is stated here rather than guessed; set it to the length of
+   * configured. While Windows is checked, `0` uses {@link rememberedWindowsVaultRootPathLength} instead when it is
+   * longer, so another device judges Windows' budget against a real Windows root. Any other root of a platform
+   * the check is NOT running on is unknowable, so it is stated here rather than guessed; set it to the length of
    * the deepest place this vault is synced to. A value below the real root's length is a warning, never a
    * silent clamp: it means the path budget is smaller than reality and every check is over-strict.
    */
@@ -79,6 +80,17 @@ export class PluginSettings {
    * it has a migration waiting and an applied migration is retired with a single write.
    */
   public proposedRenameDeleteSettings: MigratableSettings | null = null;
+
+  /**
+   * The length, in characters, of the longest vault root seen on a Windows device, `0` until one is seen.
+   *
+   * Recorded on every Windows device that loads the plugin and kept in `data.json`, so it syncs: a phone or a Mac
+   * judges Windows' path budget against the Windows root rather than its own, which says nothing about Windows.
+   * With several Windows machines the longest root wins, because that is the one a path has to fit under. A typed
+   * {@link maxVaultRootPathLength} still overrides it. Ported from `File name length limit`'s remembered
+   * "Windows vault path length" (MIT).
+   */
+  public rememberedWindowsVaultRootPathLength = 0;
 
   /**
    * Whether a repaired item's original name is added to its note's `aliases`, beside the `title` it is written to
