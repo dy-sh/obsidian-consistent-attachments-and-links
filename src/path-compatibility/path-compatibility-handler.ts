@@ -102,6 +102,47 @@ export interface PathCompatibilityEntry {
   readonly violations: readonly PathCompatibilityViolation[];
 }
 
+/**
+ * Shows the planned renames and answers which of them to apply.
+ *
+ * @param params - The entries and the `Always keep` action.
+ * @returns The paths of the ticked entries, or `null` when the user cancelled.
+ */
+export type PathCompatibilityReviewer = (params: PathCompatibilityReviewParams) => Promise<null | ReadonlySet<string>>;
+
+/**
+ * What {@link PathCompatibilityHandler.fix} hands the review before it renames anything.
+ */
+export interface PathCompatibilityReviewParams {
+  /**
+   * An Obsidian app instance.
+   */
+  readonly app: App;
+
+  /**
+   * Every offending item, in vault order: the same entries the report lists.
+   */
+  readonly entries: readonly PathCompatibilityEntry[];
+
+  /**
+   * Leaves one item out of the check for good, through `pathCompatibilityExcludePaths`, and saves the settings.
+   *
+   * @param path - The item's vault-relative path.
+   */
+  readonly keepPath: (path: string) => Promise<void>;
+}
+
+/**
+ * One offending item found by a walk, with the file object it was found as.
+ *
+ * The object, not the path, is what the repair later picks the ticked items by: renaming a parent folder changes
+ * every path under it, while Obsidian keeps each `TAbstractFile` and updates its `path` in place.
+ */
+interface FoundEntry {
+  readonly entry: PathCompatibilityEntry;
+  readonly file: TAbstractFile;
+}
+
 interface PathCompatibilityHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
@@ -109,6 +150,7 @@ interface PathCompatibilityHandlerConstructorParams {
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resourceLockComponent: null | ResourceLockComponent;
+  readonly reviewRepairs: PathCompatibilityReviewer;
 }
 
 /**
@@ -218,6 +260,7 @@ export class PathCompatibilityHandler {
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly resourceLockComponent: null | ResourceLockComponent;
+  private readonly reviewRepairs: PathCompatibilityReviewer;
   private readonly unicodeNameNormalizer: UnicodeNameNormalizer;
 
   public constructor(params: PathCompatibilityHandlerConstructorParams) {
@@ -227,6 +270,7 @@ export class PathCompatibilityHandler {
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.resourceLockComponent = params.resourceLockComponent;
+    this.reviewRepairs = params.reviewRepairs;
     this.unicodeNameNormalizer = new UnicodeNameNormalizer({ app: params.app });
   }
 
@@ -246,24 +290,16 @@ export class PathCompatibilityHandler {
       result.vaultRootWarning = this.buildVaultRootWarning();
     }
 
-    for (const file of this.getSortedAbstractFiles()) {
-      const violations = this.findViolations(file, scope);
-
-      if (violations.length === 0) {
-        continue;
-      }
-
-      const newName = this.repair(file, scope);
-      result.add({
-        newPath: newName === null ? null : joinPath(getParentPath(file), newName),
-        path: file.path,
-        violations
-      });
+    for (const { entry } of this.findEntries(scope)) {
+      result.add(entry);
     }
   }
 
   /**
-   * Repairs every offending file and folder.
+   * Shows the planned renames, then repairs the items the user left ticked.
+   *
+   * Nothing is renamed before the review answers. Every repairable item starts ticked, so confirming straight away
+   * does what this command did before the review existed.
    */
   public async fix(): Promise<void> {
     const scope = this.resolveScope();
@@ -279,66 +315,53 @@ export class PathCompatibilityHandler {
       this.pluginNoticeComponent.showNotice(vaultRootWarning);
     }
 
-    let repairedCount = 0;
-    const collidingPaths: string[] = [];
-    const unrepairablePaths: string[] = [];
+    const foundEntries = this.findEntries(scope);
 
-    // One run is one bulk operation, so one revert undoes it. Each `loop()` item refreshes the commit lock's
-    // heartbeat on its own.
-    await this.bulkOperationCommitComponent.runBulkOperation({
-      operation: async () => {
-        await loop({
-          abortSignal: this.abortSignalComponent.abortSignal,
-          buildNoticeMessage: ({ item, iterationString }) => t(($) => $.pathCompatibility.progressBar.message, { iterationString, path: item.path }),
-          items: this.getSortedAbstractFiles(),
-          pluginNoticeComponent: this.pluginNoticeComponent,
-          processItem: async (file) => {
-            const outcome = await this.fixFile(file, scope);
+    if (foundEntries.length === 0) {
+      this.pluginNoticeComponent.showNotice(t(($) => $.pathCompatibility.notice.nothingToRepair));
+      return;
+    }
 
-            switch (outcome) {
-              case FixOutcome.Collision: {
-                collidingPaths.push(file.path);
-
-                break;
-              }
-              case FixOutcome.Repaired: {
-                repairedCount++;
-
-                break;
-              }
-              case FixOutcome.Unrepairable: {
-                unrepairablePaths.push(file.path);
-
-                break;
-              }
-                // No default
-            }
-          },
-          progressBarTitle: t(($) => $.pathCompatibility.progressBar.title),
-          shouldContinueOnError: true,
-          shouldShowProgressBar: true
-        });
-      },
-      summary: 'Fix incompatible paths in the entire vault'
+    const tickedPaths = await this.reviewRepairs({
+      app: this.app,
+      entries: foundEntries.map(({ entry }) => entry),
+      keepPath: async (path) => {
+        await this.keepPath(path);
+      }
     });
 
-    this.pluginNoticeComponent.showNotice(
-      repairedCount === 0
-        ? t(($) => $.pathCompatibility.notice.nothingToRepair)
-        : t(($) => $.pathCompatibility.notice.repaired, { count: repairedCount })
-    );
-
-    if (unrepairablePaths.length > 0) {
-      this.pluginNoticeComponent.showNotice(
-        t(($) => $.pathCompatibility.notice.unrepairable, { count: unrepairablePaths.length, paths: unrepairablePaths.join(', ') })
-      );
+    if (tickedPaths === null) {
+      return;
     }
 
-    if (collidingPaths.length > 0) {
-      this.pluginNoticeComponent.showNotice(
-        t(($) => $.pathCompatibility.notice.unicodeCollision, { count: collidingPaths.length, paths: collidingPaths.join(', ') })
-      );
+    // Picked by object, before any rename: see `FoundEntry`.
+    const tickedFiles = new Set(foundEntries.filter(({ entry }) => tickedPaths.has(entry.path)).map(({ file }) => file));
+
+    if (tickedFiles.size === 0) {
+      this.pluginNoticeComponent.showNotice(t(($) => $.pathCompatibility.notice.nothingToRepair));
+      return;
     }
+
+    await this.fixFiles(scope, [...tickedFiles]);
+  }
+
+  /**
+   * Leaves one item out of the path compatibility check for good: `Always keep` in the review.
+   *
+   * The entry is the path as a plain path (`PathSettings` syntax), so it matches that item and everything inside it,
+   * and nothing else. A `*`, `?`, `[` or `\` in the name is escaped, or the entry would be read as a glob, and a name
+   * such as `2025[1].pptx` is exactly the kind this check reports.
+   *
+   * @param path - The item's vault-relative path.
+   */
+  public async keepPath(path: string): Promise<void> {
+    const entry = escapePathSettingsEntry(path);
+
+    await this.pluginSettingsComponent.editAndSave((settings) => {
+      if (!settings.pathCompatibilityExcludePaths.includes(entry)) {
+        settings.pathCompatibilityExcludePaths = [...settings.pathCompatibilityExcludePaths, entry];
+      }
+    });
   }
 
   private buildVaultRootWarning(): null | string {
@@ -346,6 +369,30 @@ export class PathCompatibilityHandler {
     const real = this.getRealVaultRootPathLength();
 
     return configured === 0 || real <= configured ? null : t(($) => $.pathCompatibility.report.vaultRootWarning, { maxLength: configured, realLength: real });
+  }
+
+  private findEntries(scope: PathCompatibilityScope): FoundEntry[] {
+    const foundEntries: FoundEntry[] = [];
+
+    for (const file of this.getSortedAbstractFiles()) {
+      const violations = this.findViolations(file, scope);
+
+      if (violations.length === 0) {
+        continue;
+      }
+
+      const newName = this.repair(file, scope);
+      foundEntries.push({
+        entry: {
+          newPath: newName === null ? null : joinPath(getParentPath(file), newName),
+          path: file.path,
+          violations
+        },
+        file
+      });
+    }
+
+    return foundEntries;
   }
 
   private findViolations(file: TAbstractFile, scope: PathCompatibilityScope): PathCompatibilityViolation[] {
@@ -379,6 +426,10 @@ export class PathCompatibilityHandler {
   private async fixFile(file: TAbstractFile, scope: PathCompatibilityScope): Promise<FixOutcome> {
     const violations = this.findViolations(file, scope);
 
+    /*
+     * Re-judged, not trusted from the review: repairing a parent folder can shorten a ticked child's path back under
+     * its limit, and the settings can change while the review is open.
+     */
     if (violations.length === 0) {
       return FixOutcome.NotNeeded;
     }
@@ -394,6 +445,71 @@ export class PathCompatibilityHandler {
 
     const newName = this.repair(file, scope);
     return newName === null ? FixOutcome.Unrepairable : await this.renameToName(file, scope, newName);
+  }
+
+  private async fixFiles(scope: PathCompatibilityScope, files: TAbstractFile[]): Promise<void> {
+    let repairedCount = 0;
+    const collidingPaths: string[] = [];
+    const unrepairablePaths: string[] = [];
+
+    // One run is one bulk operation, so one revert undoes it. Each `loop()` item refreshes the commit lock's
+    // heartbeat on its own.
+    await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: async () => {
+        await loop({
+          abortSignal: this.abortSignalComponent.abortSignal,
+          buildNoticeMessage: ({ item, iterationString }) => t(($) => $.pathCompatibility.progressBar.message, { iterationString, path: item.path }),
+          // Still in ascending path order, so a parent folder is repaired before what is inside it.
+          items: files,
+          pluginNoticeComponent: this.pluginNoticeComponent,
+          processItem: async (file) => {
+            const outcome = await this.fixFile(file, scope);
+
+            switch (outcome) {
+              case FixOutcome.Collision: {
+                collidingPaths.push(file.path);
+
+                break;
+              }
+              case FixOutcome.Repaired: {
+                repairedCount++;
+
+                break;
+              }
+              case FixOutcome.Unrepairable: {
+                unrepairablePaths.push(file.path);
+
+                break;
+              }
+                // No default
+            }
+          },
+          progressBarTitle: t(($) => $.pathCompatibility.progressBar.title),
+          shouldContinueOnError: true,
+          shouldShowProgressBar: true
+        });
+      },
+      // The ticked items only, so the commit says what this run was asked to do rather than "the entire vault".
+      summary: `Fix ${String(files.length)} incompatible path(s) ticked in the review`
+    });
+
+    this.pluginNoticeComponent.showNotice(
+      repairedCount === 0
+        ? t(($) => $.pathCompatibility.notice.nothingToRepair)
+        : t(($) => $.pathCompatibility.notice.repaired, { count: repairedCount })
+    );
+
+    if (unrepairablePaths.length > 0) {
+      this.pluginNoticeComponent.showNotice(
+        t(($) => $.pathCompatibility.notice.unrepairable, { count: unrepairablePaths.length, paths: unrepairablePaths.join(', ') })
+      );
+    }
+
+    if (collidingPaths.length > 0) {
+      this.pluginNoticeComponent.showNotice(
+        t(($) => $.pathCompatibility.notice.unicodeCollision, { count: collidingPaths.length, paths: collidingPaths.join(', ') })
+      );
+    }
   }
 
   /**
@@ -636,6 +752,27 @@ export class PathCompatibilityHandler {
   }
 }
 
+/**
+ * One violation as a sentence, the way the report and the review both show it.
+ *
+ * @param violation - The violation.
+ * @returns The sentence.
+ */
+export function describeViolation(violation: PathCompatibilityViolation): string {
+  const platform = violation.platform === null ? '' : PATH_COMPATIBILITY_PLATFORM_LABELS[violation.platform];
+  return VIOLATION_DESCRIBERS[violation.type](platform, violation);
+}
+
+/**
+ * Writes a vault path as a `PathSettings` plain-path entry, escaping the characters that would make it a glob.
+ *
+ * @param path - The vault-relative path.
+ * @returns The entry.
+ */
+export function escapePathSettingsEntry(path: string): string {
+  return path.replaceAll(/[*?[\\]/g, (char) => `\\${char}`);
+}
+
 function describeItem(app: App, path: string, reportPath: string): string {
   const file = getFileOrNull({ app, pathOrFile: path });
 
@@ -643,11 +780,6 @@ function describeItem(app: App, path: string, reportPath: string): string {
   // replacement.
   const link = file === null ? '' : `${generateMarkdownLink({ app, sourcePathOrFile: reportPath, targetPathOrFile: file })} `;
   return `${link}\`${path}\``;
-}
-
-function describeViolation(violation: PathCompatibilityViolation): string {
-  const platform = violation.platform === null ? '' : PATH_COMPATIBILITY_PLATFORM_LABELS[violation.platform];
-  return VIOLATION_DESCRIBERS[violation.type](platform, violation);
 }
 
 /*

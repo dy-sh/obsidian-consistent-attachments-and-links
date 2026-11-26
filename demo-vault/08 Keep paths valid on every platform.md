@@ -49,6 +49,14 @@ require('/demoSetup.ts').runCommand(app, 'fix-incompatible-paths');
 
 Manual equivalent: run **Fix incompatible paths** from the Command Palette.
 
+Nothing is renamed yet. The command first opens **Review incompatible paths**, which lists every item it would rename: the current path, the new one, and why. Every item that can be repaired starts ticked.
+
+- Untick an item to leave it as it is this time. **Select all** and **Select none** tick or untick the whole list.
+- **Always keep** leaves an item out for good: it is added to **Keep names unchanged in these paths**, so neither the report nor the repair lists it again.
+- **Rename N ticked** renames the ticked items. **Cancel** renames nothing.
+
+Confirm with the **Rename ... ticked** button.
+
 **Step 4.** Open `Points at the long name` - the button left it in the active tab - and look at what happened to its link. The note it points at has a new, shorter name, and the link now says so.
 
 Start over, or put the vault back:
@@ -86,7 +94,7 @@ caption: Check Vault Consistency for the decomposed name (read-only)
 await require('/demoSetup.ts').runConsistencyCheck(app);
 ```
 
-**Step 3 - repair it.** Run the repair, then check the vault again. The note is gone from the section, and `Points at the decomposed name` still links to it:
+**Step 3 - repair it.** Run the repair, confirm the review, then check the vault again. The note is gone from the section, and `Points at the decomposed name` still links to it:
 
 ```code-button
 ---

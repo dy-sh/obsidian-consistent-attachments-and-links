@@ -474,6 +474,20 @@ async function runCommand(commandId: string): Promise<void> {
       // NOT awaited: the settle below is what waits for the work.
       app.commands.executeCommandById(fullId);
 
+      // `Fix incompatible paths` shows its planned renames first; confirm them as they are, every repairable item
+      // ticked. No other command opens the review, so for them this finds nothing and moves on.
+      const REVIEW_WAIT_IN_MILLISECONDS = 2000;
+      const REVIEW_POLL_IN_MILLISECONDS = 100;
+      const confirmSelector = '.consistent-attachments-and-links-path-compatibility-review .mod-cta';
+      for (let waited = 0; waited < REVIEW_WAIT_IN_MILLISECONDS; waited += REVIEW_POLL_IN_MILLISECONDS) {
+        const confirmButton = activeDocument.querySelector<HTMLButtonElement>(confirmSelector);
+        if (confirmButton) {
+          confirmButton.click();
+          break;
+        }
+        await sleep(REVIEW_POLL_IN_MILLISECONDS);
+      }
+
       // These commands walk the whole vault through an internal queue, so the
       // wait is for the work rather than for the call.
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);

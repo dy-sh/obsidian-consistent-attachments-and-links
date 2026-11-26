@@ -153,6 +153,19 @@ describe('Fix incompatible paths', () => {
         try {
           app.commands.executeCommandById(commandId);
 
+          /*
+           * The command first shows every planned rename in its review, and renames nothing until it is
+           * confirmed. The note must still be there while the review is open, and the review must name it.
+           */
+          const reviewSelector = '.consistent-attachments-and-links-path-compatibility-review';
+          await lib.waitUntil({
+            message: 'the path compatibility review to open',
+            predicate: () => activeDocument.querySelector(`${reviewSelector} .mod-cta`) !== null
+          });
+          const reviewText = activeDocument.querySelector(reviewSelector)?.textContent ?? '';
+          const wasUntouchedDuringReview = app.vault.getAbstractFileByPath(targetPath) !== null;
+          activeDocument.querySelector<HTMLButtonElement>(`${reviewSelector} .mod-cta`)?.click();
+
           // The pass runs through a progress loop, so wait for the effect rather than for the call.
           await lib.waitUntil({
             message: `the long-named note at ${targetPath} to be renamed`,
@@ -182,9 +195,11 @@ describe('Fix incompatible paths', () => {
             aliases: preservedNames.aliases,
             newName,
             newNameByteLength: new Blob([newName]).size,
+            reviewText,
             settingsFound: true,
             sourceContent,
-            title: preservedNames.title
+            title: preservedNames.title,
+            wasUntouchedDuringReview
           };
         } finally {
           settings.shouldEnsurePathCompatibilityOnAndroid = wasAndroidEnabled;
@@ -204,6 +219,12 @@ describe('Fix incompatible paths', () => {
     });
 
     expect(result.settingsFound).toBe(true);
+
+    // The review named the item and its new name before anything was renamed.
+    expect(result.wasUntouchedDuringReview).toBe(true);
+    expect(result.reviewText).toContain(`${LONG_CJK_BASENAME}.md`);
+    expect(result.reviewText).toContain(result.newName ?? '');
+    expect(result.reviewText).toContain('Rename 1 ticked');
 
     // Renamed, and short enough that ext4 would accept it — including the `.md` extension, which is kept
     // whole because it is what tells Obsidian the file is a note.

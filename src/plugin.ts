@@ -27,6 +27,7 @@ import { HtmlProblemHandler } from './html-problems/html-problem-handler.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { MisplacedAttachmentHandler } from './misplaced-attachments/misplaced-attachment-handler.ts';
 import { PathCompatibilityHandler } from './path-compatibility/path-compatibility-handler.ts';
+import { showPathCompatibilityReviewModal } from './path-compatibility/path-compatibility-review-modal.ts';
 import { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
 import { PluginSettingsTab } from './settings/plugin-settings-tab.ts';
 import {
@@ -196,7 +197,8 @@ export class Plugin extends PluginBase {
       bulkOperationCommitComponent,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent,
-      resourceLockComponent: this.resourceLockComponent
+      resourceLockComponent: this.resourceLockComponent,
+      reviewRepairs: showPathCompatibilityReviewModal
     });
 
     const consistentAttachmentsAndLinksComponent = this.addChild(

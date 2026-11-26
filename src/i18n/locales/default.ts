@@ -44,6 +44,17 @@ export const defaultTranslations = {
       vaultRootWarning: 'The vault root path is {{realLength}} characters long, which is more than the configured maximum of {{maxLength}}. Every path check below is therefore stricter than this machine actually requires. Raise \'Maximum vault root path length\' to match.',
       wouldBecome: 'Would become: `{{newPath}}`'
     },
+    review: {
+      alwaysKeep: 'Always keep',
+      alwaysKeepTooltip: 'Never report or repair this item again. Adds it to \'Keep names unchanged in these paths\'.',
+      cannotRepair: 'Cannot be repaired automatically: every character of the name would have to be removed.',
+      kept: 'Kept as it is. It will not be reported or repaired again.',
+      rename: 'Rename {{count}} ticked',
+      selectAll: 'Select all',
+      selectNone: 'Select none',
+      summary: '{{count}} item(s) would be renamed. Untick an item to leave it as it is this time, or choose \'Always keep\' to leave it out for good. Nothing is renamed until you confirm.',
+      title: 'Review incompatible paths'
+    },
     violation: {
       bytes: 'bytes',
       characters: 'characters',

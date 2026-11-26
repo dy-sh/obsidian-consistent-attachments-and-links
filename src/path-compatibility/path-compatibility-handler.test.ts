@@ -58,10 +58,15 @@ import {
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { PluginSettings } from '../settings/plugin-settings.ts';
+import type {
+  PathCompatibilityReviewer,
+  PathCompatibilityReviewParams
+} from './path-compatibility-handler.ts';
 
 import { MAX_REPORTED_ENTRIES_PER_SECTION } from '../consistency-check/report-entry-budget.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import {
+  escapePathSettingsEntry,
   PathCompatibilityCheckResult,
   PathCompatibilityHandler
 } from './path-compatibility-handler.ts';
@@ -132,6 +137,17 @@ const mockLoop = vi.mocked(loop);
 const mockRenameSafe = vi.mocked(renameSafe);
 const mockResolveFolderNote = vi.mocked(resolveFolderNote);
 const mockResolveFolderNoteConfig = vi.mocked(resolveFolderNoteConfig);
+const mockEditAndSave = vi.fn(async (editor: (settings: PluginSettings) => void): Promise<void> => {
+  editor(castTo<PluginSettings>(mockSettings));
+  await noopAsync();
+});
+
+// Ticks every entry, unrepairable ones included, so the handler's own outcome for each is still exercised.
+function tickAll(params: PathCompatibilityReviewParams): Promise<null | ReadonlySet<string>> {
+  return Promise.resolve(new Set(params.entries.map((entry) => entry.path)));
+}
+
+const mockReviewRepairs = vi.fn<PathCompatibilityReviewer>();
 const mockRunBulkOperation = vi.fn(async (params: BulkOperationCommitComponentRunBulkOperationParams<unknown>): Promise<unknown> => await params.operation());
 
 // The fixtures only ever carry the vault, never call through it, so a strict proxy makes any real use throw
@@ -144,6 +160,7 @@ const mockSettings = {
   getPathCompatibilityPlatforms: vi.fn((): PathCompatibilityPlatform[] => [PathCompatibilityPlatform.Windows]),
   isPathIgnoredByPathCompatibility: vi.fn((_path: string, _isFolder?: boolean): boolean => false),
   maxVaultRootPathLength: 0,
+  pathCompatibilityExcludePaths: [] as string[],
   shouldAddOriginalNameAsAlias: true,
   shouldCreateNoteToPreserveOriginalName: false,
   shouldNormalizeUnicodeNames: false,
@@ -178,8 +195,9 @@ function createHandler(): PathCompatibilityHandler {
     app,
     bulkOperationCommitComponent: strictProxy<BulkOperationCommitComponent>({ runBulkOperation: castTo<BulkOperationCommitComponent['runBulkOperation']>(mockRunBulkOperation) }),
     pluginNoticeComponent: mockPluginNoticeComponent,
-    pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ settings: castTo<PluginSettings>(mockSettings) }),
-    resourceLockComponent: castTo<null | ResourceLockComponent>(null)
+    pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ editAndSave: mockEditAndSave, settings: castTo<PluginSettings>(mockSettings) }),
+    resourceLockComponent: castTo<null | ResourceLockComponent>(null),
+    reviewRepairs: mockReviewRepairs
   });
 }
 
@@ -215,6 +233,8 @@ describe('PathCompatibilityHandler', () => {
     mockSettings.isPathIgnoredByPathCompatibility.mockReturnValue(false);
     mockSettings.forbiddenCharacterReplacement = '-';
     mockSettings.maxVaultRootPathLength = 0;
+    mockSettings.pathCompatibilityExcludePaths = [];
+    mockReviewRepairs.mockImplementation(tickAll);
     mockSettings.shouldAddOriginalNameAsAlias = true;
     mockSettings.shouldCreateNoteToPreserveOriginalName = false;
     mockSettings.shouldNormalizeUnicodeNames = false;
@@ -359,7 +379,7 @@ describe('PathCompatibilityHandler', () => {
       await createHandler().fix();
 
       expect(mockRunBulkOperation).toHaveBeenCalledTimes(1);
-      expect(mockRunBulkOperation.mock.calls[0]?.[0].summary).toBe('Fix incompatible paths in the entire vault');
+      expect(mockRunBulkOperation.mock.calls[0]?.[0].summary).toBe('Fix 1 incompatible path(s) ticked in the review');
       expect(renamedInsideOperation).toStrictEqual([true]);
     });
     it('should rename an offending file and report the count', async () => {
@@ -378,6 +398,8 @@ describe('PathCompatibilityHandler', () => {
 
       expect(mockRenameSafe).not.toHaveBeenCalled();
       expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith(expect.stringContaining('No paths found'));
+      expect(mockReviewRepairs).not.toHaveBeenCalled();
+      expect(mockRunBulkOperation).not.toHaveBeenCalled();
     });
 
     it('should list what it could not repair', async () => {
@@ -409,7 +431,7 @@ describe('PathCompatibilityHandler', () => {
     });
 
     it('should build the progress message from the item being processed', async () => {
-      setVault(createFile('ordinary.md'));
+      setVault(createFile(`${LONG_BASENAME}.md`));
 
       await createHandler().fix();
 
@@ -445,6 +467,106 @@ describe('PathCompatibilityHandler', () => {
       await createHandler().fix();
 
       expect(mockRenameSafe).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('review', () => {
+    it('should show the planned renames before renaming anything', async () => {
+      setVault(createFile(`${LONG_BASENAME}.md`), createFile('ordinary.md'));
+      mockReviewRepairs.mockImplementationOnce(async (params) => {
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(params.entries.map((entry) => entry.path)).toStrictEqual([`${LONG_BASENAME}.md`]);
+        expect(params.entries[0]?.newPath).not.toBeNull();
+        expect(params.entries[0]?.violations).not.toHaveLength(0);
+        return await tickAll(params);
+      });
+
+      await createHandler().fix();
+
+      expect(mockReviewRepairs).toHaveBeenCalledTimes(1);
+      expect(mockRenameSafe).toHaveBeenCalledTimes(1);
+    });
+
+    it('should rename nothing and make no commit when the review is cancelled', async () => {
+      setVault(createFile(`${LONG_BASENAME}.md`));
+      mockReviewRepairs.mockResolvedValueOnce(null);
+
+      await createHandler().fix();
+
+      expect(mockRenameSafe).not.toHaveBeenCalled();
+      expect(mockRunBulkOperation).not.toHaveBeenCalled();
+      expect(mockPluginNoticeComponent.showNotice).not.toHaveBeenCalled();
+    });
+
+    it('should rename only the ticked items', async () => {
+      const ticked = createFile(`${LONG_BASENAME}.md`);
+      const unticked = createFile('a?b.md');
+      setVault(ticked, unticked);
+      mockReviewRepairs.mockResolvedValueOnce(new Set([`${LONG_BASENAME}.md`]));
+
+      await createHandler().fix();
+
+      expect(mockRenameSafe).toHaveBeenCalledTimes(1);
+      expect(mockRenameSafe).toHaveBeenCalledWith(expect.objectContaining({ oldPathOrAbstractFile: ticked }));
+      expect(mockRunBulkOperation.mock.calls[0]?.[0].summary).toBe('Fix 1 incompatible path(s) ticked in the review');
+    });
+
+    it('should say there is nothing to repair when every item was unticked', async () => {
+      setVault(createFile(`${LONG_BASENAME}.md`));
+      mockReviewRepairs.mockResolvedValueOnce(new Set());
+
+      await createHandler().fix();
+
+      expect(mockRenameSafe).not.toHaveBeenCalled();
+      expect(mockRunBulkOperation).not.toHaveBeenCalled();
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith(expect.stringContaining('No paths found'));
+    });
+
+    it('should re-judge a ticked item at repair time and leave it alone once it no longer offends', async () => {
+      setVault(createFile(`${LONG_BASENAME}.md`));
+      mockReviewRepairs.mockImplementationOnce(async (params) => {
+        // As if the settings changed while the review was open.
+        mockSettings.isPathIgnoredByPathCompatibility.mockReturnValue(true);
+        return await tickAll(params);
+      });
+
+      await createHandler().fix();
+
+      expect(mockRunBulkOperation).toHaveBeenCalledTimes(1);
+      expect(mockRenameSafe).not.toHaveBeenCalled();
+      expect(mockPluginNoticeComponent.showNotice).toHaveBeenCalledWith(expect.stringContaining('No paths found'));
+    });
+
+    it('should keep an item out for good through the review\'s keep action', async () => {
+      setVault(createFile('2025[1]?.md'));
+      mockReviewRepairs.mockImplementationOnce(async (params) => {
+        await params.keepPath('2025[1]?.md');
+        return new Set();
+      });
+
+      await createHandler().fix();
+
+      expect(mockEditAndSave).toHaveBeenCalledTimes(1);
+      expect(mockSettings.pathCompatibilityExcludePaths).toStrictEqual(['2025\\[1]\\?.md']);
+    });
+  });
+
+  describe('keepPath', () => {
+    it('should append an escaped plain-path entry once', async () => {
+      mockSettings.pathCompatibilityExcludePaths = ['Books/'];
+      const handler = createHandler();
+
+      await handler.keepPath('a*b.md');
+      await handler.keepPath('a*b.md');
+
+      expect(mockSettings.pathCompatibilityExcludePaths).toStrictEqual(['Books/', 'a\\*b.md']);
+    });
+  });
+
+  describe('escapePathSettingsEntry', () => {
+    it('should escape every glob character and the backslash, and nothing else', () => {
+      expect(escapePathSettingsEntry('a*b?c[d]e\\f g.md')).toBe('a\\*b\\?c\\[d]e\\\\f g.md');
+      expect(escapePathSettingsEntry('plain/path.md')).toBe('plain/path.md');
     });
   });
 
