@@ -68,6 +68,10 @@ import {
 } from '../consistency-check/report-callout.ts';
 import { ReportEntryBudget } from '../consistency-check/report-entry-budget.ts';
 import {
+  applyForbiddenCharacterReplacements,
+  parseForbiddenCharacterReplacements
+} from './forbidden-character-replacements.ts';
+import {
   UnicodeNameNormalizer,
   UnicodeNormalizationOutcome
 } from './unicode-name-normalizer.ts';
@@ -158,6 +162,7 @@ interface PathCompatibilityHandlerConstructorParams {
  */
 interface PathCompatibilityScope {
   readonly forbiddenCharacterReplacement: string;
+  readonly forbiddenCharacterReplacements: ReadonlyMap<string, string>;
   readonly maxVaultRootPathLength: number;
   readonly platforms: readonly PathCompatibilityPlatform[];
   readonly shouldNormalizeUnicodeNames: boolean;
@@ -631,9 +636,14 @@ export class PathCompatibilityHandler {
   private repair(file: TAbstractFile, scope: PathCompatibilityScope, basenameOverride?: string): null | string {
     const { basename, extension } = splitName(file);
 
+    // The per-character replacements go first; `repairName` replaces whatever they leave with the fallback.
     return repairName({
-      basename: basenameOverride ?? basename,
-      extension,
+      basename: applyForbiddenCharacterReplacements({
+        name: basenameOverride ?? basename,
+        platforms: scope.platforms,
+        replacements: scope.forbiddenCharacterReplacements
+      }),
+      extension: applyForbiddenCharacterReplacements({ name: extension, platforms: scope.platforms, replacements: scope.forbiddenCharacterReplacements }),
       forbiddenCharacterReplacement: scope.forbiddenCharacterReplacement,
       isFolder: isFolder(file),
       maxVaultRootPathLength: scope.maxVaultRootPathLength,
@@ -713,6 +723,7 @@ export class PathCompatibilityHandler {
 
     return {
       forbiddenCharacterReplacement: settings.forbiddenCharacterReplacement,
+      forbiddenCharacterReplacements: parseForbiddenCharacterReplacements(settings.forbiddenCharacterReplacements),
       maxVaultRootPathLength: this.resolveMaxVaultRootPathLength(),
       platforms,
       shouldNormalizeUnicodeNames: settings.shouldNormalizeUnicodeNames

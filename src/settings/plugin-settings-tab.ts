@@ -322,6 +322,33 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('A replacement for one forbidden character, which takes precedence over ');
+          appendCodeBlock(f, 'Forbidden character replacement');
+          f.appendText(' for that character.');
+          f.createEl('br');
+          f.appendText('Insert each entry on a new line as the character, ');
+          appendCodeBlock(f, '=');
+          f.appendText(' and its replacement, e.g. ');
+          appendCodeBlock(f, ':= -');
+          f.appendText(', ');
+          appendCodeBlock(f, '[=(');
+          f.appendText(', ');
+          appendCodeBlock(f, ']=)');
+          f.appendText(' or ');
+          appendCodeBlock(f, '?=');
+          f.appendText(', which deletes the character. Everything after ');
+          appendCodeBlock(f, '=');
+          f.appendText(' is the replacement, spaces included, and it must be valid in a file name on every platform.');
+        }),
+        name: 'Forbidden character replacements',
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({ propertyName: 'forbiddenCharacterReplacements', valueComponent: multipleText });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('When an item is renamed, add its original name to the ');
           appendCodeBlock(f, 'aliases');
           f.appendText(' of the note that describes it.');
