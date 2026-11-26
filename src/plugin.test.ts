@@ -297,9 +297,15 @@ function unpublishProviderApi(): void {
   providerComponent.unload();
 }
 
+// The first `onload` in this file pays the cold plugin load (module graph, lazy imports, JIT): measured idle at
+// 913 ms against 20-200 ms for every later load. On a machine shared by several gates it scales past vitest's
+// 5 s default, which made the coverage gate fail on whichever case loads first while the file passed alone.
+// The bound is for the whole suite, not one case, so reordering the cases cannot move the failure elsewhere.
+const PLUGIN_SUITE_TIMEOUT_IN_MILLISECONDS = 30_000;
+
 // --- Tests ---
 
-describe('Plugin', () => {
+describe('Plugin', { timeout: PLUGIN_SUITE_TIMEOUT_IN_MILLISECONDS }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Each test loads a fresh plugin and never unloads it, and the library's contexts initialize only once
