@@ -157,6 +157,7 @@ const loadedFiles: TAbstractFile[] = [];
 
 const mockSettings = {
   forbiddenCharacterReplacement: '-',
+  forbiddenCharacterReplacements: [] as string[],
   getPathCompatibilityPlatforms: vi.fn((): PathCompatibilityPlatform[] => [PathCompatibilityPlatform.Windows]),
   isPathIgnoredByPathCompatibility: vi.fn((_path: string, _isFolder?: boolean): boolean => false),
   maxVaultRootPathLength: 0,
@@ -232,6 +233,7 @@ describe('PathCompatibilityHandler', () => {
     mockSettings.getPathCompatibilityPlatforms.mockReturnValue([PathCompatibilityPlatform.Windows]);
     mockSettings.isPathIgnoredByPathCompatibility.mockReturnValue(false);
     mockSettings.forbiddenCharacterReplacement = '-';
+    mockSettings.forbiddenCharacterReplacements = [];
     mockSettings.maxVaultRootPathLength = 0;
     mockSettings.pathCompatibilityExcludePaths = [];
     mockReviewRepairs.mockImplementation(tickAll);
@@ -623,6 +625,15 @@ describe('PathCompatibilityHandler', () => {
       await createHandler().fix();
 
       expect(mockRenameSafe).toHaveBeenCalledWith(expect.objectContaining({ newPath: 'a_b.md' }));
+    });
+
+    it('should prefer a per-character replacement and fall back to the single one for the rest', async () => {
+      mockSettings.forbiddenCharacterReplacements = [':= -', '?=', '[=(', ']=)'];
+      setVault(createFile('Q1: why [draft]? *.md'));
+
+      await createHandler().fix();
+
+      expect(mockRenameSafe).toHaveBeenCalledWith(expect.objectContaining({ newPath: 'Q1 - why (draft) -.md' }));
     });
 
     it('should write into a folder\'s folder note', async () => {

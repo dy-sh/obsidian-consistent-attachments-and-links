@@ -69,6 +69,8 @@ Walked through in [08 Keep paths valid on every platform](<./08 Keep paths valid
   - the length, in characters, of the longest vault root path this vault is expected to live under. `0` means this machine's real vault root, which makes the check exact here; set it to the length of the deepest place the vault is synced to when that is longer. A value below the real root's length is reported as a warning rather than quietly applied.
 - `forbiddenCharacterReplacement` (**Forbidden character replacement**)
   - what **Fix Incompatible Paths** replaces each forbidden character with, one replacement per character. `-` by default, as in every earlier version; set `_` or anything else a file name can hold on every platform, or leave it empty to delete the character.
+- `forbiddenCharacterReplacements` (**Forbidden character replacements**)
+  - a replacement for one particular forbidden character, which wins over **Forbidden character replacement** for that character. One entry per line: the character, `=` and its replacement, such as `:= -`, `[=(`, `]=)`, `|=-` or `?=` (which deletes `?`). Everything after `=` is the replacement, spaces included, and it must be valid in a file name on every platform, like the single replacement. Empty by default, so a vault's next repair names files exactly as its earlier ones did.
 - `shouldAddOriginalNameAsAlias` (**Add the original name as an alias**)
   - add a renamed item's original name to the `aliases` of the note that describes it. On by default. The original name also goes to `title` when the note has none, and a `title` the note already has is never changed, so a vault that keeps each note's true name in `title` can turn this off and get no alias repeating it.
 - `sidecarNoteNamePattern`

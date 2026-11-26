@@ -37,6 +37,14 @@ export class PluginSettings {
   public forbiddenCharacterReplacement = '-';
 
   /**
+   * Per-character replacements that take precedence over {@link forbiddenCharacterReplacement}, one
+   * `<character>=<replacement>` line each, such as `:= -` or `?=` (which deletes `?`).
+   *
+   * Empty by default, so an existing vault's next repair names files the way its earlier repairs did.
+   */
+  public forbiddenCharacterReplacements: string[] = [];
+
+  /**
    * Whether the user has already declined the suggestion to install `Custom Attachment Location`.
    *
    * Only the load-time notice honours it — the settings-tab banner is shown regardless, because a user

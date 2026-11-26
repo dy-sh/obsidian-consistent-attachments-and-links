@@ -65,6 +65,7 @@ describe('PluginSettingsComponent', () => {
       const settings = strictProxy<PluginSettings>({
         excludePaths: [],
         forbiddenCharacterReplacement: '-',
+        forbiddenCharacterReplacements: [],
         includePaths: ['/[/'],
         pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: []
@@ -78,6 +79,7 @@ describe('PluginSettingsComponent', () => {
       const settings = strictProxy<PluginSettings>({
         excludePaths: ['/(/'],
         forbiddenCharacterReplacement: '-',
+        forbiddenCharacterReplacements: [],
         includePaths: [],
         pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: []
@@ -91,6 +93,7 @@ describe('PluginSettingsComponent', () => {
       const invalid = strictProxy<PluginSettings>({
         excludePaths: [],
         forbiddenCharacterReplacement: '-',
+        forbiddenCharacterReplacements: [],
         includePaths: [],
         pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: ['Shared', '/(/']
@@ -109,6 +112,7 @@ describe('PluginSettingsComponent', () => {
       const invalid = strictProxy<PluginSettings>({
         excludePaths: [],
         forbiddenCharacterReplacement: '-',
+        forbiddenCharacterReplacements: [],
         includePaths: [],
         pathCompatibilityExcludePaths: ['Books/!!files/Calibre/', '/(/'],
         sharedAttachmentPaths: []
@@ -139,6 +143,7 @@ describe('PluginSettingsComponent', () => {
       const invalid = strictProxy<PluginSettings>({
         excludePaths: ['Notes [old'],
         forbiddenCharacterReplacement: '-',
+        forbiddenCharacterReplacements: [],
         includePaths: [],
         pathCompatibilityExcludePaths: [],
         sharedAttachmentPaths: []
@@ -158,6 +163,19 @@ describe('PluginSettingsComponent', () => {
       valid.forbiddenCharacterReplacement = '';
       const validResult = await component.validate(valid);
       expect(validResult.forbiddenCharacterReplacement).toBeUndefined();
+    });
+
+    it('should reject an invalid per-character replacement line, and accept valid ones', async () => {
+      const component = createComponent();
+      const invalid = new PluginSettings();
+      invalid.forbiddenCharacterReplacements = [':= -', '?=:'];
+      const invalidResult = await component.validate(invalid);
+      expect(invalidResult.forbiddenCharacterReplacements).toContain('?=:');
+
+      const valid = new PluginSettings();
+      valid.forbiddenCharacterReplacements = [':= -', '?=', '[=(', ']=)', '|=-'];
+      const validResult = await component.validate(valid);
+      expect(validResult.forbiddenCharacterReplacements).toBeUndefined();
     });
   });
 

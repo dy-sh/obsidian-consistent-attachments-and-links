@@ -13,6 +13,7 @@ import type {
   MoveAttachmentToProperFolderUsedByMultipleNotesMode
 } from '../sibling-plugins/custom-attachment-location.ts';
 
+import { getForbiddenCharacterReplacementsValidationMessage } from '../path-compatibility/forbidden-character-replacements.ts';
 import { PluginSettings } from './plugin-settings.ts';
 
 // The saved record as a converter sees it: the keys this plugin used to declare, plus the ones it declares
@@ -170,6 +171,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     this.registerValidator('sharedAttachmentPaths', pathsValidator);
     this.registerValidator('pathCompatibilityExcludePaths', pathsValidator);
     this.registerValidator('forbiddenCharacterReplacement', getForbiddenCharacterReplacementValidationMessage);
+    this.registerValidator('forbiddenCharacterReplacements', getForbiddenCharacterReplacementsValidationMessage);
   }
 }
 
