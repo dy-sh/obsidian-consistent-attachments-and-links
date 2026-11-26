@@ -160,6 +160,17 @@ Things that are easy to get wrong here, and were:
 
 Reserved-name detection (`CON`/`PRN`/`AUX`/`NUL`/`COM1`-`9`/`LPT1`-`9`) lives in `@mnaoumov/obsidian-lib`. Two cases stay deliberately **unmatched** there, so do not "fix" them here either: `CONIN$` / `CONOUT$` and the superscript `COM²` forms, which every Windows version that runs Obsidian accepts — matching them would rename files that work.
 
+### The review before the repair
+
+`Fix incompatible paths` renames nothing until the user confirms `Review incompatible paths` (`src/path-compatibility/path-compatibility-review-modal.ts`): one row per offending item with its old path, the path the repair would give it, its violations, a tick box and `Always keep`; `Select all` / `Select none`; `Rename <n> ticked` / `Cancel`. The idea comes from `Filename Sanitizer`'s review list, ported **blackbox**: that plugin is AGPL-3.0, so the behavior spec was written from its public README alone by a separate agent, and this code was written from that spec without opening its repository.
+
+- **The handler takes the review as a dependency (`reviewRepairs`), and `plugin.ts` supplies the modal.** So the handler's unit tests stay modal-free, and `fix()` stays the one place that decides what is renamed.
+- **The rows are the very entries the report lists** (`findEntries`, shared by `check()` and `fix()`), so the review and the report cannot disagree about an item or its new name.
+- **Ticked items are picked by `TAbstractFile`, not by path.** Renaming a parent folder changes every path under it, and Obsidian updates each object's `path` in place, so a path-keyed pick would lose the children.
+- **Every repairable row starts ticked**, so confirming at once does what the command did before the review existed. An unrepairable row has no tick box. Cancel, or nothing ticked, makes no bulk-operation commit.
+- **`Always keep` writes an exact plain-path entry into `pathCompatibilityExcludePaths`** (`keepPath`), with `*`, `?`, `[` and `\` escaped (`escapePathSettingsEntry`), because a name such as `2025[1].pptx` is exactly what this check reports and would otherwise be read as a glob.
+- **Every integration suite that runs the command confirms the review**: it waits for `.consistent-attachments-and-links-path-compatibility-review .mod-cta` and clicks it. A suite that only fires the command now hangs on the open modal and times out with nothing renamed.
+
 ### Unicode normalization (`shouldNormalizeUnicodeNames`)
 
 The one rule that is not a platform's: a name stored on disk in NFD is reported and stored in NFC. `src/path-compatibility/unicode-name-normalizer.ts` does the on-disk half. Measured in Obsidian 1.14.4's `app.js`, and easy to get wrong:

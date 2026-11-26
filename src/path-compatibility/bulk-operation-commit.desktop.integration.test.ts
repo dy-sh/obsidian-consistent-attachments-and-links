@@ -170,8 +170,16 @@ describe('Bulk operation commits', () => {
       expect(setup.settingsFound).toBe(true);
 
       await evalInObsidian({
-        callback({ app, commandId }) {
+        async callback({ app, commandId, lib }) {
           app.commands.executeCommandById(commandId);
+
+          // The command shows its planned renames first; confirm them as they are, every repairable item ticked.
+          const confirmSelector = '.consistent-attachments-and-links-path-compatibility-review .mod-cta';
+          await lib.waitUntil({
+            message: 'the path compatibility review to open',
+            predicate: () => activeDocument.querySelector(confirmSelector) !== null
+          });
+          activeDocument.querySelector<HTMLButtonElement>(confirmSelector)?.click();
         },
         input: { commandId: COMMAND_ID },
         vaultPath
@@ -180,9 +188,9 @@ describe('Bulk operation commits', () => {
       // The commit is made after the vault settles, so wait for it in the history rather than for the command.
       const subjects = await waitForSubjects(vaultPath, (current) => current.some((subject) => /^OP\d+: /.test(subject)));
       const operationSubject = subjects.find((subject) => /^OP\d+: /.test(subject));
-      expect(operationSubject).toMatch(/^OP\d+: Fix incompatible paths in the entire vault$/);
+      expect(operationSubject).toMatch(/^OP\d+: Fix \d+ incompatible path\(s\) ticked in the review$/);
       const operationId = operationSubject?.split(':', 1)[0] ?? '';
-      expect(subjects.slice(0, 2)).toStrictEqual([`${operationId}: Fix incompatible paths in the entire vault`, `chore: before ${operationId}`]);
+      expect(subjects.slice(0, 2)).toStrictEqual([operationSubject, `chore: before ${operationId}`]);
       expect(git(vaultPath, ['log', '-1', '--format=%(trailers:key=Obsidian-Plugin,valueonly)'])).toBe(PLUGIN_ID);
 
       // The operation renamed the note and rewrote the link to it.

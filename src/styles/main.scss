@@ -5,6 +5,40 @@
   }
 }
 
+.consistent-attachments-and-links-path-compatibility-review {
+  .consistent-attachments-and-links-path-compatibility-review-toolbar {
+    display: flex;
+    gap: var(--size-4-2);
+    margin-bottom: var(--size-4-2);
+  }
+
+  .consistent-attachments-and-links-path-compatibility-review-list {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .consistent-attachments-and-links-path-compatibility-review-row {
+    align-items: flex-start;
+    border-top: 1px solid var(--background-modifier-border);
+    display: flex;
+    gap: var(--size-4-2);
+    padding: var(--size-4-2) 0;
+  }
+
+  .consistent-attachments-and-links-path-compatibility-review-body {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+  }
+
+  .consistent-attachments-and-links-path-compatibility-review-violations {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin: var(--size-2-1) 0 0;
+    padding-inline-start: var(--size-4-4);
+  }
+}
+
 .consistent-attachments-and-links-broken-links-view {
   .consistent-attachments-and-links-broken-links-toolbar {
     margin-bottom: var(--size-4-4);

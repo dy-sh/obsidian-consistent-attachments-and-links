@@ -158,6 +158,14 @@ describe('Normalize Unicode names to NFC', () => {
 
           app.commands.executeCommandById(commandId);
 
+          // The command shows its planned renames first; confirm them as they are, every repairable item ticked.
+          const confirmSelector = '.consistent-attachments-and-links-path-compatibility-review .mod-cta';
+          await lib.waitUntil({
+            message: 'the path compatibility review to open',
+            predicate: () => activeDocument.querySelector(confirmSelector) !== null
+          });
+          activeDocument.querySelector<HTMLButtonElement>(confirmSelector)?.click();
+
           await lib.waitUntil({
             message: `the decomposed names under ${rootPath} to be stored in NFC`,
             predicate: () => getRealPath(notePath) === notePath && getRealPath(folderPath) === folderPath
