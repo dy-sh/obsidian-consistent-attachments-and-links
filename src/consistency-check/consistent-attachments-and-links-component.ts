@@ -210,7 +210,9 @@ export class ConsistentAttachmentsAndLinksComponent extends LayoutReadyComponent
       app: this.app,
       message: createFragment((f) => {
         f.createDiv({ cls: 'community-modal-readme' }, (wrapper) => {
-          wrapper.appendText('The \'Fix incompatible paths\' command of ');
+          wrapper.appendText('The ');
+          appendCodeBlock(wrapper, 'Fix incompatible paths');
+          wrapper.appendText(' command of ');
           appendCodeBlock(wrapper, 'Consistent Attachments and Links');
           wrapper.appendText(' renames files and folders across your whole vault.');
           wrapper.createEl('br');

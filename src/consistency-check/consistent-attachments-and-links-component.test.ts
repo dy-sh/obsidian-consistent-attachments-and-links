@@ -485,13 +485,16 @@ describe('ConsistentAttachmentsAndLinksComponent', () => {
       expect(mockSettings.shouldShowBackupWarning).toBe(false);
     });
 
-    it('should render the plugin name as code in the message and the title', async () => {
+    it('should render the command name and the plugin name as code in the message and the title', async () => {
       const component = createComponent();
       mockSettings.shouldShowBackupWarning = true;
       await asPrivate(component).showBackupWarning();
       const [params] = mockAlert.mock.calls[0] ?? [];
       const { message, title } = params as BackupWarningAlertParams;
-      expect(message.querySelector('code')?.textContent).toBe('Consistent Attachments and Links');
+      expect(Array.from(message.querySelectorAll('code'), (code) => code.textContent)).toEqual([
+        'Fix incompatible paths',
+        'Consistent Attachments and Links'
+      ]);
       expect(title.querySelector('code')?.textContent).toBe('Consistent Attachments and Links');
     });
   });
